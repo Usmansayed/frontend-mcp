@@ -20,8 +20,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from navigation.browser_use import PerceptionAgentRunner, credentials_available
-from navigation.codeGraph import create_code_graph
+from navigation.visual_browser_intelligence.agent import PerceptionAgentRunner, credentials_available
+from navigation.codebase_intelligence.graph import create_code_graph
 
 ROOT = Path(__file__).resolve().parent.parent
 SANDBOX = ROOT / "sandbox"
@@ -86,7 +86,7 @@ async def main() -> int:
         for h in hint.hits:
             print(f"  hit: {h.get('name')} -> {h.get('file_path')}")
         print("\n--- Agent system message preview ---")
-        from navigation.browser_use import format_hints_for_agent
+        from navigation.visual_browser_intelligence.agent import format_hints_for_agent
 
         print(format_hints_for_agent(hint, runner.start_url))
         return 0

@@ -3,8 +3,8 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-from navigation.browser_use import PerceptionAgentRunner
-from navigation.codeGraph import create_code_graph
+from navigation.visual_browser_intelligence.agent import PerceptionAgentRunner
+from navigation.codebase_intelligence.graph import create_code_graph
 
 SANDBOX = Path(__file__).resolve().parent.parent / "sandbox"
 
@@ -14,7 +14,7 @@ def run_demo() -> None:
     task = "Locate checkout button and continue flow"
 
     print("=== Dry-run timeline (BrowserUseNavigator) ===")
-    from navigation.browser_use import BrowserUseNavigator
+    from navigation.visual_browser_intelligence.agent import BrowserUseNavigator
 
     for step in BrowserUseNavigator(code_graph).execute(task):
         print(f"  {step.action} -> {step.details}")
@@ -22,7 +22,7 @@ def run_demo() -> None:
     print("\n=== Graph hint preview for live agent ===")
     runner = PerceptionAgentRunner(code_graph=code_graph, start_url="http://localhost:5173")
     hint = runner.hint_resolver.resolve(task)
-    from navigation.browser_use import format_hints_for_agent
+    from navigation.visual_browser_intelligence.agent import format_hints_for_agent
 
     print(format_hints_for_agent(hint, runner.start_url))
 

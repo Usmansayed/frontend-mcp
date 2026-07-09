@@ -10,15 +10,15 @@ from _bootstrap import ROOT, SANDBOX_ROOT
 
 from dotenv import load_dotenv
 
-from navigation.codeGraph import create_code_graph
+from navigation.codebase_intelligence.graph import create_code_graph
 from navigation.perception import SuccessCriteria, artifact_dir, dump_json
-from navigation.perception.exploration import explore_with_hints
-from navigation.perception.feature_flags import probe_feature_flag
-from navigation.perception.file_upload import upload_test_file
-from navigation.perception.iframe_context import probe_iframe_interaction
-from navigation.perception.rich_editors import fill_rich_editor
-from navigation.perception.virtual_scroll import scroll_until_item_found
-from navigation.perception.websocket_observer import observe_live_dom
+from navigation.design_workflow_intelligence.exploration import explore_with_hints
+from navigation.design_workflow_intelligence.feature_flags import probe_feature_flag
+from navigation.component_intelligence.probes.file_upload import upload_test_file
+from navigation.component_intelligence.probes.iframe_context import probe_iframe_interaction
+from navigation.component_intelligence.probes.rich_editors import fill_rich_editor
+from navigation.component_intelligence.probes.virtual_scroll import scroll_until_item_found
+from navigation.visual_browser_intelligence.live.websocket_observer import observe_live_dom
 
 load_dotenv(ROOT / ".env")
 load_dotenv()

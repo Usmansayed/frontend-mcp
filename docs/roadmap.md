@@ -53,6 +53,23 @@ Status key: ✅ shipped · 🚧 in progress · 📋 planned · ⏸ deferred
 - [x] Artifacts: `diagnosis.json`, `diagnosis.md`, scan resources
 - [x] Unit + contract tests
 
+## v1.0 — Framework Intelligence (✅ shipped)
+
+- [x] `navigation/framework_intelligence/` — detector, cache, Context7 provider
+- [x] `perception_detect_framework` / `perception_framework_docs`
+
+## v1.1 — Seven-module platform layout (✅ shipped)
+
+- [x] Restructure `src/navigation/` into 7 intelligence modules + `core/`
+- [x] Move console, network, audits, reports → `frontend_quality_intelligence/`
+- [x] Move observe/verify/browser → `visual_browser_intelligence/`
+- [x] Move codeGraph → `codebase_intelligence/graph/`
+- [x] Move flows/state → `design_workflow_intelligence/`
+- [x] Move probes → `component_intelligence/`
+- [x] Move visual heuristics → `design_sense_intelligence/`
+- [x] Backward-compatible import shims (`perception/`, `console/`, etc.)
+- [x] [INTELLIGENCE_MODULES.md](./INTELLIGENCE_MODULES.md)
+
 ## v0.8 — Browser attach mode (📋)
 
 - [ ] `perception_session_start` with `cdp_url` / attach to user Chrome

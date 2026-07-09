@@ -13,7 +13,9 @@ from navigation.mcp.handlers import (
     handle_audit_accessibility,
     handle_audit_seo,
     handle_debug_mode,
+    handle_detect_framework,
     handle_full_diagnosis,
+    handle_framework_docs,
     handle_code_context,
     handle_console_clear,
     handle_console_get,
@@ -37,10 +39,10 @@ from navigation.mcp.handlers import (
     handle_verify,
 )
 from navigation.mcp.resources import list_resources, read_resource
-from navigation.mcp.visual_response import VISUAL_ATTACHMENTS_KEY, envelope_to_mcp_contents
-from navigation.mcp.scan_registry import ScanRegistry
-from navigation.mcp.session_store import SessionStore
-from navigation.audits.runner import lighthouse_available
+from navigation.visual_browser_intelligence.visual.visual_response import VISUAL_ATTACHMENTS_KEY, envelope_to_mcp_contents
+from navigation.core.scan_registry import ScanRegistry
+from navigation.visual_browser_intelligence.browser.session_store import SessionStore
+from navigation.frontend_quality_intelligence.audits.runner import lighthouse_available
 
 
 async def main() -> int:
@@ -407,6 +409,33 @@ async def main() -> int:
             }
         else:
             report["tests"]["diagnosis_resource"] = {"ok": False}
+
+        detect_fw = await handle_detect_framework({"repo_root": str(SANDBOX_ROOT)})
+        fw_meta = (detect_fw.get("data") or {}).get("metadata") or {}
+        report["tests"]["detect_framework"] = {
+            "ok": detect_fw["ok"]
+            and fw_meta.get("framework") == "React"
+            and fw_meta.get("build_tool") == "Vite"
+            and fw_meta.get("package_manager") == "npm",
+        }
+
+        fw_docs = await handle_framework_docs(
+            {
+                "repo_root": str(SANDBOX_ROOT),
+                "topic": "React Router nested routes",
+                "use_cache": True,
+            },
+        )
+        knowledge = (fw_docs.get("data") or {}).get("framework_knowledge") or {}
+        has_content = bool(str(knowledge.get("content") or "").strip())
+        degraded = knowledge.get("degraded") or fw_docs.get("degraded") or []
+        report["tests"]["framework_docs"] = {
+            "ok": fw_docs["ok"]
+            or ("context7_unavailable" in degraded)
+            or ("library_not_found" in degraded),
+            "has_content": has_content,
+            "cached": knowledge.get("cached", False),
+        }
 
         end = await handle_session_end(store, {"session_id": sid})
         report["tests"]["session_end"] = {"ok": end["ok"]}

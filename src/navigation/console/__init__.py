@@ -1,12 +1,2 @@
-"""Session-scoped console capture via CDP Runtime + Log domains."""
-from __future__ import annotations
-
-from .models import ConsoleFilter, ConsoleLogEntry, ConsoleReport
-from .service import SessionConsoleService
-
-__all__ = [
-	'ConsoleFilter',
-	'ConsoleLogEntry',
-	'ConsoleReport',
-	'SessionConsoleService',
-]
+"""Backward-compatible shim — use navigation.frontend_quality_intelligence.console."""
+from navigation.frontend_quality_intelligence.console import *  # noqa: F403

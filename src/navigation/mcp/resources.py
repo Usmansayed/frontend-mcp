@@ -5,7 +5,7 @@ import base64
 import json
 from pathlib import Path
 
-from .scan_registry import ScanRegistry
+from navigation.core.scan_registry import ScanRegistry
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 

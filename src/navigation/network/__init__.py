@@ -1,12 +1,2 @@
-"""Session-scoped network capture via CDP Network domain."""
-from __future__ import annotations
-
-from .models import NetworkEntry, NetworkFilter, NetworkReport
-from .service import SessionNetworkService
-
-__all__ = [
-	'NetworkEntry',
-	'NetworkFilter',
-	'NetworkReport',
-	'SessionNetworkService',
-]
+"""Backward-compatible shim — use navigation.frontend_quality_intelligence.network."""
+from navigation.frontend_quality_intelligence.network import *  # noqa: F403

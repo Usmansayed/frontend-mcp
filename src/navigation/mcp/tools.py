@@ -526,4 +526,41 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                 "required": ["session_id"],
             },
         ),
+        T(
+            name="perception_detect_framework",
+            description=(
+                "Framework Intelligence (v1). Detect frontend stack from package.json, lockfiles, "
+                "configs, and folder structure. Returns framework, version, build tool, package manager, "
+                "TypeScript/JavaScript, monorepo flag, and rendering/router hints."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "repo_root": {
+                        "type": "string",
+                        "description": "Project root with package.json (default: sandbox/)",
+                    },
+                },
+            },
+        ),
+        T(
+            name="perception_framework_docs",
+            description=(
+                "Framework Intelligence (v1). Detect project metadata, query Context7 with version-aware "
+                "context, and return normalized framework documentation for a single topic. Set "
+                "CONTEXT7_API_KEY for higher rate limits."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "repo_root": {"type": "string", "description": "Project root (default: sandbox/)"},
+                    "topic": {
+                        "type": "string",
+                        "description": "One documentation topic, e.g. 'useEffect cleanup' or 'form validation'",
+                    },
+                    "use_cache": {"type": "boolean", "default": True},
+                },
+                "required": ["topic"],
+            },
+        ),
     ]

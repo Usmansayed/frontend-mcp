@@ -1,4 +1,2 @@
-from .factory import create_code_graph
-from .interface import GraphQueryResult, ICodeGraph
-
-__all__ = ["ICodeGraph", "GraphQueryResult", "create_code_graph"]
+"""Backward-compatible shim — use navigation.codebase_intelligence.graph."""
+from navigation.codebase_intelligence.graph import *  # noqa: F403

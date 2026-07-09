@@ -9,9 +9,13 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
 	sys.path.insert(0, str(SRC))
 
-from navigation.reports.diagnosis import _assemble_report, _build_summary, _verification_from_observation
-from navigation.reports.hints import build_suggested_fixes
-from navigation.reports.markdown import report_to_markdown
+from navigation.frontend_quality_intelligence.reports.diagnosis import (
+	_assemble_report,
+	_build_summary,
+	_verification_from_observation,
+)
+from navigation.design_sense_intelligence.heuristics.quality_hints import build_suggested_fixes
+from navigation.frontend_quality_intelligence.reports.markdown import report_to_markdown
 
 
 def test_build_summary_includes_counts() -> None:

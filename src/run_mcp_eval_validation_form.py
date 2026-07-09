@@ -22,8 +22,8 @@ from navigation.mcp.handlers import (
     handle_session_start,
     handle_verify,
 )
-from navigation.mcp.scan_registry import ScanRegistry
-from navigation.mcp.session_store import SessionStore
+from navigation.core.scan_registry import ScanRegistry
+from navigation.visual_browser_intelligence.browser.session_store import SessionStore
 
 PLANNING_HINT_KEYS = ("suggested_next", "next_step", "recommended_action", "you_should")
 

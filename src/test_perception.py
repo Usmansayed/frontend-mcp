@@ -12,8 +12,8 @@ import json
 import sys
 from pathlib import Path
 
-from navigation.browser_use import BrowserUseNavigator
-from navigation.codeGraph import create_code_graph
+from navigation.visual_browser_intelligence.agent import BrowserUseNavigator
+from navigation.codebase_intelligence.graph import create_code_graph
 
 ROOT = Path(__file__).resolve().parent.parent
 SANDBOX = ROOT / "sandbox"
@@ -160,7 +160,7 @@ def main() -> int:
     run_null_fallback_test()
 
     if args.live:
-        from navigation.browser_use import PerceptionAgentRunner, credentials_available
+        from navigation.visual_browser_intelligence.agent import PerceptionAgentRunner, credentials_available
         if not credentials_available():
             print("\nSkipping --live: AWS credentials not configured.")
         else:

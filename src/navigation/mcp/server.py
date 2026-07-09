@@ -36,10 +36,12 @@ from .handlers import (
     handle_console_clear,
     handle_console_get,
     handle_debug_mode,
+    handle_detect_framework,
     handle_diff,
     handle_execute_actions,
     handle_execute_script,
     handle_flow_describe,
+    handle_framework_docs,
     handle_full_diagnosis,
     handle_health,
     handle_navigate,
@@ -58,10 +60,9 @@ from .handlers import (
 )
 from .instructions import MCP_INSTRUCTIONS
 from .resources import list_resources, read_resource
-from .scan_registry import ScanRegistry
-from .session_store import SessionStore
-from .tools import perception_tools
-from .visual_response import envelope_to_mcp_contents
+from navigation.core.scan_registry import ScanRegistry
+from navigation.visual_browser_intelligence.browser.session_store import SessionStore
+from navigation.visual_browser_intelligence.visual.visual_response import envelope_to_mcp_contents
 
 
 HandlerFn = Callable[..., Awaitable[dict[str, Any]]]
@@ -217,6 +218,12 @@ class PerceptionMCPServer:
         async def audit_mode(args: dict[str, Any]) -> dict[str, Any]:
             return await handle_audit_mode(store, scans, args)
 
+        async def detect_framework(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_detect_framework(args)
+
+        async def framework_docs(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_framework_docs(args)
+
         return {
             "perception_health": health,
             "perception_session_start": session_start,
@@ -247,6 +254,8 @@ class PerceptionMCPServer:
             "perception_full_diagnosis": full_diagnosis,
             "perception_debug_mode": debug_mode,
             "perception_audit_mode": audit_mode,
+            "perception_detect_framework": detect_framework,
+            "perception_framework_docs": framework_docs,
         }
 
     async def run(self) -> None:
@@ -256,7 +265,7 @@ class PerceptionMCPServer:
                 write_stream,
                 InitializationOptions(
                     server_name="frontend-perception",
-                    server_version="0.9.0",
+                    server_version="0.11.0",
                     capabilities=self._server.get_capabilities(
                         notification_options=NotificationOptions(),
                         experimental_capabilities={},

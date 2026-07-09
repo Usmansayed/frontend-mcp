@@ -16,8 +16,8 @@ from navigation.perception import (
     dump_json,
     probe_maze_guards,
 )
-from navigation.perception.route_guards import login_as_admin
-from navigation.perception.verification import evaluate_js, read_current_url
+from navigation.design_workflow_intelligence.state.route_guards import login_as_admin
+from navigation.visual_browser_intelligence.verify.verification import evaluate_js, read_current_url
 
 load_dotenv(ROOT / ".env")
 load_dotenv()

@@ -74,6 +74,26 @@ ADR-style log. New entries at top.
 
 ---
 
+## ADR-014 — Seven intelligence modules + core (2026-07-09)
+
+**Context:** The MCP grew as flat packages (`perception/`, `console/`, `codeGraph/`) making it hard to extend one domain without touching unrelated code.
+
+**Decision:** Restructure `src/navigation/` into seven intelligence modules (framework, component, design workflow, visual/browser, codebase, frontend quality, design sense) plus shared `core/`. Each module owns providers, registry, service, models, and cache where applicable. Legacy import paths remain as shims.
+
+**Consequences:** New capabilities extend a single module; MCP handlers stay thin. Physical file moves completed in v1.1; shims can be removed in a future major version.
+
+---
+
+## ADR-013 — Framework Intelligence provider abstraction (2026-07-09)
+
+**Context:** Agents need version-specific framework docs during UI work, but the MCP must not embed or maintain framework knowledge.
+
+**Decision:** `framework_intelligence/` detects stack locally, queries external providers via `KnowledgeProvider`, normalizes to `FrameworkKnowledgeResponse`, and caches by `framework:version:topic`. Context7 is the first provider; handlers never expose Context7 response shapes.
+
+**Consequences:** `CONTEXT7_API_KEY` optional; without network/API the detector still works via `perception_detect_framework`. Future providers plug in without MCP contract changes.
+
+---
+
 ## ADR-012 — Diagnosis orchestrator, no LLM in server (2026-07-09)
 
 **Context:** Agents need one-shot QA reports combining observe, console, network, and Lighthouse without raw log dumps.

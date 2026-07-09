@@ -7,17 +7,21 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin
 
-from navigation.perception.budget import OutputBudget, apply_observation_budget
-from navigation.perception.dev_insights import collect_dev_insights_during
-from navigation.perception.preflight import preflight_check, wait_for_page_ready
-from navigation.perception.scan import scan_page
-from navigation.perception.verification import SuccessCriteria, evaluate_js, verify
+from navigation.core.budget import OutputBudget, apply_observation_budget
+from navigation.frontend_quality_intelligence.dev_insights import collect_dev_insights_during
+from navigation.visual_browser_intelligence.observe.preflight import preflight_check, wait_for_page_ready
+from navigation.visual_browser_intelligence.observe.scan import scan_page
+from navigation.visual_browser_intelligence.verify.verification import SuccessCriteria, evaluate_js, verify
 
-from .diff import diff_observations
-from .envelope import agent_summary_from_observation, agent_summary_from_report, make_envelope
-from .scan_registry import ScanRegistry
-from .session_store import SessionStore
-from .visual_response import attach_diff_visuals, attach_observation_visuals, visual_uris_for_scan
+from navigation.core.envelope import agent_summary_from_observation, agent_summary_from_report, make_envelope
+from navigation.core.scan_registry import ScanRegistry
+from navigation.frontend_quality_intelligence.diff import diff_observations
+from navigation.visual_browser_intelligence.browser.session_store import SessionStore
+from navigation.visual_browser_intelligence.visual.visual_response import (
+	attach_diff_visuals,
+	attach_observation_visuals,
+	visual_uris_for_scan,
+)
 
 
 def _resolve_url(base: str, url: str) -> str:
@@ -359,7 +363,7 @@ async def handle_execute_script(
         error = str(exc)
 
     await wait_for_page_ready(rec.browser, timeout=5.0)
-    from navigation.perception.observation import collect_observation
+    from navigation.visual_browser_intelligence.observe.observation import collect_observation
 
     obs = await collect_observation(
         rec.browser,
@@ -399,7 +403,7 @@ async def handle_execute_script(
 
 
 async def _current_url(browser: Any) -> str:
-    from navigation.perception.verification import read_current_url
+    from navigation.visual_browser_intelligence.verify.verification import read_current_url
 
     return await read_current_url(browser)
 
@@ -417,7 +421,7 @@ async def _observe_and_register(
     annotate_screenshot: bool = True,
     extra_visual_labels: list[str] | None = None,
 ) -> tuple[dict[str, Any], Any]:
-    from navigation.perception.observation import collect_observation
+    from navigation.visual_browser_intelligence.observe.observation import collect_observation
 
     images_dir = rec.artifacts_dir / "images" if include_screenshot else None
     obs = await collect_observation(
@@ -518,7 +522,7 @@ async def handle_execute_actions(
     scans: ScanRegistry,
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
-    from navigation.perception.scripted_actions import (
+    from navigation.visual_browser_intelligence.actions.scripted_actions import (
         click_button_text,
         click_link_text,
         set_input_by_label,
@@ -669,7 +673,7 @@ async def handle_diff(scans: ScanRegistry, arguments: dict[str, Any]) -> dict[st
 
 
 async def handle_auth_gate(store: SessionStore, arguments: dict[str, Any]) -> dict[str, Any]:
-    from navigation.perception.auth_gate import check_auth_gate
+    from navigation.design_workflow_intelligence.state.auth_gate import check_auth_gate
 
     session_id = str(arguments.get("session_id") or "")
     if not session_id:
@@ -695,7 +699,7 @@ async def handle_auth_gate(store: SessionStore, arguments: dict[str, Any]) -> di
 
 
 async def handle_probe_form(store: SessionStore, arguments: dict[str, Any]) -> dict[str, Any]:
-    from navigation.perception.form_probe import probe_validation_form
+    from navigation.component_intelligence.probes.form_probe import probe_validation_form
 
     session_id = str(arguments.get("session_id") or "")
     form = str(arguments.get("form") or "validation")
@@ -727,7 +731,7 @@ async def handle_probe_form(store: SessionStore, arguments: dict[str, Any]) -> d
 
 
 async def handle_probe_guards(store: SessionStore, arguments: dict[str, Any]) -> dict[str, Any]:
-    from navigation.perception.route_guards import probe_maze_guards, probe_route_guard
+    from navigation.design_workflow_intelligence.state.route_guards import probe_maze_guards, probe_route_guard
 
     session_id = str(arguments.get("session_id") or "")
     if not session_id:
@@ -755,7 +759,7 @@ async def handle_probe_guards(store: SessionStore, arguments: dict[str, Any]) ->
                 requires_role=spec.get("requires_role"),
             )
             guards.append(guard)
-        from navigation.perception.route_guards import GuardProbeResult
+        from navigation.design_workflow_intelligence.state.route_guards import GuardProbeResult
 
         result = GuardProbeResult(ok=bool(guards), guards=guards)
     else:
@@ -848,7 +852,7 @@ async def handle_state_list(store: SessionStore, arguments: dict[str, Any]) -> d
 
 
 async def handle_flow_describe(arguments: dict[str, Any]) -> dict[str, Any]:
-    from navigation.perception.flow_graph import FLOWS
+    from navigation.design_workflow_intelligence.flows.flow_graph import FLOWS
 
     flow_name = arguments.get("flow_name")
     if not flow_name:
@@ -880,7 +884,7 @@ async def handle_flow_describe(arguments: dict[str, Any]) -> dict[str, Any]:
 async def handle_code_context(arguments: dict[str, Any]) -> dict[str, Any]:
     from pathlib import Path
 
-    from navigation.codeGraph import create_code_graph
+    from navigation.codebase_intelligence.graph import create_code_graph
 
     repo_root = Path(str(arguments.get("repo_root") or "")).resolve() if arguments.get("repo_root") else None
     if repo_root is None:
@@ -908,7 +912,7 @@ async def handle_code_context(arguments: dict[str, Any]) -> dict[str, Any]:
 
 
 def _console_filter_from_args(arguments: dict[str, Any]) -> Any:
-    from navigation.console.models import ConsoleFilter
+    from navigation.frontend_quality_intelligence.console.models import ConsoleFilter
 
     levels_raw = arguments.get("levels")
     levels = [str(x) for x in levels_raw] if isinstance(levels_raw, list) else None
@@ -970,7 +974,7 @@ async def handle_console_clear(store: SessionStore, arguments: dict[str, Any]) -
 
 
 def _network_filter_from_args(arguments: dict[str, Any]) -> Any:
-    from navigation.network.models import NetworkFilter
+    from navigation.frontend_quality_intelligence.network.models import NetworkFilter
 
     since_index = arguments.get("since_index")
     return NetworkFilter(
@@ -1054,9 +1058,9 @@ async def _handle_audit(
     category: Any,
     tool_name: str,
 ) -> dict[str, Any]:
-    from navigation.audits.models import AuditCategory
-    from navigation.audits.runner import LighthouseNotAvailableError
-    from navigation.audits.service import run_audit
+    from navigation.frontend_quality_intelligence.audits.models import AuditCategory
+    from navigation.frontend_quality_intelligence.audits.runner import LighthouseNotAvailableError
+    from navigation.frontend_quality_intelligence.audits.service import run_audit
 
     session_id = str(arguments.get("session_id") or "")
     if not session_id:
@@ -1114,7 +1118,7 @@ async def _handle_audit(
 
 
 async def handle_audit_accessibility(store: SessionStore, arguments: dict[str, Any]) -> dict[str, Any]:
-    from navigation.audits.models import AuditCategory
+    from navigation.frontend_quality_intelligence.audits.models import AuditCategory
 
     return await _handle_audit(
         store,
@@ -1125,7 +1129,7 @@ async def handle_audit_accessibility(store: SessionStore, arguments: dict[str, A
 
 
 async def handle_audit_performance(store: SessionStore, arguments: dict[str, Any]) -> dict[str, Any]:
-    from navigation.audits.models import AuditCategory
+    from navigation.frontend_quality_intelligence.audits.models import AuditCategory
 
     return await _handle_audit(
         store,
@@ -1136,13 +1140,13 @@ async def handle_audit_performance(store: SessionStore, arguments: dict[str, Any
 
 
 async def handle_audit_seo(store: SessionStore, arguments: dict[str, Any]) -> dict[str, Any]:
-    from navigation.audits.models import AuditCategory
+    from navigation.frontend_quality_intelligence.audits.models import AuditCategory
 
     return await _handle_audit(store, arguments, AuditCategory.SEO, "perception_audit_seo")
 
 
 async def handle_audit_best_practices(store: SessionStore, arguments: dict[str, Any]) -> dict[str, Any]:
-    from navigation.audits.models import AuditCategory
+    from navigation.frontend_quality_intelligence.audits.models import AuditCategory
 
     return await _handle_audit(
         store,
@@ -1153,7 +1157,7 @@ async def handle_audit_best_practices(store: SessionStore, arguments: dict[str, 
 
 
 def _diagnosis_options_from_args(arguments: dict[str, Any], *, mode: str) -> Any:
-    from navigation.reports.models import DiagnosisOptions
+    from navigation.frontend_quality_intelligence.reports.models import DiagnosisOptions
 
     url_arg = str(arguments.get("url") or "").strip()
     include_shot = arguments.get("include_screenshot", True)
@@ -1177,7 +1181,7 @@ async def _handle_diagnosis(
     mode: str,
     tool_name: str,
 ) -> dict[str, Any]:
-    from navigation.reports.diagnosis import (
+    from navigation.frontend_quality_intelligence.reports.diagnosis import (
         DiagnosisError,
         run_audit_mode,
         run_debug_mode,
@@ -1278,4 +1282,63 @@ async def handle_audit_mode(
         arguments,
         mode="audit",
         tool_name="perception_audit_mode",
+    )
+
+
+def _default_repo_root(arguments: dict[str, Any]) -> Path:
+    from pathlib import Path
+
+    raw = arguments.get("repo_root")
+    if raw:
+        return Path(str(raw)).resolve()
+    return Path(__file__).resolve().parents[3] / "sandbox"
+
+
+async def handle_detect_framework(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.framework_intelligence import FrameworkIntelligenceService
+
+    repo_root = _default_repo_root(arguments)
+    service = FrameworkIntelligenceService()
+    metadata = service.detect(repo_root)
+    return make_envelope(
+        "perception_detect_framework",
+        ok=metadata.framework is not None,
+        degraded=metadata.degraded,
+        data={
+            "metadata": metadata.to_dict(),
+            "agent_summary": {
+                "framework": metadata.framework,
+                "framework_version": metadata.framework_version,
+                "build_tool": metadata.build_tool,
+                "package_manager": metadata.package_manager,
+                "language": metadata.language,
+                "is_monorepo": metadata.is_monorepo,
+                "rendering_mode": metadata.rendering_mode,
+                "router_mode": metadata.router_mode,
+                "advisory": list(metadata.degraded),
+            },
+        },
+    )
+
+
+async def handle_framework_docs(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.framework_intelligence import FrameworkIntelligenceService
+
+    topic = str(arguments.get("topic") or "").strip()
+    if not topic:
+        return make_envelope("perception_framework_docs", ok=False, error="topic required")
+
+    repo_root = _default_repo_root(arguments)
+    use_cache = bool(arguments.get("use_cache", True))
+    service = FrameworkIntelligenceService()
+    response = await service.fetch_docs(repo_root, topic=topic, use_cache=use_cache)
+    ok = bool(response.content.strip()) and 'context7_unavailable' not in response.degraded
+    return make_envelope(
+        "perception_framework_docs",
+        ok=ok,
+        degraded=response.degraded,
+        data={
+            "framework_knowledge": response.to_dict(),
+            "agent_summary": service.agent_summary_from_response(response),
+        },
     )

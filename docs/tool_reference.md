@@ -186,6 +186,32 @@ All four Lighthouse categories (accessibility, performance, seo, best-practices)
 | `url` | string | optional |
 | `timeout_s` | int | `120` |
 
+## Framework Intelligence (v1.0)
+
+### `perception_detect_framework`
+
+Detect frontend stack from `package.json`, lockfiles, configs, and folder structure. No browser session required.
+
+| Param | Type | Default |
+|-------|------|---------|
+| `repo_root` | string | `sandbox/` |
+
+**Returns:** `data.metadata` (`framework`, `framework_version`, `build_tool`, `package_manager`, `language`, `is_monorepo`, `rendering_mode`, `router_mode`, `config_files`, `project_structure`).
+
+### `perception_framework_docs`
+
+Detect project → query Context7 with version-aware metadata → return normalized docs for one topic.
+
+| Param | Type | Default |
+|-------|------|---------|
+| `repo_root` | string | `sandbox/` |
+| `topic` | string | **required** (single concept) |
+| `use_cache` | bool | `true` |
+
+**Returns:** `data.framework_knowledge` (`metadata`, `content`, `summary`, `provider`, `library_id`, `cached`).
+
+**Env:** `CONTEXT7_API_KEY` (optional; higher rate limits at [context7.com/dashboard](https://context7.com/dashboard)).
+
 ## Resources
 
 | URI | Content |
