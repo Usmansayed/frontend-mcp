@@ -1,0 +1,32 @@
+[project]
+name = "frontend-perception-engine"
+version = "0.2.0"
+description = "Frontend perception engine with optional CRG-powered navigation hints for Browser Use."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "browser-use>=0.13.3",
+  "code-review-graph>=2.3.6",
+  "python-dotenv>=1.0.0",
+  "mcp>=1.0.0",
+  "pillow>=10.0.0",
+]
+
+[project.scripts]
+frontend-perception-mcp = "navigation.mcp.server:main"
+frontend-perception-install = "navigation.cli.install:main"
+
+[project.optional-dependencies]
+aws = ["boto3>=1.35.0"]
+# Audits use Lighthouse CLI via npx (Node.js 18+). No extra Python packages required.
+audits = []
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

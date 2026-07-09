@@ -1,0 +1,154 @@
+"""MCP resources — guides, evals, and scan artifacts."""
+from __future__ import annotations
+
+import base64
+import json
+from pathlib import Path
+
+from .scan_registry import ScanRegistry
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
+_SCAN_ARTIFACTS: dict[str, str] = {
+	'report.json': 'application/json',
+	'diagnosis.json': 'application/json',
+	'diagnosis.md': 'text/markdown',
+	'screenshot.png': 'image/png',
+	'screenshot-annotated.png': 'image/png',
+	'screenshot-crop.png': 'image/png',
+	'network.har': 'application/json',
+}
+
+
+def _artifact_from_report(obs: dict[str, Any], kind: str) -> Path | None:
+	pr = obs.get('perception_report') or {}
+	for art in pr.get('artifacts') or []:
+		if art.get('kind') == kind:
+			path = Path(str(art.get('path') or ''))
+			if path.is_file():
+				return path
+	return None
+
+
+def _scan_artifact_path(rec: object, artifact: str) -> Path | None:
+	obs = getattr(rec, 'observation', {}) or {}
+	if artifact == 'report.json':
+		return None
+	if artifact == 'diagnosis.json':
+		return _artifact_from_report(obs, 'diagnosis_json')
+	if artifact == 'diagnosis.md':
+		return _artifact_from_report(obs, 'diagnosis_md')
+	if artifact == 'screenshot.png':
+		raw = obs.get('screenshot_path')
+		return Path(str(raw)) if raw else None
+	if artifact == 'screenshot-annotated.png':
+		raw = obs.get('annotated_screenshot_path')
+		return Path(str(raw)) if raw else None
+	if artifact == 'screenshot-crop.png':
+		raw = obs.get('crop_screenshot_path')
+		return Path(str(raw)) if raw else None
+	if artifact == 'network.har':
+		net = obs.get('network') or {}
+		raw = net.get('har_path')
+		return Path(str(raw)) if raw else None
+	return None
+
+
+def list_resources(scans: ScanRegistry | None = None) -> list[dict[str, str]]:
+	resources = [
+		{
+			'uri': 'perception://agent-guide',
+			'name': 'AGENT_GUIDE',
+			'description': 'Primary behavior contract — playbooks for host agent (read at session start)',
+			'mimeType': 'text/markdown',
+		},
+		{
+			'uri': 'perception://eval/validation-form',
+			'name': 'Validation Form Eval',
+			'description': 'M3 eval scenario — complete using AGENT_GUIDE §4 form playbook',
+			'mimeType': 'text/markdown',
+		},
+	]
+	if scans is not None:
+		for rec in scans.all():
+			resources.append(
+				{
+					'uri': f'perception://scan/{rec.scan_id}/report.json',
+					'name': f'scan_report_{rec.scan_id}',
+					'description': f'Observation report for {rec.scan_id}',
+					'mimeType': 'application/json',
+				}
+			)
+			for artifact, mime in _SCAN_ARTIFACTS.items():
+				if artifact == 'report.json':
+					continue
+				path = _scan_artifact_path(rec, artifact)
+				if path is not None and path.is_file():
+					resources.append(
+						{
+							'uri': f'perception://scan/{rec.scan_id}/{artifact}',
+							'name': f'scan_{artifact.replace(".", "_")}_{rec.scan_id}',
+							'description': f'{artifact} for {rec.scan_id}',
+							'mimeType': mime,
+						}
+					)
+			net = (rec.observation or {}).get('network') or {}
+			if net.get('har_path'):
+				har_uri = f'perception://scan/{rec.scan_id}/network.har'
+				if not any(r.get('uri') == har_uri for r in resources):
+					resources.append(
+						{
+							'uri': har_uri,
+							'name': f'scan_network_har_{rec.scan_id}',
+							'description': f'network.har for {rec.scan_id}',
+							'mimeType': 'application/json',
+						}
+					)
+	return resources
+
+
+def read_resource(uri: str, scans: ScanRegistry | None = None) -> tuple[str, str, bool]:
+	"""Return (mime_type, payload, is_blob). Raises KeyError if unknown."""
+	if uri == 'perception://agent-guide':
+		path = PROJECT_ROOT / 'AGENT_GUIDE.md'
+		if not path.is_file():
+			raise FileNotFoundError(f'AGENT_GUIDE.md not found at {path}')
+		return 'text/markdown', path.read_text(encoding='utf-8'), False
+
+	if uri == 'perception://eval/validation-form':
+		path = PROJECT_ROOT / 'evals' / 'VALIDATION_FORM_EVAL.md'
+		if not path.is_file():
+			raise FileNotFoundError(f'eval doc not found at {path}')
+		return 'text/markdown', path.read_text(encoding='utf-8'), False
+
+	if uri.startswith('perception://scan/') and scans is not None:
+		parts = uri.split('/')
+		if len(parts) >= 5:
+			scan_id = parts[3]
+			artifact = parts[4]
+			rec = scans.get(scan_id)
+			if rec is None:
+				raise KeyError(uri)
+			if artifact == 'report.json':
+				payload = dict(rec.observation)
+				if rec.observation.get('perception_report'):
+					payload['perception_report'] = rec.observation['perception_report']
+				return 'application/json', json.dumps(payload, indent=2, default=str), False
+			if artifact == 'diagnosis.json':
+				pr = rec.observation.get('perception_report') or {}
+				return 'application/json', json.dumps(pr, indent=2, default=str), False
+			if artifact == 'diagnosis.md':
+				file_path = _scan_artifact_path(rec, artifact)
+				if file_path is None or not file_path.is_file():
+					raise KeyError(uri)
+				return 'text/markdown', file_path.read_text(encoding='utf-8'), False
+			if artifact in _SCAN_ARTIFACTS and artifact != 'report.json':
+				file_path = _scan_artifact_path(rec, artifact)
+				if file_path is None or not file_path.is_file():
+					return 'text/plain', '', False
+				if _SCAN_ARTIFACTS[artifact] == 'application/json':
+					return 'application/json', file_path.read_text(encoding='utf-8'), False
+				raw = file_path.read_bytes()
+				return _SCAN_ARTIFACTS[artifact], base64.b64encode(raw).decode('ascii'), True
+
+	raise KeyError(uri)
