@@ -196,11 +196,11 @@ Detect frontend stack from `package.json`, lockfiles, configs, and folder struct
 |-------|------|---------|
 | `repo_root` | string | `sandbox/` |
 
-**Returns:** `data.metadata` (`framework`, `framework_version`, `build_tool`, `package_manager`, `language`, `is_monorepo`, `rendering_mode`, `router_mode`, `config_files`, `project_structure`).
+**Returns:** `data.metadata` (`framework`, `framework_version`, `primary_package`, `build_tool`, `package_manager`, `language`, `is_monorepo`, `rendering_mode`, `router_mode`, `config_files`, `project_structure`).
 
 ### `perception_framework_docs`
 
-Detect project → query Context7 with version-aware metadata → return normalized docs for one topic.
+Detect project → fetch version-aware framework docs on demand (Grounded Docs) → return normalized docs for one topic.
 
 | Param | Type | Default |
 |-------|------|---------|
@@ -210,7 +210,7 @@ Detect project → query Context7 with version-aware metadata → return normali
 
 **Returns:** `data.framework_knowledge` (`metadata`, `content`, `summary`, `provider`, `library_id`, `cached`).
 
-**Env:** `CONTEXT7_API_KEY` (optional; higher rate limits at [context7.com/dashboard](https://context7.com/dashboard)).
+**Env:** `GROUNDED_DOCS_CLI`, `GROUNDED_DOCS_STORE_PATH`, `FRAMEWORK_DOCS_CACHE_PATH` (optional). Requires Node.js 22+ (`npx`).
 
 ## Resources
 

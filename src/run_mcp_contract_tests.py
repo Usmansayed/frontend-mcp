@@ -429,10 +429,21 @@ async def main() -> int:
         knowledge = (fw_docs.get("data") or {}).get("framework_knowledge") or {}
         has_content = bool(str(knowledge.get("content") or "").strip())
         degraded = knowledge.get("degraded") or fw_docs.get("degraded") or []
+        degraded_text = " ".join(str(item) for item in degraded)
+        docs_graceful = any(
+            token in degraded_text
+            for token in (
+                "docs_provider_unavailable",
+                "grounded_docs_cli_unavailable",
+                "node_version_too_old",
+                "library_spec_not_found",
+                "library_not_indexed",
+                "docs_empty_result",
+                "grounded_docs_timeout",
+            )
+        )
         report["tests"]["framework_docs"] = {
-            "ok": fw_docs["ok"]
-            or ("context7_unavailable" in degraded)
-            or ("library_not_found" in degraded),
+            "ok": fw_docs["ok"] or docs_graceful,
             "has_content": has_content,
             "cached": knowledge.get("cached", False),
         }

@@ -546,9 +546,9 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_framework_docs",
             description=(
-                "Framework Intelligence (v1). Detect project metadata, query Context7 with version-aware "
-                "context, and return normalized framework documentation for a single topic. Set "
-                "CONTEXT7_API_KEY for higher rate limits."
+                "Framework Intelligence (v1). Detect project metadata, fetch version-aware framework "
+                "documentation on demand via Grounded Docs, and return a normalized response. "
+                "Requires Node.js 22+ (npx). Override with GROUNDED_DOCS_CLI / GROUNDED_DOCS_STORE_PATH."
             ),
             inputSchema={
                 "type": "object",

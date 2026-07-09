@@ -55,7 +55,7 @@ Status key: ✅ shipped · 🚧 in progress · 📋 planned · ⏸ deferred
 
 ## v1.0 — Framework Intelligence (✅ shipped)
 
-- [x] `navigation/framework_intelligence/` — detector, cache, Context7 provider
+- [x] `navigation/framework_intelligence/` — detector, cache, Grounded Docs adapter
 - [x] `perception_detect_framework` / `perception_framework_docs`
 
 ## v1.1 — Seven-module platform layout (✅ shipped)
@@ -69,6 +69,30 @@ Status key: ✅ shipped · 🚧 in progress · 📋 planned · ⏸ deferred
 - [x] Move visual heuristics → `design_sense_intelligence/`
 - [x] Backward-compatible import shims (`perception/`, `console/`, etc.)
 - [x] [INTELLIGENCE_MODULES.md](./INTELLIGENCE_MODULES.md)
+
+## v1.2 — Framework Intelligence + Grounded Docs (✅ shipped)
+
+- [x] Replace Context7 with Grounded Docs MCP adapter
+- [x] `DocumentationProvider` abstraction + cross-platform CLI reliability
+- [x] On-demand doc scrape/search, normalized `FrameworkKnowledgeResponse`
+
+## v1.3 — Eight-module platform + Consistency Intelligence scaffold (🚧)
+
+- [x] Add `consistency_intelligence/` as 8th module (scaffold only)
+- [x] Architecture docs: Design Sense vs Consistency boundary
+- [x] [features/consistency_intelligence.md](./features/consistency_intelligence.md)
+- [ ] Design token extraction from code + computed styles
+- [ ] Spacing / typography / color scale validators
+- [ ] `perception_consistency_audit` MCP tool
+- [ ] Consistency scoring + regression diff vs prior scan
+
+## v2.0 — Consistency Intelligence (📋 planned)
+
+- [ ] Border radius, shadows, layout grid rules
+- [ ] Component + interaction-state consistency checks
+- [ ] Visual hierarchy + responsive consistency
+- [ ] Fix suggestions (rule-based; no LLM in server)
+- [ ] Optional auto-apply patches via host agent workflow
 
 ## v0.8 — Browser attach mode (📋)
 

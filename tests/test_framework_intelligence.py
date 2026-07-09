@@ -17,6 +17,7 @@ def test_detect_sandbox_react_vite() -> None:
 	meta = detect_project(ROOT / "sandbox")
 	assert meta.framework == "React"
 	assert meta.framework_version == "18.3"
+	assert meta.primary_package == "react"
 	assert meta.build_tool == "Vite"
 	assert meta.package_manager == "npm"
 	assert meta.language == "javascript"

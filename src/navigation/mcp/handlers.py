@@ -1309,6 +1309,7 @@ async def handle_detect_framework(arguments: dict[str, Any]) -> dict[str, Any]:
             "agent_summary": {
                 "framework": metadata.framework,
                 "framework_version": metadata.framework_version,
+                "primary_package": metadata.primary_package,
                 "build_tool": metadata.build_tool,
                 "package_manager": metadata.package_manager,
                 "language": metadata.language,
@@ -1332,7 +1333,7 @@ async def handle_framework_docs(arguments: dict[str, Any]) -> dict[str, Any]:
     use_cache = bool(arguments.get("use_cache", True))
     service = FrameworkIntelligenceService()
     response = await service.fetch_docs(repo_root, topic=topic, use_cache=use_cache)
-    ok = bool(response.content.strip()) and 'context7_unavailable' not in response.degraded
+    ok = bool(response.content.strip()) and 'docs_provider_unavailable' not in response.degraded
     return make_envelope(
         "perception_framework_docs",
         ok=ok,

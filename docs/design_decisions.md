@@ -74,6 +74,16 @@ ADR-style log. New entries at top.
 
 ---
 
+## ADR-015 — Consistency Intelligence vs Design Sense (2026-07-10)
+
+**Context:** Agents need both UX reasoning ("is this a good pattern?") and design-system enforcement ("does this match our tokens and scales?"). Combining both in one module would blur responsibilities and make rules harder to test.
+
+**Decision:** Add `consistency_intelligence/` as the **8th intelligence module**, separate from `design_sense_intelligence/`. Consistency Intelligence owns mathematical/visual consistency: design tokens, spacing systems, typography scales, color usage, radii, shadows, grids, component parity, interaction states, hierarchy, and responsive consistency. It detects inconsistencies, scores them, and will eventually suggest or apply fixes. Design Sense remains qualitative UX heuristics only. Scaffold only in v1.3 — no MCP tools until validators exist.
+
+**Consequences:** Future consistency tools consume observations from Visual Browser Intelligence and paths from Codebase Intelligence; they do not duplicate Lighthouse or `visual_insights`. Planned tools: `perception_consistency_audit`, `perception_consistency_diff`, `perception_token_snapshot`.
+
+---
+
 ## ADR-014 — Seven intelligence modules + core (2026-07-09)
 
 **Context:** The MCP grew as flat packages (`perception/`, `console/`, `codeGraph/`) making it hard to extend one domain without touching unrelated code.
@@ -88,9 +98,9 @@ ADR-style log. New entries at top.
 
 **Context:** Agents need version-specific framework docs during UI work, but the MCP must not embed or maintain framework knowledge.
 
-**Decision:** `framework_intelligence/` detects stack locally, queries external providers via `KnowledgeProvider`, normalizes to `FrameworkKnowledgeResponse`, and caches by `framework:version:topic`. Context7 is the first provider; handlers never expose Context7 response shapes.
+**Decision:** `framework_intelligence/` detects stack locally, routes documentation requests via `DocumentationProvider`, normalizes to `FrameworkKnowledgeResponse`, and caches by `framework:version:topic`. Grounded Docs MCP is the first provider; all custom logic lives in `providers/grounded_docs/` so upstream can be merged easily. Handlers never expose provider-specific response shapes.
 
-**Consequences:** `CONTEXT7_API_KEY` optional; without network/API the detector still works via `perception_detect_framework`. Future providers plug in without MCP contract changes.
+**Consequences:** Node.js 22+ required for live doc fetch; without CLI/network the detector still works via `perception_detect_framework`. Future providers plug in without MCP contract changes.
 
 ---
 

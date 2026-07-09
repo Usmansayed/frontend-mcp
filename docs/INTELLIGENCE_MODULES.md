@@ -1,6 +1,6 @@
 # Intelligence Modules Architecture
 
-Frontend Perception MCP is organized as **seven independent intelligence modules** plus a **shared core**. Each module owns its domain and exposes a clean interface; the MCP layer (`navigation/mcp/`) stays thin and delegates to module services.
+Frontend Perception MCP is organized as **eight independent intelligence modules** plus a **shared core**. Each module owns its domain and exposes a clean interface; the MCP layer (`navigation/mcp/`) stays thin and delegates to module services.
 
 ## Layout
 
@@ -13,7 +13,8 @@ src/navigation/
 ├── visual_browser_intelligence/         # 4. Browser, observe, verify, visuals
 ├── codebase_intelligence/             # 5. CRG graph, code ↔ UI
 ├── frontend_quality_intelligence/     # 6. Console, network, audits, diagnosis
-├── design_sense_intelligence/         # 7. Visual heuristics + UX hints
+├── design_sense_intelligence/         # 7. UX heuristics + design reasoning
+├── consistency_intelligence/          # 8. Design-system consistency (scaffold)
 ├── mcp/                               # MCP protocol (tools, handlers, server)
 └── cli/                               # Install wrapper
 ```
@@ -26,7 +27,7 @@ Each intelligence module follows this pattern where applicable:
 
 | Layer | Purpose |
 |-------|---------|
-| `providers/` | External integrations (Context7, Figma, shadcn, …) |
+| `providers/` | External integrations (Grounded Docs, Figma, shadcn, …) |
 | `registry.py` | Supported frameworks/tools/services |
 | `service.py` | Business logic facade |
 | `cache.py` | Module-scoped caching |
@@ -49,7 +50,7 @@ Understands the frontend stack and fetches version-aware documentation.
 | Framework detection | ✅ |
 | Version / build tool / package manager | ✅ |
 | Project metadata extraction | ✅ |
-| Context7 provider | ✅ |
+| Grounded Docs provider (adapter) | ✅ |
 | Documentation cache | ✅ |
 | Normalized `FrameworkKnowledgeResponse` | ✅ |
 
@@ -155,7 +156,7 @@ Validates production readiness and debugging signals.
 
 **Path:** `design_sense_intelligence/`
 
-Frontend reasoning and UI/UX decision support.
+Qualitative frontend reasoning and UI/UX **decision support** — helps the agent think about layout, hierarchy, and usability. Does **not** enforce design-system math or token rules (see module 8).
 
 | Capability | Status |
 |------------|--------|
@@ -165,6 +166,28 @@ Frontend reasoning and UI/UX decision support.
 | Design comparison | 📋 planned |
 
 Consumed during observe (`visual_insights` in observation payload) and diagnosis (`quality_hints`).
+
+---
+
+## 8. Consistency Intelligence
+
+**Path:** `consistency_intelligence/`
+
+Ensures the frontend remains **mathematically and visually consistent** with the design system. Detects drift, scores inconsistencies, and (future) suggests or applies fixes. **Not** UX coaching — that is Design Sense Intelligence.
+
+| Capability | Status |
+|------------|--------|
+| Module scaffold (`service`, `models`, `rules/`) | ✅ |
+| Design token extraction | 📋 planned |
+| Spacing / typography / color scale validation | 📋 planned |
+| Border radius, shadows, layout grid rules | 📋 planned |
+| Component + interaction-state consistency | 📋 planned |
+| Visual hierarchy + responsive consistency | 📋 planned |
+| Consistency scoring + fix suggestions | 📋 planned |
+
+**MCP tools (planned):** `perception_consistency_audit`, `perception_consistency_diff`, `perception_token_snapshot`
+
+See [features/consistency_intelligence.md](./features/consistency_intelligence.md).
 
 ---
 

@@ -1,4 +1,4 @@
-"""Framework Intelligence service — detect, query provider, normalize."""
+"""Framework Intelligence service — detect, route to doc provider, normalize."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -6,19 +6,19 @@ from typing import Any
 
 from .cache import FrameworkDocsCache
 from .detector import detect_project
-from .models import FrameworkKnowledgeResponse, ProjectMetadata, ResolvedLibrary
-from .providers.base import KnowledgeProvider
-from .providers.context7 import Context7Provider, Context7Error
+from .models import FrameworkKnowledgeResponse, ProjectMetadata
+from .providers.documentation import DocumentationProvider, DocumentationProviderError
+from .providers.grounded_docs import GroundedDocsProvider
 
 
 class FrameworkIntelligenceService:
 	def __init__(
 		self,
 		*,
-		provider: KnowledgeProvider | None = None,
+		provider: DocumentationProvider | None = None,
 		cache: FrameworkDocsCache | None = None,
 	) -> None:
-		self._provider = provider or Context7Provider()
+		self._provider = provider or GroundedDocsProvider()
 		self._cache = cache or FrameworkDocsCache()
 
 	def detect(self, repo_root: Path) -> ProjectMetadata:
@@ -76,26 +76,10 @@ class FrameworkIntelligenceService:
 					degraded=degraded,
 				)
 
-		resolved: ResolvedLibrary | None
-		content = ''
 		try:
-			resolved = await self._provider.resolve_library(meta, topic=topic)
-			if resolved is None:
-				return FrameworkKnowledgeResponse(
-					metadata=meta,
-					topic=topic,
-					provider=self._provider.name,
-					library_id=None,
-					content='',
-					summary=f'No documentation library found for {meta.framework}.',
-					degraded=degraded + ['library_not_found'],
-				)
-			content = await self._provider.fetch_documentation(
-				library_id=resolved.library_id,
-				topic=topic,
-				metadata=meta,
-			)
-		except Context7Error as exc:
+			doc = await self._provider.fetch_documentation(meta, topic=topic)
+		except DocumentationProviderError as exc:
+			code = str(exc).split(':', 1)[0]
 			return FrameworkKnowledgeResponse(
 				metadata=meta,
 				topic=topic,
@@ -103,23 +87,21 @@ class FrameworkIntelligenceService:
 				library_id=None,
 				content='',
 				summary='Documentation provider request failed.',
-				degraded=degraded + ['context7_unavailable', str(exc)],
+				degraded=degraded + ['docs_provider_unavailable', code, str(exc)],
 			)
 
-		summary = self._summarize(meta, topic, resolved, content)
-		citations = [resolved.library_id]
 		response = FrameworkKnowledgeResponse(
 			metadata=meta,
 			topic=topic,
-			provider=resolved.provider,
-			library_id=resolved.library_id,
-			content=content,
-			summary=summary,
-			citations=citations,
+			provider=doc.provider,
+			library_id=doc.library_id,
+			content=doc.content,
+			summary=doc.summary,
+			citations=list(doc.citations),
 			cached=False,
 			degraded=degraded,
 		)
-		if use_cache and content.strip():
+		if use_cache and doc.content.strip():
 			self._cache.set(
 				cache_key,
 				version_key=version_key,
@@ -133,26 +115,12 @@ class FrameworkIntelligenceService:
 			)
 		return response
 
-	def _summarize(
-		self,
-		meta: ProjectMetadata,
-		topic: str,
-		resolved: ResolvedLibrary,
-		content: str,
-	) -> str:
-		words = len(content.split())
-		framework = meta.framework or 'unknown'
-		version = meta.framework_version or 'unknown'
-		return (
-			f'{framework} {version} docs for "{topic}" via {resolved.provider} '
-			f'({resolved.library_id}); ~{words} words'
-		)
-
 	def agent_summary_from_response(self, response: FrameworkKnowledgeResponse) -> dict[str, Any]:
 		meta = response.metadata
 		return {
 			'framework': meta.framework,
 			'framework_version': meta.framework_version,
+			'primary_package': meta.primary_package,
 			'build_tool': meta.build_tool,
 			'package_manager': meta.package_manager,
 			'language': meta.language,

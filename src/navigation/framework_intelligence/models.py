@@ -10,6 +10,7 @@ class ProjectMetadata:
 	repo_root: str
 	framework: str | None = None
 	framework_version: str | None = None
+	primary_package: str | None = None
 	build_tool: str | None = None
 	package_manager: str | None = None
 	language: str = 'javascript'
@@ -18,7 +19,6 @@ class ProjectMetadata:
 	router_mode: str | None = None
 	config_files: list[str] = field(default_factory=list)
 	project_structure: dict[str, Any] = field(default_factory=dict)
-	context7_library_name: str | None = None
 	degraded: list[str] = field(default_factory=list)
 
 	def to_dict(self) -> dict[str, Any]:
@@ -26,6 +26,7 @@ class ProjectMetadata:
 			'repo_root': self.repo_root,
 			'framework': self.framework,
 			'framework_version': self.framework_version,
+			'primary_package': self.primary_package,
 			'build_tool': self.build_tool,
 			'package_manager': self.package_manager,
 			'language': self.language,
@@ -34,7 +35,6 @@ class ProjectMetadata:
 			'router_mode': self.router_mode,
 			'config_files': list(self.config_files),
 			'project_structure': dict(self.project_structure),
-			'context7_library_name': self.context7_library_name,
 			'degraded': list(self.degraded),
 		}
 
@@ -43,20 +43,26 @@ class ProjectMetadata:
 
 
 @dataclass(slots=True)
-class ResolvedLibrary:
+class DocumentationResult:
+	"""Normalized documentation payload from any provider."""
+
 	provider: str
 	library_id: str
 	title: str
-	description: str = ''
-	versions: list[str] = field(default_factory=list)
+	content: str
+	summary: str
+	citations: list[str] = field(default_factory=list)
+	snippets: list[dict[str, Any]] = field(default_factory=list)
 
 	def to_dict(self) -> dict[str, Any]:
 		return {
 			'provider': self.provider,
 			'library_id': self.library_id,
 			'title': self.title,
-			'description': self.description,
-			'versions': list(self.versions),
+			'content': self.content,
+			'summary': self.summary,
+			'citations': list(self.citations),
+			'snippets': list(self.snippets),
 		}
 
 

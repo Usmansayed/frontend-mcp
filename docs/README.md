@@ -7,7 +7,7 @@ Platform docs for the ultimate frontend MCP for AI coding agents.
 | Doc | Description |
 |-----|-------------|
 | [architecture.md](./architecture.md) | System design, intelligence modules |
-| [INTELLIGENCE_MODULES.md](./INTELLIGENCE_MODULES.md) | Seven-module platform map |
+| [INTELLIGENCE_MODULES.md](./INTELLIGENCE_MODULES.md) | Eight-module platform map |
 | [INTEGRATION_PLAN.md](./INTEGRATION_PLAN.md) | BrowserTools study → our reimplementation plan |
 | [roadmap.md](./roadmap.md) | Shipped, in-progress, planned versions |
 | [tool_reference.md](./tool_reference.md) | All MCP tools and parameters |
@@ -25,6 +25,7 @@ Platform docs for the ultimate frontend MCP for AI coding agents.
 | [features/audits.md](./features/audits.md) | ✅ v0.6 |
 | [features/reports.md](./features/reports.md) | ✅ v0.7 |
 | [features/framework_intelligence.md](./features/framework_intelligence.md) | ✅ v1.0 |
+| [features/consistency_intelligence.md](./features/consistency_intelligence.md) | 📋 scaffold |
 | [features/comparison_browser_tools.md](./features/comparison_browser_tools.md) | Reference vs us |
 
 ## Agent playbooks

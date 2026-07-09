@@ -1,4 +1,4 @@
-"""Seven intelligence modules + shared core for Frontend Perception MCP."""
+"""Eight intelligence modules + shared core for Frontend Perception MCP."""
 from __future__ import annotations
 
 __all__ = [
@@ -10,6 +10,7 @@ __all__ = [
 	'codebase_intelligence',
 	'frontend_quality_intelligence',
 	'design_sense_intelligence',
+	'consistency_intelligence',
 	'mcp',
 	'cli',
 ]

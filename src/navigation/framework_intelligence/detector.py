@@ -42,18 +42,18 @@ _CONFIG_CANDIDATES = (
 	'lerna.json',
 )
 
-_FRAMEWORK_DEPS: dict[str, tuple[str, str]] = {
-	'next': ('Next.js', 'Next.js'),
-	'nuxt': ('Nuxt', 'Nuxt'),
-	'@angular/core': ('Angular', 'Angular'),
-	'@sveltejs/kit': ('SvelteKit', 'SvelteKit'),
-	'svelte': ('Svelte', 'Svelte'),
-	'astro': ('Astro', 'Astro'),
-	'vue': ('Vue', 'Vue.js'),
-	'react': ('React', 'React'),
-	'@remix-run/react': ('Remix', 'Remix'),
-	'solid-js': ('Solid', 'SolidJS'),
-	'@qwik.dev/core': ('Qwik', 'Qwik'),
+_FRAMEWORK_DEPS: dict[str, str] = {
+	'next': 'Next.js',
+	'nuxt': 'Nuxt',
+	'@angular/core': 'Angular',
+	'@sveltejs/kit': 'SvelteKit',
+	'svelte': 'Svelte',
+	'astro': 'Astro',
+	'vue': 'Vue',
+	'react': 'React',
+	'@remix-run/react': 'Remix',
+	'solid-js': 'Solid',
+	'@qwik.dev/core': 'Qwik',
 }
 
 _BUILD_TOOL_DEPS: dict[str, str] = {
@@ -120,7 +120,6 @@ def _detect_monorepo(root: Path, pkg: dict[str, Any]) -> bool:
 
 
 def _detect_framework(deps: dict[str, str]) -> tuple[str | None, str | None, str | None]:
-	# Prefer more specific frameworks before react/vue primitives.
 	priority = (
 		'next',
 		'nuxt',
@@ -137,8 +136,7 @@ def _detect_framework(deps: dict[str, str]) -> tuple[str | None, str | None, str
 	for key in priority:
 		if key not in deps:
 			continue
-		label, context7_name = _FRAMEWORK_DEPS[key]
-		return label, _semver_major_minor(deps[key]), context7_name
+		return _FRAMEWORK_DEPS[key], _semver_major_minor(deps[key]), key
 	return None, None, None
 
 
@@ -203,7 +201,7 @@ def detect_project(repo_root: Path) -> ProjectMetadata:
 
 	pkg = _read_json(pkg_path)
 	deps = _collect_deps(pkg)
-	framework, version, context7_name = _detect_framework(deps)
+	framework, version, primary_package = _detect_framework(deps)
 	package_manager = _detect_package_manager(root)
 	language = _detect_language(root, deps)
 	is_monorepo = _detect_monorepo(root, pkg)
@@ -226,6 +224,6 @@ def detect_project(repo_root: Path) -> ProjectMetadata:
 		router_mode=router_mode,
 		config_files=config_files,
 		project_structure=_project_structure(root),
-		context7_library_name=context7_name,
+		primary_package=primary_package,
 		degraded=degraded,
 	)
