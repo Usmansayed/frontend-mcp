@@ -212,6 +212,58 @@ Detect project → fetch version-aware framework docs on demand (Grounded Docs) 
 
 **Env:** `GROUNDED_DOCS_CLI`, `GROUNDED_DOCS_STORE_PATH`, `FRAMEWORK_DOCS_CACHE_PATH` (optional). Requires Node.js 22+ (`npx`).
 
+## Component Intelligence (Phase 1)
+
+### `perception_plan_component_search`
+
+Build a deterministic search plan from a natural-language query. No provider calls.
+
+| Param | Type | Default |
+|-------|------|---------|
+| `query` | string | **required** (e.g. `Modern glass dashboard navbar`) |
+
+**Returns:** `data.search_plan` (`primary_intent`, `planned_queries`, `suggested_registries`, parsed fields). Host agent may refine before searching.
+
+### `perception_search_components`
+
+Parse query, build or accept a search plan, run multi-pass parallel provider search, merge duplicates, and return normalized candidates with session metadata.
+
+| Param | Type | Default |
+|-------|------|---------|
+| `query` | string | **required** (e.g. `glassmorphism pricing section`, `minimal dark login form`) |
+| `search_plan` | object | optional host-agent plan override |
+
+**Returns:** `data.component_search` (`query`, `candidates`, `search_plan`, `search_session`, `providers_queried`, `total`). Each candidate includes `provider`, `name`, `category`, `install_method`, `relevance_score`, and merge metadata (`matched_query`, `search_pass`).
+
+**Note:** Phase 1 merges provider-local scores only — Design Sense / Consistency ranking runs in `perception_select_component_foundation`.
+
+### `perception_select_component_foundation`
+
+Search + parallel cross-module guidance → choose best **foundation** (not perfect component).
+
+| Param | Type | Default |
+|-------|------|---------|
+| `query` | string | **required** |
+| `repo_root` | string | project root |
+| `search_plan` | object | optional |
+| `max_candidates` | integer | 12 |
+
+**Returns:** `data.foundation_selection` (`chosen`, `guidance` per module, `runner_ups`, `rationale`).
+
+### `perception_integrate_component`
+
+Full pipeline: search or `candidate_id` → select → integrate → validate → repair loop (scaffold phases return `degraded`).
+
+| Param | Type | Default |
+|-------|------|---------|
+| `query` | string | required if no `candidate_id` |
+| `candidate_id` | string | skip search |
+| `repo_root` | string | project root |
+| `preview_url` | string | for browser validation |
+| `max_repair_attempts` | integer | 3 |
+
+**Returns:** `data.integration_result` (`status`, `selection`, `integration`, `validation`, `repair_attempts`).
+
 ## Resources
 
 | URI | Content |

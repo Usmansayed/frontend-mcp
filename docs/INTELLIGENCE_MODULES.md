@@ -64,16 +64,20 @@ See [features/framework_intelligence.md](./features/framework_intelligence.md).
 
 **Path:** `component_intelligence/`
 
-Discovers, selects, installs, and adapts UI components.
+Orchestrates **discovery → foundation selection → integration → validation** across all intelligence modules. Not a search engine alone.
 
 | Capability | Status |
 |------------|--------|
+| Search planner + multi-pass provider search | ✅ |
+| Cross-module guidance (framework, codebase, design sense, consistency) | ✅ stable contracts v1.0 (heuristic implementations) |
+| Foundation selection (synthesis + priority rules) | ✅ contract-driven |
+| Integration pipeline (docs, deps, compatibility, adapter, install) | ✅ orchestrated (dry-run default) |
+| Browser validation + repair loop | ✅ contract-driven (dry-run default) |
 | Component probes (forms, editors, iframes, scroll, upload) | ✅ |
-| Component providers (shadcn, Flowbite, 21st.dev) | 📋 scaffold |
-| Component registry | 📋 scaffold |
-| Installation / adaptation | 📋 planned |
 
-**MCP tools:** `perception_probe_form` (+ probes via execute_actions)
+**MCP tools:** `perception_plan_component_search`, `perception_search_components`, `perception_select_component_foundation`, `perception_integrate_component`, `perception_probe_form`
+
+See [features/component_intelligence_architecture.md](./features/component_intelligence_architecture.md) (complete pipeline) and [features/component_intelligence.md](./features/component_intelligence.md) (Phase 1 search).
 
 ---
 

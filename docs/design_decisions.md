@@ -4,6 +4,38 @@ ADR-style log. New entries at top.
 
 ---
 
+---
+
+## ADR-018 — Stable intelligence contracts for Component Intelligence (2026-07-10)
+
+**Context:** Component Intelligence orchestration was blocked waiting for Design Sense, Consistency, and browser validation to mature. Direct imports of `component_guidance.py` would force orchestration changes as each module evolves.
+
+**Decision:** Define versioned contracts (`component_intelligence/contracts/`, `CONTRACT_VERSION=1.0`) for Framework, Codebase, Design Sense, Consistency, and Browser intelligence. Each peer module ships `contract.py` implementing the protocol; heuristic/placeholder logic stays behind the API. Component Intelligence calls contracts only — orchestration, MCP tools, and pipeline stages do not change when implementations deepen. `IntegrationRequest.execute_install` and `execute_repairs` default to false (plan-only).
+
+**Consequences:** Modules evolve independently. Today’s adapters return heuristics with `degraded[]`; future work replaces adapter internals (Grounded Docs, token validators, observe/verify) without touching `orchestrator.py`. New intelligence modules add a contract + adapter and register in `IntelligenceContracts`.
+
+---
+
+## ADR-017 — Component Intelligence orchestration refactor (2026-07-10)
+
+**Context:** Fixed percentage weights (30/25/25/20) and a monolithic IntegrationEngine do not match how modern coding agents combine expert module outputs.
+
+**Decision:** (1) Remove composite scoring — each module returns structured guidance; `guidance/synthesis.py` merges with priority rules. (2) Split integration into single-responsibility modules: Documentation Reader → Installation Planner → Dependency Resolver → Compatibility Resolver → Installer → Component Adapter, orchestrated by `IntegrationPipeline`. (3) Repair loop consults Framework, Codebase, and Documentation Reader via `fix_planner.py` before generating `FixPlan`.
+
+**Consequences:** `DocumentationBundle`, `InstallationPlan`, `InstallResult` replace flatter artifacts. Implementation phases remain scaffolded with `degraded[]` until each subsystem is wired.
+
+---
+
+## ADR-016 — Component Intelligence orchestrator (2026-07-10)
+
+**Context:** Phase 1 search finds components but agents fail at install, adaptation, and validation. Component Intelligence must coordinate all intelligence modules, not search in isolation.
+
+**Decision:** Extend `component_intelligence/` with `selection/`, `integration/`, `validation/`, `orchestrator.py`, and cross-module `component_guidance.py` entrypoints on Framework, Codebase, Design Sense, and Consistency modules. Pipeline: search → filter → parallel guidance → foundation selection → integration engine (docs, deps, compatibility, adapter, install) → browser validation → repair loop. MCP tools: `perception_select_component_foundation`, `perception_integrate_component`. Consistency guidance **never hard-rejects** — only modification lists.
+
+**Consequences:** Phases 2–5 scaffolded with `degraded[]` until install, browser wiring, and token validators land. Ranking weights and repair actions evolve without MCP contract breaks.
+
+---
+
 ## ADR-011 — Dedicated Lighthouse Chrome for audits (2026-07-09)
 
 **Context:** Attaching Lighthouse to the managed Browser Use CDP port disrupts the session (WebSocket reconnects, hub conflicts).

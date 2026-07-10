@@ -42,6 +42,10 @@ from .handlers import (
     handle_execute_script,
     handle_flow_describe,
     handle_framework_docs,
+    handle_search_components,
+    handle_plan_component_search,
+    handle_select_component_foundation,
+    handle_integrate_component,
     handle_full_diagnosis,
     handle_health,
     handle_navigate,
@@ -224,6 +228,18 @@ class PerceptionMCPServer:
         async def framework_docs(args: dict[str, Any]) -> dict[str, Any]:
             return await handle_framework_docs(args)
 
+        async def search_components(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_search_components(args)
+
+        async def plan_component_search(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_plan_component_search(args)
+
+        async def select_component_foundation(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_select_component_foundation(args)
+
+        async def integrate_component(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_integrate_component(args)
+
         return {
             "perception_health": health,
             "perception_session_start": session_start,
@@ -256,6 +272,10 @@ class PerceptionMCPServer:
             "perception_audit_mode": audit_mode,
             "perception_detect_framework": detect_framework,
             "perception_framework_docs": framework_docs,
+            "perception_search_components": search_components,
+            "perception_plan_component_search": plan_component_search,
+            "perception_select_component_foundation": select_component_foundation,
+            "perception_integrate_component": integrate_component,
         }
 
     async def run(self) -> None:

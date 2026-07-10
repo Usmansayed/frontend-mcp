@@ -1322,6 +1322,162 @@ async def handle_detect_framework(arguments: dict[str, Any]) -> dict[str, Any]:
     )
 
 
+async def handle_search_components(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.component_intelligence import ComponentIntelligenceService
+
+    query = str(arguments.get("query") or "").strip()
+    if not query:
+        return make_envelope("perception_search_components", ok=False, error="query required")
+
+    search_plan = arguments.get("search_plan")
+    if search_plan is not None and not isinstance(search_plan, dict):
+        search_plan = None
+
+    service = ComponentIntelligenceService()
+    response = await service.search_components(query, search_plan=search_plan)
+    ok = bool(response.candidates) or bool(response.degraded)
+    return make_envelope(
+        "perception_search_components",
+        ok=ok,
+        degraded=response.degraded,
+        data={
+            "component_search": response.to_dict(),
+            "agent_summary": {
+                "query": response.query.raw,
+                "primary_intent": (response.search_plan.primary_intent if response.search_plan else query),
+                "total": len(response.candidates),
+                "providers_queried": response.providers_queried,
+                "passes_executed": (
+                    response.search_session.passes_executed if response.search_session else []
+                ),
+                "top_candidates": [c.to_dict() for c in response.candidates[:8]],
+                "advisory": list(response.degraded),
+            },
+        },
+    )
+
+
+async def handle_plan_component_search(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.component_intelligence import ComponentIntelligenceService
+
+    query = str(arguments.get("query") or "").strip()
+    if not query:
+        return make_envelope("perception_plan_component_search", ok=False, error="query required")
+
+    service = ComponentIntelligenceService()
+    plan = service.build_search_plan(query)
+    return make_envelope(
+        "perception_plan_component_search",
+        ok=True,
+        data={
+            "search_plan": plan.to_dict(),
+            "agent_summary": {
+                "query": query,
+                "primary_intent": plan.primary_intent,
+                "planned_queries": [q.to_dict() for q in plan.planned_queries[:12]],
+                "suggested_registries": plan.suggested_registries,
+                "blocking": [],
+                "advisory": [
+                    "Host agent may refine this plan before calling perception_search_components.",
+                    "Pass search_plan to perception_search_components to use a custom strategy.",
+                ],
+            },
+        },
+    )
+
+
+async def handle_select_component_foundation(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.component_intelligence import ComponentIntelligenceService
+
+    query = str(arguments.get("query") or "").strip()
+    if not query:
+        return make_envelope("perception_select_component_foundation", ok=False, error="query required")
+
+    repo_root = _default_repo_root(arguments)
+    search_plan = arguments.get("search_plan")
+    if search_plan is not None and not isinstance(search_plan, dict):
+        search_plan = None
+
+    service = ComponentIntelligenceService()
+    try:
+        selection, search = await service.select_foundation(
+            query,
+            repo_root=repo_root,
+            search_plan=search_plan,
+            max_candidates=int(arguments.get("max_candidates") or 12),
+        )
+    except ValueError as exc:
+        return make_envelope("perception_select_component_foundation", ok=False, error=str(exc))
+
+    return make_envelope(
+        "perception_select_component_foundation",
+        ok=True,
+        degraded=selection.degraded,
+        data={
+            "foundation_selection": selection.to_dict(),
+            "component_search": search.to_dict(),
+            "agent_summary": {
+                "query": query,
+                "chosen": selection.chosen.to_dict(),
+                "synthesis": selection.guidance.synthesis.to_dict(),
+                "rationale": selection.rationale,
+                "runner_up_count": len(selection.runner_ups),
+                "blocking": selection.guidance.framework.issues,
+                "advisory": selection.guidance.framework.compatibility_warnings,
+            },
+        },
+    )
+
+
+async def handle_integrate_component(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.component_intelligence import ComponentIntelligenceService
+    from navigation.component_intelligence.integration_models import IntegrationRequest
+
+    query = str(arguments.get("query") or "").strip()
+    candidate_id = str(arguments.get("candidate_id") or "").strip() or None
+    if not query and not candidate_id:
+        return make_envelope("perception_integrate_component", ok=False, error="query or candidate_id required")
+
+    repo_root = _default_repo_root(arguments)
+    search_plan = arguments.get("search_plan")
+    if search_plan is not None and not isinstance(search_plan, dict):
+        search_plan = None
+
+    request = IntegrationRequest(
+        query=query,
+        candidate_id=candidate_id,
+        repo_root=str(repo_root),
+        preview_url=str(arguments.get("preview_url") or "").strip() or None,
+        search_plan=search_plan,
+        max_repair_attempts=int(arguments.get("max_repair_attempts") or 3),
+        execute_install=bool(arguments.get("execute_install")),
+        execute_repairs=bool(arguments.get("execute_repairs")),
+    )
+
+    service = ComponentIntelligenceService()
+    result = await service.integrate_component(request)
+    ok = result.status.value in ("completed", "degraded")
+    return make_envelope(
+        "perception_integrate_component",
+        ok=ok,
+        degraded=result.degraded,
+        data={
+            "integration_result": result.to_dict(),
+            "agent_summary": {
+                "status": result.status.value,
+                "foundation": result.selection.chosen.to_dict() if result.selection else None,
+                "validation_passed": result.validation.passed if result.validation else False,
+                "repair_attempts": len(result.repair_attempts),
+                "blocking": (result.validation.blocking if result.validation else []),
+                "advisory": [
+                    "Integration pipeline is partially scaffolded — install/validate/repair phases evolve in place.",
+                    "Provide preview_url for browser validation when dev server is running.",
+                ],
+            },
+        },
+    )
+
+
 async def handle_framework_docs(arguments: dict[str, Any]) -> dict[str, Any]:
     from navigation.framework_intelligence import FrameworkIntelligenceService
 

@@ -563,4 +563,92 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                 "required": ["topic"],
             },
         ),
+        T(
+            name="perception_plan_component_search",
+            description=(
+                "Component Intelligence. Build a deterministic search plan from a natural-language "
+                "query (primary intent, expanded terminology, style/theme hints, suggested registries, "
+                "multi-pass queries). The host agent may refine this plan before searching. No provider "
+                "calls — plan only."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "e.g. 'Modern glass dashboard navbar'",
+                    },
+                },
+                "required": ["query"],
+            },
+        ),
+        T(
+            name="perception_search_components",
+            description=(
+                "Component Intelligence. Parse query, build or accept a search plan, run multi-pass "
+                "parallel provider search with provider-aware vocabulary, merge duplicates, and return "
+                "normalized candidates with search session metadata."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "e.g. 'glassmorphism pricing section' or 'minimal dark login form'",
+                    },
+                    "search_plan": {
+                        "type": "object",
+                        "description": "Optional host-agent search plan override",
+                    },
+                },
+                "required": ["query"],
+            },
+        ),
+        T(
+            name="perception_select_component_foundation",
+            description=(
+                "Component Intelligence. Search, consult Framework/Codebase/Design Sense/Consistency "
+                "guidance in parallel, and choose the best foundation component for the project — "
+                "not the 'perfect' match, but the strongest starting point to adapt."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Natural-language component request"},
+                    "repo_root": {"type": "string", "description": "Project root (default: sandbox/)"},
+                    "search_plan": {"type": "object", "description": "Optional search plan override"},
+                    "max_candidates": {"type": "integer", "default": 12},
+                },
+                "required": ["query"],
+            },
+        ),
+        T(
+            name="perception_integrate_component",
+            description=(
+                "Component Intelligence. Full orchestration: search (or candidate_id) → select foundation → "
+                "documentation reader → dependency/compatibility resolution → install → adapt → "
+                "browser validate → repair loop. Partial phases are scaffolded; returns structured status."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Component request if not using candidate_id"},
+                    "candidate_id": {"type": "string", "description": "Skip search; integrate this candidate"},
+                    "repo_root": {"type": "string", "description": "Project root"},
+                    "preview_url": {"type": "string", "description": "URL for post-install browser validation"},
+                    "search_plan": {"type": "object"},
+                    "max_repair_attempts": {"type": "integer", "default": 3},
+                    "execute_install": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "Run package/provider install commands (default: plan only)",
+                    },
+                    "execute_repairs": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "Apply repair actions after validation failure (default: plan only)",
+                    },
+                },
+            },
+        ),
     ]

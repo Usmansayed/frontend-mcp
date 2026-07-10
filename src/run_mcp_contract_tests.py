@@ -16,6 +16,7 @@ from navigation.mcp.handlers import (
     handle_detect_framework,
     handle_full_diagnosis,
     handle_framework_docs,
+    handle_search_components,
     handle_code_context,
     handle_console_clear,
     handle_console_get,
@@ -446,6 +447,17 @@ async def main() -> int:
             "ok": fw_docs["ok"] or docs_graceful,
             "has_content": has_content,
             "cached": knowledge.get("cached", False),
+        }
+
+        comp_search = await handle_search_components({"query": "modern login form"})
+        search_data = (comp_search.get("data") or {}).get("component_search") or {}
+        candidates = search_data.get("candidates") or []
+        search_degraded = search_data.get("degraded") or comp_search.get("degraded") or []
+        search_degraded_text = " ".join(str(item) for item in search_degraded)
+        search_graceful = "shadcn_ecosystem_unavailable" in search_degraded_text or "registries_index_unavailable" in search_degraded_text
+        report["tests"]["search_components"] = {
+            "ok": comp_search["ok"] or search_graceful,
+            "total": len(candidates),
         }
 
         end = await handle_session_end(store, {"session_id": sid})

@@ -86,7 +86,29 @@ Status key: ✅ shipped · 🚧 in progress · 📋 planned · ⏸ deferred
 - [ ] `perception_consistency_audit` MCP tool
 - [ ] Consistency scoring + regression diff vs prior scan
 
-## v2.0 — Consistency Intelligence (📋 planned)
+## v2.1 — Component Intelligence orchestrator (✅ contract-driven)
+
+- [x] Phase 1: search planner, multi-pass search, provider merge
+- [x] Stable contracts v1.0 (`contracts/` + per-module `contract.py`)
+- [x] Structured guidance from all intelligence modules (no fixed % weights)
+- [x] `guidance/synthesis.py` — merge module opinions with priority rules
+- [x] Split `IntegrationPipeline`: docs → plan → deps → compat → install → adapt
+- [x] `plan_executor.py`, `fix_applier.py` — structured execution (dry-run default)
+- [x] Repair loop consults all modules via contracts
+- [x] MCP: `perception_select_component_foundation`, `perception_integrate_component`
+- [ ] Live `execute_install` + provider `install()` for shadcn
+- [ ] Browser validation → `perception_observe` / `perception_verify`
+- [ ] Deterministic file patches in repair loop and component adapter
+
+## v2.0 — Component Intelligence search engine (✅ Phase 1)
+
+- [x] Query parser with extensible style/type lexicon
+- [x] Provider manager + parallel search
+- [x] Shadcn registry ecosystem provider (Group A)
+- [x] External provider placeholders (Group B)
+- [x] Normalized `ComponentCandidate` schema
+- [x] `perception_search_components` MCP tool
+- [ ] Ranking, project matching, adaptation, installation (later phases)
 
 - [ ] Border radius, shadows, layout grid rules
 - [ ] Component + interaction-state consistency checks
