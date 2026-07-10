@@ -6,6 +6,18 @@ ADR-style log. New entries at top.
 
 ---
 
+---
+
+## ADR-019 — Design Sense Intelligence orchestration layer (2026-07-10)
+
+**Context:** Design Sense must critique and improve UI like a senior designer without becoming a UI generator or duplicating Consistency Intelligence. Multiple external projects (Open Design, Design Lint, Microsoft review skill, UICrit, Crit/Rams) each contribute different strengths.
+
+**Decision:** Rebuild `design_sense_intelligence/` as an orchestration layer: (1) **Open Design** is the only direct integration via `providers/open_design/` adapter. (2) **Design Lint** rules are studied and ported to `rules/` for DOM/CSS — not Figma plugin integration; this becomes the deterministic foundation shared with Consistency Intelligence. (3) **Microsoft**, **UICrit**, and **Crit/Rams** are methodology providers (workflow, rubric, specialist architecture) — no software integration. (4) Ten specialist reviewers + `ReviewCoordinator` merge findings with severity. (5) All externals implement `DesignSenseProvider` protocol.
+
+**Consequences:** `DesignSenseService.review()` returns `DesignReviewReport`. Reasoning engine depth evolves behind adapters/reviewers without MCP contract changes. MCP design review tools are planned, not shipped in v2.2 scaffold.
+
+---
+
 ## ADR-018 — Stable intelligence contracts for Component Intelligence (2026-07-10)
 
 **Context:** Component Intelligence orchestration was blocked waiting for Design Sense, Consistency, and browser validation to mature. Direct imports of `component_guidance.py` would force orchestration changes as each module evolves.

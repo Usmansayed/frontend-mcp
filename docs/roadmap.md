@@ -86,6 +86,19 @@ Status key: ✅ shipped · 🚧 in progress · 📋 planned · ⏸ deferred
 - [ ] `perception_consistency_audit` MCP tool
 - [ ] Consistency scoring + regression diff vs prior scan
 
+## v2.2 — Design Sense Intelligence orchestration (🚧 scaffold)
+
+- [x] Module architecture: providers, reviewers, rules, workflows
+- [x] Open Design adapter (`OD_DAEMON_URL`) — only direct external integration
+- [x] Design Lint rule engine port for DOM/CSS computed styles
+- [x] Microsoft review workflow + UICrit rubric pipeline (methodology)
+- [x] Crit/Rams specialist reviewer + coordinator pattern
+- [x] Architecture v1 frozen: knowledge/, reasoning/, objective/subjective lanes, learning/, pattern_library
+- [ ] MCP: `perception_design_review`, `perception_design_critique_region`
+- [ ] Wire observe/verify → ReviewRequest enrichment
+- [ ] Deep Open Design artifact comparison
+- [ ] Contrast/motion deterministic checks
+
 ## v2.1 — Component Intelligence orchestrator (✅ contract-driven)
 
 - [x] Phase 1: search planner, multi-pass search, provider merge

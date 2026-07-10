@@ -29,6 +29,7 @@ Platform docs for the ultimate frontend MCP for AI coding agents.
 | [features/framework_intelligence.md](./features/framework_intelligence.md) | ✅ v1.0 |
 | [features/component_intelligence.md](./features/component_intelligence.md) | ✅ Phase 1 search |
 | [features/component_intelligence_architecture.md](./features/component_intelligence_architecture.md) | 🚧 full orchestrator pipeline |
+| [features/design_sense_intelligence.md](./features/design_sense_intelligence.md) | 🚧 review orchestration |
 | [features/consistency_intelligence.md](./features/consistency_intelligence.md) | 📋 scaffold |
 | [features/comparison_browser_tools.md](./features/comparison_browser_tools.md) | Reference vs us |
 

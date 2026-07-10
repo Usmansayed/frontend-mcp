@@ -160,16 +160,20 @@ Validates production readiness and debugging signals.
 
 **Path:** `design_sense_intelligence/`
 
-Qualitative frontend reasoning and UI/UX **decision support** — helps the agent think about layout, hierarchy, and usability. Does **not** enforce design-system math or token rules (see module 8).
+UI/UX **review and critique orchestration** — reasons about layout, hierarchy, usability, and craft like a product designer. Does **not** generate UI or enforce design-system math (see module 8).
 
 | Capability | Status |
 |------------|--------|
 | Visual layout heuristics (`visual_insights`) | ✅ |
-| Quality report hints (overflow, a11y, perf) | ✅ |
-| Layout / typography / color reasoning | 📋 planned |
-| Design comparison | 📋 planned |
+| Quality report hints (`quality_hints`) | ✅ |
+| Specialist reviewers + Review Coordinator | 🚧 scaffold |
+| Provider adapters (Open Design, Design Lint, Microsoft, UICrit, Crit/Rams) | 🚧 scaffold |
+| Design Lint rule engine port (DOM/CSS) | 🚧 scaffold |
+| Full design review MCP tool | 📋 planned |
 
-Consumed during observe (`visual_insights` in observation payload) and diagnosis (`quality_hints`).
+See [features/design_sense_intelligence.md](./features/design_sense_intelligence.md).
+
+Consumed during observe (`visual_insights`) and diagnosis (`quality_hints`). Component Intelligence consumes `contract.py`.
 
 ---
 
