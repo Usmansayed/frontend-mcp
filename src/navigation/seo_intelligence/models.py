@@ -13,6 +13,7 @@ class SeoProviderId(str, Enum):
 	LIBRECRAWL = 'librecrawl'
 	LIGHTHOUSE = 'lighthouse'
 	BROWSER = 'browser'
+	OPENSEO = 'openseo'
 
 
 class SeoEvidenceKind(str, Enum):
@@ -27,6 +28,12 @@ class SeoEvidenceKind(str, Enum):
 	INTERNAL_LINK = 'internal_link'
 	PERFORMANCE = 'performance'
 	OPPORTUNITY = 'opportunity'
+	KEYWORD_RESEARCH = 'keyword_research'
+	SERP_RESULT = 'serp_result'
+	BACKLINK = 'backlink'
+	DOMAIN_METRIC = 'domain_metric'
+	RANK_POSITION = 'rank_position'
+	AI_VISIBILITY = 'ai_visibility'
 
 
 class SeoConnectionStatus(str, Enum):
@@ -71,6 +78,60 @@ class SeoProviderMeta:
 			'rate_limit_notes': self.rate_limit_notes,
 			'official_docs_url': self.official_docs_url,
 			'implementation_status': self.implementation_status,
+		}
+
+
+@dataclass(slots=True)
+class SeoCapabilitySpec:
+	"""Capability routing metadata — planner uses this for cost-aware provider selection."""
+
+	capability_id: str
+	display_name: str
+	primary_provider: str
+	fallback_providers: list[str] = field(default_factory=list)
+	final_fallback: str = 'no_data'
+	requires_api_key: bool = False
+	requires_paid_plan: bool = False
+	openseo_requires_paid: bool = False
+	requires_external_provider: bool = False
+	external_provider: str = ''
+	optional: bool = True
+	fallback_available: bool = True
+	notes: str = ''
+
+	def to_dict(self) -> dict[str, Any]:
+		return {
+			'capability_id': self.capability_id,
+			'display_name': self.display_name,
+			'primary_provider': self.primary_provider,
+			'fallback_providers': list(self.fallback_providers),
+			'final_fallback': self.final_fallback,
+			'requires_api_key': self.requires_api_key,
+			'requires_paid_plan': self.requires_paid_plan,
+			'openseo_requires_paid': self.openseo_requires_paid,
+			'requires_external_provider': self.requires_external_provider,
+			'external_provider': self.external_provider,
+			'optional': self.optional,
+			'fallback_available': self.fallback_available,
+			'notes': self.notes,
+		}
+
+
+@dataclass(slots=True)
+class SeoCapabilityRoute:
+	capability_id: str
+	chosen_provider: str
+	skipped_providers: list[str] = field(default_factory=list)
+	reason: str = ''
+	paid_provider_used: bool = False
+
+	def to_dict(self) -> dict[str, Any]:
+		return {
+			'capability_id': self.capability_id,
+			'chosen_provider': self.chosen_provider,
+			'skipped_providers': list(self.skipped_providers),
+			'reason': self.reason,
+			'paid_provider_used': self.paid_provider_used,
 		}
 
 
@@ -145,6 +206,10 @@ class SeoAuditRequest:
 	repo_root: str = ''
 	scan_id: str = ''
 	providers: list[str] = field(default_factory=list)
+	intents: list[str] = field(default_factory=list)
+	allow_paid_providers: bool = False
+	allow_openseo: bool = True
+	ga4_property_id: str = ''
 	include_cross_analysis: bool = True
 	include_recommendations: bool = True
 	commercial_site: bool = True
@@ -156,6 +221,10 @@ class SeoAuditRequest:
 			'repo_root': self.repo_root,
 			'scan_id': self.scan_id,
 			'providers': list(self.providers),
+			'intents': list(self.intents),
+			'allow_paid_providers': self.allow_paid_providers,
+			'allow_openseo': self.allow_openseo,
+			'ga4_property_id': self.ga4_property_id,
 			'include_cross_analysis': self.include_cross_analysis,
 			'include_recommendations': self.include_recommendations,
 			'commercial_site': self.commercial_site,
@@ -168,6 +237,7 @@ class SeoAuditResult:
 	evidence: list[SeoEvidenceRef] = field(default_factory=list)
 	recommendations: list[SeoRecommendation] = field(default_factory=list)
 	providers_queried: list[str] = field(default_factory=list)
+	capability_routes: list[SeoCapabilityRoute] = field(default_factory=list)
 	connections: dict[str, str] = field(default_factory=dict)
 	cross_analysis: list[dict[str, Any]] = field(default_factory=list)
 	verification: dict[str, Any] = field(default_factory=dict)
@@ -180,6 +250,7 @@ class SeoAuditResult:
 			'evidence': [e.to_dict() for e in self.evidence],
 			'recommendations': [r.to_dict() for r in self.recommendations],
 			'providers_queried': list(self.providers_queried),
+			'capability_routes': [r.to_dict() for r in self.capability_routes],
 			'connections': dict(self.connections),
 			'cross_analysis': list(self.cross_analysis),
 			'verification': dict(self.verification),

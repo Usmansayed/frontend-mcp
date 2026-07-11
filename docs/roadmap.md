@@ -89,18 +89,16 @@ Status key: ✅ shipped · 🚧 in progress · 📋 planned · ⏸ deferred
 - [x] Gallery adapters: Behance, One Page Love, Awwwards, SiteInspire, Godly, Land-book
 - [ ] Live Browser Intelligence capture → Design Snapshot
 
-## v1.7 — SEO Intelligence (📋 architecture_v1)
+## v1.7 — SEO Intelligence (✅ production_v1)
 
 - [x] Module scaffold `seo_intelligence/`
 - [x] Free-first provider matrix (GSC, GA4, LibreCrawl, Lighthouse, Browser, Bing optional)
 - [x] SEO Knowledge Graph schema + store
-- [x] Provider protocol + research stubs
-- [x] Planning orchestrator + cross-analysis + recommendation skeleton
-- [x] Verification loop design
-- [x] MCP: `perception_seo_status`, `perception_seo_audit`, `perception://seo-guide`
-- [ ] Phase 1: Search Console + GA4 OAuth adapters
-- [ ] Phase 2: LibreCrawl + Lighthouse evidence collection
-- [ ] Phase 3: Browser SEO bridge + deep cross-analysis
+- [x] Live provider adapters + normalizers
+- [x] Planning orchestrator + cross-analysis + recommendations
+- [x] Verification loop (`perception_seo_verify`)
+- [x] MCP: `perception_seo_status`, `perception_seo_connect`, `perception_seo_audit`, `perception_seo_verify`, `perception://seo-guide`
+- [x] OpenSEO optional adapter (free capabilities)
 - [ ] Freeze module at ~85 — shift to cross-module coordination
 
 ## v1.6 — Resource Intelligence (📋 research)

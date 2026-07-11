@@ -5,42 +5,39 @@
 - [x] Module scaffold `seo_intelligence/`
 - [x] Provider matrix (free-first)
 - [x] SEO Knowledge Graph schema
-- [x] Models + service facade + orchestrator skeleton
-- [x] Provider protocol + research stubs
-- [x] Cross-analysis + recommendation + verification skeleton
-- [x] MCP status + guide resource
-- [ ] Per-provider deep research notes (Phase 0.5)
+- [x] Models + service facade + orchestrator
 
-## Phase 1 — User-owned data (P0)
+## Phase 1 — User-owned data ✅
 
-- [ ] Google Search Console OAuth + evidence normalizers
-- [ ] GA4 Data API OAuth + landing page reports
-- [ ] Connection status in graph
-- [ ] `perception_seo_audit` returns real GSC/GA4 evidence
+- [x] Google Search Console OAuth + evidence normalizers
+- [x] GA4 Data API OAuth + landing page reports
+- [x] Connection status probing
+- [x] `perception_seo_audit` returns GSC/GA4 evidence when OAuth configured
 
-## Phase 2 — Technical SEO (P0)
+## Phase 2 — Technical SEO ✅
 
-- [ ] LibreCrawl adapter (local instance only)
-- [ ] Lighthouse CLI + PageSpeed Insights adapter
-- [ ] Issue normalization into graph
+- [x] LibreCrawl adapter (local instance)
+- [x] Lighthouse CLI adapter (performance + SEO categories)
+- [x] Issue normalization into graph
 
-## Phase 3 — Intelligence depth
+## Phase 3 — Intelligence depth ✅
 
-- [ ] Browser Intelligence SEO bridge (`scan_id` → rendering evidence)
-- [ ] Cross-analysis rules (indexing, CTR, CWV correlations)
-- [ ] Recommendation confidence scoring
-- [ ] Verification status tracking in graph
+- [x] Browser Intelligence SEO bridge (`scan_id` → rendering evidence)
+- [x] Cross-analysis rules (indexing, CTR, CWV, technical correlations)
+- [x] Recommendation confidence + fix guidance
+- [x] Verification status tracking in graph
 
-## Phase 4 — MCP production
+## Phase 4 — MCP production ✅
 
-- [ ] `perception_seo_connect` (OAuth flow guidance)
-- [ ] `perception_seo_verify` (re-audit after fix)
-- [ ] Contract tests with mock provider payloads
+- [x] `perception_seo_connect` (Google OAuth)
+- [x] `perception_seo_verify` (re-audit after fix)
+- [x] Unit tests with mock provider payloads
 
 ## Phase 5 — Optional + freeze
 
 - [ ] Bing Webmaster adapter
-- [ ] Freeze module at ~85 — coordination layer across modules > more SEO providers
+- [ ] OpenSEO paid capabilities (DataForSEO) behind `allow_paid_providers`
+- [ ] Freeze module at ~85 — coordination across modules > more SEO providers
 
 ## Explicitly out of scope
 

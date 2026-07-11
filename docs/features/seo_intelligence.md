@@ -1,6 +1,6 @@
 # SEO Intelligence
 
-**Status:** 📋 architecture_v1 (research + scaffold)
+**Status:** ✅ production_v1
 
 ## Summary
 
@@ -15,38 +15,38 @@ SEO Intelligence orchestrates **free-first** SEO data sources into a normalized 
 | Evidence-based recommendations | SERP databases |
 | Verify loop with Browser Intelligence | Custom crawlers |
 
-## Providers (planned)
+## Providers (live)
 
-| Provider | Priority |
-|----------|----------|
-| Google Search Console | P0 |
-| Google Analytics 4 | P0 |
-| LibreCrawl | P0 |
-| Lighthouse / PageSpeed | P0 |
-| Browser Intelligence | P1 |
-| Bing Webmaster | P2 (optional) |
+| Provider | Status |
+|----------|--------|
+| Google Search Console | ✅ OAuth + API |
+| Google Analytics 4 | ✅ OAuth + Data API |
+| LibreCrawl | ✅ HTTP adapter |
+| Lighthouse / PageSpeed | ✅ CLI bridge |
+| Browser Intelligence | ✅ `scan_id` bridge |
+| OpenSEO | ✅ optional (free GSC mirror; paid gated) |
+| Bing Webmaster | 📋 optional stub |
+
+## OpenSEO (optional)
+
+| Aspect | Detail |
+|--------|--------|
+| Role | GSC mirror + paid keyword/SERP when opted in |
+| Cost | App free; DataForSEO pay-as-you-go |
+| Hard dependency | No |
 
 ## Module path
 
 `src/navigation/seo_intelligence/`
 
-## Documentation
-
-| Doc | Path |
-|-----|------|
-| Architecture | `seo_intelligence/docs/ARCHITECTURE.md` |
-| Agent guide | `seo_intelligence/docs/SEO_AGENT_GUIDE.md` |
-| Provider matrix | `seo_intelligence/docs/PROVIDER_MATRIX.md` |
-| Knowledge graph | `seo_intelligence/docs/KNOWLEDGE_GRAPH_SCHEMA.md` |
-| Roadmap | `seo_intelligence/docs/ROADMAP.md` |
-| Research | `research/seo_intelligence/README.md` |
-
-## MCP tools (architecture phase)
+## MCP tools
 
 | Tool | Status |
 |------|--------|
-| `perception_seo_status` | ✅ scaffold |
-| `perception_seo_audit` | ✅ scaffold (stubs until Phase 1) |
+| `perception_seo_status` | ✅ |
+| `perception_seo_connect` | ✅ Google OAuth |
+| `perception_seo_audit` | ✅ full pipeline |
+| `perception_seo_verify` | ✅ verification loop |
 | `perception://seo-guide` | ✅ |
 
 ## Boundary

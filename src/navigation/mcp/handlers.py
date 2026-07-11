@@ -1941,16 +1941,79 @@ async def handle_seo_status(arguments: dict[str, Any]) -> dict[str, Any]:
             "seo_status": status,
             "agent_summary": {
                 "phase": status.get("phase"),
+                "integrations": status.get("integrations"),
                 "advisory": [
                     "Read perception://seo-guide before SEO audits.",
                     "SEO Intelligence orchestrates free tools — not Ahrefs/Semrush.",
+                    "Use perception_seo_connect for Google OAuth when GSC/GA4 are not connected.",
                 ],
             },
         },
     )
 
 
-async def handle_seo_audit(arguments: dict[str, Any]) -> dict[str, Any]:
+async def handle_seo_connect(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.seo_intelligence.auth.google import (
+        build_authorization_url,
+        exchange_authorization_code,
+        google_oauth_status,
+    )
+
+    action = str(arguments.get("action") or "status").strip().lower()
+    if action == "status":
+        oauth = google_oauth_status()
+        return make_envelope(
+            "perception_seo_connect",
+            ok=True,
+            data={
+                "oauth": oauth,
+                "agent_summary": {
+                    "configured": oauth.get("configured"),
+                    "has_tokens": oauth.get("has_tokens"),
+                    "advisory": [
+                        "Set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET.",
+                        "action=authorize_url returns URL; action=exchange_code with code stores tokens.",
+                    ],
+                },
+            },
+        )
+    if action == "authorize_url":
+        redirect_uri = str(arguments.get("redirect_uri") or "urn:ietf:wg:oauth:2.0:oob")
+        try:
+            url = build_authorization_url(redirect_uri=redirect_uri)
+        except Exception as exc:
+            return make_envelope("perception_seo_connect", ok=False, error=str(exc))
+        return make_envelope(
+            "perception_seo_connect",
+            ok=True,
+            data={
+                "authorization_url": url,
+                "redirect_uri": redirect_uri,
+                "agent_summary": {
+                    "advisory": [
+                        "Open authorization_url in a browser, approve scopes, then exchange_code.",
+                    ],
+                },
+            },
+        )
+    if action == "exchange_code":
+        code = str(arguments.get("code") or "").strip()
+        if not code:
+            return make_envelope("perception_seo_connect", ok=False, error="code required")
+        redirect_uri = str(arguments.get("redirect_uri") or "urn:ietf:wg:oauth:2.0:oob")
+        try:
+            oauth = exchange_authorization_code(code, redirect_uri=redirect_uri)
+        except Exception as exc:
+            return make_envelope("perception_seo_connect", ok=False, error=str(exc))
+        return make_envelope(
+            "perception_seo_connect",
+            ok=True,
+            data={"oauth": oauth, "agent_summary": {"connected": True}},
+        )
+    return make_envelope("perception_seo_connect", ok=False, error=f"unknown action:{action}")
+
+
+async def handle_seo_audit(scans: ScanRegistry, arguments: dict[str, Any]) -> dict[str, Any]:
     from navigation.seo_intelligence import SeoAuditRequest, SeoIntelligenceService
 
     website_url = str(arguments.get("website_url") or arguments.get("url") or "").strip()
@@ -1961,16 +2024,20 @@ async def handle_seo_audit(arguments: dict[str, Any]) -> dict[str, Any]:
         property_url=str(arguments.get("property_url") or ""),
         repo_root=str(arguments.get("repo_root") or ""),
         scan_id=str(arguments.get("scan_id") or ""),
+        ga4_property_id=str(arguments.get("ga4_property_id") or ""),
         providers=[str(p) for p in (arguments.get("providers") or []) if p],
+        intents=[str(i) for i in (arguments.get("intents") or []) if i],
+        allow_paid_providers=bool(arguments.get("allow_paid_providers", False)),
+        allow_openseo=bool(arguments.get("allow_openseo", True)),
         include_cross_analysis=bool(arguments.get("include_cross_analysis", True)),
         include_recommendations=bool(arguments.get("include_recommendations", True)),
     )
-    service = SeoIntelligenceService()
+    service = SeoIntelligenceService(scan_registry=scans)
     result = await service.audit(request)
     payload = result.to_dict()
     advisory = [
-        "Provider adapters are in research phase until OAuth/LibreCrawl wiring ships.",
-        "Every recommendation must cite evidence_ids — never claim fixes without verify.",
+        "Every recommendation must cite evidence_ids — run perception_seo_verify after fixes.",
+        "Pass scan_id from perception_observe for Browser Intelligence rendering evidence.",
     ]
     if result.degraded:
         advisory.append(f"degraded:{','.join(result.degraded[:5])}")
@@ -1983,9 +2050,50 @@ async def handle_seo_audit(arguments: dict[str, Any]) -> dict[str, Any]:
                 "website_url": website_url,
                 "evidence_count": len(result.evidence),
                 "recommendation_count": len(result.recommendations),
+                "capability_routes": [r.to_dict() for r in result.capability_routes],
                 "connections": result.connections,
                 "advisory": advisory,
             },
         },
         degraded=result.degraded,
+    )
+
+
+async def handle_seo_verify(scans: ScanRegistry, arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.seo_intelligence import SeoAuditRequest, SeoIntelligenceService
+
+    website_url = str(arguments.get("website_url") or arguments.get("url") or "").strip()
+    if not website_url:
+        return make_envelope("perception_seo_verify", ok=False, error="website_url required")
+    request = SeoAuditRequest(
+        website_url=website_url,
+        property_url=str(arguments.get("property_url") or ""),
+        scan_id=str(arguments.get("scan_id") or ""),
+        ga4_property_id=str(arguments.get("ga4_property_id") or ""),
+        providers=[str(p) for p in (arguments.get("providers") or []) if p],
+        intents=[str(i) for i in (arguments.get("intents") or []) if i],
+        allow_paid_providers=bool(arguments.get("allow_paid_providers", False)),
+        allow_openseo=bool(arguments.get("allow_openseo", True)),
+    )
+    rec_ids = [str(r) for r in (arguments.get("recommendation_ids") or []) if r]
+    service = SeoIntelligenceService(scan_registry=scans)
+    outcome = await service.verify(request, recommendation_ids=rec_ids)
+    ok = bool(outcome.get("ok"))
+    verification = outcome.get("verification") or {}
+    return make_envelope(
+        "perception_seo_verify",
+        ok=ok,
+        error=str(outcome.get("error") or "") if not ok else None,
+        data={
+            "seo_verify": outcome,
+            "agent_summary": {
+                "passed_count": verification.get("passed_count"),
+                "failed_count": verification.get("failed_count"),
+                "pending_resolved": verification.get("items"),
+                "advisory": [
+                    "Verification compares graph baseline to fresh audit evidence.",
+                    "Also run perception_verify for UI-level confirmation.",
+                ],
+            },
+        },
     )

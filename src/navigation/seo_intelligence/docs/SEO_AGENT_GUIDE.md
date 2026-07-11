@@ -33,6 +33,9 @@ SEO Intelligence **orchestrates** free SEO data sources. It does not crawl the i
 4. Lighthouse / PageSpeed (lab CWV + SEO score)
 5. Browser Intelligence (rendering evidence via `scan_id`)
 6. Bing Webmaster (optional)
+7. **OpenSEO** (optional) — keyword/SERP/backlink only when free sources insufficient
+
+**OpenSEO:** App is free; DataForSEO usage is paid. Never route crawl/CWV/rendering to OpenSEO. Use `allow_paid_providers` only with user consent.
 
 ## Cross-analysis playbooks
 

@@ -929,19 +929,72 @@ def perception_tools(mcp_types: Any) -> list[Any]:
             name="perception_seo_audit",
             description=(
                 "SEO Intelligence. Plan audit → collect evidence (GSC, GA4, LibreCrawl, Lighthouse, Browser) "
-                "→ SEO Knowledge Graph → cross-analysis → recommendations. "
-                "Architecture phase: returns connection map + degraded until providers ship."
+                "→ SEO Knowledge Graph → cross-analysis → recommendations → verification plan."
             ),
             inputSchema={
                 "type": "object",
                 "properties": {
                     "website_url": {"type": "string", "description": "Site to audit (required)"},
                     "property_url": {"type": "string", "description": "GSC property e.g. sc-domain:example.com"},
+                    "ga4_property_id": {"type": "string", "description": "GA4 property ID e.g. properties/123456789"},
                     "scan_id": {"type": "string", "description": "Browser Intelligence scan for rendering evidence"},
                     "repo_root": {"type": "string"},
                     "providers": {"type": "array", "items": {"type": "string"}},
+                    "intents": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Capabilities e.g. keyword_research, technical_crawl, serp_analysis",
+                    },
+                    "allow_paid_providers": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "Allow OpenSEO+DataForSEO paid capabilities",
+                    },
+                    "allow_openseo": {"type": "boolean", "default": True},
                     "include_cross_analysis": {"type": "boolean", "default": True},
                     "include_recommendations": {"type": "boolean", "default": True},
+                },
+                "required": ["website_url"],
+            },
+        ),
+        T(
+            name="perception_seo_connect",
+            description=(
+                "SEO Intelligence Google OAuth. action=status|authorize_url|exchange_code for Search Console + GA4."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "enum": ["status", "authorize_url", "exchange_code"],
+                        "default": "status",
+                    },
+                    "code": {"type": "string", "description": "OAuth authorization code for exchange_code"},
+                    "redirect_uri": {
+                        "type": "string",
+                        "default": "urn:ietf:wg:oauth:2.0:oob",
+                    },
+                },
+            },
+        ),
+        T(
+            name="perception_seo_verify",
+            description=(
+                "SEO Intelligence verification loop. Re-audit site and compare against graph baseline recommendations."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "website_url": {"type": "string"},
+                    "property_url": {"type": "string"},
+                    "ga4_property_id": {"type": "string"},
+                    "scan_id": {"type": "string"},
+                    "recommendation_ids": {"type": "array", "items": {"type": "string"}},
+                    "providers": {"type": "array", "items": {"type": "string"}},
+                    "intents": {"type": "array", "items": {"type": "string"}},
+                    "allow_paid_providers": {"type": "boolean", "default": False},
+                    "allow_openseo": {"type": "boolean", "default": True},
                 },
                 "required": ["website_url"],
             },

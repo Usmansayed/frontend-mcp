@@ -47,6 +47,7 @@ Agent (reason + act + verify)
 | LibreCrawl | P0 | Local URL | Technical crawl — **do not build crawler** |
 | Lighthouse / PSI | P0 | Optional API key | CWV, performance, SEO audits |
 | Browser Intelligence | P1 | scan_id | Rendering, hydration, JS errors |
+| **OpenSEO** | P1 | MCP URL | Keyword/SERP/backlink — optional, not for crawl/CWV |
 | Bing Webmaster | P2 | API key | Optional second search console |
 
 ## SEO Knowledge Graph
@@ -102,6 +103,8 @@ Browser Intelligence is consumed via `providers/browser/` adapter — never dupl
 ```text
 SEO_GRAPH_PATH=.cache/seo_graph.json
 LIBRECRAWL_BASE_URL=http://localhost:8080
+OPENSEO_BASE_URL=http://localhost:3001
+OPENSEO_MCP_URL=http://localhost:3001/mcp
 GOOGLE_OAUTH_CLIENT_ID=...
 GOOGLE_OAUTH_CLIENT_SECRET=...
 PAGESPEED_API_KEY=...          # optional

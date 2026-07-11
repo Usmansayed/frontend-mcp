@@ -311,25 +311,51 @@ Read `perception://seo-guide` before calling. Orchestration layer — not Ahrefs
 
 ### `perception_seo_status`
 
-Module phase, free-first provider catalog, knowledge graph summary.
+Module phase, provider catalog, integration health, knowledge graph summary.
 
-**Returns:** `data.seo_status` (`phase`, `providers_catalog`, `graph`, `do_not_build`).
+**Returns:** `data.seo_status` (`phase`, `providers_live`, `integrations`, `graph`, `do_not_build`).
+
+### `perception_seo_connect`
+
+Google OAuth for Search Console + GA4.
+
+| Param | Type | Default |
+|-------|------|---------|
+| `action` | `status` \| `authorize_url` \| `exchange_code` | `status` |
+| `code` | string | for `exchange_code` |
+| `redirect_uri` | string | `urn:ietf:wg:oauth:2.0:oob` |
 
 ### `perception_seo_audit`
 
-Plan providers → collect evidence → SEO Knowledge Graph → cross-analysis → recommendations.
+Plan providers → collect evidence → SEO Knowledge Graph → cross-analysis → recommendations → verification plan.
 
 | Param | Type | Default |
 |-------|------|---------|
 | `website_url` | string | required |
 | `property_url` | string | GSC property |
+| `ga4_property_id` | string | GA4 property |
 | `scan_id` | string | Browser Intelligence scan |
 | `repo_root` | string | |
 | `providers` | string[] | subset of provider ids |
+| `intents` | string[] | capability ids |
+| `allow_openseo` | boolean | true |
+| `allow_paid_providers` | boolean | false |
 | `include_cross_analysis` | boolean | true |
 | `include_recommendations` | boolean | true |
 
-**Returns:** `data.seo_audit` (`evidence`, `recommendations`, `connections`, `degraded`, `graph_summary`).
+**Returns:** `data.seo_audit` (`evidence`, `recommendations`, `connections`, `degraded`, `graph_summary`, `verification`).
+
+### `perception_seo_verify`
+
+Re-audit and compare against graph baseline to close recommendation verification items.
+
+| Param | Type | Default |
+|-------|------|---------|
+| `website_url` | string | required |
+| `recommendation_ids` | string[] | all from graph if omitted |
+| `scan_id` | string | Browser scan for rendering re-check |
+
+**Returns:** `data.seo_verify` (`verification` with `passed_count`, `failed_count`, `items`).
 
 ## Resources
 

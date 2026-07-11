@@ -4,6 +4,16 @@ ADR-style log. New entries at top.
 
 ---
 
+## ADR-024 — OpenSEO as optional SEO provider (2026-07-11)
+
+**Context:** OpenSEO offers keyword/SERP/backlink workflows via self-hosted MCP + DataForSEO. The app is free; data is pay-as-you-go. SEO Intelligence must remain provider-agnostic.
+
+**Decision:** (1) Add `openseo` behind `SeoDataProvider` — never replace SEO Intelligence. (2) **Capability catalog** (`SeoCapabilitySpec`) exposes paid/free/fallback metadata. (3) **Planner** routes free-first; blocks OpenSEO for crawl/CWV/rendering. (4) `allow_paid_providers` gates DataForSEO capabilities. (5) No hard dependency on OpenSEO.
+
+**Consequences:** Module works without OpenSEO. MCP calls OpenSEO instance MCP in Phase 2 — no embedded DataForSEO client.
+
+---
+
 ## ADR-023 — SEO Intelligence orchestration layer (2026-07-11)
 
 **Context:** Agents need evidence-based SEO reasoning (indexing, CTR, CWV, technical crawl) without building Ahrefs/Semrush-scale infrastructure or internet crawlers.

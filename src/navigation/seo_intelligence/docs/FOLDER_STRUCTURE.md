@@ -21,7 +21,8 @@ seo_intelligence/
 │   ├── bing/
 │   ├── librecrawl/
 │   ├── lighthouse/
-│   └── browser/              # Adapter to visual_browser_intelligence
+│   ├── browser/              # Adapter to visual_browser_intelligence
+│   └── openseo/              # Optional — MCP to self-hosted OpenSEO
 │
 ├── knowledge/
 │   └── graph/

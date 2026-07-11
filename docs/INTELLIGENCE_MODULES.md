@@ -313,13 +313,11 @@ Orchestrates **free-first SEO evidence** — Search Console, GA4, LibreCrawl, Li
 |------------|--------|
 | Architecture + provider matrix | ✅ |
 | SEO Knowledge Graph schema | ✅ |
-| Provider protocol + research stubs | ✅ |
-| Cross-analysis + recommendation skeleton | ✅ |
-| Verification loop design | ✅ |
-| Google Search Console OAuth adapter | 📋 Phase 1 |
-| GA4 Data API adapter | 📋 Phase 1 |
-| LibreCrawl + Lighthouse adapters | 📋 Phase 2 |
-| `perception_seo_status` + `perception_seo_audit` | ✅ scaffold |
+| Live provider adapters (GSC, GA4, LibreCrawl, Lighthouse, Browser) | ✅ |
+| Cross-analysis + recommendations + verification loop | ✅ |
+| Capability-aware planner + fallbacks | ✅ |
+| OpenSEO optional provider (free GSC mirror; paid gated) | ✅ partial |
+| `perception_seo_status` + `perception_seo_audit` + `perception_seo_connect` + `perception_seo_verify` | ✅ |
 
 **Do not build:** keyword databases, backlink crawlers, SERP databases.
 
