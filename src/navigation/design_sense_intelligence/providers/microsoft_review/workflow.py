@@ -52,6 +52,10 @@ class MicrosoftReviewWorkflowProvider:
 						recommendation=item.get('recommendation', ''),
 						source=self.name,
 						pillar=item.get('pillar'),
+						evidence=f"visual_insights blocking={request.visual_insights.get('blocking', [])[:2] if request.visual_insights else []}",
+						affected_element='page',
+						confidence=0.9,
+						confirmed=True,
 					)
 				)
 

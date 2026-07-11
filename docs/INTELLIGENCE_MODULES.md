@@ -10,11 +10,16 @@ src/navigation/
 ├── framework_intelligence/            # 1. Framework detection + docs
 ├── component_intelligence/            # 2. Component providers + probes
 ├── design_workflow_intelligence/      # 3. Flows, state, design tools (scaffold)
-├── visual_browser_intelligence/         # 4. Browser, observe, verify, visuals
-├── codebase_intelligence/             # 5. CRG graph, code ↔ UI
-├── frontend_quality_intelligence/     # 6. Console, network, audits, diagnosis
-├── design_sense_intelligence/         # 7. UX heuristics + design reasoning
-├── consistency_intelligence/          # 8. Design-system consistency (scaffold)
+├── visual_browser_intelligence/       # 4. Browser, observe, verify, visuals (raw collection)
+├── design_snapshot_engine/            # 5. Extract → normalize → DesignSnapshot (no critique)
+├── design_reference_registry/         # 6. Reference snapshots + structural compare
+├── codebase_intelligence/             # 7. CRG graph, code ↔ UI
+├── frontend_quality_intelligence/     # 8. Console, network, audits, diagnosis
+├── design_sense_intelligence/         # 9. UX reasoning over DesignSnapshot
+├── consistency_intelligence/          # 10. Design-system consistency over DesignSnapshot
+├── inspiration_intelligence/          # 11. Public inspiration (Dribbble, Behance, …)
+├── figma_intelligence/              # 12. User Figma account + design systems (future)
+├── resource_intelligence/             # 13. Creative assets (icons, fonts, photos, …)
 ├── mcp/                               # MCP protocol (tools, handlers, server)
 └── cli/                               # Install wrapper
 ```
@@ -121,7 +126,36 @@ Interacts with the running application.
 
 ---
 
-## 5. Codebase Intelligence
+## 5. Design Snapshot Engine
+
+**Path:** `design_snapshot_engine/`
+
+Converts live browser state into a **unified `DesignSnapshot`** — the common language for all design-related intelligence modules. Observes, extracts, normalizes, and measures. **Never critiques.**
+
+| Extractor | Report section |
+|-----------|----------------|
+| Typography, Spacing, Color, Layout, Grid | `typography`, `spacing`, `colors`, `layout`, `grid` |
+| Hierarchy, Components, Motion, Accessibility, Design tokens | `hierarchy`, `components`, `motion`, `accessibility`, `design_tokens` |
+
+**API:** `DesignSnapshotService.capture(session, observation=...)`
+
+Optional **designlang** augment when `DESIGNLANG_ENABLED=1` (see `integrations/designlang.py`).
+
+See `design_snapshot_engine/ARCHITECTURE.md`.
+
+---
+
+## 6. Design Reference Registry
+
+**Path:** `design_reference_registry/`
+
+Stores **Design Snapshots** (not screenshots) for reference products. Supports structural similarity search and snapshot-to-snapshot comparison.
+
+**API:** `DesignReferenceRegistry.register()`, `find_similar()`, `compare()`
+
+---
+
+## 7. Codebase Intelligence
 
 **Path:** `codebase_intelligence/`
 
@@ -137,7 +171,7 @@ Understands the frontend codebase via Code Review Graph (CRG).
 
 ---
 
-## 6. Frontend Quality Intelligence
+## 8. Frontend Quality Intelligence
 
 **Path:** `frontend_quality_intelligence/`
 
@@ -156,11 +190,11 @@ Validates production readiness and debugging signals.
 
 ---
 
-## 7. Design Sense Intelligence
+## 9. Design Sense Intelligence
 
 **Path:** `design_sense_intelligence/`
 
-UI/UX **review and critique orchestration** — reasons about layout, hierarchy, usability, and craft like a product designer. Does **not** generate UI or enforce design-system math (see module 8).
+UI/UX **review and critique orchestration** — reasons over `DesignSnapshot` reports (layout, hierarchy, usability, craft). Does **not** extract DOM/CSS or enforce design-system math (see module 10).
 
 | Capability | Status |
 |------------|--------|
@@ -177,7 +211,7 @@ Consumed during observe (`visual_insights`) and diagnosis (`quality_hints`). Com
 
 ---
 
-## 8. Consistency Intelligence
+## 10. Consistency Intelligence
 
 **Path:** `consistency_intelligence/`
 
@@ -196,6 +230,75 @@ Ensures the frontend remains **mathematically and visually consistent** with the
 **MCP tools (planned):** `perception_consistency_audit`, `perception_consistency_diff`, `perception_token_snapshot`
 
 See [features/consistency_intelligence.md](./features/consistency_intelligence.md).
+
+---
+
+## 11. Inspiration Intelligence
+
+**Path:** `inspiration_intelligence/`
+
+Orchestrates **public design inspiration** from curated gallery sites. Generalized from the former Figma Community inspiration pipeline. Browser automation is execution-only; ranking and evaluation stay in intelligence modules.
+
+| Capability | Status |
+|------------|--------|
+| Intent parsing + search planning | ✅ |
+| **Community Intelligence** (query expansion — not Figma-specific) | ✅ |
+| Priority provider cascade + early stop | ✅ |
+| Dribbble provider adapter | ✅ |
+| Behance / One Page Love / Awwwards / SiteInspire / Godly / Land-book | ✅ gallery adapters |
+| Candidate Intelligence + ranking + selection | ✅ |
+| Ephemeral vision blobs (session-scoped) | ✅ |
+| Capture → Design Snapshot bridge | 📋 scaffold |
+| MCP tools: `perception_inspiration_discover`, `perception_inspiration_collect`, `perception_inspiration_session_end` | ✅ |
+| Provider navigation documentation | ✅ |
+
+**Provider priority:** Dribbble → Behance → One Page Love → Awwwards → SiteInspire → Godly → Land-book (stop when enough high-confidence hits).
+
+See `inspiration_intelligence/docs/ARCHITECTURE.md`, `inspiration_intelligence/docs/INSPIRATION_AGENT_GUIDE.md`, and `inspiration_intelligence/docs/providers/`.
+
+---
+
+## 12. Figma Intelligence
+
+**Path:** `figma_intelligence/`
+
+**Future scope:** User's own Figma account — files, components, variables, design systems via Figma Console MCP. **Not** responsible for public inspiration (see Inspiration Intelligence).
+
+| Capability | Status |
+|------------|--------|
+| Community duplication pipeline (content_id → file_key) | ✅ scaffold |
+| Figma Console MCP client | ✅ |
+| Official Figma MCP provider | 📋 scaffold |
+| Community Discovery adapter (Figma Community API) | ✅ |
+| Account-scoped extraction API | 📋 planned |
+
+See [features/figma_intelligence.md](./features/figma_intelligence.md).
+
+**Boundary:** Inspiration Intelligence owns public gallery inspiration; Figma Intelligence owns project-specific Figma design context.
+
+---
+
+## 13. Resource Intelligence
+
+**Path:** `resource_intelligence/`
+
+Orchestrates **production-ready creative assets** — icons, illustrations, photos, fonts, logos, avatars, 3D, patterns, animations, mockups. License-aware; not a CDN or asset host.
+
+| Capability | Status |
+|------------|--------|
+| Provider comparison matrix (40+ ecosystems) | ✅ research |
+| Resource Graph schema | ✅ |
+| License Intelligence architecture | ✅ |
+| Ranking + Planning architecture | ✅ |
+| MCP tool specification | ✅ |
+| Provider adapters (Iconify, Pexels, Fontsource, …) | 📋 Phase 2 |
+| `perception_resource_search` + category tools | 📋 Phase 5 |
+
+**Excluded automation:** unDraw (AI/scrape ban), Storyset (robot/scraper ban).
+
+See `resource_intelligence/docs/ARCHITECTURE.md` and [features/resource_intelligence.md](./features/resource_intelligence.md).
+
+**Boundary:** Component Intelligence owns installable UI components; Resource Intelligence owns discrete assets (SVG, font files, stock photos).
 
 ---
 

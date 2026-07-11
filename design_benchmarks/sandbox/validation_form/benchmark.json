@@ -1,0 +1,21 @@
+{
+  "id": "sandbox/validation_form",
+  "category": "sandbox",
+  "description": "Live sandbox validation form",
+  "user_task": "Submit validation form with required fields",
+  "scope": "flow",
+  "sandbox_path": "/forms/validation",
+  "expected_score": {
+    "passed": true,
+    "min_blocking": 0
+  },
+  "gold_findings": [],
+  "gold_forbidden": [
+    { "match": ["zero_size"], "description": "sandbox validation form has visible controls" }
+  ],
+  "gold_review": {
+    "passed": true,
+    "summary": "Validation form renders correctly with visible interactive controls.",
+    "top_priorities": []
+  }
+}

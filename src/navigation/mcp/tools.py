@@ -651,4 +651,457 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                 },
             },
         ),
+        T(
+            name="perception_inspiration_discover",
+            description=(
+                "Inspiration Intelligence. Ranked discovery across Dribbble, Behance, One Page Love, "
+                "Awwwards, SiteInspire, Godly, and Land-book with priority cascade and early stop. "
+                "Returns URLs and scores — no capture. Read perception://inspiration-guide for per-site rules."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "e.g. 'saas landing page' or 'minimal fintech dashboard'",
+                    },
+                    "max_candidates": {"type": "integer", "default": 12},
+                    "provider_preference": {
+                        "type": "string",
+                        "description": "Optional provider id to prefer (e.g. dribbble, behance)",
+                    },
+                },
+                "required": ["query"],
+            },
+        ),
+        T(
+            name="perception_inspiration_collect",
+            description=(
+                "Inspiration Intelligence. Full URL-first collection with optional ephemeral medium JPEG "
+                "blobs for agent vision. Returns manifest hits with agent_view_url and inspiration_blob. "
+                "Uses headed browser where required (Dribbble WAF, Awwwards, Godly, Land-book). "
+                "Read perception://inspiration-guide before calling."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Inspiration search query"},
+                    "per_provider": {"type": "integer", "default": 4},
+                    "provider_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Subset of provider ids to query",
+                    },
+                    "output_dir": {
+                        "type": "string",
+                        "description": "Optional path to write manifest.json and per-hit metadata",
+                    },
+                    "materialize_blobs": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Create ephemeral medium JPEG blobs for vision",
+                    },
+                    "blob_session_id": {
+                        "type": "string",
+                        "description": "Reuse existing blob session id",
+                    },
+                    "download_images": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "Permanently download preview images (separate from ephemeral blobs)",
+                    },
+                },
+                "required": ["query"],
+            },
+        ),
+        T(
+            name="perception_inspiration_session_end",
+            description=(
+                "Inspiration Intelligence. Delete ephemeral inspiration blobs for a session when design "
+                "work is complete. Pass cleanup_expired=true to remove TTL-expired sessions instead."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "session_id": {
+                        "type": "string",
+                        "description": "Blob session id from collect (e.g. insp_abc123)",
+                    },
+                    "cleanup_expired": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "Remove all TTL-expired blob sessions",
+                    },
+                },
+            },
+        ),
+        T(
+            name="perception_resource_search",
+            description=(
+                "Resource Intelligence. Search commercial-safe creative assets. Icons use a consistent "
+                "icon family (Lucide, Heroicons, etc.) by default — URLs + npm imports, no blobs. "
+                "Read perception://resource-guide before calling."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "e.g. 'settings gear icon' or 'minimal user avatar'",
+                    },
+                    "max_results": {"type": "integer", "default": 12},
+                    "categories": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Optional category filter: icon, avatar, font, photo, ...",
+                    },
+                    "provider_preference": {
+                        "type": "string",
+                        "description": "Optional provider id (overrides icon family routing)",
+                    },
+                    "icon_family": {
+                        "type": "string",
+                        "description": "Icon set family: lucide, heroicons, tabler-icons, phosphor-icons, remix-icon",
+                    },
+                    "icon_family_strict": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Search only inside icon_family before fallback",
+                    },
+                    "allow_family_fallback": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Broaden search when icon not found in family",
+                    },
+                    "persist_icon_family": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "Save icon_family to .cache/resource_icon_family.json",
+                    },
+                    "commercial_required": {"type": "boolean", "default": True},
+                    "attribution_ok": {"type": "boolean", "default": True},
+                    "prefer_svg": {"type": "boolean", "default": True},
+                },
+                "required": ["query"],
+            },
+        ),
+        T(
+            name="perception_resource_preview",
+            description=(
+                "Resource Intelligence. Search + optional vision blobs. In-family icons skip blobs "
+                "(use access_url). Blobs only for family miss + reference_preview_url fallback. "
+                "Read perception://resource-guide before calling."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Resource search query"},
+                    "max_results": {"type": "integer", "default": 12},
+                    "categories": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "icon_family": {"type": "string"},
+                    "icon_family_strict": {"type": "boolean", "default": True},
+                    "allow_family_fallback": {"type": "boolean", "default": True},
+                    "persist_icon_family": {"type": "boolean", "default": False},
+                    "blob_fallback_only": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Skip blobs for in-family icons (default true)",
+                    },
+                    "reference_preview_url": {
+                        "type": "string",
+                        "description": "When family has no match — preview URL for vision/OCR blob",
+                    },
+                    "reference_image_path": {
+                        "type": "string",
+                        "description": "Local screenshot path when family has no match",
+                    },
+                    "provider_preference": {"type": "string"},
+                    "asset_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Subset of resource_id values from search",
+                    },
+                    "materialize_blobs": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Create ephemeral medium JPEG blobs for vision",
+                    },
+                    "blob_session_id": {
+                        "type": "string",
+                        "description": "Reuse existing blob session id",
+                    },
+                    "output_dir": {
+                        "type": "string",
+                        "description": "Optional path to write manifest.json",
+                    },
+                },
+                "required": ["query"],
+            },
+        ),
+        T(
+            name="perception_resource_session_end",
+            description=(
+                "Resource Intelligence. Delete ephemeral resource preview blobs when asset work is complete. "
+                "Pass cleanup_expired=true to remove TTL-expired sessions instead."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "session_id": {
+                        "type": "string",
+                        "description": "Blob session id from preview (e.g. res_abc123)",
+                    },
+                    "cleanup_expired": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "Remove all TTL-expired blob sessions",
+                    },
+                },
+            },
+        ),
+        T(
+            name="perception_resource_icon_search",
+            description="Resource Intelligence. Search icons in project icon family with verified imports.",
+            inputSchema={"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
+        ),
+        T(
+            name="perception_resource_font_search",
+            description="Resource Intelligence. Search Fontsource npm font families with install guidance.",
+            inputSchema={"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
+        ),
+        T(
+            name="perception_resource_logo_search",
+            description="Resource Intelligence. Search brand logos (theSVG / Simple Icons).",
+            inputSchema={"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
+        ),
+        T(
+            name="perception_resource_photo_search",
+            description="Resource Intelligence. Search Pexels photos (PEXELS_API_KEY required).",
+            inputSchema={"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
+        ),
+        T(
+            name="perception_resource_avatar_search",
+            description="Resource Intelligence. Search DiceBear avatars.",
+            inputSchema={"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
+        ),
+        T(
+            name="perception_resource_illustration_search",
+            description="Resource Intelligence. Search Open Doodles and IRA Design illustrations.",
+            inputSchema={"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
+        ),
+        T(
+            name="perception_resource_license_check",
+            description="Resource Intelligence. Structured license check for a resource asset object.",
+            inputSchema={
+                "type": "object",
+                "properties": {"asset": {"type": "object"}, "commercial_required": {"type": "boolean", "default": True}},
+                "required": ["asset"],
+            },
+        ),
+        T(
+            name="perception_resource_observe_bridge",
+            description=(
+                "Resource Intelligence. Bridge perception_observe scan to icon search — family match or vision fallback."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "scan_id": {"type": "string"},
+                    "query": {"type": "string"},
+                    "icon_family": {"type": "string"},
+                    "repo_root": {"type": "string"},
+                },
+                "required": ["scan_id", "query"],
+            },
+        ),
+        T(
+            name="perception_build_design_snapshot",
+            description=(
+                "Design pipeline: build structured DesignSnapshot from scan_id or session. "
+                "Run after perception_observe. Returns snapshot_id + typography/color/layout reports. "
+                "Never critiques — extraction only."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "session_id": {"type": "string"},
+                    "scan_id": {"type": "string", "description": "Preferred — from perception_observe"},
+                    "snapshot_id": {"type": "string", "description": "Return existing snapshot"},
+                    "use_designlang": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "Augment with designlang CLI when DESIGNLANG_ENABLED=1",
+                    },
+                },
+            },
+        ),
+        T(
+            name="perception_design_review",
+            description=(
+                "Design Sense Intelligence: full design review from snapshot. "
+                "Pass scan_id from observe or snapshot_id. Agent must NOT build ReviewRequest manually. "
+                "Returns consolidated findings, blocking issues, reference comparisons, recommendations."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "session_id": {"type": "string"},
+                    "scan_id": {"type": "string"},
+                    "snapshot_id": {"type": "string"},
+                    "user_task": {"type": "string", "description": "What the user is trying to accomplish"},
+                    "scope": {
+                        "type": "string",
+                        "enum": ["page", "flow", "feature", "component", "region"],
+                        "default": "page",
+                    },
+                    "compare_references": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Compare against reference registry (Stripe, Linear, etc.)",
+                    },
+                    "use_designlang": {"type": "boolean", "default": False},
+                },
+            },
+        ),
+        T(
+            name="perception_consistency_review",
+            description=(
+                "Consistency Intelligence: refresh Project Design Graph from snapshot + codebase/tokens, "
+                "then batch-audit interactive elements against learned standards."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "session_id": {"type": "string"},
+                    "scan_id": {"type": "string"},
+                    "snapshot_id": {"type": "string"},
+                    "repo_root": {"type": "string"},
+                    "project_id": {"type": "string"},
+                    "use_designlang": {"type": "boolean", "default": False},
+                },
+            },
+        ),
+        T(
+            name="perception_consistency_audit",
+            description=(
+                "Consistency Intelligence: batch audit snapshot elements against populated Project Design Graph. "
+                "Run perception_design_graph_refresh first if graph is empty."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "session_id": {"type": "string"},
+                    "scan_id": {"type": "string"},
+                    "snapshot_id": {"type": "string"},
+                    "design_snapshot": {"type": "object"},
+                    "repo_root": {"type": "string"},
+                    "project_id": {"type": "string"},
+                    "max_elements": {"type": "number", "default": 40},
+                },
+            },
+        ),
+        T(
+            name="perception_design_knowledge_query",
+            description=(
+                "Consistency Intelligence Knowledge API: query the Project Design Graph. "
+                "Returns evidence, standards, confidence, exceptions, alternatives, and recommendations. "
+                "Use query_id from the catalog (e.g. graph.summary, standard.for_context, component.variants)."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query_id": {"type": "string", "description": "Registered query id"},
+                    "params": {"type": "object", "description": "Query parameters"},
+                    "project_id": {"type": "string", "default": "default"},
+                    "repo_root": {"type": "string", "description": "Optional repo root for graph persistence"},
+                },
+                "required": ["query_id"],
+            },
+        ),
+        T(
+            name="perception_design_graph_summary",
+            description=(
+                "Consistency Intelligence: high-level Project Design Graph overview for agent bootstrap. "
+                "Returns KnowledgeResponse with stats, standards, and exceptions."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {"type": "string", "default": "default"},
+                    "repo_root": {"type": "string"},
+                },
+            },
+        ),
+        T(
+            name="perception_design_graph_refresh",
+            description=(
+                "Consistency Intelligence: run Discovery Pipeline to ingest knowledge from enabled sources "
+                "(snapshot, codebase, tokens) into the Project Design Graph. "
+                "Pass repo_root for codebase/tokens scan; pass session_id, scan_id, snapshot_id, or design_snapshot "
+                "for browser snapshot ingestion."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {"type": "string", "default": "default"},
+                    "repo_root": {"type": "string", "description": "Repo root for codebase and token sources"},
+                    "session_id": {"type": "string"},
+                    "scan_id": {"type": "string"},
+                    "snapshot_id": {"type": "string"},
+                    "design_snapshot": {"type": "object", "description": "Inline DesignSnapshot dict"},
+                    "enabled_sources": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Subset of: snapshot, codebase, tokens",
+                    },
+                },
+            },
+        ),
+        T(
+            name="perception_consistency_assess",
+            description=(
+                "Consistency Intelligence (Phase 3): assess element against Project Design Graph standards. "
+                "Thin consumer — queries graph only, never owns rules. "
+                "Pass selector and actual computed styles (e.g. padding, border-radius)."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "selector": {"type": "string"},
+                    "actual": {
+                        "type": "object",
+                        "description": "Property → value map from observation",
+                    },
+                    "context": {"type": "string", "description": "UI context override (default: inferred from selector)"},
+                    "properties": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "project_id": {"type": "string", "default": "default"},
+                    "repo_root": {"type": "string"},
+                },
+                "required": ["selector", "actual"],
+            },
+        ),
+        T(
+            name="perception_consistency_propose_fix",
+            description=(
+                "Consistency Intelligence (Phase 3): recommend fix for a deviation using graph standards. "
+                "Composes fix.recommend query only."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "standard_id": {"type": "string"},
+                    "selector": {"type": "string"},
+                    "actual": {"type": "object"},
+                    "project_id": {"type": "string", "default": "default"},
+                    "repo_root": {"type": "string"},
+                },
+                "required": ["standard_id"],
+            },
+        ),
     ]

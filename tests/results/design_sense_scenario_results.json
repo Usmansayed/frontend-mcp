@@ -1,0 +1,1754 @@
+{
+  "generated_at": "2026-07-10T16:43:16.355237+00:00",
+  "runner": "tests/run_design_sense_scenarios.py",
+  "sandbox": {
+    "base_url": "http://localhost:5173",
+    "reachable": true,
+    "http_status": 200,
+    "included": true,
+    "skipped_reason": null
+  },
+  "summary": {
+    "total_scenarios": 10,
+    "completed_without_error": 10,
+    "errors": 0,
+    "total_findings": 154,
+    "total_blocking": 3,
+    "total_actionable": 24,
+    "total_generic_advisories": 54,
+    "total_confirmed": 97
+  },
+  "scenarios": [
+    {
+      "scenario_id": "fake_checkout_overflow",
+      "source": "fixture",
+      "description": "Ecommerce checkout with blocking horizontal overflow",
+      "passed": false,
+      "summary": "Design review for \"Complete checkout and pay for cart items\": 27 consolidated findings. 1 blocking issue(s) require immediate attention. Top priority: Resolve blocking visual issues before polish review",
+      "finding_count": 27,
+      "blocking_count": 1,
+      "major_count": 0,
+      "objective_count": 11,
+      "subjective_count": 23,
+      "consulted_reviewers": [
+        "layout_reviewer",
+        "typography_reviewer",
+        "color_reviewer",
+        "accessibility_reviewer",
+        "hierarchy_reviewer",
+        "navigation_reviewer",
+        "component_reviewer",
+        "ux_reviewer",
+        "motion_reviewer"
+      ],
+      "consulted_providers": [
+        "design_lint",
+        "open_design",
+        "microsoft_review",
+        "uicrit",
+        "design_knowledge",
+        "crit_rams"
+      ],
+      "top_findings": [
+        {
+          "id": "layout_reviewer_horizontal_overflow_0",
+          "category": "layout",
+          "severity": "blocking",
+          "message": "scrollWidth=2400 viewport=1280",
+          "rationale": "Confirmed by 3 reviewer(s): layout_reviewer, microsoft_review, uicrit",
+          "recommendation": "Resolve blocking visual issues before polish review",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "layout_reviewer",
+              "microsoft_review",
+              "uicrit"
+            ],
+            "merged_from": 3
+          }
+        },
+        {
+          "id": "missing-color-token:button.cta",
+          "category": "color",
+          "severity": "minor",
+          "message": "Color not from design token",
+          "rationale": "Design Lint checkFills \u2014 layers should use paint/color styles",
+          "recommendation": "color uses raw value #ff0000 \u2014 Hardcoded color value detected on element; background uses raw value #00ff00 \u2014 Hardcoded color value detected on element; color uses raw value #333333 \u2014 Hardcoded color value detected on element",
+          "source": "consensus",
+          "pillar": null,
+          "selector": "button.cta",
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": "button.cta",
+          "metadata": {
+            "detail": "color uses raw value #ff0000",
+            "rule_id": "missing-color-token",
+            "consensus_sources": [
+              "design_lint"
+            ],
+            "merged_from": 5
+          }
+        },
+        {
+          "id": "off-scale-spacing:button.cta",
+          "category": "spacing",
+          "severity": "minor",
+          "message": "Spacing off design scale",
+          "rationale": "Ported from spacing rhythm validation in design systems",
+          "recommendation": "padding 11px off spacing scale \u2014 Non-standard spacing value in computed styles",
+          "source": "consensus",
+          "pillar": null,
+          "selector": "button.cta",
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": "button.cta",
+          "metadata": {
+            "detail": "padding 11px off spacing scale",
+            "rule_id": "off-scale-spacing",
+            "consensus_sources": [
+              "design_lint"
+            ]
+          }
+        },
+        {
+          "id": "ms_tokens_unknown",
+          "category": "tokens",
+          "severity": "minor",
+          "message": "Design tokens not supplied \u2014 cannot verify token compliance",
+          "rationale": "Microsoft workflow: verify design tokens are used",
+          "recommendation": "Pass design_tokens or enable token snapshot from Consistency Intelligence",
+          "source": "consensus",
+          "pillar": "quality_craft",
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "microsoft_review"
+            ]
+          }
+        },
+        {
+          "id": "missing-text-style:button.cta",
+          "category": "typography",
+          "severity": "minor",
+          "message": "Text without design token / style class",
+          "rationale": "Design Lint checks text layers for missing text styles (design tokens)",
+          "recommendation": "font-size 13px off typography scale \u2014 Computed font-size/family not mapped to project typography scale; font-size 15px off typography scale \u2014 Computed font-size/family not mapped to project typography scale",
+          "source": "consensus",
+          "pillar": null,
+          "selector": "button.cta",
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": "button.cta",
+          "metadata": {
+            "detail": "font-size 13px off typography scale",
+            "rule_id": "missing-text-style",
+            "consensus_sources": [
+              "design_lint"
+            ],
+            "merged_from": 2
+          }
+        }
+      ],
+      "reasoning_narrative": "For \"Complete checkout and pay for cart items\", the review combined 11 objective and 23 subjective signals. Primary themes: color, layout, typography, ux, usability. Strengths: User task is explicit: Complete checkout and pay for cart items. Top concerns: scrollWidth=2400 viewport=1280; Blocking visual issues detected: ['horizontal_overflow']; scrollWidth=2400 viewport=1280. Prioritized recommendations: font-size 13px off typography scale \u2014 Computed font-size/family not mapped to project typography scale; color uses raw value #ff0000 \u2014 Hardcoded color value detected on element; background uses raw value #00ff00 \u2014 Hardcoded color value detected on element.",
+      "degraded": [
+        "design_lint_deterministic",
+        "open_design_not_configured",
+        "microsoft_review_methodology",
+        "uicrit_methodology_heuristic",
+        "design_knowledge_structured",
+        "crit_rams_methodology_marker",
+        "reasoning_engine_heuristic",
+        "consensus_engine_v1"
+      ],
+      "error": null,
+      "input_meta": {
+        "user_task": "Complete checkout and pay for cart items",
+        "scope": "flow",
+        "preview_url": "http://localhost:5173/shop/checkout/shipping",
+        "has_design_snapshot": false,
+        "has_visual_insights": true,
+        "has_computed_styles": true,
+        "snapshot_sections": []
+      },
+      "actionable_count": 5,
+      "generic_advisory_count": 12,
+      "confirmed_count": 15
+    },
+    {
+      "scenario_id": "fake_login_form",
+      "source": "fixture",
+      "description": "Sign-in flow with clean layout signals",
+      "passed": true,
+      "summary": "Design review for \"Sign in to dashboard as admin\": 12 consolidated findings. No blocking or major issues detected. Top priority: Pass design_tokens or enable token snapshot from Consistency Intelligence",
+      "finding_count": 12,
+      "blocking_count": 0,
+      "major_count": 0,
+      "objective_count": 1,
+      "subjective_count": 11,
+      "consulted_reviewers": [
+        "layout_reviewer",
+        "typography_reviewer",
+        "color_reviewer",
+        "accessibility_reviewer",
+        "hierarchy_reviewer",
+        "navigation_reviewer",
+        "component_reviewer",
+        "ux_reviewer",
+        "motion_reviewer"
+      ],
+      "consulted_providers": [
+        "design_lint",
+        "open_design",
+        "microsoft_review",
+        "uicrit",
+        "design_knowledge",
+        "crit_rams"
+      ],
+      "top_findings": [
+        {
+          "id": "ms_tokens_unknown",
+          "category": "tokens",
+          "severity": "minor",
+          "message": "Design tokens not supplied \u2014 cannot verify token compliance",
+          "rationale": "Microsoft workflow: verify design tokens are used",
+          "recommendation": "Pass design_tokens or enable token snapshot from Consistency Intelligence",
+          "source": "consensus",
+          "pillar": "quality_craft",
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "microsoft_review"
+            ]
+          }
+        },
+        {
+          "id": "checklist_color_0",
+          "category": "color",
+          "severity": "advisory",
+          "message": "Verify: Contrast ratio compliant on text and interactive elements",
+          "rationale": "color AI verification checklist",
+          "recommendation": "Contrast ratio compliant on text and interactive elements",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 0.4,
+          "confirmed": false,
+          "affected_element": null,
+          "metadata": {
+            "lane": "objective",
+            "checklist": "color",
+            "consensus_sources": [
+              "design_knowledge"
+            ]
+          }
+        },
+        {
+          "id": "checklist_color_1",
+          "category": "color",
+          "severity": "advisory",
+          "message": "Verify: Semantic colors restricted to recognized states",
+          "rationale": "color AI verification checklist",
+          "recommendation": "Semantic colors restricted to recognized states",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 0.4,
+          "confirmed": false,
+          "affected_element": null,
+          "metadata": {
+            "lane": "objective",
+            "checklist": "color",
+            "consensus_sources": [
+              "design_knowledge"
+            ]
+          }
+        },
+        {
+          "id": "checklist_color_2",
+          "category": "color",
+          "severity": "advisory",
+          "message": "Verify: Accent color reserved for clickable targets",
+          "rationale": "color AI verification checklist",
+          "recommendation": "Accent color reserved for clickable targets",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 0.4,
+          "confirmed": false,
+          "affected_element": null,
+          "metadata": {
+            "lane": "objective",
+            "checklist": "color",
+            "consensus_sources": [
+              "design_knowledge"
+            ]
+          }
+        },
+        {
+          "id": "principle_enterprise_design",
+          "category": "component",
+          "severity": "advisory",
+          "message": "Support learning by doing with in-context cues.",
+          "rationale": "Dense multi-functional software for expert mission-critical workflows.",
+          "recommendation": "Batch operations via keyboard without mouse.",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "design_knowledge"
+            ]
+          }
+        }
+      ],
+      "reasoning_narrative": "For \"Sign in to dashboard as admin\", the review combined 1 objective and 11 subjective signals. Primary themes: layout, color, ux, tokens, workflow. Strengths: User task is explicit: Sign in to dashboard as admin; No blocking objective violations detected. Top concerns: Design tokens not supplied \u2014 cannot verify token compliance; Layout review awaiting DOM snapshot or visual insights; Primary user task: Sign in to dashboard as admin. Prioritized recommendations: Pass design_tokens or enable token snapshot from Consistency Intelligence; Attach scan_id or screenshot_ref for visual comparison phase; Deduce system health within 5 seconds of load..",
+      "degraded": [
+        "design_lint_error:IndexError",
+        "open_design_not_configured",
+        "microsoft_review_methodology",
+        "uicrit_methodology_heuristic",
+        "design_knowledge_structured",
+        "crit_rams_methodology_marker",
+        "reasoning_engine_heuristic",
+        "consensus_engine_v1"
+      ],
+      "error": null,
+      "input_meta": {
+        "user_task": "Sign in to dashboard as admin",
+        "scope": "page",
+        "preview_url": "http://localhost:5173/login",
+        "has_design_snapshot": false,
+        "has_visual_insights": true,
+        "has_computed_styles": true,
+        "snapshot_sections": []
+      },
+      "actionable_count": 1,
+      "generic_advisory_count": 6,
+      "confirmed_count": 6
+    },
+    {
+      "scenario_id": "fake_dashboard_analytics",
+      "source": "fixture",
+      "description": "Dashboard analytics page \u2014 layout and hierarchy review",
+      "passed": true,
+      "summary": "Design review for \"Review dashboard analytics charts and navigation\": 16 consolidated findings. No blocking or major issues detected.",
+      "finding_count": 16,
+      "blocking_count": 0,
+      "major_count": 0,
+      "objective_count": 1,
+      "subjective_count": 15,
+      "consulted_reviewers": [
+        "layout_reviewer",
+        "typography_reviewer",
+        "color_reviewer",
+        "accessibility_reviewer",
+        "hierarchy_reviewer",
+        "navigation_reviewer",
+        "component_reviewer",
+        "ux_reviewer",
+        "motion_reviewer"
+      ],
+      "consulted_providers": [
+        "design_lint",
+        "open_design",
+        "microsoft_review",
+        "uicrit",
+        "design_knowledge",
+        "crit_rams"
+      ],
+      "top_findings": [
+        {
+          "id": "checklist_color_0",
+          "category": "color",
+          "severity": "advisory",
+          "message": "Verify: Contrast ratio compliant on text and interactive elements",
+          "rationale": "color AI verification checklist",
+          "recommendation": "Contrast ratio compliant on text and interactive elements",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 0.4,
+          "confirmed": false,
+          "affected_element": null,
+          "metadata": {
+            "lane": "objective",
+            "checklist": "color",
+            "consensus_sources": [
+              "design_knowledge"
+            ]
+          }
+        },
+        {
+          "id": "checklist_color_1",
+          "category": "color",
+          "severity": "advisory",
+          "message": "Verify: Semantic colors restricted to recognized states",
+          "rationale": "color AI verification checklist",
+          "recommendation": "Semantic colors restricted to recognized states",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 0.4,
+          "confirmed": false,
+          "affected_element": null,
+          "metadata": {
+            "lane": "objective",
+            "checklist": "color",
+            "consensus_sources": [
+              "design_knowledge"
+            ]
+          }
+        },
+        {
+          "id": "checklist_color_2",
+          "category": "color",
+          "severity": "advisory",
+          "message": "Verify: Accent color reserved for clickable targets",
+          "rationale": "color AI verification checklist",
+          "recommendation": "Accent color reserved for clickable targets",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 0.4,
+          "confirmed": false,
+          "affected_element": null,
+          "metadata": {
+            "lane": "objective",
+            "checklist": "color",
+            "consensus_sources": [
+              "design_knowledge"
+            ]
+          }
+        },
+        {
+          "id": "principle_icons",
+          "category": "component",
+          "severity": "advisory",
+          "message": "Icons must be optically sized alongside text.",
+          "rationale": "Symbolic illustrations representing concepts without relying entirely on text.",
+          "recommendation": "Users can guess icon function; icons align to pixel grid.",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "design_knowledge"
+            ]
+          }
+        },
+        {
+          "id": "principle_dashboards",
+          "category": "hierarchy",
+          "severity": "advisory",
+          "message": "Critical metrics in top-left quadrant (Western contexts).",
+          "rationale": "Dense interfaces aggregating KPIs and controls.",
+          "recommendation": "Deduce system health within 5 seconds of load.",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "design_knowledge"
+            ]
+          }
+        }
+      ],
+      "reasoning_narrative": "For \"Review dashboard analytics charts and navigation\", the review combined 1 objective and 15 subjective signals. Primary themes: layout, navigation, color, ux, workflow. Strengths: User task is explicit: Review dashboard analytics charts and navigation; No blocking objective violations detected. Top concerns: Layout review awaiting DOM snapshot or visual insights; Primary user task: Review dashboard analytics charts and navigation; Implementation comparison requires screenshot or scan reference. Prioritized recommendations: Attach scan_id or screenshot_ref for visual comparison phase; Users can guess icon function; icons align to pixel grid.; User on interior page knows location relative to site structure..",
+      "degraded": [
+        "design_lint_error:IndexError",
+        "open_design_not_configured",
+        "microsoft_review_methodology",
+        "uicrit_methodology_heuristic",
+        "design_knowledge_structured",
+        "crit_rams_methodology_marker",
+        "reasoning_engine_heuristic",
+        "consensus_engine_v1"
+      ],
+      "error": null,
+      "input_meta": {
+        "user_task": "Review dashboard analytics charts and navigation",
+        "scope": "feature",
+        "preview_url": "http://localhost:5173/dashboard/analytics",
+        "has_design_snapshot": false,
+        "has_visual_insights": true,
+        "has_computed_styles": true,
+        "snapshot_sections": []
+      },
+      "actionable_count": 0,
+      "generic_advisory_count": 9,
+      "confirmed_count": 7
+    },
+    {
+      "scenario_id": "fake_validation_form",
+      "source": "fixture",
+      "description": "Form with interaction and error-prevention checks",
+      "passed": false,
+      "summary": "Design review for \"Fill validation form and submit with invalid data first\": 26 consolidated findings. 2 blocking issue(s) require immediate attention. Top priority: Resolve blocking visual issues before polish review",
+      "finding_count": 26,
+      "blocking_count": 2,
+      "major_count": 0,
+      "objective_count": 12,
+      "subjective_count": 21,
+      "consulted_reviewers": [
+        "layout_reviewer",
+        "typography_reviewer",
+        "color_reviewer",
+        "accessibility_reviewer",
+        "hierarchy_reviewer",
+        "navigation_reviewer",
+        "component_reviewer",
+        "ux_reviewer",
+        "motion_reviewer"
+      ],
+      "consulted_providers": [
+        "design_lint",
+        "open_design",
+        "microsoft_review",
+        "uicrit",
+        "design_knowledge",
+        "crit_rams"
+      ],
+      "top_findings": [
+        {
+          "id": "accessibility_reviewer_zero_size_clickable_0",
+          "category": "accessibility",
+          "severity": "blocking",
+          "message": "Submit",
+          "rationale": "Confirmed by 2 reviewer(s): accessibility_reviewer, uicrit",
+          "recommendation": "",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "accessibility_reviewer",
+              "uicrit"
+            ],
+            "merged_from": 3
+          }
+        },
+        {
+          "id": "ms_blocking_visual",
+          "category": "layout",
+          "severity": "blocking",
+          "message": "Blocking visual issues detected: ['zero_size_clickable']",
+          "rationale": "Quality Craft \u2014 layout/rendering blockers undermine trust",
+          "recommendation": "Resolve blocking visual issues before polish review",
+          "source": "consensus",
+          "pillar": "quality_craft",
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "microsoft_review"
+            ]
+          }
+        },
+        {
+          "id": "missing-color-token:button.cta",
+          "category": "color",
+          "severity": "minor",
+          "message": "Color not from design token",
+          "rationale": "Design Lint checkFills \u2014 layers should use paint/color styles",
+          "recommendation": "color uses raw value #ff0000 \u2014 Hardcoded color value detected on element; background uses raw value #00ff00 \u2014 Hardcoded color value detected on element; color uses raw value #333333 \u2014 Hardcoded color value detected on element",
+          "source": "consensus",
+          "pillar": null,
+          "selector": "button.cta",
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": "button.cta",
+          "metadata": {
+            "detail": "color uses raw value #ff0000",
+            "rule_id": "missing-color-token",
+            "consensus_sources": [
+              "design_lint"
+            ],
+            "merged_from": 5
+          }
+        },
+        {
+          "id": "off-scale-spacing:button.cta",
+          "category": "spacing",
+          "severity": "minor",
+          "message": "Spacing off design scale",
+          "rationale": "Ported from spacing rhythm validation in design systems",
+          "recommendation": "padding 11px off spacing scale \u2014 Non-standard spacing value in computed styles",
+          "source": "consensus",
+          "pillar": null,
+          "selector": "button.cta",
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": "button.cta",
+          "metadata": {
+            "detail": "padding 11px off spacing scale",
+            "rule_id": "off-scale-spacing",
+            "consensus_sources": [
+              "design_lint"
+            ]
+          }
+        },
+        {
+          "id": "ms_tokens_unknown",
+          "category": "tokens",
+          "severity": "minor",
+          "message": "Design tokens not supplied \u2014 cannot verify token compliance",
+          "rationale": "Microsoft workflow: verify design tokens are used",
+          "recommendation": "Pass design_tokens or enable token snapshot from Consistency Intelligence",
+          "source": "consensus",
+          "pillar": "quality_craft",
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "microsoft_review"
+            ]
+          }
+        }
+      ],
+      "reasoning_narrative": "For \"Fill validation form and submit with invalid data first\", the review combined 12 objective and 21 subjective signals. Primary themes: color, layout, usability, navigation, interaction. Strengths: User task is explicit: Fill validation form and submit with invalid data first. Top concerns: Submit; Submit; Blocking visual issues detected: ['zero_size_clickable']. Prioritized recommendations: font-size 13px off typography scale \u2014 Computed font-size/family not mapped to project typography scale; color uses raw value #ff0000 \u2014 Hardcoded color value detected on element; background uses raw value #00ff00 \u2014 Hardcoded color value detected on element.",
+      "degraded": [
+        "design_lint_deterministic",
+        "open_design_not_configured",
+        "microsoft_review_methodology",
+        "uicrit_methodology_heuristic",
+        "design_knowledge_structured",
+        "crit_rams_methodology_marker",
+        "reasoning_engine_heuristic",
+        "consensus_engine_v1"
+      ],
+      "error": null,
+      "input_meta": {
+        "user_task": "Fill validation form and submit with invalid data first",
+        "scope": "flow",
+        "preview_url": "http://localhost:5173/forms/validation",
+        "has_design_snapshot": false,
+        "has_visual_insights": true,
+        "has_computed_styles": true,
+        "snapshot_sections": []
+      },
+      "actionable_count": 5,
+      "generic_advisory_count": 12,
+      "confirmed_count": 14
+    },
+    {
+      "scenario_id": "fake_minimal_task",
+      "source": "fixture",
+      "description": "Task-only request \u2014 tests knowledge graph and providers without DOM",
+      "passed": true,
+      "summary": "Design review for \"Improve mobile navigation for SaaS onboarding\": 16 consolidated findings. No blocking or major issues detected. Top priority: Pass design_tokens or enable token snapshot from Consistency Intelligence",
+      "finding_count": 16,
+      "blocking_count": 0,
+      "major_count": 0,
+      "objective_count": 2,
+      "subjective_count": 14,
+      "consulted_reviewers": [
+        "layout_reviewer",
+        "typography_reviewer",
+        "color_reviewer",
+        "accessibility_reviewer",
+        "hierarchy_reviewer",
+        "navigation_reviewer",
+        "component_reviewer",
+        "ux_reviewer",
+        "motion_reviewer"
+      ],
+      "consulted_providers": [
+        "design_lint",
+        "open_design",
+        "microsoft_review",
+        "uicrit",
+        "design_knowledge",
+        "crit_rams"
+      ],
+      "top_findings": [
+        {
+          "id": "ms_tokens_unknown",
+          "category": "tokens",
+          "severity": "minor",
+          "message": "Design tokens not supplied \u2014 cannot verify token compliance",
+          "rationale": "Microsoft workflow: verify design tokens are used",
+          "recommendation": "Pass design_tokens or enable token snapshot from Consistency Intelligence",
+          "source": "consensus",
+          "pillar": "quality_craft",
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "microsoft_review"
+            ]
+          }
+        },
+        {
+          "id": "color_awaiting_snapshot",
+          "category": "color",
+          "severity": "advisory",
+          "message": "Color review awaiting Design Snapshot (colors section)",
+          "rationale": "Confirmed by 1 reviewer(s): color_reviewer",
+          "recommendation": "",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "color_reviewer"
+            ]
+          }
+        },
+        {
+          "id": "principle_icons",
+          "category": "component",
+          "severity": "advisory",
+          "message": "Icons must be optically sized alongside text.",
+          "rationale": "Symbolic illustrations representing concepts without relying entirely on text.",
+          "recommendation": "Users can guess icon function; icons align to pixel grid.",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "design_knowledge"
+            ]
+          }
+        },
+        {
+          "id": "layout_awaiting_dom",
+          "category": "layout",
+          "severity": "advisory",
+          "message": "Layout review awaiting DOM snapshot or visual insights",
+          "rationale": "Confirmed by 1 reviewer(s): layout_reviewer",
+          "recommendation": "",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "layout_reviewer"
+            ]
+          }
+        },
+        {
+          "id": "principle_responsive_design",
+          "category": "layout",
+          "severity": "advisory",
+          "message": "Use relative units (%, em, rem) not absolute pixels.",
+          "rationale": "Layouts scale and reflow across viewport sizes.",
+          "recommendation": "No overlapping content or horizontal scrolling (WCAG).",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "design_knowledge"
+            ]
+          }
+        }
+      ],
+      "reasoning_narrative": "For \"Improve mobile navigation for SaaS onboarding\", the review combined 2 objective and 14 subjective signals. Primary themes: layout, navigation, ux, color, tokens. Strengths: User task is explicit: Improve mobile navigation for SaaS onboarding; No blocking objective violations detected. Top concerns: Design tokens not supplied \u2014 cannot verify token compliance; Layout review awaiting DOM snapshot or visual insights; Color review awaiting Design Snapshot (colors section). Prioritized recommendations: Pass design_tokens or enable token snapshot from Consistency Intelligence; Users can guess icon function; icons align to pixel grid.; User on interior page knows location relative to site structure..",
+      "degraded": [
+        "design_lint_no_computed_styles",
+        "open_design_not_configured",
+        "microsoft_review_methodology",
+        "uicrit_methodology_heuristic",
+        "design_knowledge_structured",
+        "crit_rams_methodology_marker",
+        "reasoning_engine_heuristic",
+        "consensus_engine_v1"
+      ],
+      "error": null,
+      "input_meta": {
+        "user_task": "Improve mobile navigation for SaaS onboarding",
+        "scope": "page",
+        "preview_url": null,
+        "has_design_snapshot": false,
+        "has_visual_insights": false,
+        "has_computed_styles": false,
+        "snapshot_sections": []
+      },
+      "actionable_count": 1,
+      "generic_advisory_count": 6,
+      "confirmed_count": 10
+    },
+    {
+      "scenario_id": "fake_lint_only",
+      "source": "fixture",
+      "description": "Computed styles only \u2014 objective design_lint lane",
+      "passed": true,
+      "summary": "Design review for \"Audit button and text styles\": 18 consolidated findings. No blocking or major issues detected. Top priority: color uses raw value #ff0000 \u2014 Hardcoded color value detected on element; background uses raw value #00ff00 \u2014 Hardcoded color value detected on element; color uses raw value #333333 \u2014 Hardcoded color value detected on element",
+      "finding_count": 18,
+      "blocking_count": 0,
+      "major_count": 0,
+      "objective_count": 10,
+      "subjective_count": 13,
+      "consulted_reviewers": [
+        "layout_reviewer",
+        "typography_reviewer",
+        "color_reviewer",
+        "accessibility_reviewer",
+        "hierarchy_reviewer",
+        "navigation_reviewer",
+        "component_reviewer",
+        "ux_reviewer",
+        "motion_reviewer"
+      ],
+      "consulted_providers": [
+        "design_lint",
+        "open_design",
+        "microsoft_review",
+        "uicrit",
+        "design_knowledge",
+        "crit_rams"
+      ],
+      "top_findings": [
+        {
+          "id": "missing-color-token:button.cta",
+          "category": "color",
+          "severity": "minor",
+          "message": "Color not from design token",
+          "rationale": "Design Lint checkFills \u2014 layers should use paint/color styles",
+          "recommendation": "color uses raw value #ff0000 \u2014 Hardcoded color value detected on element; background uses raw value #00ff00 \u2014 Hardcoded color value detected on element; color uses raw value #333333 \u2014 Hardcoded color value detected on element",
+          "source": "consensus",
+          "pillar": null,
+          "selector": "button.cta",
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": "button.cta",
+          "metadata": {
+            "detail": "color uses raw value #ff0000",
+            "rule_id": "missing-color-token",
+            "consensus_sources": [
+              "design_lint"
+            ],
+            "merged_from": 5
+          }
+        },
+        {
+          "id": "off-scale-spacing:button.cta",
+          "category": "spacing",
+          "severity": "minor",
+          "message": "Spacing off design scale",
+          "rationale": "Ported from spacing rhythm validation in design systems",
+          "recommendation": "padding 11px off spacing scale \u2014 Non-standard spacing value in computed styles",
+          "source": "consensus",
+          "pillar": null,
+          "selector": "button.cta",
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": "button.cta",
+          "metadata": {
+            "detail": "padding 11px off spacing scale",
+            "rule_id": "off-scale-spacing",
+            "consensus_sources": [
+              "design_lint"
+            ]
+          }
+        },
+        {
+          "id": "ms_tokens_unknown",
+          "category": "tokens",
+          "severity": "minor",
+          "message": "Design tokens not supplied \u2014 cannot verify token compliance",
+          "rationale": "Microsoft workflow: verify design tokens are used",
+          "recommendation": "Pass design_tokens or enable token snapshot from Consistency Intelligence",
+          "source": "consensus",
+          "pillar": "quality_craft",
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "microsoft_review"
+            ]
+          }
+        },
+        {
+          "id": "missing-text-style:button.cta",
+          "category": "typography",
+          "severity": "minor",
+          "message": "Text without design token / style class",
+          "rationale": "Design Lint checks text layers for missing text styles (design tokens)",
+          "recommendation": "font-size 13px off typography scale \u2014 Computed font-size/family not mapped to project typography scale; font-size 15px off typography scale \u2014 Computed font-size/family not mapped to project typography scale",
+          "source": "consensus",
+          "pillar": null,
+          "selector": "button.cta",
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": "button.cta",
+          "metadata": {
+            "detail": "font-size 13px off typography scale",
+            "rule_id": "missing-text-style",
+            "consensus_sources": [
+              "design_lint"
+            ],
+            "merged_from": 2
+          }
+        },
+        {
+          "id": "checklist_color_0",
+          "category": "color",
+          "severity": "advisory",
+          "message": "Verify: Contrast ratio compliant on text and interactive elements",
+          "rationale": "color AI verification checklist",
+          "recommendation": "Contrast ratio compliant on text and interactive elements",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 0.4,
+          "confirmed": false,
+          "affected_element": null,
+          "metadata": {
+            "lane": "objective",
+            "checklist": "color",
+            "consensus_sources": [
+              "design_knowledge"
+            ]
+          }
+        }
+      ],
+      "reasoning_narrative": "For \"Audit button and text styles\", the review combined 10 objective and 13 subjective signals. Primary themes: color, typography, layout, ux, radius. Strengths: User task is explicit: Audit button and text styles; No blocking objective violations detected. Top concerns: Text without design token / style class; Color not from design token; Color not from design token. Prioritized recommendations: font-size 13px off typography scale \u2014 Computed font-size/family not mapped to project typography scale; color uses raw value #ff0000 \u2014 Hardcoded color value detected on element; background uses raw value #00ff00 \u2014 Hardcoded color value detected on element.",
+      "degraded": [
+        "design_lint_deterministic",
+        "open_design_not_configured",
+        "microsoft_review_methodology",
+        "uicrit_methodology_heuristic",
+        "design_knowledge_structured",
+        "crit_rams_methodology_marker",
+        "reasoning_engine_heuristic",
+        "consensus_engine_v1"
+      ],
+      "error": null,
+      "input_meta": {
+        "user_task": "Audit button and text styles",
+        "scope": "component",
+        "preview_url": null,
+        "has_design_snapshot": false,
+        "has_visual_insights": false,
+        "has_computed_styles": true,
+        "snapshot_sections": []
+      },
+      "actionable_count": 4,
+      "generic_advisory_count": 9,
+      "confirmed_count": 9
+    },
+    {
+      "scenario_id": "sandbox_login",
+      "source": "sandbox",
+      "description": "Live sandbox page /login",
+      "passed": true,
+      "summary": "Design review for \"Sign in to access protected dashboard\": 8 consolidated findings. No blocking or major issues detected. Top priority: vs Stripe Checkout: Typography families differ from reference",
+      "finding_count": 8,
+      "blocking_count": 0,
+      "major_count": 0,
+      "objective_count": 5,
+      "subjective_count": 4,
+      "consulted_reviewers": [
+        "layout_reviewer",
+        "typography_reviewer",
+        "color_reviewer",
+        "accessibility_reviewer",
+        "hierarchy_reviewer",
+        "navigation_reviewer",
+        "component_reviewer",
+        "ux_reviewer",
+        "motion_reviewer"
+      ],
+      "consulted_providers": [
+        "design_lint",
+        "open_design",
+        "microsoft_review",
+        "uicrit",
+        "design_knowledge",
+        "crit_rams"
+      ],
+      "top_findings": [
+        {
+          "id": "color_raw_values",
+          "category": "color",
+          "severity": "minor",
+          "message": "16 elements use non-token colors",
+          "rationale": "Confirmed by 1 reviewer(s): color_reviewer",
+          "recommendation": "Map colors to design tokens",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "color_reviewer"
+            ]
+          }
+        },
+        {
+          "id": "typography_snapshot_0",
+          "category": "typography",
+          "severity": "minor",
+          "message": "h1 font-size 22.4px",
+          "rationale": "Confirmed by 1 reviewer(s): typography_reviewer",
+          "recommendation": "",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "typography_reviewer"
+            ]
+          }
+        },
+        {
+          "id": "typography_snapshot_1",
+          "category": "typography",
+          "severity": "minor",
+          "message": "label font-size 13.6px",
+          "rationale": "Confirmed by 1 reviewer(s): typography_reviewer",
+          "recommendation": "",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "typography_reviewer"
+            ],
+            "merged_from": 2
+          }
+        },
+        {
+          "id": "typography_off_scale",
+          "category": "typography",
+          "severity": "minor",
+          "message": "Type scale includes sizes off project typography grid",
+          "rationale": "Confirmed by 1 reviewer(s): typography_reviewer",
+          "recommendation": "Normalize font sizes to design token scale",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "typography_reviewer"
+            ]
+          }
+        },
+        {
+          "id": "pattern_dashboard_kpi_row",
+          "category": "dashboard",
+          "severity": "advisory",
+          "message": "Lead with KPI summary row; defer detail tables below fold",
+          "rationale": "Confirmed by 1 reviewer(s): design_knowledge",
+          "recommendation": "",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 0.6,
+          "confirmed": false,
+          "affected_element": null,
+          "metadata": {
+            "pattern": "dashboard_kpi_row",
+            "consensus_sources": [
+              "design_knowledge"
+            ]
+          }
+        }
+      ],
+      "reasoning_narrative": "For \"Sign in to access protected dashboard\", the review combined 5 objective and 4 subjective signals. Primary themes: typography, color, ux, hierarchy, saas. Strengths: User task is explicit: Sign in to access protected dashboard; No blocking objective violations detected. Top concerns: h1 font-size 22.4px; label font-size 13.6px; label font-size 13.6px. Prioritized recommendations: Normalize font sizes to design token scale; Map colors to design tokens; Deduce system health within 5 seconds of load..",
+      "degraded": [
+        "design_lint_error:IndexError",
+        "open_design_not_configured",
+        "microsoft_review_methodology",
+        "uicrit_methodology_heuristic",
+        "design_knowledge_structured",
+        "crit_rams_methodology_marker",
+        "reasoning_engine_heuristic",
+        "consensus_engine_v1"
+      ],
+      "error": null,
+      "input_meta": {
+        "user_task": "Sign in to access protected dashboard",
+        "scope": "page",
+        "preview_url": "http://localhost:5173/login",
+        "has_design_snapshot": true,
+        "has_visual_insights": true,
+        "has_computed_styles": true,
+        "snapshot_sections": [
+          "url",
+          "captured_at",
+          "scan_id",
+          "typography",
+          "spacing",
+          "colors",
+          "layout",
+          "grid",
+          "hierarchy",
+          "components",
+          "motion",
+          "accessibility",
+          "design_tokens",
+          "provenance",
+          "degraded"
+        ]
+      },
+      "actionable_count": 2,
+      "generic_advisory_count": 0,
+      "confirmed_count": 6
+    },
+    {
+      "scenario_id": "sandbox_checkout_shipping",
+      "source": "sandbox",
+      "description": "Live sandbox page /shop/checkout/shipping",
+      "passed": true,
+      "summary": "Design review for \"Complete checkout shipping step\": 12 consolidated findings. No blocking or major issues detected. Top priority: vs Stripe Checkout: Typography families differ from reference",
+      "finding_count": 12,
+      "blocking_count": 0,
+      "major_count": 0,
+      "objective_count": 10,
+      "subjective_count": 7,
+      "consulted_reviewers": [
+        "layout_reviewer",
+        "typography_reviewer",
+        "color_reviewer",
+        "accessibility_reviewer",
+        "hierarchy_reviewer",
+        "navigation_reviewer",
+        "component_reviewer",
+        "ux_reviewer",
+        "motion_reviewer"
+      ],
+      "consulted_providers": [
+        "design_lint",
+        "open_design",
+        "microsoft_review",
+        "uicrit",
+        "design_knowledge",
+        "crit_rams"
+      ],
+      "top_findings": [
+        {
+          "id": "color_raw_values",
+          "category": "color",
+          "severity": "minor",
+          "message": "25 elements use non-token colors",
+          "rationale": "Confirmed by 1 reviewer(s): color_reviewer",
+          "recommendation": "Map colors to design tokens",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "color_reviewer"
+            ]
+          }
+        },
+        {
+          "id": "typography_snapshot_0",
+          "category": "typography",
+          "severity": "minor",
+          "message": "h1 font-size 32.0px",
+          "rationale": "Confirmed by 1 reviewer(s): typography_reviewer",
+          "recommendation": "",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "typography_reviewer"
+            ]
+          }
+        },
+        {
+          "id": "typography_snapshot_1",
+          "category": "typography",
+          "severity": "minor",
+          "message": "span font-size 13.6px",
+          "rationale": "Confirmed by 1 reviewer(s): typography_reviewer",
+          "recommendation": "",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "typography_reviewer"
+            ],
+            "merged_from": 4
+          }
+        },
+        {
+          "id": "typography_snapshot_5",
+          "category": "typography",
+          "severity": "minor",
+          "message": "a font-size 13.6px",
+          "rationale": "Confirmed by 1 reviewer(s): typography_reviewer",
+          "recommendation": "",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "typography_reviewer"
+            ],
+            "merged_from": 3
+          }
+        },
+        {
+          "id": "typography_off_scale",
+          "category": "typography",
+          "severity": "minor",
+          "message": "Type scale includes sizes off project typography grid",
+          "rationale": "Confirmed by 1 reviewer(s): typography_reviewer",
+          "recommendation": "Normalize font sizes to design token scale",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "typography_reviewer"
+            ]
+          }
+        }
+      ],
+      "reasoning_narrative": "For \"Complete checkout shipping step\", the review combined 10 objective and 7 subjective signals. Primary themes: typography, ux, usability, color, ecommerce. Strengths: User task is explicit: Complete checkout shipping step; No blocking objective violations detected. Top concerns: h1 font-size 32.0px; span font-size 13.6px; span font-size 13.6px. Prioritized recommendations: Normalize font sizes to design token scale; Map colors to design tokens; First-time users complete the pattern without instructions..",
+      "degraded": [
+        "design_lint_error:IndexError",
+        "open_design_not_configured",
+        "microsoft_review_methodology",
+        "uicrit_methodology_heuristic",
+        "design_knowledge_structured",
+        "crit_rams_methodology_marker",
+        "reasoning_engine_heuristic",
+        "consensus_engine_v1"
+      ],
+      "error": null,
+      "input_meta": {
+        "user_task": "Complete checkout shipping step",
+        "scope": "flow",
+        "preview_url": "http://localhost:5173/shop/cart",
+        "has_design_snapshot": true,
+        "has_visual_insights": true,
+        "has_computed_styles": true,
+        "snapshot_sections": [
+          "url",
+          "captured_at",
+          "scan_id",
+          "typography",
+          "spacing",
+          "colors",
+          "layout",
+          "grid",
+          "hierarchy",
+          "components",
+          "motion",
+          "accessibility",
+          "design_tokens",
+          "provenance",
+          "degraded"
+        ]
+      },
+      "actionable_count": 2,
+      "generic_advisory_count": 0,
+      "confirmed_count": 11
+    },
+    {
+      "scenario_id": "sandbox_validation_form",
+      "source": "sandbox",
+      "description": "Live sandbox page /forms/validation",
+      "passed": true,
+      "summary": "Design review for \"Submit validation form with required fields\": 12 consolidated findings. No blocking or major issues detected. Top priority: vs Stripe Checkout: Typography families differ from reference",
+      "finding_count": 12,
+      "blocking_count": 0,
+      "major_count": 0,
+      "objective_count": 12,
+      "subjective_count": 5,
+      "consulted_reviewers": [
+        "layout_reviewer",
+        "typography_reviewer",
+        "color_reviewer",
+        "accessibility_reviewer",
+        "hierarchy_reviewer",
+        "navigation_reviewer",
+        "component_reviewer",
+        "ux_reviewer",
+        "motion_reviewer"
+      ],
+      "consulted_providers": [
+        "design_lint",
+        "open_design",
+        "microsoft_review",
+        "uicrit",
+        "design_knowledge",
+        "crit_rams"
+      ],
+      "top_findings": [
+        {
+          "id": "color_raw_values",
+          "category": "color",
+          "severity": "minor",
+          "message": "46 elements use non-token colors",
+          "rationale": "Confirmed by 1 reviewer(s): color_reviewer",
+          "recommendation": "Map colors to design tokens",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "color_reviewer"
+            ]
+          }
+        },
+        {
+          "id": "typography_snapshot_0",
+          "category": "typography",
+          "severity": "minor",
+          "message": "h1 font-size 32.0px",
+          "rationale": "Confirmed by 1 reviewer(s): typography_reviewer",
+          "recommendation": "",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "typography_reviewer"
+            ]
+          }
+        },
+        {
+          "id": "typography_snapshot_1",
+          "category": "typography",
+          "severity": "minor",
+          "message": "h3 font-size 18.72px",
+          "rationale": "Confirmed by 1 reviewer(s): typography_reviewer",
+          "recommendation": "",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "typography_reviewer"
+            ]
+          }
+        },
+        {
+          "id": "typography_snapshot_2",
+          "category": "typography",
+          "severity": "minor",
+          "message": "span font-size 13.6px",
+          "rationale": "Confirmed by 1 reviewer(s): typography_reviewer",
+          "recommendation": "",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "typography_reviewer"
+            ],
+            "merged_from": 4
+          }
+        },
+        {
+          "id": "typography_snapshot_6",
+          "category": "typography",
+          "severity": "minor",
+          "message": "a font-size 13.6px",
+          "rationale": "Confirmed by 1 reviewer(s): typography_reviewer",
+          "recommendation": "",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "typography_reviewer"
+            ],
+            "merged_from": 3
+          }
+        }
+      ],
+      "reasoning_narrative": "For \"Submit validation form with required fields\", the review combined 12 objective and 5 subjective signals. Primary themes: typography, usability, ux, color. Strengths: User task is explicit: Submit validation form with required fields; No blocking objective violations detected. Top concerns: h1 font-size 32.0px; h3 font-size 18.72px; span font-size 13.6px. Prioritized recommendations: Normalize font sizes to design token scale; Map colors to design tokens; Errors adjacent to inputs; full keyboard navigation via Tab..",
+      "degraded": [
+        "design_lint_error:IndexError",
+        "open_design_not_configured",
+        "microsoft_review_methodology",
+        "uicrit_methodology_heuristic",
+        "design_knowledge_structured",
+        "crit_rams_methodology_marker",
+        "reasoning_engine_heuristic",
+        "consensus_engine_v1"
+      ],
+      "error": null,
+      "input_meta": {
+        "user_task": "Submit validation form with required fields",
+        "scope": "flow",
+        "preview_url": "http://localhost:5173/forms/validation",
+        "has_design_snapshot": true,
+        "has_visual_insights": true,
+        "has_computed_styles": true,
+        "snapshot_sections": [
+          "url",
+          "captured_at",
+          "scan_id",
+          "typography",
+          "spacing",
+          "colors",
+          "layout",
+          "grid",
+          "hierarchy",
+          "components",
+          "motion",
+          "accessibility",
+          "design_tokens",
+          "provenance",
+          "degraded"
+        ]
+      },
+      "actionable_count": 2,
+      "generic_advisory_count": 0,
+      "confirmed_count": 12
+    },
+    {
+      "scenario_id": "sandbox_home",
+      "source": "sandbox",
+      "description": "Live sandbox page /",
+      "passed": true,
+      "summary": "Design review for \"Navigate home page and evaluate layout hierarchy\": 7 consolidated findings. No blocking or major issues detected. Top priority: vs Stripe Checkout: Typography families differ from reference",
+      "finding_count": 7,
+      "blocking_count": 0,
+      "major_count": 0,
+      "objective_count": 9,
+      "subjective_count": 2,
+      "consulted_reviewers": [
+        "layout_reviewer",
+        "typography_reviewer",
+        "color_reviewer",
+        "accessibility_reviewer",
+        "hierarchy_reviewer",
+        "navigation_reviewer",
+        "component_reviewer",
+        "ux_reviewer",
+        "motion_reviewer"
+      ],
+      "consulted_providers": [
+        "design_lint",
+        "open_design",
+        "microsoft_review",
+        "uicrit",
+        "design_knowledge",
+        "crit_rams"
+      ],
+      "top_findings": [
+        {
+          "id": "color_raw_values",
+          "category": "color",
+          "severity": "minor",
+          "message": "37 elements use non-token colors",
+          "rationale": "Confirmed by 1 reviewer(s): color_reviewer",
+          "recommendation": "Map colors to design tokens",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "color_reviewer"
+            ]
+          }
+        },
+        {
+          "id": "typography_snapshot_0",
+          "category": "typography",
+          "severity": "minor",
+          "message": "h1 font-size 32.0px",
+          "rationale": "Confirmed by 1 reviewer(s): typography_reviewer",
+          "recommendation": "",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "typography_reviewer"
+            ]
+          }
+        },
+        {
+          "id": "typography_snapshot_1",
+          "category": "typography",
+          "severity": "minor",
+          "message": "h3 font-size 18.72px",
+          "rationale": "Confirmed by 1 reviewer(s): typography_reviewer",
+          "recommendation": "",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "typography_reviewer"
+            ],
+            "merged_from": 5
+          }
+        },
+        {
+          "id": "typography_snapshot_6",
+          "category": "typography",
+          "severity": "minor",
+          "message": "a font-size 13.6px",
+          "rationale": "Confirmed by 1 reviewer(s): typography_reviewer",
+          "recommendation": "",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "typography_reviewer"
+            ]
+          }
+        },
+        {
+          "id": "typography_off_scale",
+          "category": "typography",
+          "severity": "minor",
+          "message": "Type scale includes sizes off project typography grid",
+          "rationale": "Confirmed by 1 reviewer(s): typography_reviewer",
+          "recommendation": "Normalize font sizes to design token scale",
+          "source": "consensus",
+          "pillar": null,
+          "selector": null,
+          "region": null,
+          "evidence": "",
+          "confidence": 1.0,
+          "confirmed": true,
+          "affected_element": null,
+          "metadata": {
+            "consensus_sources": [
+              "typography_reviewer"
+            ]
+          }
+        }
+      ],
+      "reasoning_narrative": "For \"Navigate home page and evaluate layout hierarchy\", the review combined 9 objective and 2 subjective signals. Primary themes: typography, color, ux, navigation. Strengths: User task is explicit: Navigate home page and evaluate layout hierarchy; No blocking objective violations detected. Top concerns: h1 font-size 32.0px; h3 font-size 18.72px; h3 font-size 18.72px. Prioritized recommendations: Normalize font sizes to design token scale; Map colors to design tokens; User on interior page knows location relative to site structure..",
+      "degraded": [
+        "design_lint_error:IndexError",
+        "open_design_not_configured",
+        "microsoft_review_methodology",
+        "uicrit_methodology_heuristic",
+        "design_knowledge_structured",
+        "crit_rams_methodology_marker",
+        "reasoning_engine_heuristic",
+        "consensus_engine_v1"
+      ],
+      "error": null,
+      "input_meta": {
+        "user_task": "Navigate home page and evaluate layout hierarchy",
+        "scope": "page",
+        "preview_url": "http://localhost:5173/",
+        "has_design_snapshot": true,
+        "has_visual_insights": true,
+        "has_computed_styles": true,
+        "snapshot_sections": [
+          "url",
+          "captured_at",
+          "scan_id",
+          "typography",
+          "spacing",
+          "colors",
+          "layout",
+          "grid",
+          "hierarchy",
+          "components",
+          "motion",
+          "accessibility",
+          "design_tokens",
+          "provenance",
+          "degraded"
+        ]
+      },
+      "actionable_count": 2,
+      "generic_advisory_count": 0,
+      "confirmed_count": 7
+    }
+  ]
+}

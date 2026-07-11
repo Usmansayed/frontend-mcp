@@ -237,6 +237,47 @@ Parse query, build or accept a search plan, run multi-pass parallel provider sea
 
 **Note:** Phase 1 merges provider-local scores only — Design Sense / Consistency ranking runs in `perception_select_component_foundation`.
 
+## Inspiration Intelligence
+
+Read MCP resource `perception://inspiration-guide` before calling these tools.
+
+### `perception_inspiration_discover`
+
+Ranked discovery across gallery providers (Dribbble → Land-book) with early stop. Fast — no capture or blobs.
+
+| Param | Type | Default |
+|-------|------|---------|
+| `query` | string | **required** (e.g. `saas landing page`) |
+| `max_candidates` | integer | 12 |
+| `provider_preference` | string | optional provider id |
+
+**Returns:** `data.inspiration_discovery` (candidates, search_plan, degraded). `agent_summary.top_hits` has url + preview_ref.
+
+### `perception_inspiration_collect`
+
+Full URL-first collection with optional ephemeral medium JPEG blobs for agent vision. Uses headed browser where required.
+
+| Param | Type | Default |
+|-------|------|---------|
+| `query` | string | **required** |
+| `per_provider` | integer | 4 |
+| `provider_ids` | string[] | optional subset |
+| `output_dir` | string | optional manifest path |
+| `materialize_blobs` | bool | `true` |
+| `blob_session_id` | string | reuse session |
+| `download_images` | bool | `false` (permanent download) |
+
+**Returns:** `data.inspiration_collection` manifest with `hits[]` (`agent_view_url`, `inspiration_blob`, `blob_session_id`).
+
+### `perception_inspiration_session_end`
+
+Delete ephemeral blobs when design work is complete.
+
+| Param | Type | Default |
+|-------|------|---------|
+| `session_id` | string | blob session id from collect |
+| `cleanup_expired` | bool | `false` — set true to TTL-clean all expired sessions |
+
 ### `perception_select_component_foundation`
 
 Search + parallel cross-module guidance → choose best **foundation** (not perfect component).

@@ -16,6 +16,7 @@ from navigation.mcp.handlers import (
     handle_detect_framework,
     handle_full_diagnosis,
     handle_framework_docs,
+    handle_inspiration_discover,
     handle_search_components,
     handle_code_context,
     handle_console_clear,
@@ -459,6 +460,55 @@ async def main() -> int:
             "ok": comp_search["ok"] or search_graceful,
             "total": len(candidates),
         }
+
+        from navigation.mcp.resources import read_resource
+
+        _mime, guide_payload, _blob = read_resource("perception://inspiration-guide")
+        report["tests"]["inspiration_guide_resource"] = {
+            "ok": bool(str(guide_payload).strip()),
+        }
+
+        insp_discover = await handle_inspiration_discover(
+            {"query": "saas dashboard ui", "max_candidates": 3}
+        )
+        insp_data = (insp_discover.get("data") or {}).get("inspiration_discovery") or {}
+        insp_candidates = insp_data.get("candidates") or []
+        insp_degraded = list(insp_discover.get("degraded") or insp_data.get("degraded") or [])
+        insp_graceful = bool(insp_degraded) or bool(insp_candidates)
+        report["tests"]["inspiration_discover"] = {
+            "ok": insp_discover["ok"] or insp_graceful,
+            "total": len(insp_candidates),
+        }
+
+        from navigation.mcp.handlers import (
+            handle_resource_icon_search,
+            handle_resource_license_check,
+            handle_resource_search,
+        )
+
+        _mime2, resource_guide, _blob2 = read_resource("perception://resource-guide")
+        report["tests"]["resource_guide_resource"] = {"ok": bool(str(resource_guide).strip())}
+
+        res_search = await handle_resource_search(
+            {"query": "analytics icon", "categories": ["icon"], "icon_family": "lucide", "max_results": 3}
+        )
+        res_data = (res_search.get("data") or {}).get("resource_recommendation") or {}
+        res_assets = res_data.get("assets") or []
+        res_degraded = list(res_search.get("degraded") or res_data.get("degraded") or [])
+        report["tests"]["resource_search"] = {
+            "ok": res_search["ok"] or bool(res_degraded) or bool(res_assets),
+            "total": len(res_assets),
+            "has_selection": bool(res_data.get("selection")),
+        }
+
+        icon_search = await handle_resource_icon_search({"query": "settings", "max_results": 2})
+        report["tests"]["resource_icon_search"] = {"ok": icon_search["ok"]}
+
+        if res_assets:
+            lic = await handle_resource_license_check({"asset": res_assets[0]})
+            report["tests"]["resource_license_check"] = {"ok": lic["ok"]}
+        else:
+            report["tests"]["resource_license_check"] = {"ok": True}
 
         end = await handle_session_end(store, {"session_id": sid})
         report["tests"]["session_end"] = {"ok": end["ok"]}

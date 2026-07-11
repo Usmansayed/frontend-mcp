@@ -4,6 +4,7 @@ from __future__ import annotations
 import base64
 import json
 from pathlib import Path
+from typing import Any
 
 from navigation.core.scan_registry import ScanRegistry
 
@@ -63,6 +64,18 @@ def list_resources(scans: ScanRegistry | None = None) -> list[dict[str, str]]:
 			'mimeType': 'text/markdown',
 		},
 		{
+			'uri': 'perception://inspiration-guide',
+			'name': 'INSPIRATION_AGENT_GUIDE',
+			'description': 'Inspiration Intelligence — per-site navigation, preview URLs, anti-bot (read before inspiration tools)',
+			'mimeType': 'text/markdown',
+		},
+		{
+			'uri': 'perception://resource-guide',
+			'name': 'RESOURCE_AGENT_GUIDE',
+			'description': 'Resource Intelligence — icons, avatars, license rules, ephemeral preview blobs (read before resource tools)',
+			'mimeType': 'text/markdown',
+		},
+		{
 			'uri': 'perception://eval/validation-form',
 			'name': 'Validation Form Eval',
 			'description': 'M3 eval scenario — complete using AGENT_GUIDE §4 form playbook',
@@ -113,6 +126,32 @@ def read_resource(uri: str, scans: ScanRegistry | None = None) -> tuple[str, str
 		path = PROJECT_ROOT / 'AGENT_GUIDE.md'
 		if not path.is_file():
 			raise FileNotFoundError(f'AGENT_GUIDE.md not found at {path}')
+		return 'text/markdown', path.read_text(encoding='utf-8'), False
+
+	if uri == 'perception://inspiration-guide':
+		path = (
+			PROJECT_ROOT
+			/ 'src'
+			/ 'navigation'
+			/ 'inspiration_intelligence'
+			/ 'docs'
+			/ 'INSPIRATION_AGENT_GUIDE.md'
+		)
+		if not path.is_file():
+			raise FileNotFoundError(f'INSPIRATION_AGENT_GUIDE.md not found at {path}')
+		return 'text/markdown', path.read_text(encoding='utf-8'), False
+
+	if uri == 'perception://resource-guide':
+		path = (
+			PROJECT_ROOT
+			/ 'src'
+			/ 'navigation'
+			/ 'resource_intelligence'
+			/ 'docs'
+			/ 'RESOURCE_AGENT_GUIDE.md'
+		)
+		if not path.is_file():
+			raise FileNotFoundError(f'RESOURCE_AGENT_GUIDE.md not found at {path}')
 		return 'text/markdown', path.read_text(encoding='utf-8'), False
 
 	if uri == 'perception://eval/validation-form':

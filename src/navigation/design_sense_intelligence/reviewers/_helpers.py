@@ -23,7 +23,14 @@ def findings_from_visual_insights(
 				category=category,
 				severity=str(issue.get('severity', 'advisory')),
 				message=str(issue.get('detail', kind)),
+				rationale=f'Visual insight detected {kind}',
+				recommendation=str(issue.get('recommendation', '')),
 				source=source,
+				selector=issue.get('selector'),
+				affected_element=issue.get('selector') or issue.get('tag'),
+				evidence=f'visual_insight kind={kind} detail={issue.get("detail", "")}',
+				confidence=0.92 if issue.get('severity') == 'blocking' else 0.78,
+				confirmed=True,
 			)
 		)
 	return out

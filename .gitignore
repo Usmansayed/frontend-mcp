@@ -6,6 +6,12 @@ dist/
 build/
 *.egg-info/
 artifacts/
+.cache/inspiration_blobs/
+.cache/resource_blobs/
+.cache/resource_sessions.json
+.cache/resource_icon_family.json
+.cache/resource_graph.json
+.cache/inspiration_sessions.json
 node_modules/
 sandbox/node_modules/
 sandbox/dist/

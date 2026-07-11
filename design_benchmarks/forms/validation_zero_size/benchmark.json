@@ -1,0 +1,27 @@
+{
+  "id": "forms/validation_zero_size",
+  "category": "forms",
+  "description": "Validation form with zero-size submit control",
+  "user_task": "Fill validation form and submit with invalid data first",
+  "scope": "flow",
+  "fixture_ref": "fake_validation_form",
+  "expected_score": {
+    "passed": false,
+    "min_blocking": 1
+  },
+  "gold_findings": [
+    {
+      "id": "zero_size_submit",
+      "category": "accessibility",
+      "severity": "blocking",
+      "match": ["zero_size", "submit"],
+      "required": true
+    }
+  ],
+  "gold_forbidden": [],
+  "gold_review": {
+    "passed": false,
+    "summary": "Submit control has zero visible size — blocking accessibility and usability issue.",
+    "top_priorities": ["Ensure submit button has visible dimensions and accessible name"]
+  }
+}

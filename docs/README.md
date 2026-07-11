@@ -7,7 +7,7 @@ Platform docs for the ultimate frontend MCP for AI coding agents.
 | Doc | Description |
 |-----|-------------|
 | [architecture.md](./architecture.md) | System design, intelligence modules |
-| [INTELLIGENCE_MODULES.md](./INTELLIGENCE_MODULES.md) | Eight-module platform map |
+| [INTELLIGENCE_MODULES.md](./INTELLIGENCE_MODULES.md) | Intelligence module platform map |
 | [INTEGRATION_PLAN.md](./INTEGRATION_PLAN.md) | BrowserTools study → our reimplementation plan |
 | [roadmap.md](./roadmap.md) | Shipped, in-progress, planned versions |
 | [PRODUCT_STORY.md](./PRODUCT_STORY.md) | Landing page copy, positioning, feature narrative |
@@ -31,6 +31,9 @@ Platform docs for the ultimate frontend MCP for AI coding agents.
 | [features/component_intelligence_architecture.md](./features/component_intelligence_architecture.md) | 🚧 full orchestrator pipeline |
 | [features/design_sense_intelligence.md](./features/design_sense_intelligence.md) | 🚧 review orchestration |
 | [features/consistency_intelligence.md](./features/consistency_intelligence.md) | 📋 scaffold |
+| [features/inspiration_intelligence.md](./features/inspiration_intelligence.md) | ✅ public gallery inspiration |
+| [features/resource_intelligence.md](./features/resource_intelligence.md) | 📋 research & architecture |
+| [features/figma_intelligence.md](./features/figma_intelligence.md) | 🚧 user Figma account scaffold |
 | [features/comparison_browser_tools.md](./features/comparison_browser_tools.md) | Reference vs us |
 
 ## Agent playbooks

@@ -116,5 +116,9 @@ def _finding(meta, el: StyleSnapshot, detail: str) -> ReviewFinding:
 		recommendation=f'{detail} — {meta.when_triggered}',
 		source='design_lint',
 		selector=el.selector,
+		affected_element=el.selector,
+		evidence=f'{el.selector} {detail}',
+		confidence=0.85,
+		confirmed=True,
 		metadata={'detail': detail, 'rule_id': meta.id},
 	)

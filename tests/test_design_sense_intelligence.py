@@ -65,6 +65,21 @@ async def test_service_review_facade() -> None:
 	assert report.findings or report.degraded
 
 
+async def test_knowledge_from_gemini_research() -> None:
+	from navigation.design_sense_intelligence.knowledge import KnowledgeService
+	from navigation.design_sense_intelligence.knowledge.catalog import KNOWLEDGE_TOPICS
+	from navigation.design_sense_intelligence.knowledge.epistemology import NIELSEN_HEURISTICS
+
+	assert len(KNOWLEDGE_TOPICS) >= 25
+	assert len(NIELSEN_HEURISTICS) == 10
+
+	ks = KnowledgeService()
+	contrib = await ks.contribute(ReviewRequest(user_task='Complete checkout on ecommerce site'))
+	assert any('catalog:' in n or 'topic:' in n or 'principle:' in n for n in contrib.notes)
+	assert 'design_knowledge_structured' in contrib.degraded
+	assert any('checkout' in n or 'ecommerce' in n for n in contrib.notes)
+
+
 def main() -> int:
 	test_design_lint_rules_on_computed_styles()
 	asyncio.run(test_coordinator_runs_specialists_and_providers())

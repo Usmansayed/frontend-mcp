@@ -1,0 +1,48 @@
+{
+  "id": "ecommerce/checkout_overflow",
+  "category": "ecommerce",
+  "description": "Checkout with blocking horizontal overflow and off-scale styles",
+  "user_task": "Complete checkout and pay for cart items",
+  "scope": "flow",
+  "fixture_ref": "fake_checkout_overflow",
+  "expected_score": {
+    "passed": false,
+    "min_blocking": 1,
+    "max_findings": 40
+  },
+  "gold_findings": [
+    {
+      "id": "blocking_horizontal_overflow",
+      "category": "layout",
+      "severity": "blocking",
+      "match": ["horizontal_overflow", "scrollwidth"],
+      "required": true
+    },
+    {
+      "id": "raw_color_values",
+      "category": "color",
+      "severity": "minor",
+      "match": ["token", "raw", "#ff0000"],
+      "required": true
+    },
+    {
+      "id": "off_scale_spacing",
+      "category": "spacing",
+      "severity": "minor",
+      "match": ["spacing", "scale", "11px"],
+      "required": false
+    }
+  ],
+  "gold_forbidden": [
+    { "match": ["verify: contrast"], "description": "generic contrast checklist without measurement" }
+  ],
+  "gold_review": {
+    "passed": false,
+    "summary": "Checkout flow has blocking horizontal overflow. Fix layout before polish. Raw colors and off-scale spacing on CTA.",
+    "top_priorities": [
+      "Fix horizontal overflow — scrollWidth exceeds viewport",
+      "Replace raw hex colors on button with design tokens",
+      "Normalize CTA padding to spacing scale"
+    ]
+  }
+}

@@ -10,28 +10,19 @@ class UXReviewer:
 	lane = 'subjective'
 
 	async def review(self, request: ReviewRequest) -> list[ReviewFinding]:
-		findings: list[ReviewFinding] = []
-		if request.user_task:
-			findings.append(
-				ReviewFinding(
-					id='ux_task_identified',
-					category='ux',
-					severity=FindingSeverity.ADVISORY.value,
-					message=f'Primary user task: {request.user_task}',
-					rationale='Frictionless pillar — task clarity established',
-					source=self.name,
-					pillar=QualityPillar.FRICTIONLESS.value,
-				)
-			)
-		else:
-			findings.append(
+		if not request.user_task:
+			return [
 				ReviewFinding(
 					id='ux_missing_task',
 					category='ux',
 					severity=FindingSeverity.MAJOR.value,
 					message='Define primary user task before UX critique',
+					rationale='Cannot evaluate task completion without a stated user goal',
+					recommendation='Provide user_task in the review request',
 					source=self.name,
 					pillar=QualityPillar.FRICTIONLESS.value,
+					confidence=0.7,
+					confirmed=True,
 				)
-			)
-		return findings
+			]
+		return []

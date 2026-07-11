@@ -1,0 +1,29 @@
+{
+  "id": "landing/minimal_task_only",
+  "category": "landing",
+  "description": "Task-only request without DOM — knowledge patterns only",
+  "user_task": "Improve mobile navigation for SaaS onboarding",
+  "scope": "page",
+  "fixture_ref": "fake_minimal_task",
+  "expected_score": {
+    "passed": true,
+    "min_blocking": 0
+  },
+  "gold_findings": [
+    {
+      "id": "saas_onboarding_pattern",
+      "category": "ux",
+      "severity": "advisory",
+      "match": ["onboard", "saas", "navigation", "mobile"],
+      "required": false
+    }
+  ],
+  "gold_forbidden": [
+    { "match": ["horizontal_overflow", "zero_size"], "description": "hallucinated blocking without DOM" }
+  ],
+  "gold_review": {
+    "passed": true,
+    "summary": "Without page snapshot, review should surface task-relevant patterns only — no fabricated blocking issues.",
+    "top_priorities": ["Apply SaaS onboarding navigation patterns"]
+  }
+}

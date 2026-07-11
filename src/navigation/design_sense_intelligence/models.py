@@ -70,6 +70,10 @@ class ReviewFinding:
 	pillar: str | None = None
 	selector: str | None = None
 	region: ReviewRegion | None = None
+	evidence: str = ''
+	confidence: float = 1.0
+	confirmed: bool = True
+	affected_element: str | None = None
 	metadata: dict[str, Any] = field(default_factory=dict)
 
 	def to_dict(self) -> dict[str, Any]:
@@ -84,6 +88,10 @@ class ReviewFinding:
 			'pillar': self.pillar,
 			'selector': self.selector,
 			'region': self.region.to_dict() if self.region else None,
+			'evidence': self.evidence,
+			'confidence': self.confidence,
+			'confirmed': self.confirmed,
+			'affected_element': self.affected_element,
 			'metadata': dict(self.metadata),
 		}
 
@@ -128,13 +136,14 @@ class ProviderContribution:
 
 @dataclass(slots=True)
 class ReviewRequest:
-	"""Inputs for a design review — future fields reserved for browser/DOM/token data."""
+	"""Inputs for design review — prefers structured DesignSnapshot over raw browser data."""
 
 	repo_root: str = ''
 	preview_url: str | None = None
 	scope: str = ReviewScope.PAGE.value
 	user_task: str = ''
 	region: ReviewRegion | None = None
+	design_snapshot: Any | None = None  # DesignSnapshot — avoid circular import in type hint
 	dom_snapshot: dict[str, Any] | None = None
 	computed_styles: list[dict[str, Any]] | None = None
 	html_excerpt: str | None = None
@@ -146,6 +155,8 @@ class ReviewRequest:
 	open_design_project: str | None = None
 	scan_id: str | None = None
 	visual_insights: dict[str, Any] | None = None
+	project_design_knowledge: dict[str, Any] | None = None
+	_legacy_snapshot_dict: dict[str, Any] | None = None
 
 	def to_dict(self) -> dict[str, Any]:
 		return {
@@ -154,12 +165,14 @@ class ReviewRequest:
 			'scope': self.scope,
 			'user_task': self.user_task,
 			'region': self.region.to_dict() if self.region else None,
+			'has_design_snapshot': self.design_snapshot is not None,
 			'has_dom_snapshot': bool(self.dom_snapshot),
 			'has_computed_styles': bool(self.computed_styles),
 			'screenshot_ref': self.screenshot_ref,
 			'framework': self.framework,
 			'open_design_project': self.open_design_project,
 			'scan_id': self.scan_id,
+			'has_project_design_knowledge': bool(self.project_design_knowledge),
 		}
 
 
@@ -208,6 +221,8 @@ class DesignReviewReport:
 	scores: list[DimensionScore] = field(default_factory=list)
 	pillars: dict[str, list[str]] = field(default_factory=dict)
 	reasoning: ReasoningResult | None = None
+	consensus: Any | None = None  # ConsensusResult
+	reference_comparisons: list[dict[str, Any]] = field(default_factory=list)
 	consulted_providers: list[str] = field(default_factory=list)
 	consulted_reviewers: list[str] = field(default_factory=list)
 	workflow_phases: list[str] = field(default_factory=list)
@@ -223,6 +238,8 @@ class DesignReviewReport:
 			'scores': [s.to_dict() for s in self.scores],
 			'pillars': {k: list(v) for k, v in self.pillars.items()},
 			'reasoning': self.reasoning.to_dict() if self.reasoning else None,
+			'consensus': self.consensus.to_dict() if self.consensus and hasattr(self.consensus, 'to_dict') else None,
+			'reference_comparisons': list(self.reference_comparisons),
 			'consulted_providers': list(self.consulted_providers),
 			'consulted_reviewers': list(self.consulted_reviewers),
 			'workflow_phases': list(self.workflow_phases),

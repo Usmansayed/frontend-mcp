@@ -1,0 +1,22 @@
+{
+  "id": "sandbox/login",
+  "category": "sandbox",
+  "description": "Live sandbox /login — should pass, no blocking",
+  "user_task": "Sign in to access protected dashboard",
+  "scope": "page",
+  "sandbox_path": "/login",
+  "expected_score": {
+    "passed": true,
+    "min_blocking": 0,
+    "max_blocking": 0
+  },
+  "gold_findings": [],
+  "gold_forbidden": [
+    { "match": ["horizontal_overflow", "zero_size_clickable"], "description": "no blocking on clean login" }
+  ],
+  "gold_review": {
+    "passed": true,
+    "summary": "Sandbox login is functional. Minor token/typography notes acceptable; no blocking.",
+    "top_priorities": []
+  }
+}

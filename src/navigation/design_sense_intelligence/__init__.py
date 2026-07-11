@@ -6,6 +6,10 @@ from navigation.design_sense_intelligence.models import (
 	ReviewRequest,
 )
 from navigation.design_sense_intelligence.service import DesignSenseService
+from navigation.design_sense_intelligence.snapshot_access import (
+	enrich_request,
+	review_request_from_snapshot,
+)
 
 __all__ = [
 	'DesignReviewReport',
@@ -13,4 +17,6 @@ __all__ = [
 	'DimensionScore',
 	'ReviewFinding',
 	'ReviewRequest',
+	'enrich_request',
+	'review_request_from_snapshot',
 ]

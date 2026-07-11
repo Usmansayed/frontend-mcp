@@ -1,0 +1,23 @@
+{
+  "id": "auth/login_clean",
+  "category": "auth",
+  "description": "Sign-in page with clean layout and token-based styles",
+  "user_task": "Sign in to dashboard as admin",
+  "scope": "page",
+  "fixture_ref": "fake_login_form",
+  "expected_score": {
+    "passed": true,
+    "min_blocking": 0,
+    "max_blocking": 0
+  },
+  "gold_findings": [],
+  "gold_forbidden": [
+    { "match": ["horizontal_overflow", "zero_size"], "description": "no blocking layout issues" },
+    { "match": ["verify:"], "description": "generic verify advisories" }
+  ],
+  "gold_review": {
+    "passed": true,
+    "summary": "Login form is structurally sound. No blocking issues. Token-based styles acceptable.",
+    "top_priorities": []
+  }
+}

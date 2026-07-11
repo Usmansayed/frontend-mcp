@@ -1,16 +1,11 @@
-"""Design heuristics knowledge base (distinct from runtime browser heuristics/)."""
+"""Nielsen heuristics and Gestalt principles — from epistemology research."""
 from __future__ import annotations
 
-# Nielsen's heuristics — reference IDs for knowledge graph linking
-NIELSEN_HEURISTICS = [
-	'visibility_of_system_status',
-	'match_between_system_and_real_world',
-	'user_control_and_freedom',
-	'consistency_and_standards',
-	'error_prevention',
-	'recognition_rather_than_recall',
-	'flexibility_and_efficiency_of_use',
-	'aesthetic_and_minimalist_design',
-	'help_users_recognize_diagnose_recover_from_errors',
-	'help_and_documentation',
-]
+from ..epistemology import GESTALT_PRINCIPLES, NIELSEN_HEURISTICS
+from ..types import HeuristicEntry
+
+__all__ = ['GESTALT_PRINCIPLES', 'NIELSEN_HEURISTICS', 'HeuristicEntry', 'all_heuristics']
+
+
+def all_heuristics() -> list[HeuristicEntry]:
+	return list(NIELSEN_HEURISTICS) + list(GESTALT_PRINCIPLES)

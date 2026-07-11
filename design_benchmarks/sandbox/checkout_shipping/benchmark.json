@@ -1,0 +1,29 @@
+{
+  "id": "sandbox/checkout_shipping",
+  "category": "sandbox",
+  "description": "Live sandbox checkout shipping step",
+  "user_task": "Complete checkout shipping step",
+  "scope": "flow",
+  "sandbox_path": "/shop/checkout/shipping",
+  "expected_score": {
+    "passed": true,
+    "min_blocking": 0
+  },
+  "gold_findings": [
+    {
+      "id": "checkout_flow_context",
+      "category": "ux",
+      "severity": "advisory",
+      "match": ["checkout", "shipping", "form", "ecommerce"],
+      "required": false
+    }
+  ],
+  "gold_forbidden": [
+    { "match": ["horizontal_overflow"], "description": "checkout should not overflow" }
+  ],
+  "gold_review": {
+    "passed": true,
+    "summary": "Checkout shipping step is usable. Ecommerce flow patterns apply.",
+    "top_priorities": []
+  }
+}

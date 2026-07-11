@@ -42,6 +42,22 @@ from .handlers import (
     handle_execute_script,
     handle_flow_describe,
     handle_framework_docs,
+    handle_inspiration_collect,
+    handle_inspiration_discover,
+    handle_inspiration_session_end,
+    handle_resource_observe_bridge,
+    handle_resource_license_check,
+    handle_resource_icon_search,
+    handle_resource_font_search,
+    handle_resource_logo_search,
+    handle_resource_photo_search,
+    handle_resource_avatar_search,
+    handle_resource_illustration_search,
+    handle_resource_pattern_search,
+    handle_resource_animation_search,
+    handle_resource_preview,
+    handle_resource_search,
+    handle_resource_session_end,
     handle_search_components,
     handle_plan_component_search,
     handle_select_component_foundation,
@@ -62,9 +78,21 @@ from .handlers import (
     handle_state_save,
     handle_verify,
 )
+from .design_intelligence_handlers import (
+    handle_build_design_snapshot,
+    handle_consistency_assess,
+    handle_consistency_audit,
+    handle_consistency_propose_fix,
+    handle_consistency_review,
+    handle_design_graph_refresh,
+    handle_design_graph_summary,
+    handle_design_knowledge_query,
+    handle_design_review,
+)
 from .instructions import MCP_INSTRUCTIONS
 from .resources import list_resources, read_resource
 from navigation.core.scan_registry import ScanRegistry
+from navigation.core.snapshot_registry import SnapshotRegistry
 from navigation.visual_browser_intelligence.browser.session_store import SessionStore
 from navigation.visual_browser_intelligence.visual.visual_response import envelope_to_mcp_contents
 
@@ -78,6 +106,7 @@ class PerceptionMCPServer:
             raise RuntimeError("mcp package not installed. pip install mcp")
         self._store = SessionStore()
         self._scans = ScanRegistry()
+        self._snapshots = SnapshotRegistry()
         self._server = Server("frontend-perception")
         self._dispatch: dict[str, HandlerFn] = self._build_dispatch()
 
@@ -134,6 +163,7 @@ class PerceptionMCPServer:
     def _build_dispatch(self) -> dict[str, HandlerFn]:
         store = self._store
         scans = self._scans
+        snapshots = self._snapshots
 
         async def health(args: dict[str, Any]) -> dict[str, Any]:
             return await handle_health(args)
@@ -240,6 +270,81 @@ class PerceptionMCPServer:
         async def integrate_component(args: dict[str, Any]) -> dict[str, Any]:
             return await handle_integrate_component(args)
 
+        async def inspiration_discover(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_inspiration_discover(args)
+
+        async def inspiration_collect(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_inspiration_collect(args)
+
+        async def inspiration_session_end(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_inspiration_session_end(args)
+
+        async def resource_search(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_resource_search(args)
+
+        async def resource_preview(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_resource_preview(args)
+
+        async def resource_session_end(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_resource_session_end(args)
+
+        async def resource_icon_search(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_resource_icon_search(args)
+
+        async def resource_font_search(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_resource_font_search(args)
+
+        async def resource_logo_search(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_resource_logo_search(args)
+
+        async def resource_photo_search(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_resource_photo_search(args)
+
+        async def resource_avatar_search(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_resource_avatar_search(args)
+
+        async def resource_illustration_search(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_resource_illustration_search(args)
+
+        async def resource_pattern_search(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_resource_pattern_search(args)
+
+        async def resource_animation_search(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_resource_animation_search(args)
+
+        async def resource_license_check(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_resource_license_check(args)
+
+        async def resource_observe_bridge(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_resource_observe_bridge(scans, args)
+
+        async def build_design_snapshot(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_build_design_snapshot(store, scans, snapshots, args)
+
+        async def design_review(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_design_review(store, scans, snapshots, args)
+
+        async def consistency_review(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_consistency_review(store, scans, snapshots, args)
+
+        async def consistency_audit(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_consistency_audit(store, scans, snapshots, args)
+
+        async def design_knowledge_query(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_design_knowledge_query(args)
+
+        async def design_graph_summary(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_design_graph_summary(args)
+
+        async def design_graph_refresh(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_design_graph_refresh(store, scans, snapshots, args)
+
+        async def consistency_assess(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_consistency_assess(args)
+
+        async def consistency_propose_fix(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_consistency_propose_fix(args)
+
         return {
             "perception_health": health,
             "perception_session_start": session_start,
@@ -276,6 +381,31 @@ class PerceptionMCPServer:
             "perception_plan_component_search": plan_component_search,
             "perception_select_component_foundation": select_component_foundation,
             "perception_integrate_component": integrate_component,
+            "perception_inspiration_discover": inspiration_discover,
+            "perception_inspiration_collect": inspiration_collect,
+            "perception_inspiration_session_end": inspiration_session_end,
+            "perception_resource_search": resource_search,
+            "perception_resource_preview": resource_preview,
+            "perception_resource_session_end": resource_session_end,
+            "perception_resource_icon_search": resource_icon_search,
+            "perception_resource_font_search": resource_font_search,
+            "perception_resource_logo_search": resource_logo_search,
+            "perception_resource_photo_search": resource_photo_search,
+            "perception_resource_avatar_search": resource_avatar_search,
+            "perception_resource_illustration_search": resource_illustration_search,
+            "perception_resource_pattern_search": resource_pattern_search,
+            "perception_resource_animation_search": resource_animation_search,
+            "perception_resource_license_check": resource_license_check,
+            "perception_resource_observe_bridge": resource_observe_bridge,
+            "perception_build_design_snapshot": build_design_snapshot,
+            "perception_design_review": design_review,
+            "perception_consistency_review": consistency_review,
+            "perception_consistency_audit": consistency_audit,
+            "perception_design_knowledge_query": design_knowledge_query,
+            "perception_design_graph_summary": design_graph_summary,
+            "perception_design_graph_refresh": design_graph_refresh,
+            "perception_consistency_assess": consistency_assess,
+            "perception_consistency_propose_fix": consistency_propose_fix,
         }
 
     async def run(self) -> None:

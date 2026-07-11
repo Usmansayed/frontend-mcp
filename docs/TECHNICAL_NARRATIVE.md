@@ -292,6 +292,52 @@ Agent edits file → perception_verify on live UI
 
 ---
 
+## Figma Intelligence — Community → structured knowledge (scaffold)
+
+Figma Intelligence mirrors the Component Intelligence pattern: **orchestration in our MCP, execution in replaceable providers**. Figma Console MCP is the first provider — not the product.
+
+```text
+Agent query ("saas dashboard inspiration")
+        ↓
+┌───────────────────┐
+│  Intent Parser    │  inspire · extract DS · compare · reuse · learn
+└─────────┬─────────┘
+          ↓
+┌───────────────────┐
+│  Search Planner   │  provider routing + Framework/Component hints
+└─────────┬─────────┘
+          ↓
+┌───────────────────┐
+│  Community        │  Pass 1: primary · Pass 2: synonyms + styles
+│  Intelligence ⭐  │  Pass 3: component + industry expansion
+└─────────┬─────────┘
+          ↓
+┌───────────────────┐
+│  Discovery        │  execute ranked queries (provider — later)
+└─────────┬─────────┘
+          ↓
+┌───────────────────┐
+│  Candidate        │  CandidateProfile: industry, page_type, components,
+│  Intelligence ⭐  │  framework, style, patterns, confidence
+└─────────┬─────────┘
+          ↓
+┌───────────────────┐
+│  Ranking + Eval   │  score without re-opening Figma files
+└───────────────────┘
+```
+
+**Creative choices:**
+
+1. **Providers return facts; intelligence decides value** — Design Sense scores quality; Consistency scores fit; Component scores reuse; Framework scores compatibility.
+
+2. **FigmaProvider protocol** — Swap Figma Console, Official Figma MCP, Figwright, or REST without changing pipeline stages.
+
+3. **Provider wiring last** — Figma Console executes ranked queries only after Community + Candidate brains are solid.
+
+See [features/figma_intelligence.md](./features/figma_intelligence.md) and ADR-020.
+
+---
+
 ## Design Sense vs Consistency — two kinds of “good”
 
 We split what others merge:
@@ -355,7 +401,7 @@ User: "Build a SaaS pricing page with glass navbar"
 9. perception_diff                 → regression on next edit
 ```
 
-**One MCP. Eight modules. One loop.** Each step uses a different module; the agent never leaves the protocol.
+**One MCP. Intelligence modules. One loop.** Each step uses a different module; the agent never leaves the protocol.
 
 ---
 
@@ -366,7 +412,7 @@ User: "Build a SaaS pricing page with glass navbar"
 | Chrome extension + middleware | Managed CDP session |
 | LLM inside MCP for “fixes” | Rule-based hints; agent writes code |
 | Local component registry | Live orchestration across registries |
-| Monolithic “browser tool” | Eight intelligence modules |
+| Monolithic “browser tool” | Modular intelligence modules |
 | Autonomous Browser Use as default | Host agent is primary; Browser Use is runtime |
 | Copy inactive BrowserTools deps | Study clone, reimplement on our schema |
 
@@ -400,9 +446,9 @@ User: "Build a SaaS pricing page with glass navbar"
 
 ### Section: Roadmap honesty
 
-**Shipped:** Search Phase 1, framework detection + Grounded Docs, full quality stack, eight-module layout.
+**Shipped:** Search Phase 1, framework detection + Grounded Docs, full quality stack, modular intelligence layout.
 
-**Next:** Component ranking → adaptation → install. Consistency validators. Token snapshots across code and DOM.
+**Next:** Figma Intelligence provider wiring. Component ranking → adaptation → install. Consistency validators. Token snapshots across code and DOM.
 
 ---
 

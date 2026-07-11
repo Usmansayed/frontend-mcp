@@ -1,0 +1,29 @@
+{
+  "id": "dashboards/analytics_tall_page",
+  "category": "dashboards",
+  "description": "Dashboard analytics with tall page advisory",
+  "user_task": "Review dashboard analytics charts and navigation",
+  "scope": "feature",
+  "fixture_ref": "fake_dashboard_analytics",
+  "expected_score": {
+    "passed": true,
+    "min_blocking": 0
+  },
+  "gold_findings": [
+    {
+      "id": "tall_page_advisory",
+      "category": "layout",
+      "severity": "advisory",
+      "match": ["tall", "scrollheight"],
+      "required": false
+    }
+  ],
+  "gold_forbidden": [
+    { "match": ["blocking"], "severity": "blocking", "description": "no false blocking" }
+  ],
+  "gold_review": {
+    "passed": true,
+    "summary": "Dashboard analytics page is usable. Tall page is advisory only.",
+    "top_priorities": []
+  }
+}

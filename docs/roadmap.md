@@ -76,6 +76,46 @@ Status key: ✅ shipped · 🚧 in progress · 📋 planned · ⏸ deferred
 - [x] `DocumentationProvider` abstraction + cross-platform CLI reliability
 - [x] On-demand doc scrape/search, normalized `FrameworkKnowledgeResponse`
 
+## v1.5 — Inspiration Intelligence (🚧)
+
+- [x] Split public inspiration from Figma Intelligence — `inspiration_intelligence/` module
+- [x] Priority provider cascade (Dribbble → Land-book) with early stop
+- [x] Dribbble provider adapter + navigation research
+- [x] Provider navigation docs for Behance, Awwwards, SiteInspire, Godly, Land-book
+- [x] Anti-bot policy: rate limits, jitter, block detection, headed default
+- [x] Dribbble browser-first fetch: session cookie → og:image → screenshot (no official API)
+- [x] MCP tools: `perception_inspiration_discover`, `perception_inspiration_collect`, `perception_inspiration_session_end`
+- [x] Agent guide: `perception://inspiration-guide` + AGENT_GUIDE §13
+- [x] Gallery adapters: Behance, One Page Love, Awwwards, SiteInspire, Godly, Land-book
+- [ ] Live Browser Intelligence capture → Design Snapshot
+
+## v1.6 — Resource Intelligence (📋 research)
+
+- [x] Module scaffold `resource_intelligence/`
+- [x] Provider comparison matrix (icons → photos)
+- [x] Resource Graph schema + seed providers
+- [x] License Intelligence architecture (exclusions: unDraw, Storyset)
+- [x] Ranking, Planning, MCP tool spec, roadmap
+- [ ] P0 provider adapters: Iconify, Lucide, Fontsource, DiceBear, Open Doodles, Pexels, Simple Icons
+- [ ] MCP tools: `perception_resource_search`, category shortcuts
+- [ ] `perception://resource-guide`
+
+## v1.4 — Figma Intelligence scaffold (🚧)
+
+- [x] `figma_intelligence/` module — intent, planning, discovery, ranking, extraction, evaluation
+- [x] `FigmaProvider` protocol — Figma Console, Official Figma, future stubs
+- [x] Research docs: Figma Console MCP, Official Figma MCP, community discovery, OSS tooling
+- [x] Community Intelligence — multi-pass query expansion (synonyms, styles, industries, components)
+- [x] Candidate Intelligence — `CandidateProfile` normalization for scoring without extraction
+- [x] Profile-aware ranking
+- [x] Selection Planner — budget-aware retrieval (who is worth opening)
+- [x] Deep Candidate Review — post-extraction multi-intelligence scoring
+- [x] Figma Console MCP client adapter (southleft) — catalog discovery + kit extraction
+- [x] Architecture frozen v1 — [ARCHITECTURE_FROZEN.md](../src/navigation/figma_intelligence/docs/ARCHITECTURE_FROZEN.md)
+- [ ] MCP tools: `perception_figma_discover`, `perception_figma_pipeline`
+- [ ] Live Community search beyond keyword catalog
+- [ ] Design Snapshot + Reference Registry integration
+
 ## v1.3 — Eight-module platform + Consistency Intelligence scaffold (🚧)
 
 - [x] Add `consistency_intelligence/` as 8th module (scaffold only)

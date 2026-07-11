@@ -22,6 +22,8 @@ Playbooks by task (AGENT_GUIDE.md):
   §8  Responsive / viewport        → session_start with viewport, observe + screenshot
   §9  Feature flags & edge UI      → edge-lab routes, feature-specific verify
   §10 Code ↔ live UI             → code_context + observe + diff
+  §13 Design inspiration         → inspiration-guide, discover, collect, session_end
+  §14 Creative assets (resources) → resource-guide, search, preview, session_end
 
 Hard rules:
 - Never claim UI work is done without perception_verify.
@@ -33,6 +35,9 @@ Hard rules:
 - perception_auth_gate requires_human → STOP, ask user (no login/MFA loops).
 - probe_form before filling unknown forms; invalid submit before valid.
 - flow_describe gives checkpoints — YOU execute each; MCP does not run flows.
+
+Inspiration (AGENT_GUIDE §13): read perception://inspiration-guide before perception_inspiration_* tools.
+Resources (AGENT_GUIDE §14): read perception://resource-guide before perception_resource_* tools.
 
 Eval scenario (smoke test your wiring): perception://eval/validation-form
 """

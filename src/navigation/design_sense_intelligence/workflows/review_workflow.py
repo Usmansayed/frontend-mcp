@@ -52,31 +52,4 @@ def build_pillar_checklist(request: ReviewRequest) -> list[dict]:
 			}
 		)
 
-	if not request.design_tokens:
-		items.append(
-			{
-				'id': 'ms_tokens_unknown',
-				'category': 'tokens',
-				'severity': 'minor',
-				'message': 'Design tokens not supplied — cannot verify token compliance',
-				'rationale': 'Microsoft workflow: verify design tokens are used',
-				'recommendation': 'Pass design_tokens or enable token snapshot from Consistency Intelligence',
-				'pillar': QualityPillar.CRAFT.value,
-				'flag': True,
-			}
-		)
-
-	if request.preview_url and not request.screenshot_ref:
-		items.append(
-			{
-				'id': 'ms_compare_figma',
-				'category': 'workflow',
-				'severity': 'advisory',
-				'message': 'Implementation comparison requires screenshot or scan reference',
-				'recommendation': 'Attach scan_id or screenshot_ref for visual comparison phase',
-				'pillar': QualityPillar.CRAFT.value,
-				'flag': True,
-			}
-		)
-
 	return items

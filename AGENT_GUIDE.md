@@ -383,7 +383,70 @@ Guideline:
 
 ---
 
-## 13. Tool quick reference (secondary to playbooks)
+## 13. Playbook: Design inspiration (public galleries)
+
+**When:** User asks for landing page / dashboard / UI inspiration from Dribbble, Behance, gallery sites.
+
+**Read first:** MCP resource `perception://inspiration-guide` — per-site URLs, selectors, preview rules, anti-bot.
+
+```text
+1. perception_inspiration_discover({ query })     → ranked candidates (fast)
+2. perception_inspiration_collect({ query })      → URLs + ephemeral vision blobs
+3. Open agent_view_url for live pages; use inspiration_blob for quick visual reference
+4. perception_inspiration_session_end({ session_id })  → delete blobs when done
+```
+
+| Field | Use |
+|-------|-----|
+| `agent_view_url` | Best URL to open (live page preferred) |
+| `preview_url` | CDN / og:image when available |
+| `inspiration_blob` | Ephemeral medium JPEG (~24h TTL) |
+| `blob_session_id` | Pass to session_end when finished |
+
+**Provider notes (summary):**
+- **Dribbble** — HTTP WAF 202; headed browser + optional `DRIBBBLE_SESSION_COOKIE`
+- **Behance / One Page Love** — HTTP works; OPL uses `/genre/` not `?s=`
+- **Awwwards / SiteInspire / Godly / Land-book** — browser extract; Godly → `recent.design` `/i/` links
+- **Land-book** — `land-book.com` (no www); browse fallback; skip generic og-image blobs
+
+**Do not:** Scrape galleries ad-hoc — use MCP tools. Permanent image download is optional (`download_images`); blobs are ephemeral.
+
+**Stop when:** You have enough references for the task, or user confirms stop. Always end blob session when design work completes.
+
+---
+
+## 14. Playbook: Creative assets (Resource Intelligence)
+
+**When:** User needs icons, avatars, illustrations, fonts, or stock assets for a commercial project.
+
+**Read first:** MCP resource `perception://resource-guide` — license rules, provider notes, blob fields.
+
+```text
+1. perception_resource_search({ query, icon_family: "lucide" })  → family URLs + suggested_import
+2. perception_resource_preview only when family miss + reference image (blobs skipped for in-family icons)
+3. Use access_url / npm import — not blobs — for matched family icons
+4. perception_resource_session_end({ session_id })
+```
+
+| Field | Use |
+|-------|-----|
+| `access_url` | SVG/API URL for integration |
+| `suggested_import` | npm import line (e.g. lucide-react) |
+| `icon_family` | Active style set (lucide, heroicons, tabler-icons, …) |
+| `resource_blob` | Only on family miss + `reference_preview_url`, or avatars/photos |
+
+**Provider notes (MVP):**
+- **Iconify / Lucide** — commercial icons; NC collections skipped per asset
+- **DiceBear** — preview via public API; self-host for production commercial
+- **unDraw / Storyset** — in catalog; blobs skipped when automation prohibited
+
+**Do not:** Scrape provider sites ad-hoc — use MCP tools. Respect `license_warnings`.
+
+**Stop when:** Assets selected and integrated, or user confirms stop. Always end blob session when asset work completes.
+
+---
+
+## 15. Tool quick reference (secondary to playbooks)
 
 Use tools **only as steps inside playbooks above**.
 
@@ -402,10 +465,16 @@ Use tools **only as steps inside playbooks above**.
 | `perception_state_save/restore` | Multi-step auth |
 | `perception_flow_describe` | Multi-step flows |
 | `perception_code_context` | Code ↔ UI correlation |
+| `perception_inspiration_discover` | Ranked inspiration candidates (fast) |
+| `perception_inspiration_collect` | URLs + ephemeral vision blobs |
+| `perception_inspiration_session_end` | Delete ephemeral inspiration blobs |
+| `perception_resource_search` | Ranked creative assets (fast) |
+| `perception_resource_preview` | URLs + ephemeral resource vision blobs |
+| `perception_resource_session_end` | Delete ephemeral resource blobs |
 
 ---
 
-## 14. Success checklist (before telling user “done”)
+## 16. Success checklist (before telling user “done”)
 
 - [ ] `perception_verify` passed for stated criteria
 - [ ] `agent_summary.blocking` is empty (or user accepted warnings)

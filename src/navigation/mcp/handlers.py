@@ -1499,3 +1499,431 @@ async def handle_framework_docs(arguments: dict[str, Any]) -> dict[str, Any]:
             "agent_summary": service.agent_summary_from_response(response),
         },
     )
+
+
+def _inspiration_top_hits(candidates: list[Any], *, limit: int = 8) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for ranked in candidates[:limit]:
+        c = ranked.candidate
+        out.append(
+            {
+                "title": c.title,
+                "provider_id": c.provider_id,
+                "url": c.url,
+                "preview_ref": c.preview_ref,
+                "overall_score": ranked.overall_score,
+                "fetch_tier": c.metadata.get("fetch_tier", ""),
+            }
+        )
+    return out
+
+
+async def handle_inspiration_discover(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.inspiration_intelligence import InspirationDiscoveryRequest, InspirationIntelligenceService
+
+    query = str(arguments.get("query") or "").strip()
+    if not query:
+        return make_envelope("perception_inspiration_discover", ok=False, error="query required")
+
+    service = InspirationIntelligenceService()
+    result = await service.discover(
+        InspirationDiscoveryRequest(
+            query=query,
+            max_candidates=int(arguments.get("max_candidates") or 12),
+            provider_preference=arguments.get("provider_preference"),
+        )
+    )
+    ok = bool(result.candidates) or bool(result.degraded)
+    blocking: list[str] = []
+    if not result.candidates:
+        blocking.append("no_inspiration_candidates")
+    return make_envelope(
+        "perception_inspiration_discover",
+        ok=ok,
+        degraded=result.degraded,
+        data={
+            "inspiration_discovery": result.to_dict(),
+            "agent_summary": {
+                "query": query,
+                "total": len(result.candidates),
+                "providers": list(result.search_plan.provider_ids),
+                "top_hits": _inspiration_top_hits(result.candidates),
+                "blocking": blocking,
+                "advisory": [
+                    "Read perception://inspiration-guide for per-site navigation and preview URL rules.",
+                    "Call perception_inspiration_collect when you need agent_view_url + ephemeral vision blobs.",
+                ],
+            },
+        },
+    )
+
+
+async def handle_inspiration_collect(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.inspiration_intelligence.collect import collect_inspiration_hits
+
+    query = str(arguments.get("query") or "").strip()
+    if not query:
+        return make_envelope("perception_inspiration_collect", ok=False, error="query required")
+
+    output_raw = str(arguments.get("output_dir") or "").strip()
+    output_dir = Path(output_raw) if output_raw else None
+    provider_ids = arguments.get("provider_ids")
+    if provider_ids is not None and not isinstance(provider_ids, list):
+        provider_ids = None
+
+    manifest = await collect_inspiration_hits(
+        query,
+        output_dir,
+        per_provider=int(arguments.get("per_provider") or 4),
+        provider_ids=provider_ids,
+        download_images=bool(arguments.get("download_images", False)),
+        materialize_blobs=bool(arguments.get("materialize_blobs", True)),
+        blob_session_id=arguments.get("blob_session_id"),
+        write_per_hit_files=output_dir is not None,
+    )
+    hits = list(manifest.get("hits") or [])
+    ok = bool(hits) or bool(manifest.get("provider_summary"))
+    return make_envelope(
+        "perception_inspiration_collect",
+        ok=ok,
+        data={
+            "inspiration_collection": manifest,
+            "agent_summary": {
+                "query": query,
+                "total_hits": manifest.get("total_hits", 0),
+                "total_with_urls": manifest.get("total_with_urls", 0),
+                "blob_session_id": manifest.get("blob_session_id", ""),
+                "top_hits": hits[:8],
+                "blocking": [] if hits else ["no_inspiration_hits"],
+                "advisory": [
+                    "Open agent_view_url for live pages; use inspiration_blob for vision.",
+                    "Call perception_inspiration_session_end when design work is complete.",
+                ],
+            },
+        },
+    )
+
+
+async def handle_inspiration_session_end(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.inspiration_intelligence import InspirationIntelligenceService
+
+    session_id = str(arguments.get("session_id") or "").strip()
+    if not session_id:
+        return make_envelope("perception_inspiration_session_end", ok=False, error="session_id required")
+
+    service = InspirationIntelligenceService()
+    if bool(arguments.get("cleanup_expired", False)):
+        result = service.cleanup_inspiration_blobs()
+        return make_envelope(
+            "perception_inspiration_session_end",
+            ok=True,
+            data={"cleanup": result, "agent_summary": {"advisory": ["Expired blob sessions removed."]}},
+        )
+
+    result = service.end_inspiration_session(session_id)
+    return make_envelope(
+        "perception_inspiration_session_end",
+        ok=True,
+        data={
+            "session_end": result,
+            "agent_summary": {
+                "session_id": session_id,
+                "removed": result.get("removed", 0),
+                "advisory": ["Ephemeral inspiration blobs deleted for this session."],
+            },
+        },
+    )
+
+
+def _resource_top_assets(assets: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for asset in assets[:8]:
+        out.append(
+            {
+                "resource_id": asset.get("resource_id", ""),
+                "provider_id": asset.get("provider_id", ""),
+                "title": asset.get("title", ""),
+                "preview_url": asset.get("preview_url", ""),
+                "access_url": asset.get("access_url", ""),
+                "format": asset.get("format", ""),
+                "score": asset.get("score", 0),
+            }
+        )
+    return out
+
+
+def _build_resource_request(arguments: dict[str, Any], *, default_categories: list[str] | None = None) -> tuple[Any, str | None]:
+    from navigation.resource_intelligence.models import ResourceCategory, ResourceDiscoveryRequest
+
+    query = str(arguments.get("query") or "").strip()
+    if not query:
+        return None, "query required"
+    categories: list[ResourceCategory] = []
+    raw_cats = arguments.get("categories") or default_categories or []
+    for raw in raw_cats:
+        try:
+            categories.append(ResourceCategory(str(raw)))
+        except ValueError:
+            continue
+    request = ResourceDiscoveryRequest(
+        query=query,
+        categories=categories,
+        max_results=int(arguments.get("max_results") or 12),
+        provider_preference=arguments.get("provider_preference"),
+        commercial_required=bool(arguments.get("commercial_required", True)),
+        attribution_ok=bool(arguments.get("attribution_ok", True)),
+        prefer_svg=bool(arguments.get("prefer_svg", True)),
+        icon_family=arguments.get("icon_family"),
+        icon_family_strict=bool(arguments.get("icon_family_strict", True)),
+        allow_family_fallback=bool(arguments.get("allow_family_fallback", True)),
+        persist_icon_family=bool(arguments.get("persist_icon_family", False)),
+        repo_root=str(arguments.get("repo_root") or ""),
+        project_id=str(arguments.get("project_id") or "default"),
+        scan_id=arguments.get("scan_id"),
+        design_sense_profile=arguments.get("design_sense_profile"),
+        auto_observe_bridge=bool(arguments.get("auto_observe_bridge", False)),
+    )
+    return request, None
+
+
+def _resource_search_envelope(tool: str, result: Any, query: str) -> dict[str, Any]:
+    assets = [a.to_dict() for a in result.assets]
+    ok = bool(assets) or bool(result.degraded)
+    blocking: list[str] = []
+    if not assets:
+        blocking.append("no_resource_assets")
+    advisory = [
+        "Read perception://resource-guide for icon family + license rules.",
+        "Icons in family: use verified_import / access_url — no blobs needed.",
+    ]
+    if not result.family_match:
+        advisory.append("Family miss: use perception_resource_observe_bridge or reference_preview_url.")
+    return make_envelope(
+        tool,
+        ok=ok,
+        degraded=result.degraded,
+        data={
+            "resource_recommendation": result.to_dict(),
+            "agent_summary": {
+                "query": query,
+                "icon_family": result.icon_family,
+                "family_match": result.family_match,
+                "fallback_used": result.fallback_used,
+                "selection": result.selection.to_dict() if result.selection else None,
+                "total": len(assets),
+                "providers_queried": list(result.providers_queried),
+                "license_warnings": list(result.license_warnings),
+                "top_assets": _resource_top_assets(assets),
+                "blocking": blocking,
+                "advisory": advisory,
+            },
+        },
+    )
+
+
+async def handle_resource_search(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.resource_intelligence import ResourceIntelligenceService
+
+    request, err = _build_resource_request(arguments)
+    if err:
+        return make_envelope("perception_resource_search", ok=False, error=err)
+    service = ResourceIntelligenceService()
+    result = await service.search(request)
+    return _resource_search_envelope("perception_resource_search", result, request.query)
+
+
+async def handle_resource_icon_search(arguments: dict[str, Any]) -> dict[str, Any]:
+    args = dict(arguments)
+    args.setdefault("categories", ["icon"])
+    return await handle_resource_search(args)
+
+
+async def handle_resource_font_search(arguments: dict[str, Any]) -> dict[str, Any]:
+    args = dict(arguments)
+    args.setdefault("categories", ["font"])
+    return await handle_resource_search(args)
+
+
+async def handle_resource_logo_search(arguments: dict[str, Any]) -> dict[str, Any]:
+    args = dict(arguments)
+    args.setdefault("categories", ["logo"])
+    return await handle_resource_search(args)
+
+
+async def handle_resource_photo_search(arguments: dict[str, Any]) -> dict[str, Any]:
+    args = dict(arguments)
+    args.setdefault("categories", ["photo"])
+    return await handle_resource_search(args)
+
+
+async def handle_resource_avatar_search(arguments: dict[str, Any]) -> dict[str, Any]:
+    args = dict(arguments)
+    args.setdefault("categories", ["avatar"])
+    return await handle_resource_search(args)
+
+
+async def handle_resource_illustration_search(arguments: dict[str, Any]) -> dict[str, Any]:
+    args = dict(arguments)
+    args.setdefault("categories", ["illustration"])
+    return await handle_resource_search(args)
+
+
+async def handle_resource_pattern_search(arguments: dict[str, Any]) -> dict[str, Any]:
+    args = dict(arguments)
+    args.setdefault("categories", ["pattern"])
+    return await handle_resource_search(args)
+
+
+async def handle_resource_animation_search(arguments: dict[str, Any]) -> dict[str, Any]:
+    args = dict(arguments)
+    args.setdefault("categories", ["animation"])
+    return await handle_resource_search(args)
+
+
+async def handle_resource_license_check(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.resource_intelligence import ResourceDiscoveryRequest, ResourceIntelligenceService
+
+    asset = arguments.get("asset")
+    if not isinstance(asset, dict):
+        return make_envelope("perception_resource_license_check", ok=False, error="asset object required")
+    request = ResourceDiscoveryRequest(
+        query=str(arguments.get("query") or "license check"),
+        commercial_required=bool(arguments.get("commercial_required", True)),
+        attribution_ok=bool(arguments.get("attribution_ok", True)),
+    )
+    service = ResourceIntelligenceService()
+    summary = service.check_license(asset, request)
+    return make_envelope(
+        "perception_resource_license_check",
+        ok=True,
+        data={"license_summary": summary, "agent_summary": {"allowed": summary.get("allowed", False)}},
+    )
+
+
+async def handle_resource_observe_bridge(scans: Any, arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.resource_intelligence import ResourceIntelligenceService
+
+    scan_id = str(arguments.get("scan_id") or "").strip()
+    query = str(arguments.get("query") or "").strip()
+    if not scan_id or not query:
+        return make_envelope("perception_resource_observe_bridge", ok=False, error="scan_id and query required")
+    service = ResourceIntelligenceService()
+    bridge = await service.resolve_from_observe(
+        scan_id=scan_id,
+        query=query,
+        scans=scans,
+        repo_root=str(arguments.get("repo_root") or ""),
+        icon_family=arguments.get("icon_family"),
+    )
+    ok = bool(bridge.get("ok"))
+    return make_envelope(
+        "perception_resource_observe_bridge",
+        ok=ok,
+        degraded=list(bridge.get("degraded") or []),
+        data={
+            "resource_observe_bridge": bridge,
+            "agent_summary": {
+                "scan_id": scan_id,
+                "query": query,
+                "bridge": bridge.get("bridge", ""),
+                "icon_family": bridge.get("icon_family"),
+                "family_match": bridge.get("family_match", False),
+                "selection": bridge.get("selection"),
+                "blocking": [] if ok else ["resource_observe_bridge_miss"],
+                "advisory": ["Use selection.verified_import or assets[0].access_url for integration."],
+            },
+        },
+    )
+
+
+async def handle_resource_preview(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.resource_intelligence.collect import collect_resource_assets
+
+    query = str(arguments.get("query") or "").strip()
+    if not query:
+        return make_envelope("perception_resource_preview", ok=False, error="query required")
+
+    categories = arguments.get("categories")
+    asset_ids = arguments.get("asset_ids")
+    if categories is not None and not isinstance(categories, list):
+        categories = None
+    if asset_ids is not None and not isinstance(asset_ids, list):
+        asset_ids = None
+
+    output_raw = str(arguments.get("output_dir") or "").strip()
+    output_dir = Path(output_raw) if output_raw else None
+
+    manifest = await collect_resource_assets(
+        query,
+        max_results=int(arguments.get("max_results") or 12),
+        categories=[str(c) for c in categories] if categories else None,
+        provider_preference=str(arguments.get("provider_preference") or "") or None,
+        icon_family=arguments.get("icon_family"),
+        icon_family_strict=bool(arguments.get("icon_family_strict", True)),
+        allow_family_fallback=bool(arguments.get("allow_family_fallback", True)),
+        persist_icon_family=bool(arguments.get("persist_icon_family", False)),
+        materialize_blobs=arguments.get("materialize_blobs"),
+        blob_fallback_only=bool(arguments.get("blob_fallback_only", True)),
+        reference_preview_url=str(arguments.get("reference_preview_url") or ""),
+        reference_image_path=str(arguments.get("reference_image_path") or ""),
+        blob_session_id=arguments.get("blob_session_id"),
+        output_dir=output_dir,
+        asset_ids=[str(a) for a in asset_ids] if asset_ids else None,
+        repo_root=str(arguments.get("repo_root") or ""),
+    )
+    hits = list(manifest.get("hits") or [])
+    ok = bool(hits) or bool(manifest.get("providers_queried"))
+    return make_envelope(
+        "perception_resource_preview",
+        ok=ok,
+        data={
+            "resource_collection": manifest,
+            "agent_summary": {
+                "query": query,
+                "icon_family": manifest.get("icon_family", ""),
+                "family_match": manifest.get("family_match", False),
+                "total_hits": manifest.get("total_hits", 0),
+                "total_with_urls": manifest.get("total_with_urls", 0),
+                "blob_session_id": manifest.get("blob_session_id", ""),
+                "license_warnings": manifest.get("license_warnings", []),
+                "top_hits": hits[:8],
+                "blocking": [] if hits else ["no_resource_hits"],
+                "advisory": [
+                    "In-family icons: use access_url / suggested_import — blobs skipped by default.",
+                    "Family miss: pass reference_preview_url for vision blob; or perception_observe for OCR.",
+                    "Call perception_resource_session_end when asset work is complete.",
+                ],
+            },
+        },
+    )
+
+
+async def handle_resource_session_end(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.resource_intelligence import ResourceIntelligenceService
+
+    session_id = str(arguments.get("session_id") or "").strip()
+    if not session_id and not bool(arguments.get("cleanup_expired", False)):
+        return make_envelope("perception_resource_session_end", ok=False, error="session_id required")
+
+    service = ResourceIntelligenceService()
+    if bool(arguments.get("cleanup_expired", False)):
+        result = service.cleanup_resource_blobs()
+        return make_envelope(
+            "perception_resource_session_end",
+            ok=True,
+            data={"cleanup": result, "agent_summary": {"advisory": ["Expired resource blob sessions removed."]}},
+        )
+
+    result = service.end_resource_session(session_id)
+    return make_envelope(
+        "perception_resource_session_end",
+        ok=True,
+        data={
+            "session_end": result,
+            "agent_summary": {
+                "session_id": session_id,
+                "removed": result.get("removed", 0),
+                "advisory": ["Ephemeral resource blobs deleted for this session."],
+            },
+        },
+    )

@@ -16,6 +16,13 @@ from ..models import (
 )
 from ..providers.registry import ProviderRegistry
 from ..reasoning.engine import ReasoningEngine
+from ..reference_comparison import compare_with_references
+from ..snapshot_access import resolve_snapshot
+from ..consensus.engine import ConsensusEngine
+from ..confidence.engine import ConfidenceContext, ConfidenceEngine
+from ..debate.engine import ReviewerDebateEngine
+from ..evidence.policy import enforce_evidence_policy
+from ..filters.placeholders import drop_placeholders
 from ..workflows.review_workflow import MICROSOFT_REVIEW_PHASES
 from .accessibility import AccessibilityReviewer
 from .color import ColorReviewer
@@ -55,12 +62,18 @@ class ReviewCoordinator:
 		reviewers: list[SpecialistReviewer] | None = None,
 		providers: ProviderRegistry | None = None,
 		reasoning: ReasoningEngine | None = None,
+		consensus: ConsensusEngine | None = None,
+		debate: ReviewerDebateEngine | None = None,
+		confidence: ConfidenceEngine | None = None,
 	) -> None:
 		self._reviewers = reviewers or default_reviewers()
 		self._providers = providers or ProviderRegistry()
 		self._reasoning = reasoning or ReasoningEngine()
+		self._consensus = consensus or ConsensusEngine()
+		self._debate = debate or ReviewerDebateEngine()
+		self._confidence = confidence or ConfidenceEngine()
 
-	async def run(self, request: ReviewRequest) -> DesignReviewReport:
+	async def run(self, request: ReviewRequest, *, compare_references: bool = True) -> DesignReviewReport:
 		degraded: list[str] = []
 		consulted_reviewers: list[str] = []
 
@@ -98,14 +111,46 @@ class ReviewCoordinator:
 		)
 		degraded.extend(reasoning.degraded)
 
-		all_findings = _dedupe_findings(objective_bundle.findings + subjective_bundle.findings)
+		raw_findings = objective_bundle.findings + subjective_bundle.findings
+		raw_findings, _dropped_ph = drop_placeholders(raw_findings)
+
+		debate = self._debate.run(raw_findings, request=request)
+		degraded.extend(debate.degraded)
+
+		ref_comparisons: list[dict] = []
+		ref_notes: list[str] = []
+		snapshot = resolve_snapshot(request)
+		if compare_references and snapshot is not None:
+			ref_comparisons, ref_notes = compare_with_references(
+				snapshot,
+				user_task=request.user_task or '',
+			)
+
+		consensus = self._consensus.synthesize(
+			debate.findings,
+			user_task=request.user_task or '',
+			reference_notes=ref_notes,
+		)
+		degraded.extend(consensus.degraded)
+
+		confidence = self._confidence.apply(
+			consensus.findings,
+			context=ConfidenceContext(
+				reference_note_count=len(ref_notes),
+				has_snapshot=snapshot is not None,
+				user_task=request.user_task or '',
+			),
+		)
+		degraded.extend(confidence.degraded)
+
+		all_findings = enforce_evidence_policy(confidence.findings, request=request)
 		all_findings.sort(key=lambda f: (_SEVERITY_ORDER.get(f.severity, 9), f.category))
 
 		pillars = _group_by_pillar(all_findings)
 		blocking = [f for f in all_findings if f.severity == 'blocking']
 		passed = not blocking
 
-		summary = reasoning.narrative or _build_summary(all_findings, scores)
+		summary = consensus.narrative or reasoning.narrative or _build_summary(all_findings, scores)
 
 		return DesignReviewReport(
 			passed=passed,
@@ -116,6 +161,8 @@ class ReviewCoordinator:
 			scores=scores,
 			pillars=pillars,
 			reasoning=reasoning,
+			consensus=consensus,
+			reference_comparisons=ref_comparisons,
 			consulted_providers=consulted_providers,
 			consulted_reviewers=consulted_reviewers,
 			workflow_phases=list(MICROSOFT_REVIEW_PHASES),

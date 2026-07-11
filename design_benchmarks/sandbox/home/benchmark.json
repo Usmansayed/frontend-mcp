@@ -1,0 +1,29 @@
+{
+  "id": "sandbox/home",
+  "category": "sandbox",
+  "description": "Live sandbox home page navigation",
+  "user_task": "Navigate home page and evaluate layout hierarchy",
+  "scope": "page",
+  "sandbox_path": "/",
+  "expected_score": {
+    "passed": true,
+    "min_blocking": 0
+  },
+  "gold_findings": [
+    {
+      "id": "navigation_hierarchy",
+      "category": "navigation",
+      "severity": "advisory",
+      "match": ["nav", "hierarchy", "layout"],
+      "required": false
+    }
+  ],
+  "gold_forbidden": [
+    { "match": ["horizontal_overflow", "zero_size"] }
+  ],
+  "gold_review": {
+    "passed": true,
+    "summary": "Home page navigation and hierarchy are acceptable for a hub page.",
+    "top_priorities": []
+  }
+}

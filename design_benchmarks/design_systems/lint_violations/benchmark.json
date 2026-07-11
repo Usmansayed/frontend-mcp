@@ -1,0 +1,34 @@
+{
+  "id": "design_systems/lint_violations",
+  "category": "design_systems",
+  "description": "Component styles violating token and scale rules",
+  "user_task": "Audit button and text styles",
+  "scope": "component",
+  "fixture_ref": "fake_lint_only",
+  "expected_score": {
+    "passed": true,
+    "min_blocking": 0
+  },
+  "gold_findings": [
+    {
+      "id": "missing_color_token",
+      "category": "color",
+      "severity": "minor",
+      "match": ["token", "raw", "color"],
+      "required": true
+    },
+    {
+      "id": "off_scale_typography",
+      "category": "typography",
+      "severity": "minor",
+      "match": ["13px", "typography", "scale", "font"],
+      "required": false
+    }
+  ],
+  "gold_forbidden": [],
+  "gold_review": {
+    "passed": true,
+    "summary": "Lint detects raw colors and off-scale typography. No blocking issues.",
+    "top_priorities": ["Map colors to tokens", "Align font sizes to type scale"]
+  }
+}

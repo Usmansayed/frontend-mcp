@@ -4,7 +4,33 @@ ADR-style log. New entries at top.
 
 ---
 
+## ADR-022 — Decouple Community Discovery from Figma Console (2026-07-11)
+
+**Context:** Community template search and deep file extraction are different problems. Figma has no public Community search REST API; LiveGraph is internal. PAT should not be required to discover templates.
+
+**Decision:** (1) Add **Community Discovery Adapter** (`discovery/community_adapter/`) with pluggable backends: `CatalogBackend` (default, no PAT) and `HttpCommunityBackend` (env-configurable). (2) Return normalized `CommunityDiscoveryHit` metadata independent of providers. (3) Figma Console MCP is **extraction-only** — `discover_candidates` returns degraded not-supported. (4) Provider interface unchanged for forward compatibility.
+
+**Consequences:** Discovery no longer routes through `FigmaProviderRegistry`. PAT required only after Selection Planner. Catalog extensible via `FIGMA_COMMUNITY_CATALOG_JSON`.
+
 ---
+
+## ADR-021 — Figma Intelligence pipeline freeze: Selection + Deep Review (2026-07-11)
+
+**Context:** Ranking alone decides who is best but not who is worth expensive provider extraction. Pre-extraction metadata scoring cannot judge actual design quality. Figma Console MCP must remain a thin executor.
+
+**Decision:** Freeze pipeline v1: (1) **Selection Planner** after ranking — batch opens (3 then 5), design-system dedup, API budget, confidence stop. (2) **Deep Candidate Review** after extraction — sibling modules score extracted tokens/components (65% weight) blended with profile metadata (35%). (3) Wire **southleft/figma-console-mcp** via stdio MCP client for extraction; discovery uses keyword catalog matched to Community Intelligence queries (no official Community REST API). (4) No further pipeline stages without new ADR.
+
+**Consequences:** `evaluation/multi_intelligence.py` pre-extraction path removed from `discover()`. Implementation quality work (catalog depth, snapshot integration, MCP tools) proceeds without architectural churn.
+
+---
+
+## ADR-020 — Figma Intelligence orchestration layer (2026-07-11)
+
+**Context:** Agents need Figma Community inspiration and design-system extraction as structured knowledge, not raw MCP tool dumps. Figma Console MCP and Official Figma MCP are powerful but solve execution — not intent planning, community ranking, or multi-intelligence evaluation.
+
+**Decision:** Add `figma_intelligence/` as a first-class module. (1) **FigmaProvider** protocol with swappable backends — Figma Console first, Official Figma second, future providers without pipeline changes. (2) Pipeline stages owned by us: intent → search planning → discovery → ranking → extraction → multi-intelligence evaluation → reference registry. (3) Sibling modules (Design Sense, Consistency, Component, Framework) participate before provider calls (search hints) and after extraction (value scoring). (4) Outputs feed Design Snapshot Engine, Reference Registry, and Consistency PDG — not standalone Figma JSON. (5) MCP tools deferred until provider wiring; scaffold + research ship first.
+
+**Consequences:** Figma Console is never imported from MCP handlers directly. `consistency_intelligence/discovery/sources/figma.py` remains a thin PDG ingestor; Figma Intelligence orchestrates upstream. Design Workflow Intelligence keeps workflow ownership; Figma Intelligence owns knowledge extraction.
 
 ---
 

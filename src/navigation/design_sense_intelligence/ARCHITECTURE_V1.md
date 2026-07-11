@@ -2,6 +2,19 @@
 
 **Status:** Frozen contracts — improve implementations only behind interfaces.
 
+## Position in stack (v2)
+
+```text
+Browser Intelligence → Design Snapshot Engine → DesignSnapshot
+                                                    │
+                    ┌───────────────────────────────┼───────────────────────────────┐
+                    ▼                               ▼                               ▼
+        Design Sense Intelligence      Consistency Intelligence        Component Intelligence
+        (reasoning only)               (token/scale validation)        (guidance contracts)
+```
+
+Design Sense **must not** parse raw DOM/CSS. It consumes `ReviewRequest.design_snapshot` or legacy fields hydrated via `snapshot_access.enrich_request()`.
+
 ## Pipeline (do not reorder without ADR)
 
 ```text
