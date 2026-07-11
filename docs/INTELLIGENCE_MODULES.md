@@ -1,6 +1,6 @@
 # Intelligence Modules Architecture
 
-Frontend Perception MCP is organized as **eight independent intelligence modules** plus a **shared core**. Each module owns its domain and exposes a clean interface; the MCP layer (`navigation/mcp/`) stays thin and delegates to module services.
+Frontend Perception MCP is organized as **independent intelligence modules** plus a **shared core**. Each module owns its domain and exposes a clean interface; the MCP layer (`navigation/mcp/`) stays thin and delegates to module services.
 
 ## Layout
 
@@ -20,6 +20,7 @@ src/navigation/
 ├── inspiration_intelligence/          # 11. Public inspiration (Dribbble, Behance, …)
 ├── figma_intelligence/              # 12. User Figma account + design systems (future)
 ├── resource_intelligence/             # 13. Creative assets (icons, fonts, photos, …)
+├── seo_intelligence/                  # 14. SEO orchestration (GSC, GA4, LibreCrawl, …)
 ├── mcp/                               # MCP protocol (tools, handlers, server)
 └── cli/                               # Install wrapper
 ```
@@ -299,6 +300,32 @@ Orchestrates **production-ready creative assets** — icons, illustrations, phot
 See `resource_intelligence/docs/ARCHITECTURE.md` and [features/resource_intelligence.md](./features/resource_intelligence.md).
 
 **Boundary:** Component Intelligence owns installable UI components; Resource Intelligence owns discrete assets (SVG, font files, stock photos).
+
+---
+
+## 14. SEO Intelligence
+
+**Path:** `seo_intelligence/`
+
+Orchestrates **free-first SEO evidence** — Search Console, GA4, LibreCrawl, Lighthouse, Browser Intelligence. Not Ahrefs, Semrush, or an internet-scale crawler.
+
+| Capability | Status |
+|------------|--------|
+| Architecture + provider matrix | ✅ |
+| SEO Knowledge Graph schema | ✅ |
+| Provider protocol + research stubs | ✅ |
+| Cross-analysis + recommendation skeleton | ✅ |
+| Verification loop design | ✅ |
+| Google Search Console OAuth adapter | 📋 Phase 1 |
+| GA4 Data API adapter | 📋 Phase 1 |
+| LibreCrawl + Lighthouse adapters | 📋 Phase 2 |
+| `perception_seo_status` + `perception_seo_audit` | ✅ scaffold |
+
+**Do not build:** keyword databases, backlink crawlers, SERP databases.
+
+See `seo_intelligence/docs/ARCHITECTURE.md` and [features/seo_intelligence.md](./features/seo_intelligence.md).
+
+**Boundary:** SEO Intelligence owns search performance orchestration. Browser Intelligence owns live observation (consumed via adapter). `perception_audit_seo` (Frontend Quality) remains a page-level Lighthouse audit — SEO Intelligence correlates multi-source evidence.
 
 ---
 

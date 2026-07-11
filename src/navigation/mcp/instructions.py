@@ -24,6 +24,7 @@ Playbooks by task (AGENT_GUIDE.md):
   §10 Code ↔ live UI             → code_context + observe + diff
   §13 Design inspiration         → inspiration-guide, discover, collect, session_end
   §14 Creative assets (resources) → resource-guide, search, preview, session_end
+  §15 SEO orchestration          → seo-guide, status, audit, verify loop
 
 Hard rules:
 - Never claim UI work is done without perception_verify.
@@ -38,6 +39,7 @@ Hard rules:
 
 Inspiration (AGENT_GUIDE §13): read perception://inspiration-guide before perception_inspiration_* tools.
 Resources (AGENT_GUIDE §14): read perception://resource-guide before perception_resource_* tools.
+SEO (AGENT_GUIDE §15): read perception://seo-guide before perception_seo_* tools.
 
 Eval scenario (smoke test your wiring): perception://eval/validation-form
 """

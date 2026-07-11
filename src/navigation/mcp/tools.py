@@ -918,6 +918,35 @@ def perception_tools(mcp_types: Any) -> list[Any]:
             },
         ),
         T(
+            name="perception_seo_status",
+            description=(
+                "SEO Intelligence. Module phase, free-first provider catalog, knowledge graph summary. "
+                "Read perception://seo-guide first. Not Ahrefs/Semrush — orchestration layer only."
+            ),
+            inputSchema={"type": "object", "properties": {}},
+        ),
+        T(
+            name="perception_seo_audit",
+            description=(
+                "SEO Intelligence. Plan audit → collect evidence (GSC, GA4, LibreCrawl, Lighthouse, Browser) "
+                "→ SEO Knowledge Graph → cross-analysis → recommendations. "
+                "Architecture phase: returns connection map + degraded until providers ship."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "website_url": {"type": "string", "description": "Site to audit (required)"},
+                    "property_url": {"type": "string", "description": "GSC property e.g. sc-domain:example.com"},
+                    "scan_id": {"type": "string", "description": "Browser Intelligence scan for rendering evidence"},
+                    "repo_root": {"type": "string"},
+                    "providers": {"type": "array", "items": {"type": "string"}},
+                    "include_cross_analysis": {"type": "boolean", "default": True},
+                    "include_recommendations": {"type": "boolean", "default": True},
+                },
+                "required": ["website_url"],
+            },
+        ),
+        T(
             name="perception_build_design_snapshot",
             description=(
                 "Design pipeline: build structured DesignSnapshot from scan_id or session. "

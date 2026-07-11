@@ -448,7 +448,15 @@ User: "Build a SaaS pricing page with glass navbar"
 
 **Shipped:** Search Phase 1, framework detection + Grounded Docs, full quality stack, modular intelligence layout.
 
-**Next:** Figma Intelligence provider wiring. Component ranking → adaptation → install. Consistency validators. Token snapshots across code and DOM.
+**Next:** Figma Intelligence provider wiring. Component ranking → adaptation → install. Consistency validators. Token snapshots across code and DOM. SEO Intelligence Phase 1 (GSC + GA4 OAuth).
+
+### Section: SEO Intelligence (architecture_v1)
+
+**Headline:** We are not Ahrefs. We orchestrate your data.
+
+**Body:** SEO Intelligence gathers user-owned Search Console and GA4 evidence, technical crawl from LibreCrawl (local), Lighthouse CWV, and Browser Intelligence rendering signals. Everything normalizes into an SEO Knowledge Graph. Cross-analysis explains *why* indexing or CTR fails — with `evidence_ids` on every recommendation. Verify loop matches frontend: analyze → fix → `perception_verify` → re-audit.
+
+**Explicit non-goals:** keyword databases, backlink crawlers, SERP scrapers, internet-scale crawlers.
 
 ---
 

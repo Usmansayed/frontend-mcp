@@ -76,6 +76,12 @@ def list_resources(scans: ScanRegistry | None = None) -> list[dict[str, str]]:
 			'mimeType': 'text/markdown',
 		},
 		{
+			'uri': 'perception://seo-guide',
+			'name': 'SEO_AGENT_GUIDE',
+			'description': 'SEO Intelligence — free-first SEO orchestration, providers, verify loop (read before seo tools)',
+			'mimeType': 'text/markdown',
+		},
+		{
 			'uri': 'perception://eval/validation-form',
 			'name': 'Validation Form Eval',
 			'description': 'M3 eval scenario — complete using AGENT_GUIDE §4 form playbook',
@@ -152,6 +158,19 @@ def read_resource(uri: str, scans: ScanRegistry | None = None) -> tuple[str, str
 		)
 		if not path.is_file():
 			raise FileNotFoundError(f'RESOURCE_AGENT_GUIDE.md not found at {path}')
+		return 'text/markdown', path.read_text(encoding='utf-8'), False
+
+	if uri == 'perception://seo-guide':
+		path = (
+			PROJECT_ROOT
+			/ 'src'
+			/ 'navigation'
+			/ 'seo_intelligence'
+			/ 'docs'
+			/ 'SEO_AGENT_GUIDE.md'
+		)
+		if not path.is_file():
+			raise FileNotFoundError(f'SEO_AGENT_GUIDE.md not found at {path}')
 		return 'text/markdown', path.read_text(encoding='utf-8'), False
 
 	if uri == 'perception://eval/validation-form':

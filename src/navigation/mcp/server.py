@@ -58,6 +58,8 @@ from .handlers import (
     handle_resource_preview,
     handle_resource_search,
     handle_resource_session_end,
+    handle_seo_audit,
+    handle_seo_status,
     handle_search_components,
     handle_plan_component_search,
     handle_select_component_foundation,
@@ -318,6 +320,12 @@ class PerceptionMCPServer:
         async def resource_observe_bridge(args: dict[str, Any]) -> dict[str, Any]:
             return await handle_resource_observe_bridge(scans, args)
 
+        async def seo_status(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_seo_status(args)
+
+        async def seo_audit(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_seo_audit(args)
+
         async def build_design_snapshot(args: dict[str, Any]) -> dict[str, Any]:
             return await handle_build_design_snapshot(store, scans, snapshots, args)
 
@@ -397,6 +405,8 @@ class PerceptionMCPServer:
             "perception_resource_animation_search": resource_animation_search,
             "perception_resource_license_check": resource_license_check,
             "perception_resource_observe_bridge": resource_observe_bridge,
+            "perception_seo_status": seo_status,
+            "perception_seo_audit": seo_audit,
             "perception_build_design_snapshot": build_design_snapshot,
             "perception_design_review": design_review,
             "perception_consistency_review": consistency_review,

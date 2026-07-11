@@ -15,6 +15,8 @@ __all__ = [
 	'consistency_intelligence',
 	'figma_intelligence',
 	'inspiration_intelligence',
+	'resource_intelligence',
+	'seo_intelligence',
 	'mcp',
 	'cli',
 ]

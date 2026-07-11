@@ -12,6 +12,7 @@ artifacts/
 .cache/resource_icon_family.json
 .cache/resource_graph.json
 .cache/inspiration_sessions.json
+.cache/seo_graph.json
 node_modules/
 sandbox/node_modules/
 sandbox/dist/

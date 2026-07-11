@@ -510,6 +510,17 @@ async def main() -> int:
         else:
             report["tests"]["resource_license_check"] = {"ok": True}
 
+        from navigation.mcp.handlers import handle_seo_audit, handle_seo_status
+
+        _mime3, seo_guide, _blob3 = read_resource("perception://seo-guide")
+        report["tests"]["seo_guide_resource"] = {"ok": bool(str(seo_guide).strip())}
+
+        seo_status = await handle_seo_status({})
+        report["tests"]["seo_status"] = {"ok": seo_status["ok"]}
+
+        seo_audit = await handle_seo_audit({"website_url": "https://example.com"})
+        report["tests"]["seo_audit"] = {"ok": seo_audit["ok"]}
+
         end = await handle_session_end(store, {"session_id": sid})
         report["tests"]["session_end"] = {"ok": end["ok"]}
 

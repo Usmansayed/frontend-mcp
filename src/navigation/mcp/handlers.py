@@ -1927,3 +1927,65 @@ async def handle_resource_session_end(arguments: dict[str, Any]) -> dict[str, An
             },
         },
     )
+
+
+async def handle_seo_status(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.seo_intelligence import SeoIntelligenceService
+
+    service = SeoIntelligenceService()
+    status = service.status()
+    return make_envelope(
+        "perception_seo_status",
+        ok=True,
+        data={
+            "seo_status": status,
+            "agent_summary": {
+                "phase": status.get("phase"),
+                "advisory": [
+                    "Read perception://seo-guide before SEO audits.",
+                    "SEO Intelligence orchestrates free tools — not Ahrefs/Semrush.",
+                ],
+            },
+        },
+    )
+
+
+async def handle_seo_audit(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.seo_intelligence import SeoAuditRequest, SeoIntelligenceService
+
+    website_url = str(arguments.get("website_url") or arguments.get("url") or "").strip()
+    if not website_url:
+        return make_envelope("perception_seo_audit", ok=False, error="website_url required")
+    request = SeoAuditRequest(
+        website_url=website_url,
+        property_url=str(arguments.get("property_url") or ""),
+        repo_root=str(arguments.get("repo_root") or ""),
+        scan_id=str(arguments.get("scan_id") or ""),
+        providers=[str(p) for p in (arguments.get("providers") or []) if p],
+        include_cross_analysis=bool(arguments.get("include_cross_analysis", True)),
+        include_recommendations=bool(arguments.get("include_recommendations", True)),
+    )
+    service = SeoIntelligenceService()
+    result = await service.audit(request)
+    payload = result.to_dict()
+    advisory = [
+        "Provider adapters are in research phase until OAuth/LibreCrawl wiring ships.",
+        "Every recommendation must cite evidence_ids — never claim fixes without verify.",
+    ]
+    if result.degraded:
+        advisory.append(f"degraded:{','.join(result.degraded[:5])}")
+    return make_envelope(
+        "perception_seo_audit",
+        ok=True,
+        data={
+            "seo_audit": payload,
+            "agent_summary": {
+                "website_url": website_url,
+                "evidence_count": len(result.evidence),
+                "recommendation_count": len(result.recommendations),
+                "connections": result.connections,
+                "advisory": advisory,
+            },
+        },
+        degraded=result.degraded,
+    )

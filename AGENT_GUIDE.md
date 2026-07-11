@@ -446,7 +446,37 @@ Guideline:
 
 ---
 
-## 15. Tool quick reference (secondary to playbooks)
+## 15. Playbook: SEO orchestration (SEO Intelligence)
+
+**When:** User asks about search rankings, indexing, CTR, Core Web Vitals, technical SEO, or site-wide SEO audit.
+
+**Read first:** MCP resource `perception://seo-guide` — free-first providers, verify loop, boundaries.
+
+```text
+1. perception_seo_status()                    → phase + provider catalog
+2. Connect user GSC / GA4 (when Phase 1 ships) — OAuth, user-owned data
+3. perception_seo_audit({ website_url, scan_id? })
+4. Read evidence + recommendations — every claim has evidence_ids
+5. Fix code / config based on evidence
+6. perception_observe → perception_verify on affected pages
+7. Re-run perception_seo_audit to measure gains
+```
+
+| Provider | Role |
+|----------|------|
+| Search Console | Queries, index, crawl issues, CWV in GSC |
+| GA4 | Traffic, landing pages, conversions |
+| LibreCrawl | Technical crawl (local — not our crawler) |
+| Lighthouse | Lab CWV + SEO score |
+| Browser Intelligence | Rendering evidence via `scan_id` |
+
+**Do not:** Build keyword/backlink databases. Scrape SERPs ad-hoc. Claim SEO fixes without verify.
+
+**Stop when:** Recommendations addressed and verified, or user confirms stop.
+
+---
+
+## 16. Tool quick reference (secondary to playbooks)
 
 Use tools **only as steps inside playbooks above**.
 
@@ -471,10 +501,12 @@ Use tools **only as steps inside playbooks above**.
 | `perception_resource_search` | Ranked creative assets (fast) |
 | `perception_resource_preview` | URLs + ephemeral resource vision blobs |
 | `perception_resource_session_end` | Delete ephemeral resource blobs |
+| `perception_seo_status` | SEO module phase + provider catalog |
+| `perception_seo_audit` | SEO evidence → graph → recommendations |
 
 ---
 
-## 16. Success checklist (before telling user “done”)
+## 17. Success checklist (before telling user “done”)
 
 - [ ] `perception_verify` passed for stated criteria
 - [ ] `agent_summary.blocking` is empty (or user accepted warnings)

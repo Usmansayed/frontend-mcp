@@ -4,6 +4,16 @@ ADR-style log. New entries at top.
 
 ---
 
+## ADR-023 — SEO Intelligence orchestration layer (2026-07-11)
+
+**Context:** Agents need evidence-based SEO reasoning (indexing, CTR, CWV, technical crawl) without building Ahrefs/Semrush-scale infrastructure or internet crawlers.
+
+**Decision:** Add `seo_intelligence/` as a first-class module. (1) **Free-first providers only** — Google Search Console, GA4 (user OAuth), LibreCrawl (local), Lighthouse/PSI, Browser Intelligence adapter. (2) **SEO Knowledge Graph** normalizes evidence — never duplicate raw provider payloads in recommendations. (3) **Cross-analysis + recommendation engine** require `evidence_ids` on every claim. (4) **Verification loop** mirrors frontend workflow: analyze → recommend → apply → `perception_verify` → re-audit. (5) **Explicit non-goals:** keyword databases, backlink indexes, SERP databases, custom crawlers. (6) Bing Webmaster optional P2 only.
+
+**Consequences:** `perception_audit_seo` (page Lighthouse) remains in Frontend Quality; SEO Intelligence correlates multi-source site-level evidence. Provider adapters ship in phases after architecture/research. Module freeze target ~85 — then invest in cross-module coordination.
+
+---
+
 ## ADR-022 — Decouple Community Discovery from Figma Console (2026-07-11)
 
 **Context:** Community template search and deep file extraction are different problems. Figma has no public Community search REST API; LiveGraph is internal. PAT should not be required to discover templates.

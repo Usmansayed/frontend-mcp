@@ -39,6 +39,8 @@ src/navigation/
 ├── consistency_intelligence/     # Project Design Graph + consistency
 ├── inspiration_intelligence/       # Public gallery inspiration (Dribbble, Behance, …)
 ├── figma_intelligence/           # User Figma account + design systems
+├── resource_intelligence/        # Creative assets (icons, fonts, photos, …)
+├── seo_intelligence/             # SEO orchestration (GSC, GA4, LibreCrawl, …)
 ├── mcp/                          # MCP server (thin handlers)
 └── cli/
 ```
@@ -51,6 +53,16 @@ Legacy paths (`perception/`, `console/`, `codeGraph/`, `browser_use/`, etc.) are
 |---------|--------|
 | "Is this good UX?" / qualitative guidance | **Design Sense Intelligence** |
 | "Does this match the design system?" / token & scale enforcement | **Consistency Intelligence** |
+
+## Module boundaries: SEO vs Browser vs Frontend Quality
+
+| Concern | Module |
+|---------|--------|
+| Site-wide SEO evidence (GSC, GA4, crawl, CWV correlation) | **SEO Intelligence** |
+| Live page observation, DOM, screenshots | **Browser Intelligence** |
+| Single-page Lighthouse SEO audit (`perception_audit_seo`) | **Frontend Quality** |
+
+SEO Intelligence **orchestrates** free providers and normalizes into the SEO Knowledge Graph. It does not build keyword databases or internet crawlers.
 
 ## Core principles
 
