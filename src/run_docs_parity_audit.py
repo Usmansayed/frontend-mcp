@@ -59,7 +59,7 @@ def main() -> int:
     tool_names = set(tools)
 
     tool_reference = _names_in_file(ROOT / "docs" / "tool_reference.md")
-    agent_guide = _names_in_file(ROOT / "AGENT_GUIDE.md")
+    agent_guide = _names_in_file(ROOT / "src" / "navigation" / "mcp" / "AGENT_GUIDE.md")
     instructions = _names_in_file(ROOT / "src" / "navigation" / "mcp" / "instructions.py")
 
     missing_dispatch = sorted(tool_names - dispatch)

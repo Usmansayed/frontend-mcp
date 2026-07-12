@@ -5,18 +5,25 @@ __pycache__/
 dist/
 build/
 *.egg-info/
+.pytest_cache/
+.code-review-graph/
+
+# Runtime output (regenerated locally)
 artifacts/
 .cache/
+
 node_modules/
 sandbox/node_modules/
 sandbox/dist/
 .cursor/
 
-# Local vendored clones (use PyPI / clone separately)
+# Local vendored clones — use PyPI instead
 browser-use/
 
-# Reference study clones — track files, not nested .git
+# Reference / research clones (study only — clone locally, never ship)
 references/**/.git
+research/**/repos/*/
+!research/**/repos/.gitkeep
 
 # Generated validation reports (reproduced by run_*_validation.py)
 evals/**/reports/**

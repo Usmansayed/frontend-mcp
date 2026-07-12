@@ -1,7 +1,7 @@
 [project]
 name = "frontend-perception-engine"
-version = "0.2.0"
-description = "Frontend perception engine with optional CRG-powered navigation hints for Browser Use."
+version = "1.0.0"
+description = "Frontend Perception MCP — deterministic browser runtime for coding agents."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -33,6 +33,9 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+navigation = ["**/*.md", "**/*.yaml", "**/*.json"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"

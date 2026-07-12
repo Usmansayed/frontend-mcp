@@ -6,9 +6,12 @@ import json
 from pathlib import Path
 from typing import Any
 
+from navigation.core.paths import (
+	agent_guide_path,
+	module_doc,
+	validation_form_eval_path,
+)
 from navigation.core.scan_registry import ScanRegistry
-
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 _SCAN_ARTIFACTS: dict[str, str] = {
 	'report.json': 'application/json',
@@ -19,6 +22,12 @@ _SCAN_ARTIFACTS: dict[str, str] = {
 	'screenshot-crop.png': 'image/png',
 	'network.har': 'application/json',
 }
+
+
+def _read_md(path: Path, label: str) -> tuple[str, str, bool]:
+	if not path.is_file():
+		raise FileNotFoundError(f'{label} not found at {path}')
+	return 'text/markdown', path.read_text(encoding='utf-8'), False
 
 
 def _artifact_from_report(obs: dict[str, Any], kind: str) -> Path | None:
@@ -135,68 +144,34 @@ def list_resources(scans: ScanRegistry | None = None) -> list[dict[str, str]]:
 def read_resource(uri: str, scans: ScanRegistry | None = None) -> tuple[str, str, bool]:
 	"""Return (mime_type, payload, is_blob). Raises KeyError if unknown."""
 	if uri == 'perception://agent-guide':
-		path = PROJECT_ROOT / 'AGENT_GUIDE.md'
-		if not path.is_file():
-			raise FileNotFoundError(f'AGENT_GUIDE.md not found at {path}')
-		return 'text/markdown', path.read_text(encoding='utf-8'), False
+		return _read_md(agent_guide_path(), 'AGENT_GUIDE.md')
 
 	if uri == 'perception://inspiration-guide':
-		path = (
-			PROJECT_ROOT
-			/ 'src'
-			/ 'navigation'
-			/ 'inspiration_intelligence'
-			/ 'docs'
-			/ 'INSPIRATION_AGENT_GUIDE.md'
+		return _read_md(
+			module_doc('inspiration_intelligence', 'docs', 'INSPIRATION_AGENT_GUIDE.md'),
+			'INSPIRATION_AGENT_GUIDE.md',
 		)
-		if not path.is_file():
-			raise FileNotFoundError(f'INSPIRATION_AGENT_GUIDE.md not found at {path}')
-		return 'text/markdown', path.read_text(encoding='utf-8'), False
 
 	if uri == 'perception://resource-guide':
-		path = (
-			PROJECT_ROOT
-			/ 'src'
-			/ 'navigation'
-			/ 'resource_intelligence'
-			/ 'docs'
-			/ 'RESOURCE_AGENT_GUIDE.md'
+		return _read_md(
+			module_doc('resource_intelligence', 'docs', 'RESOURCE_AGENT_GUIDE.md'),
+			'RESOURCE_AGENT_GUIDE.md',
 		)
-		if not path.is_file():
-			raise FileNotFoundError(f'RESOURCE_AGENT_GUIDE.md not found at {path}')
-		return 'text/markdown', path.read_text(encoding='utf-8'), False
 
 	if uri == 'perception://seo-guide':
-		path = (
-			PROJECT_ROOT
-			/ 'src'
-			/ 'navigation'
-			/ 'seo_intelligence'
-			/ 'docs'
-			/ 'SEO_AGENT_GUIDE.md'
+		return _read_md(
+			module_doc('seo_intelligence', 'docs', 'SEO_AGENT_GUIDE.md'),
+			'SEO_AGENT_GUIDE.md',
 		)
-		if not path.is_file():
-			raise FileNotFoundError(f'SEO_AGENT_GUIDE.md not found at {path}')
-		return 'text/markdown', path.read_text(encoding='utf-8'), False
 
 	if uri == 'perception://figma-guide':
-		path = (
-			PROJECT_ROOT
-			/ 'src'
-			/ 'navigation'
-			/ 'figma_intelligence'
-			/ 'docs'
-			/ 'FIGMA_AGENT_GUIDE.md'
+		return _read_md(
+			module_doc('figma_intelligence', 'docs', 'FIGMA_AGENT_GUIDE.md'),
+			'FIGMA_AGENT_GUIDE.md',
 		)
-		if not path.is_file():
-			raise FileNotFoundError(f'FIGMA_AGENT_GUIDE.md not found at {path}')
-		return 'text/markdown', path.read_text(encoding='utf-8'), False
 
 	if uri == 'perception://eval/validation-form':
-		path = PROJECT_ROOT / 'evals' / 'VALIDATION_FORM_EVAL.md'
-		if not path.is_file():
-			raise FileNotFoundError(f'eval doc not found at {path}')
-		return 'text/markdown', path.read_text(encoding='utf-8'), False
+		return _read_md(validation_form_eval_path(), 'VALIDATION_FORM_EVAL.md')
 
 	if uri.startswith('perception://scan/') and scans is not None:
 		parts = uri.split('/')

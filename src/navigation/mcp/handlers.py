@@ -14,6 +14,7 @@ from navigation.visual_browser_intelligence.observe.scan import scan_page
 from navigation.visual_browser_intelligence.verify.verification import SuccessCriteria, evaluate_js, verify
 
 from navigation.core.envelope import agent_summary_from_observation, agent_summary_from_report, make_envelope
+from navigation.core.paths import default_code_repo_root
 from navigation.core.scan_registry import ScanRegistry
 from navigation.frontend_quality_intelligence.diff import diff_observations
 from navigation.visual_browser_intelligence.browser.session_store import SessionStore
@@ -888,8 +889,7 @@ async def handle_code_context(arguments: dict[str, Any]) -> dict[str, Any]:
 
     repo_root = Path(str(arguments.get("repo_root") or "")).resolve() if arguments.get("repo_root") else None
     if repo_root is None:
-        # Default: sandbox sibling of src/
-        repo_root = Path(__file__).resolve().parents[3] / "sandbox"
+        repo_root = default_code_repo_root()
 
     enabled = bool(arguments.get("enabled", True))
     query_type = str(arguments.get("query_type") or "stats")
@@ -1286,12 +1286,10 @@ async def handle_audit_mode(
 
 
 def _default_repo_root(arguments: dict[str, Any]) -> Path:
-    from pathlib import Path
-
     raw = arguments.get("repo_root")
     if raw:
         return Path(str(raw)).resolve()
-    return Path(__file__).resolve().parents[3] / "sandbox"
+    return default_code_repo_root()
 
 
 async def handle_detect_framework(arguments: dict[str, Any]) -> dict[str, Any]:
