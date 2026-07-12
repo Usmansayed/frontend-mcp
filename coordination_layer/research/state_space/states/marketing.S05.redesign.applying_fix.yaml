@@ -1,0 +1,35 @@
+state_id: marketing.S05.redesign.applying_fix
+name: "Redesign — applying Design Sense-guided fix"
+description: |
+  A Design Sense finding is being addressed via code change.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S05_implementation
+project_types: [existing_mature]
+situation_class: redesign
+current_project_condition: |
+  Change staged; not yet verified.
+entry_conditions: [design_review_fix_selected]
+exit_conditions: [verify_diff_confirms_improvement]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: known, design_source: partial, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [before_after_diff]
+user_intents: [improve_design_finding]
+possible_actions: [re_observe, run_diff, run_design_review]
+prerequisites: [scan_id]
+possible_next_states:
+  - marketing.S07.new_feature.change_scope_ready
+  - global.Sxx.verify_loop_exhausted
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, design_sense_intelligence]
+modules_must_not_execute: []
+dependencies: [scan_id]
+expected_outputs: [design_diff]
+verification_requirements: [finding_no_longer_flagged]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

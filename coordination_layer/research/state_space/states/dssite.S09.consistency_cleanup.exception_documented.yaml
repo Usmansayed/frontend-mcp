@@ -1,0 +1,35 @@
+state_id: dssite.S09.consistency_cleanup.exception_documented
+name: "Consistency — deviation accepted as documented exception"
+description: |
+  User accepts a deviation; consistency exception recorded in PDG.
+mcp_ready: true
+project_archetype: design_system_site
+project_maturity: M4
+lifecycle_stage: S09_consistency
+project_types: [existing_mature]
+situation_class: consistency_cleanup
+current_project_condition: |
+  Exception noted; future audits treat this element as verified.
+entry_conditions: [exception_recorded]
+exit_conditions: [next_finding_or_terminal]
+state_confidence: high
+known_evidence: {ui_runtime: known, codebase: partial, design_source: partial, design_system: verified, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: []
+user_intents: [move_on]
+possible_actions: [proceed_to_next_finding]
+prerequisites: [pdg_file]
+possible_next_states:
+  - dssite.S09.consistency_cleanup.audit_findings_open
+  - dssite.S09.consistency_cleanup.no_deviation_detected
+failure_states: []
+relevant_modules: [consistency_intelligence]
+modules_must_not_execute: []
+dependencies: [pdg_file]
+expected_outputs: [exception_record]
+verification_requirements: [exception_persisted]
+parent_cluster: null
+forest_id: F08
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

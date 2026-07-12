@@ -1,0 +1,35 @@
+state_id: marketing.S10.release_prep.baseline_stored
+name: "Release — baseline stored, ready for staging"
+description: |
+  Regression baseline artifacts persisted; ready to verify staging environment.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S10_release
+project_types: [existing_mature]
+situation_class: release_prep
+current_project_condition: |
+  Baseline complete; staging URL awaiting verification.
+entry_conditions: [baseline_persisted]
+exit_conditions: [staging_verified]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: partial, design_system: partial, seo: partial, quality: verified, assets: partial}
+unknown_evidence: [staging_state]
+user_intents: [proceed_to_staging]
+possible_actions: [session_start_staging, verify_pages_staging]
+prerequisites: [staging_url]
+possible_next_states:
+  - marketing.S10.release_prep.staging_verify
+  - global.Sxx.dev_server_down
+failure_states: [global.Sxx.dev_server_down]
+relevant_modules: [visual_browser, frontend_quality]
+modules_must_not_execute: []
+dependencies: [staging_url]
+expected_outputs: [staging_verify_start]
+verification_requirements: [staging_reachable]
+parent_cluster: null
+forest_id: F09
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

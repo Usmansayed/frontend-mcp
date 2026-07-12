@@ -1,0 +1,35 @@
+state_id: marketing.S12.framework_migration.incremental_progress
+name: "Migration — incremental migration in progress"
+description: |
+  Per-page or per-module migration underway; some routes migrated, some not.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M5
+lifecycle_stage: S12_evolution
+project_types: [existing_mature]
+situation_class: framework_migration
+current_project_condition: |
+  Coexistence period; both frameworks or code paths active.
+entry_conditions: [migration_started, incremental_mode]
+exit_conditions: [all_pages_migrated_or_reverted]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: partial, quality: partial, assets: partial}
+unknown_evidence: [migration_side_effects]
+user_intents: [complete_migration]
+possible_actions: [migrate_next_page, verify_migrated_page, capture_diff_vs_baseline]
+prerequisites: [repo_root, session_id]
+possible_next_states:
+  - marketing.S12.framework_migration.completed
+  - marketing.S07.ui_bug.visual_regression_detected
+failure_states: [global.Sxx.tooling_broken]
+relevant_modules: [visual_browser, framework_intelligence, codebase_intelligence, design_snapshot_engine]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [repo_root, session_id]
+expected_outputs: [migrated_pages]
+verification_requirements: [each_migrated_page_verified]
+parent_cluster: null
+forest_id: F11
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

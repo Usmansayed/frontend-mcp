@@ -1,0 +1,35 @@
+state_id: landing.S08.seo_campaign.fix_applying
+name: "SEO — applying a recommendation"
+description: |
+  A recommendation was chosen; code change staged; awaiting verify.
+mcp_ready: true
+project_archetype: landing
+project_maturity: M4
+lifecycle_stage: S08_quality
+project_types: [existing_project]
+situation_class: seo_campaign
+current_project_condition: |
+  Meta/schema/canonical/etc. change staged in repo.
+entry_conditions: [recommendation_selected]
+exit_conditions: [verify_shows_expected_change]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: known, design_source: partial, design_system: partial, seo: partial, quality: partial, assets: partial}
+unknown_evidence: [post_fix_evidence]
+user_intents: [ship_seo_fix]
+possible_actions: [seo_verify, capture_scan]
+prerequisites: [audit_id]
+possible_next_states:
+  - landing.S08.seo_campaign.re_audit_after_fix
+  - global.Sxx.verify_loop_exhausted
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [seo_intelligence, visual_browser, codebase_intelligence]
+modules_must_not_execute: []
+dependencies: [audit_id, scan_id]
+expected_outputs: [seo_verify_report]
+verification_requirements: [fixed_element_present_post_scan]
+parent_cluster: null
+forest_id: F07
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

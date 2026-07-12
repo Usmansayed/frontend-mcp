@@ -1,0 +1,34 @@
+state_id: blog.S08.seo_campaign.content_gap_verified
+name: "SEO — content gap closed and verified"
+description: |
+  New content added; re-audit confirms the gap is closed.
+mcp_ready: true
+project_archetype: blog
+project_maturity: M4
+lifecycle_stage: S08_quality
+project_types: [existing_mature]
+situation_class: ai_visibility_campaign
+current_project_condition: |
+  Content live; ai_readiness metric improved.
+entry_conditions: [re_audit_confirms_improvement]
+exit_conditions: [progress_release]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: partial, design_system: partial, seo: verified, quality: partial, assets: partial}
+unknown_evidence: []
+user_intents: [progress]
+possible_actions: [move_to_release]
+prerequisites: [audit_id]
+possible_next_states:
+  - marketing.S10.release_prep.regression_baseline_capture
+failure_states: []
+relevant_modules: [seo_intelligence]
+modules_must_not_execute: []
+dependencies: [audit_id]
+expected_outputs: [verified_content]
+verification_requirements: [ai_readiness_improved]
+parent_cluster: null
+forest_id: F07
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

@@ -1,0 +1,36 @@
+state_id: marketing.S08.seo_campaign.audit_needed
+name: "SEO — audit needed on marketing site"
+description: |
+  Marketing site with multiple pages; SEO baseline unknown or stale.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M5
+lifecycle_stage: S08_quality
+project_types: [existing_mature]
+situation_class: seo_campaign
+current_project_condition: |
+  Some pages indexable; graph incomplete.
+entry_conditions: [pages_indexable]
+exit_conditions: [audit_returned_or_auth_required]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: partial, design_source: partial, design_system: partial, seo: partial, quality: partial, assets: partial}
+unknown_evidence: [gsc_data]
+user_intents: [audit_seo]
+possible_actions: [choose_mode, seo_audit]
+prerequisites: [website_url]
+possible_next_states:
+  - marketing.S08.seo_campaign.audit_completed_pro
+  - landing.S08.seo_campaign.audit_completed_dev
+  - ecom.S08.seo_campaign.pro_mode.needs_auth
+failure_states: [global.Sxx.upstream_degraded]
+relevant_modules: [seo_intelligence]
+modules_must_not_execute: [figma_intelligence]
+dependencies: [website_url]
+expected_outputs: [audit_result_or_auth_required]
+verification_requirements: [audit_returned_or_degraded]
+parent_cluster: null
+forest_id: F07
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

@@ -1,0 +1,35 @@
+state_id: marketing.S12.redesign.completed
+name: "Redesign — completed"
+description: |
+  All pages redesigned and verified; SEO/A11y quality passes on new design.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M5
+lifecycle_stage: S12_evolution
+project_types: [existing_mature]
+situation_class: redesign
+current_project_condition: |
+  Redesign fully rolled out; ready for release baseline refresh.
+entry_conditions: [all_pages_redesigned_and_verified]
+exit_conditions: [return_to_live_and_monitored]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: known, design_system: known, seo: partial, quality: verified, assets: verified}
+unknown_evidence: [post_redesign_seo]
+user_intents: [ship_redesign]
+possible_actions: [capture_new_baseline, seo_reaudit]
+prerequisites: []
+possible_next_states:
+  - marketing.S10.release_prep.regression_baseline_capture
+  - marketing.S08.seo_campaign.audit_needed
+failure_states: []
+relevant_modules: [visual_browser, seo_intelligence, design_snapshot_engine]
+modules_must_not_execute: []
+dependencies: []
+expected_outputs: [redesign_close_report]
+verification_requirements: [new_baseline_captured]
+parent_cluster: null
+forest_id: F11
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

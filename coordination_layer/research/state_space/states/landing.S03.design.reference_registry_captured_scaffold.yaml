@@ -1,0 +1,37 @@
+state_id: landing.S03.design.reference_registry_captured_scaffold
+name: "Design — reference snapshots captured to registry (aspirational)"
+description: |
+  High-value inspirations copied into Design Reference Registry for later comparison.
+  Bridge from Inspiration to Registry is scaffold today.
+mcp_ready: false
+project_archetype: landing
+project_maturity: M2
+lifecycle_stage: S03_design
+project_types: [greenfield]
+situation_class: inspiration_needed
+current_project_condition: |
+  User has curated references; Design Reference Registry stores them.
+entry_conditions: [inspiration_curated, reference_registry_bridge_available]
+exit_conditions: [architecture_or_implementation_started]
+state_confidence: speculative
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: known, design_system: unknown, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [design_system_tokens]
+user_intents: [reuse_references_later]
+possible_actions: [store_reference_snapshot, tag_reference_metadata]
+prerequisites: []
+possible_next_states:
+  - landing.S04.architecture.route_plan_ready
+  - landing.S03.design.direction_agreed_with_references
+failure_states: [global.Sxx.upstream_degraded]
+relevant_modules: [design_reference_registry, inspiration_intelligence]
+modules_must_not_execute: []
+dependencies: []
+expected_outputs: [design_reference_records]
+verification_requirements: [reference_records_persisted]
+parent_cluster: null
+forest_id: F02
+mcp_ready_gap: "Report 01 §4.11 — Design Reference Registry has no MCP tool exposure; Inspiration bridge is scaffold."
+notes: |
+  Kept in the state space because Coordination Layer design must anticipate it.
+discarded_as_duplicate_of: null
+first_added_in: batch1

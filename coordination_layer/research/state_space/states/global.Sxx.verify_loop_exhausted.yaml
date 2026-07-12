@@ -1,0 +1,35 @@
+state_id: global.Sxx.verify_loop_exhausted
+name: "Global — verify loop exhausted without success"
+description: |
+  Multiple verify attempts failed; hand off to user with observations + diffs.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: Sxx_any
+project_types: [existing_mature]
+situation_class: functional_bug
+current_project_condition: |
+  Retry budget exceeded; no reliable next fix.
+entry_conditions: [max_verify_retries_hit]
+exit_conditions: [user_takes_over_or_agent_pauses]
+state_confidence: high
+known_evidence: {ui_runtime: regressed, codebase: partial, design_source: partial, design_system: partial, seo: partial, quality: partial, assets: partial}
+unknown_evidence: [next_hypothesis]
+user_intents: [get_unstuck]
+possible_actions: [surface_evidence_bundle, ask_user_for_hint, pause_work]
+prerequisites: []
+possible_next_states:
+  - marketing.S07.ui_bug.full_diagnosis_run
+  - marketing.S07.ui_bug.user_report_no_repro
+failure_states: []
+relevant_modules: [visual_browser, frontend_quality]
+modules_must_not_execute: []
+dependencies: []
+expected_outputs: [evidence_bundle_for_user]
+verification_requirements: [handoff_ready]
+parent_cluster: null
+forest_id: F12
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

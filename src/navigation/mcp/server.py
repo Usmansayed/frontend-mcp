@@ -1,464 +1,235 @@
 """Frontend Perception MCP server — host agent is the brain; this is the runtime."""
+
 from __future__ import annotations
 
+
+
 import asyncio
-import json
+
 import logging
+
 import os
+
 import sys
-from collections.abc import Awaitable, Callable
+
 from typing import Any
 
+
+
+from navigation.core.env import load_project_env
+
+
+
+load_project_env()
+
+
+
 os.environ.setdefault("BROWSER_USE_LOGGING_LEVEL", "warning")
+
 os.environ.setdefault("BROWSER_USE_SETUP_LOGGING", "false")
+
+
 
 logger = logging.getLogger(__name__)
 
+
+
 try:
+
     import mcp.server.stdio
+
     import mcp.types as types
+
     from mcp.server import NotificationOptions, Server
+
     from mcp.server.models import InitializationOptions
 
+
+
     MCP_AVAILABLE = True
+
 except ImportError:
+
     MCP_AVAILABLE = False
+
     types = None  # type: ignore
 
-from .handlers import (
-    handle_auth_gate,
-    handle_audit_accessibility,
-    handle_audit_best_practices,
-    handle_audit_mode,
-    handle_audit_performance,
-    handle_audit_seo,
-    handle_code_context,
-    handle_console_clear,
-    handle_console_get,
-    handle_debug_mode,
-    handle_detect_framework,
-    handle_diff,
-    handle_execute_actions,
-    handle_execute_script,
-    handle_flow_describe,
-    handle_framework_docs,
-    handle_inspiration_collect,
-    handle_inspiration_discover,
-    handle_inspiration_session_end,
-    handle_resource_observe_bridge,
-    handle_resource_license_check,
-    handle_resource_icon_search,
-    handle_resource_font_search,
-    handle_resource_logo_search,
-    handle_resource_photo_search,
-    handle_resource_avatar_search,
-    handle_resource_illustration_search,
-    handle_resource_pattern_search,
-    handle_resource_animation_search,
-    handle_resource_preview,
-    handle_resource_search,
-    handle_resource_session_end,
-    handle_seo_audit,
-    handle_seo_connect,
-    handle_seo_status,
-    handle_seo_verify,
-    handle_search_components,
-    handle_plan_component_search,
-    handle_select_component_foundation,
-    handle_integrate_component,
-    handle_full_diagnosis,
-    handle_health,
-    handle_navigate,
-    handle_navigate_and_observe,
-    handle_network_clear,
-    handle_network_get,
-    handle_observe,
-    handle_probe_form,
-    handle_probe_guards,
-    handle_session_end,
-    handle_session_start,
-    handle_state_list,
-    handle_state_restore,
-    handle_state_save,
-    handle_verify,
-)
-from .design_intelligence_handlers import (
-    handle_build_design_snapshot,
-    handle_consistency_assess,
-    handle_consistency_audit,
-    handle_consistency_propose_fix,
-    handle_consistency_review,
-    handle_design_graph_refresh,
-    handle_design_graph_summary,
-    handle_design_knowledge_query,
-    handle_design_review,
-)
+
+
 from .instructions import MCP_INSTRUCTIONS
+
 from .resources import list_resources, read_resource
+
+from .tools import perception_tools
+
 from navigation.core.scan_registry import ScanRegistry
+
 from navigation.core.snapshot_registry import SnapshotRegistry
+
+from navigation.execution_runtime.runtime import ExecutionRuntime, configure
+
 from navigation.visual_browser_intelligence.browser.session_store import SessionStore
+
 from navigation.visual_browser_intelligence.visual.visual_response import envelope_to_mcp_contents
 
 
-HandlerFn = Callable[..., Awaitable[dict[str, Any]]]
+
 
 
 class PerceptionMCPServer:
+
     def __init__(self) -> None:
+
         if not MCP_AVAILABLE:
+
             raise RuntimeError("mcp package not installed. pip install mcp")
+
         self._store = SessionStore()
+
         self._scans = ScanRegistry()
+
         self._snapshots = SnapshotRegistry()
+
+        self._runtime = ExecutionRuntime(self._store, self._scans, self._snapshots)
+
+        configure(self._runtime)
+
         self._server = Server("frontend-perception")
-        self._dispatch: dict[str, HandlerFn] = self._build_dispatch()
+
+
 
         @self._server.list_tools()
+
         async def list_tools() -> list[types.Tool]:
+
             return perception_tools(types)
 
+
+
         @self._server.list_resources()
+
         async def list_resources_handler() -> list[types.Resource]:
+
             return [
+
                 types.Resource(
+
                     uri=item["uri"],
+
                     name=item["name"],
+
                     description=item["description"],
+
                     mimeType=item["mimeType"],
+
                 )
+
                 for item in list_resources(self._scans)
+
             ]
 
+
+
         @self._server.read_resource()
+
         async def read_resource_handler(uri: str) -> types.TextResourceContents | types.BlobResourceContents:
+
             uri_str = str(uri)
+
             mime, payload, is_blob = read_resource(uri_str, self._scans)
+
             if is_blob:
+
                 return types.BlobResourceContents(uri=uri_str, mimeType=mime, blob=payload)
+
             return types.TextResourceContents(uri=uri_str, mimeType=mime, text=payload)
 
+
+
         @self._server.call_tool()
+
         async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[Any]:
+
             args = arguments or {}
-            try:
-                handler = self._dispatch.get(name)
-                if handler is None:
-                    result = {
-                        "contract_version": "1.0",
-                        "tool": name,
-                        "ok": False,
-                        "error": f"unknown tool: {name}",
-                        "data": {},
-                    }
-                else:
-                    result = await handler(args)
-            except Exception as exc:
-                logger.exception("tool %s failed", name)
-                result = {
-                    "contract_version": "1.0",
-                    "tool": name,
-                    "ok": False,
-                    "error": str(exc),
-                    "data": {},
-                }
-            return envelope_to_mcp_contents(result, types)
 
-    def _build_dispatch(self) -> dict[str, HandlerFn]:
-        store = self._store
-        scans = self._scans
-        snapshots = self._snapshots
+            result = await self._runtime.execute_tool(name, args)
 
-        async def health(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_health(args)
+            return envelope_to_mcp_contents(result.envelope, types)
 
-        async def session_start(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_session_start(store, args)
 
-        async def session_end(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_session_end(store, args)
-
-        async def navigate(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_navigate(store, args)
-
-        async def navigate_and_observe(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_navigate_and_observe(store, scans, args)
-
-        async def observe(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_observe(store, scans, args)
-
-        async def execute_script(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_execute_script(store, scans, args)
-
-        async def execute_actions(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_execute_actions(store, scans, args)
-
-        async def verify(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_verify(store, scans, args)
-
-        async def diff(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_diff(scans, args)
-
-        async def auth_gate(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_auth_gate(store, args)
-
-        async def probe_form(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_probe_form(store, args)
-
-        async def probe_guards(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_probe_guards(store, args)
-
-        async def state_save(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_state_save(store, args)
-
-        async def state_restore(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_state_restore(store, args)
-
-        async def state_list(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_state_list(store, args)
-
-        async def flow_describe(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_flow_describe(args)
-
-        async def code_context(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_code_context(args)
-
-        async def console_get(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_console_get(store, args)
-
-        async def console_clear(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_console_clear(store, args)
-
-        async def network_get(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_network_get(store, args)
-
-        async def network_clear(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_network_clear(store, args)
-
-        async def audit_accessibility(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_audit_accessibility(store, args)
-
-        async def audit_performance(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_audit_performance(store, args)
-
-        async def audit_seo(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_audit_seo(store, args)
-
-        async def audit_best_practices(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_audit_best_practices(store, args)
-
-        async def full_diagnosis(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_full_diagnosis(store, scans, args)
-
-        async def debug_mode(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_debug_mode(store, scans, args)
-
-        async def audit_mode(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_audit_mode(store, scans, args)
-
-        async def detect_framework(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_detect_framework(args)
-
-        async def framework_docs(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_framework_docs(args)
-
-        async def search_components(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_search_components(args)
-
-        async def plan_component_search(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_plan_component_search(args)
-
-        async def select_component_foundation(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_select_component_foundation(args)
-
-        async def integrate_component(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_integrate_component(args)
-
-        async def inspiration_discover(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_inspiration_discover(args)
-
-        async def inspiration_collect(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_inspiration_collect(args)
-
-        async def inspiration_session_end(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_inspiration_session_end(args)
-
-        async def resource_search(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_resource_search(args)
-
-        async def resource_preview(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_resource_preview(args)
-
-        async def resource_session_end(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_resource_session_end(args)
-
-        async def resource_icon_search(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_resource_icon_search(args)
-
-        async def resource_font_search(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_resource_font_search(args)
-
-        async def resource_logo_search(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_resource_logo_search(args)
-
-        async def resource_photo_search(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_resource_photo_search(args)
-
-        async def resource_avatar_search(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_resource_avatar_search(args)
-
-        async def resource_illustration_search(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_resource_illustration_search(args)
-
-        async def resource_pattern_search(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_resource_pattern_search(args)
-
-        async def resource_animation_search(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_resource_animation_search(args)
-
-        async def resource_license_check(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_resource_license_check(args)
-
-        async def resource_observe_bridge(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_resource_observe_bridge(scans, args)
-
-        async def seo_status(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_seo_status(args)
-
-        async def seo_connect(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_seo_connect(args)
-
-        async def seo_audit(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_seo_audit(scans, args)
-
-        async def seo_verify(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_seo_verify(scans, args)
-
-        async def build_design_snapshot(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_build_design_snapshot(store, scans, snapshots, args)
-
-        async def design_review(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_design_review(store, scans, snapshots, args)
-
-        async def consistency_review(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_consistency_review(store, scans, snapshots, args)
-
-        async def consistency_audit(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_consistency_audit(store, scans, snapshots, args)
-
-        async def design_knowledge_query(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_design_knowledge_query(args)
-
-        async def design_graph_summary(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_design_graph_summary(args)
-
-        async def design_graph_refresh(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_design_graph_refresh(store, scans, snapshots, args)
-
-        async def consistency_assess(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_consistency_assess(args)
-
-        async def consistency_propose_fix(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_consistency_propose_fix(args)
-
-        return {
-            "perception_health": health,
-            "perception_session_start": session_start,
-            "perception_session_end": session_end,
-            "perception_navigate": navigate,
-            "perception_navigate_and_observe": navigate_and_observe,
-            "perception_observe": observe,
-            "perception_execute_script": execute_script,
-            "perception_execute_actions": execute_actions,
-            "perception_verify": verify,
-            "perception_diff": diff,
-            "perception_auth_gate": auth_gate,
-            "perception_probe_form": probe_form,
-            "perception_probe_guards": probe_guards,
-            "perception_state_save": state_save,
-            "perception_state_restore": state_restore,
-            "perception_state_list": state_list,
-            "perception_flow_describe": flow_describe,
-            "perception_code_context": code_context,
-            "perception_console_get": console_get,
-            "perception_console_clear": console_clear,
-            "perception_network_get": network_get,
-            "perception_network_clear": network_clear,
-            "perception_audit_accessibility": audit_accessibility,
-            "perception_audit_performance": audit_performance,
-            "perception_audit_seo": audit_seo,
-            "perception_audit_best_practices": audit_best_practices,
-            "perception_full_diagnosis": full_diagnosis,
-            "perception_debug_mode": debug_mode,
-            "perception_audit_mode": audit_mode,
-            "perception_detect_framework": detect_framework,
-            "perception_framework_docs": framework_docs,
-            "perception_search_components": search_components,
-            "perception_plan_component_search": plan_component_search,
-            "perception_select_component_foundation": select_component_foundation,
-            "perception_integrate_component": integrate_component,
-            "perception_inspiration_discover": inspiration_discover,
-            "perception_inspiration_collect": inspiration_collect,
-            "perception_inspiration_session_end": inspiration_session_end,
-            "perception_resource_search": resource_search,
-            "perception_resource_preview": resource_preview,
-            "perception_resource_session_end": resource_session_end,
-            "perception_resource_icon_search": resource_icon_search,
-            "perception_resource_font_search": resource_font_search,
-            "perception_resource_logo_search": resource_logo_search,
-            "perception_resource_photo_search": resource_photo_search,
-            "perception_resource_avatar_search": resource_avatar_search,
-            "perception_resource_illustration_search": resource_illustration_search,
-            "perception_resource_pattern_search": resource_pattern_search,
-            "perception_resource_animation_search": resource_animation_search,
-            "perception_resource_license_check": resource_license_check,
-            "perception_resource_observe_bridge": resource_observe_bridge,
-            "perception_seo_status": seo_status,
-            "perception_seo_connect": seo_connect,
-            "perception_seo_audit": seo_audit,
-            "perception_seo_verify": seo_verify,
-            "perception_build_design_snapshot": build_design_snapshot,
-            "perception_design_review": design_review,
-            "perception_consistency_review": consistency_review,
-            "perception_consistency_audit": consistency_audit,
-            "perception_design_knowledge_query": design_knowledge_query,
-            "perception_design_graph_summary": design_graph_summary,
-            "perception_design_graph_refresh": design_graph_refresh,
-            "perception_consistency_assess": consistency_assess,
-            "perception_consistency_propose_fix": consistency_propose_fix,
-        }
 
     async def run(self) -> None:
+
         async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
+
             await self._server.run(
+
                 read_stream,
+
                 write_stream,
+
                 InitializationOptions(
+
                     server_name="frontend-perception",
+
                     server_version="0.11.0",
+
                     capabilities=self._server.get_capabilities(
+
                         notification_options=NotificationOptions(),
+
                         experimental_capabilities={},
+
                     ),
+
                     instructions=MCP_INSTRUCTIONS,
+
                 ),
+
             )
 
 
+
+
+
 async def async_main() -> None:
+
     if not MCP_AVAILABLE:
+
         print("Install MCP: pip install mcp", file=sys.stderr)
+
         raise SystemExit(1)
+
     server = PerceptionMCPServer()
+
     try:
+
         await server.run()
+
     finally:
+
         await server._store.end_all()
+
+        from navigation.seo_intelligence.setup.companion_processes import shutdown_companions
+
+
+
+        shutdown_companions()
+
+
+
 
 
 def main() -> None:
+
     asyncio.run(async_main())
 
 
+
+
+
 if __name__ == "__main__":
+
     main()
+
+

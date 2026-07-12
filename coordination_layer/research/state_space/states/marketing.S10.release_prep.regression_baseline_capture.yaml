@@ -1,0 +1,35 @@
+state_id: marketing.S10.release_prep.regression_baseline_capture
+name: "Release — capturing regression baseline"
+description: |
+  Snapshots + scans across key pages captured and stored as the release baseline.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S10_release
+project_types: [existing_mature]
+situation_class: regression_baseline
+current_project_condition: |
+  All target pages verified; baseline being persisted.
+entry_conditions: [pages_verified]
+exit_conditions: [baseline_stored]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: partial, design_system: partial, seo: partial, quality: verified, assets: partial}
+unknown_evidence: [prod_env_state]
+user_intents: [enable_future_regression_detection]
+possible_actions: [store_snapshots, tag_baseline]
+prerequisites: [scan_id, snapshot_id]
+possible_next_states:
+  - marketing.S10.release_prep.staging_verify
+  - marketing.S10.release_prep.baseline_stored
+failure_states: []
+relevant_modules: [design_snapshot_engine, visual_browser]
+modules_must_not_execute: []
+dependencies: [scan_id, snapshot_id]
+expected_outputs: [baseline_artifacts]
+verification_requirements: [artifacts_persisted]
+parent_cluster: null
+forest_id: F09
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from navigation.seo_intelligence.evidence.identity import stable_evidence_id
 from navigation.seo_intelligence.models import SeoEvidenceKind, SeoEvidenceRef
 
 
@@ -10,10 +11,11 @@ def normalize_crawl_payload(
 	payload: dict[str, Any],
 	*,
 	provider_id: str = 'librecrawl',
+	base_url: str = '',
 ) -> list[SeoEvidenceRef]:
 	evidence: list[SeoEvidenceRef] = []
 	issues = payload.get('issues') or []
-	for index, issue in enumerate(issues[:50]):
+	for issue in issues[:50]:
 		if not isinstance(issue, dict):
 			continue
 		title = str(issue.get('type') or issue.get('issue_type') or issue.get('title') or 'crawl_issue')
@@ -27,7 +29,14 @@ def normalize_crawl_payload(
 			kind = SeoEvidenceKind.TECHNICAL_ISSUE
 		evidence.append(
 			SeoEvidenceRef(
-				evidence_id=f'librecrawl:issue:{index}',
+				evidence_id=stable_evidence_id(
+					provider_id,
+					kind.value,
+					page_url=page_url,
+					title=title,
+					source_ref='librecrawl.crawl_status.issues',
+					base_url=base_url,
+				),
 				provider_id=provider_id,
 				kind=kind,
 				title=title,
@@ -40,7 +49,7 @@ def normalize_crawl_payload(
 		)
 
 	urls = payload.get('urls') or []
-	for index, item in enumerate(urls[:100]):
+	for item in urls[:100]:
 		if not isinstance(item, dict):
 			continue
 		status_code = item.get('status') or item.get('status_code') or item.get('code')
@@ -54,7 +63,15 @@ def normalize_crawl_payload(
 		if code >= 400:
 			evidence.append(
 				SeoEvidenceRef(
-					evidence_id=f'librecrawl:url:{index}',
+					evidence_id=stable_evidence_id(
+						provider_id,
+						SeoEvidenceKind.TECHNICAL_ISSUE.value,
+						page_url=page_url,
+						title=f'HTTP {code}',
+						source_ref='librecrawl.crawl_status.urls',
+						metric_key=str(code),
+						base_url=base_url,
+					),
 					provider_id=provider_id,
 					kind=SeoEvidenceKind.TECHNICAL_ISSUE,
 					title=f'HTTP {code}: {page_url}',
@@ -72,7 +89,14 @@ def normalize_crawl_payload(
 		if canonical and declared and str(canonical) != str(declared):
 			evidence.append(
 				SeoEvidenceRef(
-					evidence_id=f'librecrawl:canonical:{index}',
+					evidence_id=stable_evidence_id(
+						provider_id,
+						SeoEvidenceKind.TECHNICAL_ISSUE.value,
+						page_url=page_url,
+						title='canonical mismatch',
+						source_ref='librecrawl.canonical',
+						base_url=base_url,
+					),
 					provider_id=provider_id,
 					kind=SeoEvidenceKind.TECHNICAL_ISSUE,
 					title=f'Canonical mismatch: {page_url}',
@@ -80,37 +104,14 @@ def normalize_crawl_payload(
 					page_url=page_url,
 					severity='medium',
 					source_ref='librecrawl.canonical',
-					metadata={'canonical': canonical, 'declared': declared},
-				)
-			)
-
-	stats = payload.get('stats') or {}
-	if stats:
-		discovered = stats.get('discovered')
-		crawled = stats.get('crawled')
-		if discovered is not None:
-			evidence.append(
-				SeoEvidenceRef(
-					evidence_id='librecrawl:stats:summary',
-					provider_id=provider_id,
-					kind=SeoEvidenceKind.TECHNICAL_ISSUE,
-					title='Crawl summary',
-					summary=f'Discovered {discovered} URLs, crawled {crawled}',
-					severity='info',
-					source_ref='librecrawl.stats',
-					metadata=dict(stats),
+					metadata=dict(item),
 				)
 			)
 	return evidence
 
 
 def _severity_from_issue(issue: dict[str, Any]) -> str:
-	severity = str(issue.get('severity') or issue.get('level') or '').lower()
-	if severity in {'critical', 'error', 'high'}:
-		return 'high'
-	if severity in {'warning', 'medium'}:
-		return 'medium'
-	issue_type = str(issue.get('type') or '').lower()
-	if 'broken' in issue_type or 'error' in issue_type:
-		return 'high'
+	raw = str(issue.get('severity') or issue.get('level') or 'medium').lower()
+	if raw in {'critical', 'high', 'medium', 'low', 'info'}:
+		return raw
 	return 'medium'

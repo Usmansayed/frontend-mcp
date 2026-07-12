@@ -1,0 +1,75 @@
+# Lifecycle stage → cluster mapping
+# Which clusters typically appear as entry or exit for each lifecycle stage.
+# Used by the Coordination Layer to select cluster-level plans.
+version: 1
+generated_at: "2026-07-12"
+
+stages:
+  S01_intent:
+    entry_clusters: [cluster.intent.conversation]
+    typical_exit_clusters: [cluster.discovery.bootstrap]
+    notes: "Purely conversational. No MCP modules should run."
+
+  S02_discovery:
+    entry_clusters: [cluster.discovery.bootstrap]
+    typical_exit_clusters: [cluster.architecture.plan, cluster.design.reference_gathering, cluster.design.figma_pipeline]
+    notes: "Detection modules cheap and safe. Blank-page recovery may cross into debug cluster."
+
+  S03_design:
+    entry_clusters: [cluster.design.reference_gathering, cluster.design.figma_pipeline, cluster.design.review_and_snapshot]
+    typical_exit_clusters: [cluster.architecture.plan, cluster.feature.data_ui, cluster.component.acquisition_pipeline]
+    notes: "Inspiration blob sessions must be closed before exit."
+
+  S04_architecture:
+    entry_clusters: [cluster.architecture.plan]
+    typical_exit_clusters: [cluster.feature.data_ui, cluster.feature.form_pipeline, cluster.feature.flow_pipeline, cluster.component.acquisition_pipeline]
+    notes: "Conversation-driven; no evidence collection needed."
+
+  S05_implementation:
+    entry_clusters: [cluster.feature.form_pipeline, cluster.feature.flow_pipeline, cluster.feature.data_ui, cluster.feature.navigation_change, cluster.feature.auth_flow, cluster.feature.api_integration, cluster.feature.resource_gap, cluster.component.acquisition_pipeline, cluster.debug.iteration_target]
+    typical_exit_clusters: [cluster.debug.signal_class, cluster.quality.audit_cycle, cluster.seo.audit_cycle]
+
+  S06_integration:
+    entry_clusters: [cluster.feature.api_integration, cluster.feature.resource_gap, cluster.component.acquisition_pipeline]
+    typical_exit_clusters: [cluster.debug.signal_class, cluster.quality.audit_cycle]
+
+  S07_verification:
+    entry_clusters: [cluster.feature.form_pipeline, cluster.feature.flow_pipeline, cluster.feature.data_ui, cluster.feature.navigation_change, cluster.debug.signal_class]
+    typical_exit_clusters: [cluster.quality.audit_cycle, cluster.seo.audit_cycle, cluster.release.baseline_and_staging, cluster.global.recovery]
+    notes: "Verify loop is the workhorse. Retry budget enforced by planner."
+
+  S08_quality:
+    entry_clusters: [cluster.quality.audit_cycle, cluster.seo.audit_cycle, cluster.quality.session_mode]
+    typical_exit_clusters: [cluster.release.baseline_and_staging, cluster.debug.iteration_target]
+
+  S09_consistency:
+    entry_clusters: [cluster.consistency.audit_cycle, cluster.design.review_and_snapshot]
+    typical_exit_clusters: [cluster.release.baseline_and_staging, cluster.component.acquisition_pipeline]
+
+  S10_release:
+    entry_clusters: [cluster.release.baseline_and_staging]
+    typical_exit_clusters: [cluster.production.live_and_incidents]
+
+  S11_production:
+    entry_clusters: [cluster.production.live_and_incidents]
+    typical_exit_clusters: [cluster.debug.signal_class, cluster.migration.framework_or_redesign, cluster.release.baseline_and_staging]
+
+  S12_evolution:
+    entry_clusters: [cluster.migration.framework_or_redesign]
+    typical_exit_clusters: [cluster.release.baseline_and_staging, cluster.production.live_and_incidents]
+
+  Sxx_any:
+    entry_clusters: [cluster.global.recovery]
+    typical_exit_clusters: []
+    notes: "Global states short-circuit; recovery paths re-enter the originating stage."
+
+# Cross-cutting rule
+rules:
+  - id: R01
+    text: "cluster.global.recovery is always reachable as a failure edge from S02..S12 states."
+  - id: R02
+    text: "cluster.debug.signal_class is the canonical loop-back from S07 to S05."
+  - id: R03
+    text: "cluster.seo.audit_cycle only enters from S08 onward — never during S05 implementation."
+  - id: R04
+    text: "cluster.consistency.audit_cycle requires a non-empty PDG (see global.Sxx.pdg_refresh_failed)."

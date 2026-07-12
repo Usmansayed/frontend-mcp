@@ -1,0 +1,61 @@
+state_id: landing.S01.intent.unclear
+name: "Landing page — user goal is vague"
+description: |
+  User has asked to "build a landing page" or "make a website" without specifying purpose,
+  audience, or content. No repo yet. The agent must refine the intent before any tooling runs.
+mcp_ready: true
+
+project_archetype: landing
+project_maturity: M0
+lifecycle_stage: S01_intent
+project_types: [greenfield]
+situation_class: new_feature
+
+current_project_condition: |
+  No repository, no dev server, no design. Only a natural-language request from the user.
+entry_conditions: [user_message_received, no_prior_context]
+exit_conditions: [intent_describable_in_one_sentence]
+state_confidence: high
+
+known_evidence:
+  ui_runtime: unknown
+  codebase: unknown
+  design_source: unknown
+  design_system: unknown
+  seo: unknown
+  quality: unknown
+  assets: unknown
+unknown_evidence: [audience, purpose, brand_direction, target_pages, tone]
+
+user_intents: [build_landing_page, describe_project_goal]
+
+possible_actions:
+  - ask_clarifying_questions
+  - offer_intent_templates
+  - restate_goal_and_confirm
+prerequisites: []
+possible_next_states:
+  - landing.S01.intent.described
+  - landing.S02.discovery.no_repo
+failure_states:
+  - global.Sxx.user_abandoned
+recovery_paths:
+  - from: global.Sxx.user_abandoned
+    action: park_conversation
+    notes: no automated recovery; user must return
+
+relevant_modules: []
+modules_must_not_execute: [visual_browser, seo_intelligence, figma_intelligence, component_intelligence]
+dependencies: []
+
+expected_outputs: [describable_intent]
+verification_requirements: [user_confirms_summary]
+
+parent_cluster: null
+forest_id: F01
+mcp_ready_gap: null
+notes: |
+  Purely conversational state. No tool call is safe here; running observe or session_start
+  before the intent exists wastes resources and produces noise.
+discarded_as_duplicate_of: null
+first_added_in: batch1

@@ -1,0 +1,37 @@
+state_id: marketing.S03.design.pdg_empty_snapshot_ready
+name: "Design — snapshot exists but PDG is empty"
+description: |
+  A DesignSnapshot has been built from a scan, but no PDG has been discovered yet.
+  Design Sense can run; Consistency queries return empty.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M3
+lifecycle_stage: S03_design
+project_types: [existing_mature]
+situation_class: new_feature
+current_project_condition: |
+  snapshot_id available; .perception/design_graph.json absent or empty.
+entry_conditions: [snapshot_built]
+exit_conditions: [pdg_refresh_scheduled_or_design_sense_run]
+state_confidence: high
+known_evidence: {ui_runtime: known, codebase: partial, design_source: partial, design_system: unknown, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [design_system_standards]
+user_intents: [review_current_design, seed_design_system]
+possible_actions: [run_design_review, schedule_pdg_refresh, decide_to_defer_pdg]
+prerequisites: [snapshot_id]
+possible_next_states:
+  - marketing.S03.design.design_review_open
+  - dssite.S09.consistency_cleanup.pdg_seeded_from_snapshot
+failure_states: [global.Sxx.pdg_refresh_failed]
+relevant_modules: [design_sense_intelligence, consistency_intelligence, design_snapshot_engine]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [snapshot_id]
+expected_outputs: [design_review_or_pdg_seed]
+verification_requirements: [snapshot_non_empty]
+parent_cluster: null
+forest_id: F02
+mcp_ready_gap: null
+notes: |
+  Design Sense is safe when PDG is empty; Consistency audit is not (returns empty).
+discarded_as_duplicate_of: null
+first_added_in: batch1

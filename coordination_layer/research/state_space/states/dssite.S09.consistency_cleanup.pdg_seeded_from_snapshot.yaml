@@ -1,0 +1,36 @@
+state_id: dssite.S09.consistency_cleanup.pdg_seeded_from_snapshot
+name: "Consistency — PDG discovered from snapshots and codebase"
+description: |
+  design_graph_refresh has scanned snapshot + codebase + tokens; PDG has standards.
+mcp_ready: true
+project_archetype: design_system_site
+project_maturity: M3
+lifecycle_stage: S09_consistency
+project_types: [existing_mature]
+situation_class: consistency_cleanup
+current_project_condition: |
+  .perception/design_graph.json populated. design_graph_summary yields non-empty categories.
+entry_conditions: [pdg_refresh_completed]
+exit_conditions: [audit_findings_open_or_no_deviation]
+state_confidence: high
+known_evidence: {ui_runtime: known, codebase: partial, design_source: partial, design_system: known, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [figma_alignment]
+user_intents: [align_ui_with_design_system]
+possible_actions: [run_consistency_audit, query_standards, assess_specific_element]
+prerequisites: [pdg_file]
+possible_next_states:
+  - dssite.S09.consistency_cleanup.audit_findings_open
+  - dssite.S09.consistency_cleanup.no_deviation_detected
+failure_states: [global.Sxx.pdg_refresh_failed]
+relevant_modules: [consistency_intelligence, design_snapshot_engine]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [pdg_file]
+expected_outputs: [consistency_audit_report_or_clean_verdict]
+verification_requirements: [pdg_present, standards_count_non_zero]
+parent_cluster: null
+forest_id: F02
+mcp_ready_gap: null
+notes: |
+  Referenced by F08 as an entry point.
+discarded_as_duplicate_of: null
+first_added_in: batch1

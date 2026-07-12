@@ -1,0 +1,36 @@
+state_id: marketing.S08.debug_mode.active
+name: "Quality — debug_mode active for intensive investigation"
+description: |
+  perception_debug_mode active: elevated console/network capture during debug sessions.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S08_quality
+project_types: [existing_mature]
+situation_class: functional_bug
+current_project_condition: |
+  Elevated capture provides more evidence per observe; noisier.
+entry_conditions: [debug_mode_enabled]
+exit_conditions: [debug_mode_disabled]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: known, assets: unknown}
+unknown_evidence: [next_step]
+user_intents: [dig_deep_on_bug]
+possible_actions: [observe_and_review, capture_har, correlate_via_code_context]
+prerequisites: [session_id]
+possible_next_states:
+  - marketing.S07.ui_bug.full_diagnosis_run
+  - saas.S07.functional_bug.race_condition
+failure_states: []
+relevant_modules: [frontend_quality, visual_browser]
+modules_must_not_execute: []
+dependencies: [session_id]
+expected_outputs: [enhanced_diagnostic_evidence]
+verification_requirements: [debug_mode_toggled_off_at_end]
+parent_cluster: null
+forest_id: F06
+mcp_ready_gap: null
+notes: |
+  Do not leave debug_mode enabled indefinitely.
+discarded_as_duplicate_of: null
+first_added_in: batch1

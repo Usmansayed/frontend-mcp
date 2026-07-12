@@ -82,6 +82,7 @@ async def main() -> int:
 
         invalid_verify = await handle_verify(
             store,
+            scans,
             {"session_id": sid, "criteria": {"text_contains": ["Invalid email"]}},
         )
         report["steps"]["verify_invalid"] = (
@@ -119,6 +120,7 @@ async def main() -> int:
 
         valid_verify = await handle_verify(
             store,
+            scans,
             {"session_id": sid, "criteria": {"text_contains": ["Form is valid"]}},
         )
         report["steps"]["verify_valid"] = (
@@ -152,6 +154,11 @@ async def main() -> int:
         print(f"  {name}: ok={ok}")
     if report.get("error"):
         print(f"  error: {report['error']}")
+
+    out_dir = ROOT / "artifacts" / "evals" / "E2E-4"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+
     return 0 if report["ok"] else 1
 
 

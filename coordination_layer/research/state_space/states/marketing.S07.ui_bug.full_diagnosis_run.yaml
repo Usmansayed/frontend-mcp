@@ -1,0 +1,36 @@
+state_id: marketing.S07.ui_bug.full_diagnosis_run
+name: "Debug — full_diagnosis performed to widen the net"
+description: |
+  Focused debug attempts inconclusive; perception_full_diagnosis captures a broad report.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S07_verification
+project_types: [existing_mature]
+situation_class: ui_bug
+current_project_condition: |
+  PerceptionReport with console, network, audits, and observations.
+entry_conditions: [focused_debug_inconclusive]
+exit_conditions: [hypothesis_from_report]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: partial, quality: known, assets: unknown}
+unknown_evidence: [root_cause]
+user_intents: [broaden_diagnosis]
+possible_actions: [read_full_diagnosis, correlate_findings, choose_next_fix]
+prerequisites: [session_id]
+possible_next_states:
+  - marketing.S07.new_feature.change_scope_ready
+  - marketing.S08.perf_remediation.audit_needed
+  - marketing.S08.a11y_remediation.audit_needed
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [frontend_quality, visual_browser]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [session_id]
+expected_outputs: [broad_diagnostic_report]
+verification_requirements: [hypothesis_formed]
+parent_cluster: null
+forest_id: F05
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

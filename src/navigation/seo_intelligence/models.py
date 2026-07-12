@@ -13,7 +13,6 @@ class SeoProviderId(str, Enum):
 	LIBRECRAWL = 'librecrawl'
 	LIGHTHOUSE = 'lighthouse'
 	BROWSER = 'browser'
-	OPENSEO = 'openseo'
 
 
 class SeoEvidenceKind(str, Enum):
@@ -49,6 +48,13 @@ class SeoVerificationStatus(str, Enum):
 	PASSED = 'passed'
 	FAILED = 'failed'
 	SKIPPED = 'skipped'
+
+
+class SeoAuditMode(str, Enum):
+	"""Development SEO (default, no auth) vs Professional optimization (live Google data)."""
+
+	DEVELOPMENT = 'development'
+	PROFESSIONAL = 'professional'
 
 
 @dataclass(slots=True)
@@ -92,7 +98,6 @@ class SeoCapabilitySpec:
 	final_fallback: str = 'no_data'
 	requires_api_key: bool = False
 	requires_paid_plan: bool = False
-	openseo_requires_paid: bool = False
 	requires_external_provider: bool = False
 	external_provider: str = ''
 	optional: bool = True
@@ -108,7 +113,6 @@ class SeoCapabilitySpec:
 			'final_fallback': self.final_fallback,
 			'requires_api_key': self.requires_api_key,
 			'requires_paid_plan': self.requires_paid_plan,
-			'openseo_requires_paid': self.openseo_requires_paid,
 			'requires_external_provider': self.requires_external_provider,
 			'external_provider': self.external_provider,
 			'optional': self.optional,
@@ -123,7 +127,6 @@ class SeoCapabilityRoute:
 	chosen_provider: str
 	skipped_providers: list[str] = field(default_factory=list)
 	reason: str = ''
-	paid_provider_used: bool = False
 
 	def to_dict(self) -> dict[str, Any]:
 		return {
@@ -131,7 +134,6 @@ class SeoCapabilityRoute:
 			'chosen_provider': self.chosen_provider,
 			'skipped_providers': list(self.skipped_providers),
 			'reason': self.reason,
-			'paid_provider_used': self.paid_provider_used,
 		}
 
 
@@ -179,20 +181,29 @@ class SeoRecommendation:
 	priority: str
 	category: str
 	evidence_ids: list[str] = field(default_factory=list)
+	root_cause: str = ''
+	business_impact: str = ''
 	fix_guidance: str = ''
 	verification_steps: list[str] = field(default_factory=list)
 	confidence: float = 0.0
 	metadata: dict[str, Any] = field(default_factory=dict)
 
 	def to_dict(self) -> dict[str, Any]:
+		implementation_steps = (
+			[self.fix_guidance] if self.fix_guidance else list(self.metadata.get('implementation_steps') or [])
+		)
 		return {
 			'recommendation_id': self.recommendation_id,
 			'title': self.title,
 			'summary': self.summary,
+			'root_cause': self.root_cause,
+			'business_impact': self.business_impact,
 			'priority': self.priority,
 			'category': self.category,
 			'evidence_ids': list(self.evidence_ids),
+			'evidence_used': list(self.evidence_ids),
 			'fix_guidance': self.fix_guidance,
+			'implementation_steps': implementation_steps,
 			'verification_steps': list(self.verification_steps),
 			'confidence': self.confidence,
 			'metadata': dict(self.metadata),
@@ -207,11 +218,13 @@ class SeoAuditRequest:
 	scan_id: str = ''
 	providers: list[str] = field(default_factory=list)
 	intents: list[str] = field(default_factory=list)
-	allow_paid_providers: bool = False
-	allow_openseo: bool = True
+	mode: SeoAuditMode | None = None
 	ga4_property_id: str = ''
+	bing_site_url: str = ''
 	include_cross_analysis: bool = True
 	include_recommendations: bool = True
+	include_ai_visibility: bool = True
+	ai_reasoning: bool | None = None
 	commercial_site: bool = True
 
 	def to_dict(self) -> dict[str, Any]:
@@ -222,11 +235,13 @@ class SeoAuditRequest:
 			'scan_id': self.scan_id,
 			'providers': list(self.providers),
 			'intents': list(self.intents),
-			'allow_paid_providers': self.allow_paid_providers,
-			'allow_openseo': self.allow_openseo,
+			'mode': self.mode.value if self.mode is not None else 'auto',
 			'ga4_property_id': self.ga4_property_id,
+			'bing_site_url': self.bing_site_url,
 			'include_cross_analysis': self.include_cross_analysis,
 			'include_recommendations': self.include_recommendations,
+			'include_ai_visibility': self.include_ai_visibility,
+			'ai_reasoning': self.ai_reasoning,
 			'commercial_site': self.commercial_site,
 		}
 
@@ -234,12 +249,15 @@ class SeoAuditRequest:
 @dataclass(slots=True)
 class SeoAuditResult:
 	request: SeoAuditRequest
+	audit_id: str = ''
+	mode: str = 'development'
 	evidence: list[SeoEvidenceRef] = field(default_factory=list)
 	recommendations: list[SeoRecommendation] = field(default_factory=list)
 	providers_queried: list[str] = field(default_factory=list)
 	capability_routes: list[SeoCapabilityRoute] = field(default_factory=list)
 	connections: dict[str, str] = field(default_factory=dict)
 	cross_analysis: list[dict[str, Any]] = field(default_factory=list)
+	reasoning_context: dict[str, Any] = field(default_factory=dict)
 	verification: dict[str, Any] = field(default_factory=dict)
 	degraded: list[str] = field(default_factory=list)
 	graph_summary: dict[str, Any] = field(default_factory=dict)
@@ -247,12 +265,16 @@ class SeoAuditResult:
 	def to_dict(self) -> dict[str, Any]:
 		return {
 			'request': self.request.to_dict(),
+			'audit_id': self.audit_id,
+			'mode': self.mode,
 			'evidence': [e.to_dict() for e in self.evidence],
 			'recommendations': [r.to_dict() for r in self.recommendations],
 			'providers_queried': list(self.providers_queried),
 			'capability_routes': [r.to_dict() for r in self.capability_routes],
 			'connections': dict(self.connections),
 			'cross_analysis': list(self.cross_analysis),
+			'reasoning_context': dict(self.reasoning_context),
+			'reasoning_context_v2': dict(self.reasoning_context),
 			'verification': dict(self.verification),
 			'degraded': list(self.degraded),
 			'graph_summary': dict(self.graph_summary),

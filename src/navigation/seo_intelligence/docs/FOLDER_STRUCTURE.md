@@ -22,7 +22,6 @@ seo_intelligence/
 │   ├── librecrawl/
 │   ├── lighthouse/
 │   ├── browser/              # Adapter to visual_browser_intelligence
-│   └── openseo/              # Optional — MCP to self-hosted OpenSEO
 │
 ├── knowledge/
 │   └── graph/
@@ -30,9 +29,12 @@ seo_intelligence/
 │       └── store.py          # SeoKnowledgeGraphStore
 │
 ├── analysis/
-│   └── cross_analyzer.py
+│   ├── cross_analyzer.py
+│   └── opportunities.py
 │
 ├── recommendations/
+│   ├── engine.py
+│   └── pipeline.py
 │   └── engine.py
 │
 ├── verification/

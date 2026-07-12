@@ -1,0 +1,36 @@
+state_id: global.Sxx.dev_server_down
+name: "Global — dev server down"
+description: |
+  perception_health fails or session_start cannot reach dev server. Blocks browser-dependent work.
+mcp_ready: true
+project_archetype: landing
+project_maturity: M2
+lifecycle_stage: Sxx_any
+project_types: [greenfield, existing_project]
+situation_class: degraded_upstream
+current_project_condition: |
+  Dev URL unreachable or health returns error.
+entry_conditions: [health_returns_error]
+exit_conditions: [health_returns_ok]
+state_confidence: high
+known_evidence: {ui_runtime: regressed, codebase: partial, design_source: partial, design_system: partial, seo: partial, quality: partial, assets: partial}
+unknown_evidence: [server_state]
+user_intents: [restore_service]
+possible_actions: [probe_health, ask_user_to_start_server, wait_and_retry_once]
+prerequisites: []
+possible_next_states:
+  - landing.S02.discovery.dev_server_up
+  - global.Sxx.tooling_broken
+failure_states: [global.Sxx.tooling_broken]
+relevant_modules: [visual_browser]
+modules_must_not_execute: [seo_intelligence, frontend_quality, design_snapshot_engine, consistency_intelligence]
+dependencies: []
+expected_outputs: [health_status]
+verification_requirements: [health_ok]
+parent_cluster: null
+forest_id: F12
+mcp_ready_gap: null
+notes: |
+  Do not loop probes indefinitely.
+discarded_as_duplicate_of: null
+first_added_in: batch2

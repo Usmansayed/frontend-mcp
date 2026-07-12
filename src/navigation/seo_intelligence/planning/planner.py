@@ -1,14 +1,14 @@
-"""SEO audit planner — capability-aware, cost-conscious provider routing."""
+"""SEO audit planner — orchestrates evidence providers only (no SEO reasoning)."""
 from __future__ import annotations
 
-import os
-
 from navigation.seo_intelligence.models import SeoAuditRequest, SeoCapabilityRoute
-from navigation.seo_intelligence.planning.capabilities import (
-	CAPABILITY_CATALOG,
-	DEFAULT_AUDIT_CAPABILITIES,
-	OPENSEO_BLOCKED_CAPABILITIES,
+from navigation.seo_intelligence.planning.capabilities import CAPABILITY_CATALOG
+from navigation.seo_intelligence.planning.modes import (
+	capabilities_for_mode,
+	provider_allowed,
+	resolve_effective_mode,
 )
+from navigation.seo_intelligence.providers.librecrawl.client import base_url as librecrawl_base_url
 from navigation.seo_intelligence.registry import SeoProviderRegistry
 
 _CONNECTED = frozenset({'connected', 'degraded'})
@@ -19,15 +19,8 @@ class SeoAuditPlanner:
 		self._registry = registry or SeoProviderRegistry()
 
 	def resolve_capabilities(self, request: SeoAuditRequest) -> list[str]:
-		if request.intents:
-			return [c for c in request.intents if c in CAPABILITY_CATALOG]
-		return list(DEFAULT_AUDIT_CAPABILITIES)
-
-	def _openseo_configured(self) -> bool:
-		return bool(
-			os.environ.get('OPENSEO_BASE_URL', '').strip()
-			or os.environ.get('OPENSEO_MCP_URL', '').strip()
-		)
+		mode = resolve_effective_mode(request)
+		return capabilities_for_mode(request, mode)
 
 	def _provider_usable(
 		self,
@@ -35,22 +28,10 @@ class SeoAuditPlanner:
 		*,
 		connections: dict[str, str],
 		request: SeoAuditRequest,
-		capability_id: str,
-		spec_paid: bool,
 	) -> tuple[bool, str]:
-		if provider_id == 'openseo':
-			if capability_id in OPENSEO_BLOCKED_CAPABILITIES:
-				return False, 'openseo_blocked_for_capability'
-			if not request.allow_openseo:
-				return False, 'openseo_disabled_by_request'
-			if not self._openseo_configured():
-				return False, 'openseo_not_configured'
-			if spec_paid and not request.allow_paid_providers:
-				return False, 'paid_provider_blocked'
-			status = connections.get('openseo', 'not_configured')
-			if status == 'error':
-				return False, 'openseo_connection_error'
-			return True, 'openseo_available'
+		mode = resolve_effective_mode(request)
+		if not provider_allowed(provider_id, mode):
+			return False, f'{provider_id}_excluded_in_{mode.value}_mode'
 
 		if self._registry.get(provider_id) is None:
 			return False, 'provider_unknown'
@@ -62,8 +43,12 @@ class SeoAuditPlanner:
 			return True, 'lighthouse_always_available'
 		if provider_id == 'browser' and request.scan_id:
 			return True, 'browser_scan_available'
-		if provider_id == 'librecrawl' and os.environ.get('LIBRECRAWL_BASE_URL', '').strip():
-			return True, 'librecrawl_configured'
+		if provider_id == 'librecrawl':
+			if librecrawl_base_url() and status in _CONNECTED:
+				return True, 'librecrawl_connected'
+			if librecrawl_base_url():
+				return False, 'librecrawl_degraded'
+			return False, 'librecrawl_not_configured'
 		return False, f'{provider_id}_not_connected'
 
 	def route_capability(
@@ -77,35 +62,23 @@ class SeoAuditPlanner:
 			return None
 		candidates = [spec.primary_provider, *spec.fallback_providers]
 		skipped: list[str] = []
-		paid = spec.requires_paid_plan or spec.openseo_requires_paid
+
+		chosen = ''
+		reason = spec.final_fallback
 
 		for pid in candidates:
-			if pid == 'openseo' and capability_id in OPENSEO_BLOCKED_CAPABILITIES:
-				skipped.append(f'{pid}:blocked_capability')
-				continue
-			usable, reason = self._provider_usable(
-				pid,
-				connections=connections,
-				request=request,
-				capability_id=capability_id,
-				spec_paid=paid and pid == 'openseo',
-			)
+			usable, pick_reason = self._provider_usable(pid, connections=connections, request=request)
 			if usable:
-				return SeoCapabilityRoute(
-					capability_id=capability_id,
-					chosen_provider=pid,
-					skipped_providers=skipped,
-					reason=reason,
-					paid_provider_used=pid == 'openseo' and (paid or spec.openseo_requires_paid),
-				)
-			skipped.append(f'{pid}:{reason}')
+				chosen = pid
+				reason = pick_reason
+				break
+			skipped.append(f'{pid}:{pick_reason}')
 
 		return SeoCapabilityRoute(
 			capability_id=capability_id,
-			chosen_provider='',
+			chosen_provider=chosen,
 			skipped_providers=skipped,
-			reason=spec.final_fallback,
-			paid_provider_used=False,
+			reason=reason,
 		)
 
 	def build_plan(
@@ -113,23 +86,18 @@ class SeoAuditPlanner:
 		request: SeoAuditRequest,
 		connections: dict[str, str],
 	) -> tuple[list[SeoCapabilityRoute], list[str]]:
-		"""Return capability routes + provider ids to query (deduped, ordered)."""
+		"""Return capability routes and provider ids to query."""
 		capabilities = self.resolve_capabilities(request)
 		routes: list[SeoCapabilityRoute] = []
 		provider_order: list[str] = []
 		seen: set[str] = set()
-		degraded: list[str] = []
 
 		for cap_id in capabilities:
 			route = self.route_capability(cap_id, request, connections)
 			if route is None:
-				degraded.append(f'unknown_capability:{cap_id}')
 				continue
 			routes.append(route)
-			if not route.chosen_provider:
-				degraded.append(f'capability_unresolved:{cap_id}:{route.reason}')
-				continue
-			if route.chosen_provider not in seen:
+			if route.chosen_provider and route.chosen_provider not in seen:
 				seen.add(route.chosen_provider)
 				provider_order.append(route.chosen_provider)
 
@@ -138,6 +106,10 @@ class SeoAuditPlanner:
 	def resolve_provider_ids(self, request: SeoAuditRequest) -> list[str]:
 		"""Legacy entry — uses empty connections (pre-collection). Prefer build_plan after status probe."""
 		if request.providers:
-			return [pid for pid in request.providers if self._registry.get(pid) is not None]
+			mode = resolve_effective_mode(request)
+			return [
+				pid for pid in request.providers
+				if self._registry.get(pid) is not None and provider_allowed(pid, mode)
+			]
 		_, provider_order = self.build_plan(request, {})
 		return provider_order

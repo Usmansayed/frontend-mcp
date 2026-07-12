@@ -1,0 +1,35 @@
+state_id: marketing.S07.ui_bug.snapshot_investigation
+name: "Debug — investigating via design snapshot comparison"
+description: |
+  Snapshot from current scan compared against prior snapshot to isolate the regression.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S07_verification
+project_types: [existing_mature]
+situation_class: regression
+current_project_condition: |
+  Two snapshots exist; delta enumerable; potential hypothesis emerging.
+entry_conditions: [prior_snapshot_available, new_snapshot_built]
+exit_conditions: [root_cause_hypothesized]
+state_confidence: high
+known_evidence: {ui_runtime: regressed, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [root_cause]
+user_intents: [find_root_cause]
+possible_actions: [enumerate_delta, correlate_to_code_context]
+prerequisites: [snapshot_id, prior_snapshot_id, repo_root]
+possible_next_states:
+  - marketing.S07.new_feature.change_scope_ready
+  - global.Sxx.verify_loop_exhausted
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [design_snapshot_engine, codebase_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [snapshot_id, repo_root]
+expected_outputs: [root_cause_hypothesis]
+verification_requirements: [delta_explained]
+parent_cluster: null
+forest_id: F05
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

@@ -1,0 +1,36 @@
+state_id: marketing.S12.framework_migration.big_bang_progress
+name: "Migration — big-bang migration in progress"
+description: |
+  Whole codebase converted in one push; regression risk maximal until verified.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M5
+lifecycle_stage: S12_evolution
+project_types: [existing_mature]
+situation_class: framework_migration
+current_project_condition: |
+  Entire app rebuilt on new framework; verification pending.
+entry_conditions: [big_bang_mode, code_conversion_complete]
+exit_conditions: [full_regression_suite_passes]
+state_confidence: medium
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: partial, quality: partial, assets: partial}
+unknown_evidence: [full_regression]
+user_intents: [complete_and_verify]
+possible_actions: [run_full_regression, iterate_fixes]
+prerequisites: [repo_root, session_id]
+possible_next_states:
+  - marketing.S12.framework_migration.completed
+  - marketing.S07.ui_bug.visual_regression_detected
+  - global.Sxx.verify_loop_exhausted
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, frontend_quality, framework_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [repo_root, session_id]
+expected_outputs: [regression_report]
+verification_requirements: [regression_report_passes]
+parent_cluster: null
+forest_id: F11
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

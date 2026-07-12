@@ -1,0 +1,35 @@
+state_id: marketing.S11.production.dependency_upgrade_offered
+name: "Production — dependency upgrade offered (Dependabot/notice)"
+description: |
+  Upstream package released a version with security or feature relevance.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M5
+lifecycle_stage: S11_production
+project_types: [existing_mature]
+situation_class: dependency_upgrade
+current_project_condition: |
+  Notice received; risk to be assessed.
+entry_conditions: [dependency_notice_received]
+exit_conditions: [upgrade_scheduled_or_declined]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: partial, design_system: partial, seo: partial, quality: verified, assets: partial}
+unknown_evidence: [breaking_change_risk]
+user_intents: [decide_to_upgrade]
+possible_actions: [read_changelog_via_framework_docs, assess_impact, schedule_migration]
+prerequisites: [repo_root]
+possible_next_states:
+  - marketing.S12.framework_migration.plan_ready
+  - marketing.S11.production.live_and_monitored
+failure_states: [global.Sxx.upstream_degraded]
+relevant_modules: [framework_intelligence, codebase_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [repo_root]
+expected_outputs: [upgrade_decision]
+verification_requirements: [decision_recorded]
+parent_cluster: null
+forest_id: F10
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

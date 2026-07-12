@@ -1,0 +1,35 @@
+state_id: marketing.S08.best_practices.findings_open
+name: "Quality — best-practices findings open"
+description: |
+  Findings include mixed content, security headers, deprecated APIs.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S08_quality
+project_types: [existing_mature]
+situation_class: performance_remediation
+current_project_condition: |
+  Findings enumerated.
+entry_conditions: [audit_findings_present]
+exit_conditions: [findings_addressed]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: partial, assets: unknown}
+unknown_evidence: [post_fix_state]
+user_intents: [fix_findings]
+possible_actions: [apply_fix, re_audit]
+prerequisites: [session_id, repo_root]
+possible_next_states:
+  - marketing.S08.best_practices.clean
+  - global.Sxx.verify_loop_exhausted
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [frontend_quality, codebase_intelligence]
+modules_must_not_execute: []
+dependencies: [session_id, repo_root]
+expected_outputs: [fix_diff]
+verification_requirements: [findings_reduced]
+parent_cluster: null
+forest_id: F06
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

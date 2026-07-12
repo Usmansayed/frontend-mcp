@@ -34,7 +34,7 @@ Platform docs for the ultimate frontend MCP for AI coding agents.
 | [features/inspiration_intelligence.md](./features/inspiration_intelligence.md) | ✅ public gallery inspiration |
 | [features/resource_intelligence.md](./features/resource_intelligence.md) | 📋 research & architecture |
 | [features/seo_intelligence.md](./features/seo_intelligence.md) | 📋 architecture_v1 |
-| [features/figma_intelligence.md](./features/figma_intelligence.md) | 🚧 user Figma account scaffold |
+| [features/figma_intelligence.md](./features/figma_intelligence.md) | ✅ Figma connection + context layer |
 | [features/comparison_browser_tools.md](./features/comparison_browser_tools.md) | Reference vs us |
 
 ## Agent playbooks

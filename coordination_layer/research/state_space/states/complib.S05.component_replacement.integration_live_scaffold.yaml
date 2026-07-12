@@ -1,0 +1,35 @@
+state_id: complib.S05.component_replacement.integration_live_scaffold
+name: "Component — live install requested (aspirational)"
+description: |
+  User wants MCP to install and adapt the component directly. Feature is scaffold today.
+mcp_ready: false
+project_archetype: component_library
+project_maturity: M3
+lifecycle_stage: S05_implementation
+project_types: [existing_mature]
+situation_class: component_replacement
+current_project_condition: |
+  Live install requested but MCP is not authorized to mutate the repo end-to-end.
+entry_conditions: [user_requests_live_install]
+exit_conditions: [feature_becomes_ready_or_user_falls_back_to_dry_run]
+state_confidence: speculative
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [live_install_pipeline]
+user_intents: [install_component_automatically]
+possible_actions: [inform_user_of_scaffold_status, fallback_to_dry_run]
+prerequisites: [repo_root, permission_to_mutate_repo]
+possible_next_states:
+  - complib.S05.component_replacement.integration_dry_run_report
+failure_states: [global.Sxx.env_misconfigured]
+relevant_modules: [component_intelligence]
+modules_must_not_execute: []
+dependencies: [repo_root]
+expected_outputs: [informed_user_and_fallback_choice]
+verification_requirements: [no_unauthorized_mutation]
+parent_cluster: null
+forest_id: F03
+mcp_ready_gap: "Report 01 §4.5 — live install (execute_install=true) is scaffold; only dry run ships."
+notes: |
+  Explicitly modeled so the Coordination Layer knows this transition exists in theory.
+discarded_as_duplicate_of: null
+first_added_in: batch1

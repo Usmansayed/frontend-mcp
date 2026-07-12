@@ -1,0 +1,37 @@
+state_id: marketing.S03.design.design_review_open
+name: "Design — review findings open on current page"
+description: |
+  Design Sense heuristic critiques (hierarchy, spacing, readability) captured.
+  Awaiting decision to fix or accept.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M3
+lifecycle_stage: S03_design
+project_types: [existing_mature]
+situation_class: redesign
+current_project_condition: |
+  DesignReviewReport with N heuristic advisories.
+entry_conditions: [design_review_run]
+exit_conditions: [decisions_taken_on_each_finding]
+state_confidence: high
+known_evidence: {ui_runtime: known, codebase: partial, design_source: partial, design_system: unknown, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [fix_priority]
+user_intents: [triage_design_findings]
+possible_actions: [prioritize_findings, apply_fixes_to_code, accept_advisory]
+prerequisites: [snapshot_id]
+possible_next_states:
+  - marketing.S05.redesign.applying_fix
+  - marketing.S03.design.pdg_empty_snapshot_ready
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [design_sense_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [snapshot_id]
+expected_outputs: [triage_result]
+verification_requirements: [each_finding_has_decision]
+parent_cluster: null
+forest_id: F02
+mcp_ready_gap: null
+notes: |
+  Advisories, not blockers. Never gate progress on Design Sense alone.
+discarded_as_duplicate_of: null
+first_added_in: batch1

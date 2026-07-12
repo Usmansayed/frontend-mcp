@@ -1,0 +1,35 @@
+state_id: marketing.S09.consistency_cleanup.token_import_pending_scaffold
+name: "Consistency — token import from Figma/Penpot pending (aspirational)"
+description: |
+  Design Workflow Intelligence would import token files from Figma/Penpot; scaffold today.
+mcp_ready: false
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S09_consistency
+project_types: [existing_mature]
+situation_class: consistency_cleanup
+current_project_condition: |
+  User wants tokens imported directly; feature scaffold.
+entry_conditions: [figma_connected, token_import_capability_wanted]
+exit_conditions: [feature_ships_or_fallback_manual]
+state_confidence: speculative
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: known, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [imported_tokens]
+user_intents: [automated_token_import]
+possible_actions: [manual_token_alignment, wait_for_feature]
+prerequisites: [figma_context]
+possible_next_states:
+  - dssite.S09.consistency_cleanup.pdg_seeded_from_figma
+  - dssite.S09.consistency_cleanup.token_drift_detected
+failure_states: [global.Sxx.env_misconfigured]
+relevant_modules: [design_workflow_intelligence, figma_intelligence, consistency_intelligence]
+modules_must_not_execute: []
+dependencies: []
+expected_outputs: [manual_token_diff_or_wait]
+verification_requirements: [manual_diff_verified_when_taken]
+parent_cluster: null
+forest_id: F08
+mcp_ready_gap: "Report 01 §4.12 — Design Workflow token import is roadmap."
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

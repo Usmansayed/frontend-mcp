@@ -1,0 +1,35 @@
+state_id: admin.S06.new_feature.data_table.integrated
+name: "Feature — data table integrated with data source"
+description: |
+  Data fetched and rendered. Awaiting verification of pagination, empty, error states.
+mcp_ready: true
+project_archetype: admin_panel
+project_maturity: M3
+lifecycle_stage: S06_integration
+project_types: [existing_project, csr]
+situation_class: new_feature
+current_project_condition: |
+  Live rows visible; sort/pagination behavior untested.
+entry_conditions: [rows_visible]
+exit_conditions: [pagination_verified_all_states]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: known, design_source: unknown, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [empty_state, error_state]
+user_intents: [verify_table_states]
+possible_actions: [simulate_empty_state, simulate_error_state, verify_pagination, verify_sort]
+prerequisites: [scan_id]
+possible_next_states:
+  - admin.S07.new_feature.data_table.verified
+  - saas.S07.new_feature.multi_step_flow.checkpoint_failure
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, frontend_quality]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [scan_id]
+expected_outputs: [verified_table_states]
+verification_requirements: [empty_error_and_data_states_verified]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

@@ -1,0 +1,36 @@
+state_id: marketing.S11.production.live_and_monitored
+name: "Production — live and being monitored"
+description: |
+  Release deployed to prod; monitoring passive; no incidents.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M5
+lifecycle_stage: S11_production
+project_types: [existing_mature]
+situation_class: release_prep
+current_project_condition: |
+  Prod healthy; SEO graph and PDG frozen at release state.
+entry_conditions: [prod_deploy_confirmed]
+exit_conditions: [next_episode_or_incident]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: partial, design_system: partial, seo: verified, quality: verified, assets: partial}
+unknown_evidence: [future_drift]
+user_intents: [monitor]
+possible_actions: [passive_monitor, schedule_re_audit, capture_prod_scan]
+prerequisites: [prod_url]
+possible_next_states:
+  - marketing.S11.production.hotfix_requested
+  - marketing.S10.release_prep.regression_baseline_capture
+  - marketing.S08.seo_campaign.audit_diff_open
+failure_states: []
+relevant_modules: [visual_browser, seo_intelligence]
+modules_must_not_execute: []
+dependencies: [prod_url]
+expected_outputs: [monitor_events]
+verification_requirements: [prod_reachable]
+parent_cluster: null
+forest_id: F09
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

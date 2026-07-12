@@ -1,0 +1,35 @@
+state_id: landing.S05.new_feature.landing_hero.stub
+name: "Feature — hero section stub in place"
+description: |
+  Landing hero component placed; copy, image, CTA not yet finalized.
+mcp_ready: true
+project_archetype: landing
+project_maturity: M2
+lifecycle_stage: S05_implementation
+project_types: [greenfield]
+situation_class: new_feature
+current_project_condition: |
+  Placeholder hero renders; content missing.
+entry_conditions: [route_plan_ready, session_id]
+exit_conditions: [hero_content_visible_and_verified]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: unknown, seo: unknown, quality: unknown, assets: partial}
+unknown_evidence: [final_copy, cta_target]
+user_intents: [flesh_out_hero]
+possible_actions: [write_copy, choose_assets, verify_render]
+prerequisites: [session_id]
+possible_next_states:
+  - landing.S07.new_feature.landing_hero.verified
+  - landing.S06.resource_gap.icon_missing
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, resource_intelligence, codebase_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [session_id]
+expected_outputs: [hero_diff]
+verification_requirements: [content_visible]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

@@ -1,8 +1,8 @@
 # SEO Intelligence — Provider Matrix
 
-**Policy:** 100% free-first. User-owned data preferred. No paid SEO SaaS.
+**Policy:** Five evidence providers only. User-owned data preferred. AI-native reasoning — not third-party SEO apps.
 
-## P0 — Core
+## P0 — Core evidence providers
 
 | Provider | API | Auth | User data | Status |
 |----------|-----|------|-----------|--------|
@@ -10,39 +10,22 @@
 | Google Analytics 4 | GA4 Data API | OAuth 2.0 | Yes | ✅ live |
 | LibreCrawl | Self-hosted HTTP | Local URL | No | ✅ live |
 | Lighthouse / PSI | CLI + PSI v5 | Optional key | No | ✅ live |
-
-## P1 — Evidence enrichment
-
-| Provider | Role | Status |
-|----------|------|--------|
-| Browser Intelligence | Rendering, hydration, JS errors via `scan_id` | ✅ live |
-| **OpenSEO** | GSC mirror (free); keyword/SERP/backlink (paid gated) | ✅ partial |
+| Browser Intelligence | Visual browser scan | scan_id | No | ✅ live |
 
 ## P2 — Optional
 
 | Provider | Role | Status |
 |----------|------|--------|
-| Bing Webmaster Tools | Secondary search console | 📋 research |
-
-## OpenSEO (optional provider)
-
-| Aspect | Detail |
-|--------|--------|
-| App cost | Free (MIT, self-hostable) |
-| Data cost | DataForSEO pay-as-you-go for keyword/SERP/backlink features |
-| Hard dependency | **No** — module works without OpenSEO |
-| Planner blocks | technical_crawl, core_web_vitals, rendering_verification |
-| Paid gate | `allow_paid_providers` on audit request |
-
-See `OPENSEO_PROVIDER.md`.
+| Bing Webmaster Tools | Secondary search console (on-demand) | ✅ live |
 
 ## Do NOT build
 
 | Capability | Reason |
 |------------|--------|
-| Keyword database | Infrastructure cost; solved by GSC queries |
+| Keyword database | Use GSC query evidence + opportunity detection |
 | Backlink index | Requires web-scale crawl |
 | SERP database | Requires continuous scraping |
+| Third-party SEO apps | Reasoning engine is our product |
 | Custom internet crawler | Use LibreCrawl locally |
 
 ## Official sources
@@ -53,5 +36,4 @@ See `OPENSEO_PROVIDER.md`.
 | GA4 Data API | https://developers.google.com/analytics/devguides/reporting/data/v1 |
 | PageSpeed Insights | https://developers.google.com/speed/docs/insights/v5/get-started |
 | LibreCrawl | https://github.com/librecrawl/librecrawl |
-| OpenSEO | https://github.com/every-app/open-seo |
 | Bing Webmaster | https://learn.microsoft.com/en-us/bingwebmaster/ |

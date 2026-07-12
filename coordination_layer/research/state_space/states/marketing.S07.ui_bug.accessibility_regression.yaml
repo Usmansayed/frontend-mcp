@@ -1,0 +1,35 @@
+state_id: marketing.S07.ui_bug.accessibility_regression
+name: "Debug — a11y regression detected during verify"
+description: |
+  Runtime a11y tree signals blocking issues (missing labels, low contrast) after a recent change.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S07_verification
+project_types: [existing_mature]
+situation_class: accessibility_remediation
+current_project_condition: |
+  agent_summary blocking includes a11y-tagged findings.
+entry_conditions: [a11y_findings_present]
+exit_conditions: [a11y_findings_resolved_or_accepted]
+state_confidence: high
+known_evidence: {ui_runtime: regressed, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: partial, assets: unknown}
+unknown_evidence: [full_a11y_scope]
+user_intents: [restore_a11y]
+possible_actions: [audit_accessibility, apply_fix, verify_a11y]
+prerequisites: [session_id]
+possible_next_states:
+  - marketing.S08.a11y_remediation.audit_needed
+  - global.Sxx.verify_loop_exhausted
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, frontend_quality]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [session_id]
+expected_outputs: [a11y_fix_diff]
+verification_requirements: [findings_resolved]
+parent_cluster: null
+forest_id: F05
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

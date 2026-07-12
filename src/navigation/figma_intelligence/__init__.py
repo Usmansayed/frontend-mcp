@@ -1,9 +1,9 @@
-"""Figma Intelligence — user's Figma account, files, and design systems (future).
+"""Figma Intelligence — connection + coordination for user's Figma workspace.
 
-Public design inspiration lives in ``inspiration_intelligence`` — not here.
-This module retains Community duplication, Figma Console providers, and
-project-specific extraction until the account-focused API ships.
+Orchestrates southleft/figma-console-mcp. Public inspiration lives in
+``inspiration_intelligence`` — not here.
 """
+from navigation.figma_intelligence.context_models import FigmaDesignContext
 from navigation.figma_intelligence.models import (
 	FigmaCandidate,
 	FigmaDiscoveryRequest,
@@ -15,6 +15,7 @@ from navigation.figma_intelligence.service import FigmaIntelligenceService
 
 __all__ = [
 	'FigmaCandidate',
+	'FigmaDesignContext',
 	'FigmaDiscoveryRequest',
 	'FigmaDiscoveryResult',
 	'FigmaExtractionResult',

@@ -98,7 +98,7 @@ Status key: ✅ shipped · 🚧 in progress · 📋 planned · ⏸ deferred
 - [x] Planning orchestrator + cross-analysis + recommendations
 - [x] Verification loop (`perception_seo_verify`)
 - [x] MCP: `perception_seo_status`, `perception_seo_connect`, `perception_seo_audit`, `perception_seo_verify`, `perception://seo-guide`
-- [x] OpenSEO optional adapter (free capabilities)
+- [x] AI-native recommendation engine (correlation + opportunities + reasoning_context)
 - [ ] Freeze module at ~85 — shift to cross-module coordination
 
 ## v1.6 — Resource Intelligence (📋 research)
@@ -112,21 +112,16 @@ Status key: ✅ shipped · 🚧 in progress · 📋 planned · ⏸ deferred
 - [ ] MCP tools: `perception_resource_search`, category shortcuts
 - [ ] `perception://resource-guide`
 
-## v1.4 — Figma Intelligence scaffold (🚧)
+## v1.4 — Figma Intelligence (✅ connection layer)
 
-- [x] `figma_intelligence/` module — intent, planning, discovery, ranking, extraction, evaluation
-- [x] `FigmaProvider` protocol — Figma Console, Official Figma, future stubs
-- [x] Research docs: Figma Console MCP, Official Figma MCP, community discovery, OSS tooling
-- [x] Community Intelligence — multi-pass query expansion (synonyms, styles, industries, components)
-- [x] Candidate Intelligence — `CandidateProfile` normalization for scoring without extraction
-- [x] Profile-aware ranking
-- [x] Selection Planner — budget-aware retrieval (who is worth opening)
-- [x] Deep Candidate Review — post-extraction multi-intelligence scoring
-- [x] Figma Console MCP client adapter (southleft) — catalog discovery + kit extraction
-- [x] Architecture frozen v1 — [ARCHITECTURE_FROZEN.md](../src/navigation/figma_intelligence/docs/ARCHITECTURE_FROZEN.md)
-- [ ] MCP tools: `perception_figma_discover`, `perception_figma_pipeline`
-- [ ] Live Community search beyond keyword catalog
-- [ ] Design Snapshot + Reference Registry integration
+- [x] `figma_intelligence/` module — intent, planning, discovery, ranking, extraction, evaluation (legacy)
+- [x] Figma Console MCP client (southleft)
+- [x] **Connection + coordination v2** — PAT, session, adapter, normalizer, cache, health
+- [x] MCP tools: `perception_figma_connect`, `perception_figma_status`, `perception_figma_context`
+- [x] Agent guide: `perception://figma-guide`
+- [ ] Multi-file / multi-workspace support
+- [ ] Real-time change detection
+- [ ] Design Snapshot + Reference Registry integration from live context
 
 ## v1.3 — Eight-module platform + Consistency Intelligence scaffold (🚧)
 

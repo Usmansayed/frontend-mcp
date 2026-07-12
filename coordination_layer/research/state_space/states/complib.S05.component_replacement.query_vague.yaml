@@ -1,0 +1,36 @@
+state_id: complib.S05.component_replacement.query_vague
+name: "Component — user query too vague to search"
+description: |
+  User asked for "a form" or "a button" without adjectives, framework hints, or role.
+  Plan step required before search.
+mcp_ready: true
+project_archetype: component_library
+project_maturity: M3
+lifecycle_stage: S05_implementation
+project_types: [existing_mature]
+situation_class: component_replacement
+current_project_condition: |
+  Component intent expressed but insufficient search inputs.
+entry_conditions: [component_request_received, missing_query_specificity]
+exit_conditions: [search_plan_produced]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [component_role, style_direction, framework_constraint]
+user_intents: [find_component_foundation]
+possible_actions: [ask_clarifying_questions, plan_component_search]
+prerequisites: []
+possible_next_states:
+  - complib.S05.component_replacement.plan_ready
+failure_states: [global.Sxx.user_abandoned]
+relevant_modules: [component_intelligence]
+modules_must_not_execute: [seo_intelligence, figma_intelligence]
+dependencies: []
+expected_outputs: [component_search_plan]
+verification_requirements: [plan_has_required_fields]
+parent_cluster: null
+forest_id: F03
+mcp_ready_gap: null
+notes: |
+  plan_component_search must run before search when query is vague.
+discarded_as_duplicate_of: null
+first_added_in: batch1

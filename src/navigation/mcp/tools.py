@@ -893,6 +893,16 @@ def perception_tools(mcp_types: Any) -> list[Any]:
             inputSchema={"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
         ),
         T(
+            name="perception_resource_pattern_search",
+            description="Resource Intelligence. Search background patterns and textures (Hero Patterns and similar).",
+            inputSchema={"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
+        ),
+        T(
+            name="perception_resource_animation_search",
+            description="Resource Intelligence. Search Lottie / motion animations for UI micro-interactions.",
+            inputSchema={"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
+        ),
+        T(
             name="perception_resource_license_check",
             description="Resource Intelligence. Structured license check for a resource asset object.",
             inputSchema={
@@ -928,31 +938,49 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_seo_audit",
             description=(
-                "SEO Intelligence. Plan audit → collect evidence (GSC, GA4, LibreCrawl, Lighthouse, Browser) "
-                "→ SEO Knowledge Graph → cross-analysis → recommendations → verification plan."
+                "SEO Intelligence. Default mode=development (no auth): Browser, Lighthouse, LibreCrawl. "
+                "mode=professional adds GSC/GA4 when user requests live search optimization."
             ),
             inputSchema={
                 "type": "object",
                 "properties": {
                     "website_url": {"type": "string", "description": "Site to audit (required)"},
-                    "property_url": {"type": "string", "description": "GSC property e.g. sc-domain:example.com"},
-                    "ga4_property_id": {"type": "string", "description": "GA4 property ID e.g. properties/123456789"},
+                    "mode": {
+                        "type": "string",
+                        "enum": ["development", "professional"],
+                        "description": "Omit for auto (development default; professional when GSC/GA4 intents requested)",
+                    },
+                    "property_url": {
+                        "type": "string",
+                        "description": "Advanced: GSC property override if auto-discovery failed",
+                    },
+                    "ga4_property_id": {
+                        "type": "string",
+                        "description": "Advanced: GA4 property override if auto-discovery failed",
+                    },
+                    "bing_site_url": {
+                        "type": "string",
+                        "description": "Advanced: Bing site override if auto-discovery failed",
+                    },
                     "scan_id": {"type": "string", "description": "Browser Intelligence scan for rendering evidence"},
-                    "repo_root": {"type": "string"},
+                    "repo_root": {"type": "string", "description": "Frontend repo root for codebase_hints and browser_code_links (Sprint 2)"},
                     "providers": {"type": "array", "items": {"type": "string"}},
                     "intents": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "description": "Capabilities e.g. keyword_research, technical_crawl, serp_analysis",
+                        "description": "Capabilities e.g. keyword_research, technical_crawl, core_web_vitals",
                     },
-                    "allow_paid_providers": {
-                        "type": "boolean",
-                        "default": False,
-                        "description": "Allow OpenSEO+DataForSEO paid capabilities",
-                    },
-                    "allow_openseo": {"type": "boolean", "default": True},
                     "include_cross_analysis": {"type": "boolean", "default": True},
                     "include_recommendations": {"type": "boolean", "default": True},
+                    "include_ai_visibility": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Run the AI Visibility layer (derived analysis over SEO evidence). Set false to skip.",
+                    },
+                    "ai_reasoning": {
+                        "type": "boolean",
+                        "description": "Use host LLM over reasoning_units (auto when Bedrock creds available; false forces deterministic fallback)",
+                    },
                 },
                 "required": ["website_url"],
             },
@@ -960,21 +988,68 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_seo_connect",
             description=(
-                "SEO Intelligence Google OAuth. action=status|authorize_url|exchange_code for Search Console + GA4."
+                "SEO Intelligence setup and on-demand OAuth. Default action=setup registers website_url only. "
+                "Use action=connect_google or connect_bing when user requests provider-specific analysis."
             ),
             inputSchema={
                 "type": "object",
                 "properties": {
+                    "website_url": {"type": "string", "description": "Website URL"},
+                    "provider": {
+                        "type": "string",
+                        "enum": ["google", "bing"],
+                        "description": "Required for connect_bing; use with action=connect for Google",
+                    },
                     "action": {
                         "type": "string",
-                        "enum": ["status", "authorize_url", "exchange_code"],
-                        "default": "status",
+                        "enum": [
+                            "status",
+                            "setup",
+                            "connect",
+                            "connect_google",
+                            "connect_bing",
+                            "refresh_discovery",
+                        ],
+                        "default": "setup",
                     },
-                    "code": {"type": "string", "description": "OAuth authorization code for exchange_code"},
-                    "redirect_uri": {
+                    "interactive": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "When true, opens browser and waits for localhost OAuth callback",
+                    },
+                    "code": {
                         "type": "string",
-                        "default": "urn:ietf:wg:oauth:2.0:oob",
+                        "description": "Manual OAuth code override (automation/testing only)",
                     },
+                    "api_key": {
+                        "type": "string",
+                        "description": "Bing API key fallback when Bing OAuth client not configured",
+                    },
+                },
+            },
+        ),
+        T(
+            name="perception_seo_query",
+            description=(
+                "Query the SEO knowledge graph — page issues, audit diff, traffic signals. "
+                "Omit query_id to list available queries. Run perception_seo_audit first."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query_id": {
+                        "type": "string",
+                        "enum": [
+                            "graph.summary",
+                            "page.issues",
+                            "audit.latest",
+                            "audit.diff",
+                            "site.traffic_signals",
+                        ],
+                    },
+                    "page_url": {"type": "string", "description": "For page.issues"},
+                    "audit_id": {"type": "string", "description": "For audit.diff (default: latest)"},
+                    "params": {"type": "object", "description": "Alternative param bag"},
                 },
             },
         ),
@@ -993,10 +1068,55 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                     "recommendation_ids": {"type": "array", "items": {"type": "string"}},
                     "providers": {"type": "array", "items": {"type": "string"}},
                     "intents": {"type": "array", "items": {"type": "string"}},
-                    "allow_paid_providers": {"type": "boolean", "default": False},
-                    "allow_openseo": {"type": "boolean", "default": True},
                 },
                 "required": ["website_url"],
+            },
+        ),
+        T(
+            name="perception_figma_status",
+            description=(
+                "Figma Intelligence. Connection state, session, health of southleft/figma-console-mcp. "
+                "Read perception://figma-guide first. Connection + coordination only — not design critique."
+            ),
+            inputSchema={"type": "object", "properties": {}},
+        ),
+        T(
+            name="perception_figma_connect",
+            description=(
+                "Figma Intelligence. Connect user's Figma account with Personal Access Token (stored locally). "
+                "action=status to check connection; action=disconnect to clear token."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "pat": {"type": "string", "description": "Figma Personal Access Token"},
+                    "figma_pat": {"type": "string", "description": "Alias for pat"},
+                    "action": {
+                        "type": "string",
+                        "enum": ["connect", "status", "disconnect"],
+                        "description": "Default connect — validates and stores PAT",
+                    },
+                    "account_hint": {"type": "string", "description": "Optional label for stored token"},
+                },
+            },
+        ),
+        T(
+            name="perception_figma_context",
+            description=(
+                "Figma Intelligence. Normalized design context — file, pages, frames, components, "
+                "variables, styles, tokens, selection. Optionally set file_url/file_key and refresh."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "file_key": {"type": "string"},
+                    "file_url": {"type": "string", "description": "Figma file or design URL"},
+                    "file_name": {"type": "string"},
+                    "page_id": {"type": "string"},
+                    "frame_id": {"type": "string"},
+                    "selection_node_ids": {"type": "array", "items": {"type": "string"}},
+                    "refresh": {"type": "boolean", "default": False},
+                },
             },
         ),
         T(
@@ -1184,6 +1304,61 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                     "repo_root": {"type": "string"},
                 },
                 "required": ["standard_id"],
+            },
+        ),
+        T(
+            name="perception_coordinator_episode_start",
+            description=(
+                "Coordination Intelligence: start a coordinator episode and initialize PSM Runtime. "
+                "Returns advisory briefing with next capability and compiled MCP tools. "
+                "Host LLM remains the reasoner — coordinator is deterministic and advisory."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {"type": "string", "default": "default"},
+                    "cluster_id": {"type": "string", "description": "e.g. cluster.feature.form_pipeline"},
+                    "playbook_id": {"type": "string", "description": "e.g. invalid_before_valid.form"},
+                    "situation_class": {"type": "string"},
+                    "lifecycle_stage": {"type": "string"},
+                    "repo_root": {"type": "string"},
+                    "website_url": {"type": "string"},
+                    "session_id": {"type": "string"},
+                    "intent": {"type": "string"},
+                    "leaf_hint": {"type": "string", "description": "Telemetry only"},
+                    "step_context": {"type": "object"},
+                },
+            },
+        ),
+        T(
+            name="perception_coordinator_apply_envelope",
+            description=(
+                "Coordination Intelligence: normalize an MCP tool envelope into PSM Runtime and refresh briefing. "
+                "Pass the envelope from any perception_* tool after invocation."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "episode_id": {"type": "string"},
+                    "envelope": {"type": "object", "description": "contract v1.0 envelope"},
+                    "capability_id": {"type": "string", "description": "Optional T1 capability hint"},
+                    "step_context": {"type": "object"},
+                },
+                "required": ["episode_id", "envelope"],
+            },
+        ),
+        T(
+            name="perception_coordinator_briefing",
+            description=(
+                "Coordination Intelligence: refresh advisory briefing from current PSM Runtime state."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "episode_id": {"type": "string"},
+                    "step_context": {"type": "object"},
+                },
+                "required": ["episode_id"],
             },
         ),
     ]

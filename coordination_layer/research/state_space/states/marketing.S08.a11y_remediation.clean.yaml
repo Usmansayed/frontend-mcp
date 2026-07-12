@@ -1,0 +1,35 @@
+state_id: marketing.S08.a11y_remediation.clean
+name: "Quality — a11y verified clean"
+description: |
+  a11y audit passed thresholds; no blocking findings.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S08_quality
+project_types: [existing_mature]
+situation_class: accessibility_remediation
+current_project_condition: |
+  Audit clean; page ready for downstream quality checks.
+entry_conditions: [a11y_audit_passed]
+exit_conditions: [progress_to_perf_or_release]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: partial, design_system: partial, seo: unknown, quality: verified, assets: unknown}
+unknown_evidence: [perf, seo]
+user_intents: [progress_release]
+possible_actions: [audit_performance, seo_audit, capture_baseline]
+prerequisites: [scan_id]
+possible_next_states:
+  - marketing.S08.perf_remediation.audit_needed
+  - marketing.S08.seo_campaign.audit_needed
+failure_states: []
+relevant_modules: [frontend_quality, visual_browser, seo_intelligence]
+modules_must_not_execute: []
+dependencies: [scan_id]
+expected_outputs: [a11y_clean_marker]
+verification_requirements: [audit_passes_threshold]
+parent_cluster: null
+forest_id: F06
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

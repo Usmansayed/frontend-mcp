@@ -1,0 +1,328 @@
+schema_version: "1.0"
+description: >
+  Maps T1 capabilities and semantic actions to MCP tools. Tool names may evolve;
+  capability IDs remain stable.
+
+bindings:
+  - tools_ref: environment_probe
+    capability: environment_probe
+    semantic_actions: [check_environment, probe_dev_server]
+    tools:
+      - tool: perception_health
+        arg_template:
+          url: "$artifacts.website_url"
+
+  - tools_ref: browser_session_manage
+    capability: browser_session_manage
+    semantic_actions: [start_browser_session, end_browser_session]
+    tools:
+      - tool: perception_session_start
+        arg_template:
+          base_url: "$artifacts.website_url"
+      - tool: perception_session_end
+        arg_template:
+          session_id: "$artifacts.session_id"
+
+  - tools_ref: framework_profile
+    capability: framework_profile
+    semantic_actions: [detect_framework, fetch_framework_docs]
+    tools:
+      - tool: perception_detect_framework
+        arg_template:
+          repo_root: "$artifacts.repo_root"
+      - tool: perception_framework_docs
+        arg_template:
+          repo_root: "$artifacts.repo_root"
+
+  - tools_ref: browser_observe
+    capability: browser_observe
+    semantic_actions: [observe_current_page, observe_target_page, capture_regression_baseline]
+    tools:
+      - tool: perception_navigate_and_observe
+        when: step.url_present
+        arg_template:
+          session_id: "$artifacts.session_id"
+          url: "$step.url"
+          include_screenshot: true
+      - tool: perception_observe
+        when: step.url_absent
+        arg_template:
+          session_id: "$artifacts.session_id"
+          include_screenshot: true
+
+  - tools_ref: browser_act
+    capability: browser_act
+    semantic_actions: [execute_in_browser]
+    tools:
+      - tool: perception_execute_actions
+        when: step.actions_present
+        arg_template:
+          session_id: "$artifacts.session_id"
+          actions: "$step.actions"
+      - tool: perception_execute_script
+        when: step.script_present
+        arg_template:
+          session_id: "$artifacts.session_id"
+          script: "$step.script"
+
+  - tools_ref: browser_verify
+    capability: browser_verify
+    semantic_actions:
+      - verify_success_criteria
+      - run_invalid_submit_check
+      - run_valid_submit_check
+      - verify_staging_pages
+      - verify_consistency_fix
+      - verify_integration
+    tools:
+      - tool: perception_execute_actions
+        when: step.actions_before_verify
+        arg_template:
+          session_id: "$artifacts.session_id"
+          actions: "$step.actions"
+      - tool: perception_verify
+        arg_template:
+          session_id: "$artifacts.session_id"
+          criteria: "$step.criteria"
+
+  - tools_ref: browser_diff
+    capability: browser_diff
+    semantic_actions: [diff_against_baseline]
+    tools:
+      - tool: perception_diff
+        arg_template:
+          session_id: "$artifacts.session_id"
+          scan_id_before: "$step.scan_id_before"
+          scan_id_after: "$artifacts.scan_id"
+
+  - tools_ref: codebase_context
+    capability: codebase_context
+    semantic_actions: [resolve_code_context]
+    tools:
+      - tool: perception_code_context
+        arg_template:
+          repo_root: "$artifacts.repo_root"
+          query: "$step.query"
+
+  - tools_ref: form_probe
+    capability: form_probe
+    semantic_actions: [probe_form_rules]
+    tools:
+      - tool: perception_probe_form
+        arg_template:
+          session_id: "$artifacts.session_id"
+
+  - tools_ref: route_guards_probe
+    capability: route_guards_probe
+    semantic_actions: [probe_route_guards]
+    tools:
+      - tool: perception_probe_guards
+        arg_template:
+          session_id: "$artifacts.session_id"
+
+  - tools_ref: auth_gate
+    capability: auth_gate
+    semantic_actions: [evaluate_auth_gate]
+    tools:
+      - tool: perception_auth_gate
+        arg_template:
+          session_id: "$artifacts.session_id"
+
+  - tools_ref: flow_describe
+    capability: flow_describe
+    semantic_actions: [describe_flow_checkpoints]
+    tools:
+      - tool: perception_flow_describe
+        arg_template:
+          session_id: "$artifacts.session_id"
+          flow_id: "$step.flow_id"
+
+  - tools_ref: session_state_manage
+    capability: session_state_manage
+    semantic_actions: [save_session_state, restore_session_state, list_session_states]
+    tools:
+      - tool: perception_state_save
+        arg_template:
+          session_id: "$artifacts.session_id"
+          name: "$step.name"
+      - tool: perception_state_restore
+        arg_template:
+          session_id: "$artifacts.session_id"
+          name: "$step.name"
+      - tool: perception_state_list
+        arg_template:
+          session_id: "$artifacts.session_id"
+
+  - tools_ref: design_snapshot
+    capability: design_snapshot
+    semantic_actions: [build_design_snapshot]
+    tools:
+      - tool: perception_build_design_snapshot
+        arg_template:
+          scan_id: "$artifacts.scan_id"
+
+  - tools_ref: design_review
+    capability: design_review
+    semantic_actions: [run_design_review]
+    tools:
+      - tool: perception_design_review
+        arg_template:
+          snapshot_id: "$artifacts.snapshot_id"
+
+  - tools_ref: design_graph_manage
+    capability: design_graph_manage
+    semantic_actions: [refresh_design_graph_if_needed, query_design_graph]
+    tools:
+      - tool: perception_design_graph_refresh
+        arg_template:
+          repo_root: "$artifacts.repo_root"
+      - tool: perception_design_graph_summary
+        arg_template:
+          repo_root: "$artifacts.repo_root"
+
+  - tools_ref: design_consistency_audit
+    capability: design_consistency_audit
+    semantic_actions: [run_consistency_audit]
+    tools:
+      - tool: perception_consistency_audit
+        arg_template:
+          scan_id: "$artifacts.scan_id"
+          repo_root: "$artifacts.repo_root"
+
+  - tools_ref: design_consistency_assess
+    capability: design_consistency_assess
+    semantic_actions: [assess_selector_consistency]
+    tools:
+      - tool: perception_consistency_assess
+        arg_template:
+          scan_id: "$artifacts.scan_id"
+          selector: "$step.selector"
+
+  - tools_ref: design_knowledge_query
+    capability: design_knowledge_query
+    semantic_actions: [query_design_knowledge]
+    tools:
+      - tool: perception_design_knowledge_query
+        arg_template:
+          repo_root: "$artifacts.repo_root"
+          query: "$step.query"
+
+  - tools_ref: quality_audit
+    capability: quality_audit
+    semantic_actions: [run_quality_audit]
+    note: Module selects T2 audit tool by domain parameter
+    tools:
+      - tool: perception_audit_accessibility
+        when: domain_is_a11y
+      - tool: perception_audit_performance
+        when: domain_is_perf
+      - tool: perception_audit_best_practices
+        when: domain_is_best_practices
+      - tool: perception_audit_seo
+        when: domain_is_seo
+
+  - tools_ref: runtime_diagnosis
+    capability: runtime_diagnosis
+    semantic_actions: [run_full_diagnosis]
+    tools:
+      - tool: perception_full_diagnosis
+        arg_template:
+          session_id: "$artifacts.session_id"
+      - tool: perception_console_get
+        arg_template:
+          session_id: "$artifacts.session_id"
+      - tool: perception_network_get
+        arg_template:
+          session_id: "$artifacts.session_id"
+
+  - tools_ref: seo_readiness
+    capability: seo_readiness
+    semantic_actions: [confirm_seo_readiness]
+    tools:
+      - tool: perception_seo_status
+      - tool: perception_seo_connect
+        when: connect_requested
+
+  - tools_ref: seo_evidence_collect
+    capability: seo_evidence_collect
+    semantic_actions: [collect_seo_evidence]
+    tools:
+      - tool: perception_seo_audit
+        arg_template:
+          repo_root: "$artifacts.repo_root"
+          scan_id: "$artifacts.scan_id"
+          mode: "$step.mode"
+
+  - tools_ref: seo_graph_query
+    capability: seo_graph_query
+    semantic_actions: [query_seo_audit_diff]
+    tools:
+      - tool: perception_seo_query
+        arg_template:
+          query: "$step.query"
+
+  - tools_ref: seo_recommendation_verify
+    capability: seo_recommendation_verify
+    semantic_actions: [verify_seo_recommendation]
+    tools:
+      - tool: perception_seo_verify
+        arg_template:
+          recommendation_id: "$step.recommendation_id"
+
+  - tools_ref: inspiration_workflow
+    capability: inspiration_workflow
+    semantic_actions: [discover_inspiration, collect_inspiration, end_ephemeral_sessions]
+    tools:
+      - tool: perception_inspiration_discover
+      - tool: perception_inspiration_collect
+      - tool: perception_inspiration_session_end
+
+  - tools_ref: resource_workflow
+    capability: resource_workflow
+    semantic_actions: [search_resources, check_resource_license, bridge_resource_to_ui]
+    tools:
+      - tool: perception_resource_search
+      - tool: perception_resource_license_check
+      - tool: perception_resource_observe_bridge
+      - tool: perception_resource_session_end
+
+  - tools_ref: figma_integration
+    capability: figma_integration
+    semantic_actions: [connect_figma, load_figma_context]
+    tools:
+      - tool: perception_figma_connect
+      - tool: perception_figma_context
+
+  - tools_ref: component_search_plan
+    capability: component_search_plan
+    semantic_actions: [plan_component_search]
+    tools:
+      - tool: perception_plan_component_search
+
+  - tools_ref: component_search
+    capability: component_search
+    semantic_actions: [search_components]
+    tools:
+      - tool: perception_search_components
+
+  - tools_ref: component_select
+    capability: component_select
+    semantic_actions: [select_component_foundation]
+    tools:
+      - tool: perception_select_component_foundation
+
+  - tools_ref: component_integrate_dry_run
+    capability: component_integrate
+    semantic_actions: [integrate_component]
+    tools:
+      - tool: perception_integrate_component
+        arg_template:
+          dry_run: true
+
+  - tools_ref: component_integrate_live
+    capability: component_integrate
+    semantic_actions: [integrate_component_live]
+    tools:
+      - tool: perception_integrate_component
+        arg_template:
+          dry_run: false

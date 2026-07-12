@@ -1,0 +1,36 @@
+state_id: complib.S03.component_replacement.inspiration_fallback
+name: "Component — falling back to inspiration when no candidate fits"
+description: |
+  All viable candidates rejected. Agent uses Inspiration to seed a bespoke build.
+mcp_ready: true
+project_archetype: component_library
+project_maturity: M3
+lifecycle_stage: S03_design
+project_types: [existing_mature]
+situation_class: inspiration_needed
+current_project_condition: |
+  Component search exhausted for this need; requirement is bespoke.
+entry_conditions: [all_candidates_rejected]
+exit_conditions: [design_direction_available_for_bespoke_build]
+state_confidence: medium
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [style_direction]
+user_intents: [design_bespoke_component]
+possible_actions: [run_inspiration_discovery, propose_bespoke_design]
+prerequisites: []
+possible_next_states:
+  - landing.S03.design.inspiration_collected
+  - saas.S05.new_feature.form_validation.v1
+failure_states: [global.Sxx.upstream_degraded]
+relevant_modules: [inspiration_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: []
+expected_outputs: [bespoke_design_brief]
+verification_requirements: [design_direction_confirmed]
+parent_cluster: null
+forest_id: F03
+mcp_ready_gap: null
+notes: |
+  Cross-link between F03 and F02.
+discarded_as_duplicate_of: null
+first_added_in: batch1

@@ -1,0 +1,36 @@
+state_id: saas.S07.new_feature.multi_step_flow.checkpoint_failure
+name: "Feature — checkpoint failed mid-flow"
+description: |
+  One or more checkpoints failed their observable predicates. Re-observe and diagnose.
+mcp_ready: true
+project_archetype: saas_dashboard
+project_maturity: M3
+lifecycle_stage: S07_verification
+project_types: [existing_project, csr]
+situation_class: functional_bug
+current_project_condition: |
+  Flow paused at failure point; blocking issues in agent_summary.
+entry_conditions: [checkpoint_predicate_failed]
+exit_conditions: [root_cause_identified_and_retried]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: unknown, design_system: partial, seo: unknown, quality: partial, assets: unknown}
+unknown_evidence: [root_cause]
+user_intents: [fix_and_retry]
+possible_actions: [re_observe_with_screenshot, run_diff, code_context_correlate, edit_and_re_verify]
+prerequisites: [scan_id]
+possible_next_states:
+  - saas.S07.new_feature.multi_step_flow.all_checkpoints_verified
+  - global.Sxx.verify_loop_exhausted
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, frontend_quality, codebase_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [scan_id, repo_root]
+expected_outputs: [root_cause_hypothesis]
+verification_requirements: [failing_predicate_now_passes]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: |
+  Entry point back into F05 debug forest.
+discarded_as_duplicate_of: null
+first_added_in: batch1

@@ -35,9 +35,18 @@
 
 ## Phase 5 — Optional + freeze
 
-- [ ] Bing Webmaster adapter
-- [ ] OpenSEO paid capabilities (DataForSEO) behind `allow_paid_providers`
+- [x] Bing Webmaster adapter (optional OAuth/API)
+- [x] AI-native recommendation pipeline (correlation, opportunities, reasoning_context)
 - [ ] Freeze module at ~85 — coordination across modules > more SEO providers
+
+## Phase 6 — AI Visibility layer ✅ (Jul 2026)
+
+- [x] `AiVisibilityAdapter` derives `ai_visibility` evidence from collected SEO evidence
+- [x] 12 analyzers grounded in Google's public AI search guidance (see `ai_visibility/docs/ANALYZER_SOURCES.md`)
+- [x] `reasoning_context_v2.ai_readiness` block + `ai_visibility` recommendation category
+- [x] Graph queries `ai.readiness.summary` and `page.ai_readiness`
+- [x] `include_ai_visibility` flag on `perception_seo_audit`
+- [x] Verification loop extended to compare derived AI evidence across audits
 
 ## Explicitly out of scope
 

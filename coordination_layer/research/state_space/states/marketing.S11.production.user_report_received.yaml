@@ -1,0 +1,35 @@
+state_id: marketing.S11.production.user_report_received
+name: "Production — user reports issue"
+description: |
+  External user reports a bug or regression; agent begins triage.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M5
+lifecycle_stage: S11_production
+project_types: [existing_mature]
+situation_class: ui_bug
+current_project_condition: |
+  Report received; local repro TBD.
+entry_conditions: [external_report]
+exit_conditions: [issue_resolved_or_deferred]
+state_confidence: medium
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: partial, quality: partial, assets: partial}
+unknown_evidence: [repro_conditions]
+user_intents: [understand_report]
+possible_actions: [ask_reporter_details, session_start_with_matching_context, prod_scan]
+prerequisites: [prod_url]
+possible_next_states:
+  - marketing.S07.ui_bug.user_report_no_repro
+  - marketing.S11.production.hotfix_requested
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, frontend_quality]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [prod_url]
+expected_outputs: [triage_result]
+verification_requirements: [triage_completed]
+parent_cluster: null
+forest_id: F10
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

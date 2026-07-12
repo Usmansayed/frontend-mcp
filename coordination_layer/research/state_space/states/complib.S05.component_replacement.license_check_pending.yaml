@@ -1,0 +1,36 @@
+state_id: complib.S05.component_replacement.license_check_pending
+name: "Component — license check needed before integration"
+description: |
+  Candidate license unclear or restrictive. Cross-checked via resource_license_check if asset-heavy.
+mcp_ready: true
+project_archetype: component_library
+project_maturity: M3
+lifecycle_stage: S05_implementation
+project_types: [existing_mature]
+situation_class: component_replacement
+current_project_condition: |
+  Selected candidate awaits license clearance.
+entry_conditions: [candidate_selected, license_unresolved]
+exit_conditions: [license_verified_or_candidate_dropped]
+state_confidence: medium
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [license_metadata]
+user_intents: [choose_licensed_component]
+possible_actions: [run_license_check, drop_candidate, escalate_to_user]
+prerequisites: []
+possible_next_states:
+  - complib.S05.component_replacement.integration_dry_run_report
+  - complib.S05.component_replacement.candidates_ranked
+failure_states: [global.Sxx.upstream_degraded]
+relevant_modules: [component_intelligence, resource_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: []
+expected_outputs: [license_verdict]
+verification_requirements: [license_documented]
+parent_cluster: null
+forest_id: F03
+mcp_ready_gap: null
+notes: |
+  Resource license_check may be reused via bridging when component ships assets.
+discarded_as_duplicate_of: null
+first_added_in: batch1

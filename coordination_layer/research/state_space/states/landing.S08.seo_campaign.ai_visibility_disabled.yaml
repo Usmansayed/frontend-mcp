@@ -1,0 +1,36 @@
+state_id: landing.S08.seo_campaign.ai_visibility_disabled
+name: "SEO — audit with include_ai_visibility=false"
+description: |
+  User disabled AI visibility for this audit. Reasoning context has no ai_readiness block.
+mcp_ready: true
+project_archetype: landing
+project_maturity: M4
+lifecycle_stage: S08_quality
+project_types: [existing_project]
+situation_class: seo_campaign
+current_project_condition: |
+  Audit ran without AI analyzers; graph carries no ai_signals bucket for this run.
+entry_conditions: [audit_completed_with_ai_disabled]
+exit_conditions: [recs_triaged]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: partial, design_source: partial, design_system: partial, seo: known, quality: partial, assets: partial}
+unknown_evidence: [ai_readiness]
+user_intents: [seo_only_no_ai]
+possible_actions: [apply_seo_fix, verify_fix]
+prerequisites: [audit_id]
+possible_next_states:
+  - landing.S08.seo_campaign.fix_applying
+  - marketing.S10.release_prep.regression_baseline_capture
+failure_states: []
+relevant_modules: [seo_intelligence]
+modules_must_not_execute: []
+dependencies: [audit_id]
+expected_outputs: [seo_only_recs]
+verification_requirements: [no_ai_readiness_block]
+parent_cluster: null
+forest_id: F07
+mcp_ready_gap: null
+notes: |
+  Explicitly opted-out state — differentiated from ai_readiness_reviewed.
+discarded_as_duplicate_of: null
+first_added_in: batch2

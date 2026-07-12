@@ -1,0 +1,36 @@
+state_id: marketing.S07.ui_bug.user_report_no_repro
+name: "Debug — user-reported bug without local reproduction"
+description: |
+  User reports a bug; local observe cannot reproduce. Need environment or browser info.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M5
+lifecycle_stage: S07_verification
+project_types: [existing_mature]
+situation_class: ui_bug
+current_project_condition: |
+  Report exists; local scans show clean state.
+entry_conditions: [user_report_received, local_no_repro]
+exit_conditions: [repro_captured_or_report_handed_back]
+state_confidence: medium
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: partial, assets: unknown}
+unknown_evidence: [browser, viewport, feature_flag]
+user_intents: [understand_report]
+possible_actions: [ask_reporter_for_environment, session_start_with_matching_viewport, session_start_with_matching_browser]
+prerequisites: []
+possible_next_states:
+  - marketing.S07.ui_bug.responsive_break
+  - marketing.S07.ui_bug.hydration_mismatch
+  - global.Sxx.verify_loop_exhausted
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, frontend_quality]
+modules_must_not_execute: [seo_intelligence]
+dependencies: []
+expected_outputs: [repro_or_handback]
+verification_requirements: [repro_or_documented_handback]
+parent_cluster: null
+forest_id: F05
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

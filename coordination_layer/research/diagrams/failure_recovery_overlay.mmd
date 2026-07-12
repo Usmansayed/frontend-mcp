@@ -1,0 +1,55 @@
+flowchart TB
+  subgraph failures [Global failure surfaces]
+    F1[global.dev_server_down]
+    F2[global.auth_gate.requires_human]
+    F3[global.figma_connect_failed]
+    F4[global.upstream_degraded]
+    F5[global.verify_loop_exhausted]
+    F6[global.tooling_broken]
+    F7[global.pdg_refresh_failed]
+    F8[global.session_lost]
+    F9[global.repo_unavailable]
+    F10[global.env_misconfigured]
+    F11[global.user_abandoned]
+  end
+
+  subgraph terminal [Terminal]
+    T[global.verify_success_terminal]
+  end
+
+  subgraph recovery [Recovery strategies]
+    R1[health_recover]
+    R2[human_in_loop]
+    R3[rotate_credentials]
+    R4[degrade_gracefully]
+    R5[verify_exhaust_escape]
+    R6[surface_and_pause]
+    R7[refresh_or_defer]
+    R8[restart_session]
+    R9[repo_prompt]
+    R10[env_prompt]
+    R11[cleanup_and_park]
+  end
+
+  F1 --> R1
+  F2 --> R2
+  F3 --> R3
+  F4 --> R4
+  F5 --> R5
+  F6 --> R6
+  F7 --> R7
+  F8 --> R8
+  F9 --> R9
+  F10 --> R10
+  F11 --> R11
+
+  R1 --> T
+  R2 --> T
+  R3 --> T
+  R4 --> T
+  R5 --> T
+  R6 --> T
+  R7 --> T
+  R8 --> T
+  R9 --> T
+  R10 --> T

@@ -1,0 +1,34 @@
+state_id: landing.S06.resource_gap.icon_provisioned
+name: "Integration — icon asset added and verified"
+description: |
+  Selected icon added to codebase; page re-observed with icon rendered.
+mcp_ready: true
+project_archetype: landing
+project_maturity: M2
+lifecycle_stage: S06_integration
+project_types: [greenfield]
+situation_class: resource_gap
+current_project_condition: |
+  Icon present in bundle; renders in page; license documented.
+entry_conditions: [icon_added, license_documented]
+exit_conditions: [re_verify_hero_state]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: partial, design_system: partial, seo: unknown, quality: unknown, assets: verified}
+unknown_evidence: []
+user_intents: [continue_feature_work]
+possible_actions: [re_verify_hero]
+prerequisites: [scan_id]
+possible_next_states:
+  - landing.S07.new_feature.landing_hero.verified
+failure_states: []
+relevant_modules: [resource_intelligence, visual_browser]
+modules_must_not_execute: []
+dependencies: [scan_id]
+expected_outputs: [verified_icon_render]
+verification_requirements: [icon_visible_on_expected_element]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

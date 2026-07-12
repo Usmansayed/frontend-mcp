@@ -1,0 +1,35 @@
+state_id: admin.S05.new_feature.modal_dialog.stub
+name: "Feature — modal dialog stub in place"
+description: |
+  Modal component exists; content and focus management incomplete.
+mcp_ready: true
+project_archetype: admin_panel
+project_maturity: M3
+lifecycle_stage: S05_implementation
+project_types: [existing_project]
+situation_class: new_feature
+current_project_condition: |
+  Modal opens; focus trap and escape handling untested.
+entry_conditions: [modal_component_rendered]
+exit_conditions: [modal_focus_and_escape_verified]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: unknown, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [a11y_focus_trap]
+user_intents: [ship_accessible_modal]
+possible_actions: [verify_focus_trap, verify_escape_close, run_a11y_audit]
+prerequisites: [session_id]
+possible_next_states:
+  - marketing.S08.a11y_remediation.audit_needed
+  - saas.S07.new_feature.multi_step_flow.checkpoint_failure
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, frontend_quality]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [session_id]
+expected_outputs: [verified_modal]
+verification_requirements: [focus_trap_verified, escape_closes]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

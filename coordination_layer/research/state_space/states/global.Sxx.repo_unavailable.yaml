@@ -1,0 +1,35 @@
+state_id: global.Sxx.repo_unavailable
+name: "Global — repo_root unavailable"
+description: |
+  repo_root missing or not readable. Codebase, Framework, Component, and SEO-with-repo paths blocked.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M2
+lifecycle_stage: Sxx_any
+project_types: [existing_mature]
+situation_class: degraded_upstream
+current_project_condition: |
+  Filesystem access to repo denied or path invalid.
+entry_conditions: [repo_root_missing_or_bad]
+exit_conditions: [valid_repo_root_provided]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: unknown, design_source: partial, design_system: partial, seo: partial, quality: partial, assets: partial}
+unknown_evidence: [repo_state]
+user_intents: [provide_repo_access]
+possible_actions: [ask_user_for_repo_root, proceed_without_repo_signals]
+prerequisites: []
+possible_next_states:
+  - marketing.S02.discovery.legacy_repo_open
+  - landing.S02.discovery.stack_chosen
+failure_states: []
+relevant_modules: [codebase_intelligence]
+modules_must_not_execute: [component_intelligence__integrate_live]
+dependencies: []
+expected_outputs: [repo_root_ready_or_skipped]
+verification_requirements: [decision_recorded]
+parent_cluster: null
+forest_id: F12
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

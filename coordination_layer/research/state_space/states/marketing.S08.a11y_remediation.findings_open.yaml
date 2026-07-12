@@ -1,0 +1,35 @@
+state_id: marketing.S08.a11y_remediation.findings_open
+name: "Quality — a11y findings open"
+description: |
+  Audit produced findings above threshold; remediation needed.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S08_quality
+project_types: [existing_mature]
+situation_class: accessibility_remediation
+current_project_condition: |
+  Findings enumerated with impact levels.
+entry_conditions: [audit_findings_present]
+exit_conditions: [each_finding_triaged_and_addressed_or_accepted]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: partial, assets: unknown}
+unknown_evidence: [remediation_effort]
+user_intents: [fix_a11y_findings]
+possible_actions: [apply_a11y_fix, re_audit_after_fix, accept_advisory]
+prerequisites: [session_id]
+possible_next_states:
+  - marketing.S07.ui_bug.accessibility_regression
+  - marketing.S08.a11y_remediation.clean
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [frontend_quality, visual_browser]
+modules_must_not_execute: []
+dependencies: [session_id]
+expected_outputs: [remediation_plan_or_applied_fixes]
+verification_requirements: [findings_reduced_after_remediation]
+parent_cluster: null
+forest_id: F06
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

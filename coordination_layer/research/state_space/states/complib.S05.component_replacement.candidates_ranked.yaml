@@ -1,0 +1,36 @@
+state_id: complib.S05.component_replacement.candidates_ranked
+name: "Component — ranked candidates available"
+description: |
+  search_components returned N ranked ComponentCandidate entries.
+mcp_ready: true
+project_archetype: component_library
+project_maturity: M3
+lifecycle_stage: S05_implementation
+project_types: [existing_mature]
+situation_class: component_replacement
+current_project_condition: |
+  Non-empty candidates with scores.
+entry_conditions: [search_returned_candidates]
+exit_conditions: [foundation_selected]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [preferred_candidate]
+user_intents: [pick_foundation]
+possible_actions: [present_top_candidates, select_component_foundation]
+prerequisites: [component_candidates]
+possible_next_states:
+  - complib.S05.component_replacement.candidate_selected
+  - complib.S05.component_replacement.zero_candidates
+failure_states: []
+relevant_modules: [component_intelligence, design_sense_intelligence, consistency_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [repo_root]
+expected_outputs: [selection_result]
+verification_requirements: [candidate_chosen]
+parent_cluster: null
+forest_id: F03
+mcp_ready_gap: null
+notes: |
+  Selection uses Design Sense + Consistency + Framework + Codebase contracts.
+discarded_as_duplicate_of: null
+first_added_in: batch1

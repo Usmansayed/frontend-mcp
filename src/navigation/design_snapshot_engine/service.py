@@ -1,12 +1,13 @@
 """Design Snapshot Engine service facade."""
 from __future__ import annotations
 
-from typing import Any
-
-from navigation.visual_browser_intelligence.observe.observation import PageObservation
+from typing import TYPE_CHECKING, Any
 
 from .engine import DesignSnapshotEngine
 from .models import DesignSnapshot
+
+if TYPE_CHECKING:
+    from navigation.visual_browser_intelligence.observe.observation import PageObservation
 
 
 class DesignSnapshotService:
@@ -19,7 +20,7 @@ class DesignSnapshotService:
 		self,
 		session: Any,
 		*,
-		observation: PageObservation | None = None,
+		observation: "PageObservation | None" = None,
 		scan_id: str | None = None,
 	) -> DesignSnapshot:
 		obs_dict = observation.to_dict() if observation else {}

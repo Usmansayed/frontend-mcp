@@ -1,117 +1,68 @@
 # Figma Intelligence — Architecture
 
-**Status:** Architecture scaffold (v0.1) — no execution pipeline wired yet.
+Connection + coordination layer over **southleft/figma-console-mcp**.
 
-## Mission
+## Layers
 
-Figma Intelligence is **not** a wrapper around Figma Console MCP. It is an orchestration and intelligence layer inside Frontend Perception MCP. External MCPs are execution providers only when the pipeline reaches the provider stage.
+### Connection Manager (`connection/`)
 
-**Our MCP remains the brain.**
+- `connect(pat)` — validate via console status, store PAT
+- `disconnect()` — clear stored token
+- `status()` — connected, token source
+- Token file: `.cache/figma_tokens.json` (override: `FIGMA_TOKEN_PATH`)
 
-## Pipeline
+### Session Manager (`session/`)
 
-```text
-Agent
-  │
-  ▼
-FigmaIntelligenceService
-  │
-  ├─ intent/                  → parse agent goal
-  ├─ planning/                → provider routing + intelligence hints
-  ├─ community_intelligence/  → ⭐ query expansion (synonyms, styles, industries, components)
-  ├─ discovery/               → execute ranked community searches via providers
-  ├─ candidate_intelligence/  → ⭐ normalize rich CandidateProfile metadata
-  ├─ ranking/                 → score using profile (not keywords alone)
-  ├─ providers/               → thin execution only (Figma Console last)
-  ├─ extraction/              → snapshot, components, tokens (post-provider)
-  ├─ evaluation/              → Design Sense, Consistency, Component, Framework
-  └─ registry/                → Reference Registry + PDG bridge
-  │
-  ▼
-Agent
-```
+Persists active design context:
 
-## Multi-intelligence participation
+- `file_key`, `file_url`, `file_name`
+- `active_page_id`, `active_frame_id`
+- `selection_node_ids`
+- `known_files` (recent files, max 20)
 
-| Stage | Modules |
-|-------|---------|
-| **Before provider** | Framework, Component, Design Sense, Consistency → search hints |
-| **After extraction** | Same modules → quality, fit, reusability, compatibility, inspiration score |
+Session file: `.cache/figma_session.json` (override: `FIGMA_SESSION_PATH`)
 
-Providers return **raw design data**. Intelligence modules decide value.
+### Figma Console MCP Adapter (`adapter/console.py`)
 
-## Provider interface
+Internal methods (MCP tool names hidden from rest of codebase):
 
-All providers implement `FigmaProvider` (`providers/protocol.py`):
+| Method | Console tool (internal) |
+|--------|-------------------------|
+| `connect()` | `figma_get_status` |
+| `navigate()` | `figma_navigate` |
+| `get_current_file()` | `figma_get_file_data` |
+| `get_components()` | `figma_get_library_components` / kit fallback |
+| `get_styles()` | `figma_get_styles` |
+| `get_variables()` | `figma_get_variables` |
+| `get_tokens()` | `figma_get_token_values` |
+| `get_selection()` | status payload |
 
-- `discover_candidates(plan, intent)` → community/file candidates
-- `extract_design(candidate, intent)` → tokens, components, variables
-- `health()` → degraded reporting
+### Context Normalizer (`normalize/context.py`)
 
-**First provider:** `figma_console` (southleft/figma-console-mcp)  
-**Second provider:** `official_figma` (https://mcp.figma.com/mcp)  
-**Future:** Figwright, community MCPs, REST adapters
+Maps raw payloads → `context_models.FigmaDesignContext`.
 
-Providers are swappable — pipeline stages do not change when adding a provider.
+### Design Cache (`cache/store.py`)
 
-## Ecosystem integration
+In-memory TTL cache (default 120s). Keyed by file + page + frame + selection. Invalidated on session updates.
 
-```text
-Figma Community
-  → Discovery
-  → Extraction
-  → Design Snapshot (design_snapshot_engine)
-  → Component DNA / Patterns
-  → Reference Registry (design_reference_registry)
-  → Project Design Graph (consistency_intelligence)
-  → Design Sense / Consistency / Component Intelligence
-```
+### Coordination Layer (`coordination/coordinator.py`)
 
-**Relationship to Consistency Intelligence:**  
-`consistency_intelligence/discovery/sources/figma.py` is a thin PDG ingestor for pre-extracted token payloads. Figma Intelligence **orchestrates** discovery and extraction; CI **consumes** normalized knowledge via the graph.
+`get_design_context(refresh=False)` — cache hit, or parallel MCP fetches + normalize + cache put.
 
-## Package layout
+### Health Monitor (`health/monitor.py`)
 
-```text
-figma_intelligence/
-├── providers/              # protocol + manager + figma_console | official_figma | future
-├── intent/                 # agent goal parsing
-├── planning/               # search planner + orchestrator
-├── community_intelligence/ # ⭐ query expansion before any provider call
-├── candidate_intelligence/ # ⭐ CandidateProfile normalization
-├── discovery/              # execute community plan via providers
-├── ranking/                # profile-aware ranking
-├── extraction/             # provider extraction (after brains)
-├── evaluation/             # multi-intelligence review
-├── registry/               # reference registry bridge
-├── adapters/               # ecosystem hints + snapshot normalization
-├── models.py
-├── service.py
-└── docs/
-```
+Connection status + console `health()` combined report.
 
-## MCP tools (planned)
+## Service facade (`service.py`)
 
-| Tool | Purpose |
-|------|---------|
-| `perception_figma_discover` | Intent → plan → candidates (no extraction) |
-| `perception_figma_pipeline` | Full pipeline through extraction + evaluation |
-| `perception_figma_providers` | List provider capabilities + health |
+Primary API:
 
-Not registered until execution phase — scaffold only.
+- `connect`, `disconnect`, `connection_status`, `health`
+- `get_context`, `list_files`
+- `set_active_file`, `set_active_page`, `set_active_frame`, `set_selection`
 
-## Phase plan
+Legacy: `discover`, `run_pipeline`, `run_duplication_pipeline`.
 
-1. **Architecture + research** — models, protocol, stubs, docs ✅
-2. **Community Intelligence** — multi-pass query expansion ✅
-3. **Candidate Intelligence** — `CandidateProfile` normalization ✅
-4. **Provider wiring** — Figma Console MCP (**after** brains; not started)
-5. **Extraction + snapshot** — Design Snapshot Engine integration
-6. **Multi-intelligence evaluation** — contract-based scoring from sibling modules
-7. **Reference Registry + PDG** — persist valuable extractions
+## Boundaries
 
-## Related
-
-- [RESEARCH.md](./RESEARCH.md) — external tooling survey
-- [PIPELINE.md](./PIPELINE.md) — stage contracts
-- [../../../docs/features/figma_intelligence.md](../../../docs/features/figma_intelligence.md) — platform feature doc
+Do **not** add inspiration, critique, or component search here. Delegate to sibling intelligence modules after context is available.

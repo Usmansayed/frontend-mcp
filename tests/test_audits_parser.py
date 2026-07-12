@@ -8,8 +8,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from navigation.audits.models import AuditCategory
-from navigation.audits.parser import parse_lighthouse_report
+from navigation.frontend_quality_intelligence.audits.models import AuditCategory
+from navigation.frontend_quality_intelligence.audits.parser import parse_lighthouse_report
 
 FIXTURE = ROOT / "artifacts" / "test-lighthouse.json"
 

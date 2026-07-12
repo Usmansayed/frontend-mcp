@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from navigation.core.envelope import agent_summary_from_observation
+from navigation.seo_intelligence.evidence.identity import stable_evidence_id
 from navigation.seo_intelligence.models import SeoEvidenceKind, SeoEvidenceRef
 
 
@@ -18,12 +19,20 @@ def normalize_browser_observation(
 	summary = agent_summary_from_observation(observation)
 
 	for index, message in enumerate(summary.get('blocking') or []):
+		title = 'Blocking browser issue'
 		evidence.append(
 			SeoEvidenceRef(
-				evidence_id=f'browser:blocking:{index}',
+				evidence_id=stable_evidence_id(
+					provider_id,
+					SeoEvidenceKind.RENDERING_ISSUE.value,
+					page_url=page_url,
+					title=title,
+					source_ref=f'scan:{scan_id}:blocking:{index}',
+					metric_key=str(message)[:80],
+				),
 				provider_id=provider_id,
 				kind=SeoEvidenceKind.RENDERING_ISSUE,
-				title='Blocking browser issue',
+				title=title,
 				summary=str(message),
 				page_url=page_url,
 				severity='high',
@@ -37,13 +46,20 @@ def normalize_browser_observation(
 		if not isinstance(issue, dict):
 			continue
 		kind_name = str(issue.get('kind') or issue.get('type') or 'rendering')
+		title = str(issue.get('title') or issue.get('message') or kind_name)
 		severity = 'high' if issue.get('tier') == 'blocking' or issue.get('severity') in {'high', 'critical'} else 'medium'
 		evidence.append(
 			SeoEvidenceRef(
-				evidence_id=f'browser:dev:{index}',
+				evidence_id=stable_evidence_id(
+					provider_id,
+					SeoEvidenceKind.RENDERING_ISSUE.value,
+					page_url=page_url,
+					title=title,
+					source_ref=f'scan:{scan_id}:dev:{index}',
+				),
 				provider_id=provider_id,
 				kind=SeoEvidenceKind.RENDERING_ISSUE,
-				title=str(issue.get('title') or issue.get('message') or kind_name),
+				title=title,
 				summary=str(issue.get('message') or issue.get('detail') or kind_name),
 				page_url=page_url,
 				severity=severity,
@@ -54,12 +70,20 @@ def normalize_browser_observation(
 
 	console = observation.get('console') or {}
 	for index, message in enumerate((console.get('blocking') or [])[:10]):
+		title = 'Console error'
 		evidence.append(
 			SeoEvidenceRef(
-				evidence_id=f'browser:console:{index}',
+				evidence_id=stable_evidence_id(
+					provider_id,
+					SeoEvidenceKind.RENDERING_ISSUE.value,
+					page_url=page_url,
+					title=title,
+					source_ref=f'scan:{scan_id}:console:{index}',
+					metric_key=str(message)[:80],
+				),
 				provider_id=provider_id,
 				kind=SeoEvidenceKind.RENDERING_ISSUE,
-				title='Console error',
+				title=title,
 				summary=str(message),
 				page_url=page_url,
 				severity='high',
@@ -70,12 +94,20 @@ def normalize_browser_observation(
 
 	visual = observation.get('visual_insights') or {}
 	for index, message in enumerate((visual.get('blocking') or [])[:10]):
+		title = 'Visual insight (blocking)'
 		evidence.append(
 			SeoEvidenceRef(
-				evidence_id=f'browser:visual:{index}',
+				evidence_id=stable_evidence_id(
+					provider_id,
+					SeoEvidenceKind.RENDERING_ISSUE.value,
+					page_url=page_url,
+					title=title,
+					source_ref=f'scan:{scan_id}:visual:{index}',
+					metric_key=str(message)[:80],
+				),
 				provider_id=provider_id,
 				kind=SeoEvidenceKind.RENDERING_ISSUE,
-				title='Visual insight (blocking)',
+				title=title,
 				summary=str(message),
 				page_url=page_url,
 				severity='high',
@@ -85,12 +117,20 @@ def normalize_browser_observation(
 		)
 
 	for index, message in enumerate((summary.get('advisory') or [])[:5]):
+		title = 'Browser advisory'
 		evidence.append(
 			SeoEvidenceRef(
-				evidence_id=f'browser:advisory:{index}',
+				evidence_id=stable_evidence_id(
+					provider_id,
+					SeoEvidenceKind.RENDERING_ISSUE.value,
+					page_url=page_url,
+					title=title,
+					source_ref=f'scan:{scan_id}:advisory:{index}',
+					metric_key=str(message)[:80],
+				),
 				provider_id=provider_id,
 				kind=SeoEvidenceKind.RENDERING_ISSUE,
-				title='Browser advisory',
+				title=title,
 				summary=str(message),
 				page_url=page_url,
 				severity='medium',
@@ -100,12 +140,19 @@ def normalize_browser_observation(
 		)
 
 	if observation.get('degraded'):
+		title = 'Observation degraded signals'
 		evidence.append(
 			SeoEvidenceRef(
-				evidence_id=f'browser:degraded:{scan_id}',
+				evidence_id=stable_evidence_id(
+					provider_id,
+					SeoEvidenceKind.RENDERING_ISSUE.value,
+					page_url=page_url,
+					title=title,
+					source_ref=f'scan:{scan_id}:degraded',
+				),
 				provider_id=provider_id,
 				kind=SeoEvidenceKind.RENDERING_ISSUE,
-				title='Observation degraded signals',
+				title=title,
 				summary='; '.join(str(d) for d in observation.get('degraded')[:5]),
 				page_url=page_url,
 				severity='medium',

@@ -1,0 +1,35 @@
+state_id: saas.S07.new_feature.form_validation.invalid_path_verified
+name: "Feature — invalid-submit path verified"
+description: |
+  Invalid submission path shows expected errors; per AGENT_GUIDE §4 invalid comes before valid.
+mcp_ready: true
+project_archetype: saas_dashboard
+project_maturity: M3
+lifecycle_stage: S07_verification
+project_types: [existing_project, csr]
+situation_class: new_feature
+current_project_condition: |
+  Invalid submit produces expected error UI; success criteria pass.
+entry_conditions: [invalid_submit_run, verify_success]
+exit_conditions: [valid_path_verified]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: partial, design_source: unknown, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [valid_path_behavior]
+user_intents: [confirm_valid_path]
+possible_actions: [run_valid_submit_check]
+prerequisites: [scan_id]
+possible_next_states:
+  - saas.S07.new_feature.form_validation.verified
+  - saas.S07.new_feature.form_validation.blocked_by_auth
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, design_workflow_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [scan_id]
+expected_outputs: [invalid_path_evidence]
+verification_requirements: [error_messages_visible, blocking_empty]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

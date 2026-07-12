@@ -1,0 +1,59 @@
+state_id: marketing.S02.discovery.legacy_repo_open
+name: "Discovery — existing/legacy repo, no prior perception state"
+description: |
+  User points MCP at an existing (possibly legacy) marketing/blog codebase. Framework
+  detection likely succeeds; SEO graph and PDG do not exist yet.
+mcp_ready: true
+
+project_archetype: marketing
+project_maturity: M5
+lifecycle_stage: S02_discovery
+project_types: [existing_mature, ssr]
+situation_class: new_feature
+
+current_project_condition: |
+  Live repo with routes; no scan/snapshot/graph produced yet by MCP.
+entry_conditions: [repo_root_provided, dev_server_reachable]
+exit_conditions: [first_scan_captured_and_framework_detected]
+state_confidence: high
+
+known_evidence:
+  ui_runtime: unknown
+  codebase: partial
+  design_source: unknown
+  design_system: unknown
+  seo: unknown
+  quality: unknown
+  assets: unknown
+unknown_evidence: [visual_baseline, seo_baseline, pdg_state]
+
+user_intents: [understand_project, plan_change]
+
+possible_actions:
+  - detect_framework
+  - list_routes_via_codebase
+  - observe_home_route
+  - decide_priority_task
+prerequisites: [repo_root]
+possible_next_states:
+  - marketing.S03.design.pdg_empty_snapshot_ready
+  - marketing.S07.new_feature.change_scope_ready
+  - marketing.S08.seo_campaign.audit_needed
+failure_states:
+  - global.Sxx.dev_server_down
+  - global.Sxx.repo_unavailable
+
+relevant_modules: [visual_browser, codebase_intelligence, framework_intelligence]
+modules_must_not_execute: [seo_intelligence, consistency_intelligence, figma_intelligence]
+dependencies: [repo_root, session_id]
+
+expected_outputs: [baseline_scan_id, framework_metadata]
+verification_requirements: [routes_listable, home_page_renders]
+
+parent_cluster: null
+forest_id: F01
+mcp_ready_gap: null
+notes: |
+  Discovery entry-point for non-greenfield origins. Fans out into design, feature, or growth work.
+discarded_as_duplicate_of: null
+first_added_in: batch1

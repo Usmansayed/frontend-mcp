@@ -1,0 +1,86 @@
+schema_version: '1.0'
+description: 'Situation-driven module/capability blocks. Distilled from module inventory
+  anti-pattern catalog and research state modules_must_not_execute patterns.
+
+  '
+rules:
+- rule_id: AP_DEV_SERVER_DOWN
+  when: environment_probe_unreachable
+  block_capabilities:
+  - browser_observe
+  - browser_act
+  - browser_verify
+  - browser_diff
+  - quality_audit
+  - seo_evidence_collect
+  reason: Browser-dependent work wastes cycles when dev server is down.
+- rule_id: AP_AUTH_HUMAN_REQUIRED
+  when: auth_gate_requires_human
+  block_capabilities:
+  - browser_act
+  - browser_verify
+  - quality_audit
+  - seo_evidence_collect
+  - design_consistency_audit
+  reason: Human input required before further automation.
+- rule_id: AP_BLOCKING_RUNTIME
+  when: evidence_blocking_nonempty
+  block_capabilities:
+  - design_review
+  - design_consistency_audit
+  - seo_evidence_collect
+  - quality_audit
+  reason: Fix runtime blocking issues before advisory or heavy audits.
+- rule_id: AP_COMPONENT_FIX_NOT_SEARCH
+  when: situation_class_is_component_repair
+  block_capabilities:
+  - component_search
+  - component_search_plan
+  reason: Repair path should not re-run acquisition search.
+- rule_id: AP_SEO_PRO_WITHOUT_AUTH
+  when: seo_pro_mode_without_oauth
+  block_capabilities:
+  - seo_evidence_collect
+  allow_capabilities:
+  - seo_readiness
+  reason: Professional SEO requires connect first.
+- rule_id: AP_FIGMA_NOT_CONNECTED
+  when: figma_not_connected
+  block_capabilities:
+  - figma_integration
+  reason: Figma context requires connection.
+- rule_id: AP_NO_SNAPSHOT_OR_SCAN
+  when: no_scan_id_and_no_snapshot_id
+  block_capabilities:
+  - design_review
+  - design_consistency_audit
+  - design_consistency_assess
+  reason: Design pipeline needs observe evidence first.
+- rule_id: AP_NO_REPO_ROOT
+  when: repo_root_missing
+  block_capabilities:
+  - codebase_context
+  - framework_profile
+  - component_search
+  - component_integrate
+  reason: Codebase-dependent capabilities need repo_root.
+- rule_id: AP_PDG_EMPTY
+  when: pdg_empty
+  block_capabilities:
+  - design_consistency_audit
+  - design_consistency_assess
+  allow_capabilities:
+  - design_graph_manage
+  reason: Refresh PDG before audit or assess.
+- rule_id: AP_RAPID_ITERATION
+  when: same_page_rapid_iteration
+  defer_capabilities:
+  - quality_audit
+  - seo_evidence_collect
+  reason: Prefer browser_verify during tight iteration loops.
+- rule_id: AP_INSPIRATION_SESSION_OPEN
+  when: inspiration_blob_session_active_at_episode_end
+  require_capabilities:
+  - inspiration_workflow
+  require_action: session_end_cleanup
+  reason: Ephemeral blob sessions must be cleaned up.

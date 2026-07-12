@@ -25,9 +25,9 @@ class Ga4Provider:
 			return 'not_configured', ['google_oauth_not_configured:set_GOOGLE_OAUTH_CLIENT_ID_and_SECRET']
 		if not has_stored_tokens():
 			return 'pending_auth', ['google_oauth_pending:run_perception_seo_connect']
-		property_id = resolve_ga4_property_id(request.ga4_property_id)
+		property_id = resolve_ga4_property_id(request.ga4_property_id, request.website_url)
 		if not property_id:
-			return 'not_configured', ['ga4_property_missing:set_GA4_PROPERTY_ID_or_ga4_property_id']
+			return 'not_configured', ['ga4_property_missing:connect_google_for_auto_discovery']
 		creds = get_valid_credentials()
 		if creds is None:
 			return 'pending_auth', ['google_oauth_token_invalid:reconnect']
@@ -38,7 +38,7 @@ class Ga4Provider:
 		if creds is None:
 			return [], ['ga4_not_authenticated']
 
-		property_id = resolve_ga4_property_id(request.ga4_property_id)
+		property_id = resolve_ga4_property_id(request.ga4_property_id, request.website_url)
 		if not property_id:
 			return [], ['ga4_property_missing']
 
@@ -51,7 +51,7 @@ class Ga4Provider:
 		)
 		if payload is None:
 			return [], degraded or ['ga4_report_failed']
-		evidence = normalize_ga4_report(payload, property_id=property_id)
+		evidence = normalize_ga4_report(payload, property_id=property_id, base_url=request.website_url)
 		if not evidence:
 			degraded.append('ga4_no_rows')
 		return evidence, degraded

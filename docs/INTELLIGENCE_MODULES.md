@@ -263,19 +263,21 @@ See `inspiration_intelligence/docs/ARCHITECTURE.md`, `inspiration_intelligence/d
 
 **Path:** `figma_intelligence/`
 
-**Future scope:** User's own Figma account — files, components, variables, design systems via Figma Console MCP. **Not** responsible for public inspiration (see Inspiration Intelligence).
+**Connection + coordination layer** for the user's Figma workspace via **southleft/figma-console-mcp**. Returns normalized `FigmaDesignContext` — not design critique or public inspiration.
 
 | Capability | Status |
 |------------|--------|
-| Community duplication pipeline (content_id → file_key) | ✅ scaffold |
-| Figma Console MCP client | ✅ |
-| Official Figma MCP provider | 📋 scaffold |
-| Community Discovery adapter (Figma Community API) | ✅ |
-| Account-scoped extraction API | 📋 planned |
+| Connection Manager (PAT connect, validate, store) | ✅ |
+| Session Manager (file, page, frame, selection) | ✅ |
+| Figma Console MCP Adapter | ✅ |
+| Context Normalizer + Design Cache + Coordination | ✅ |
+| Health Monitor | ✅ |
+| MCP: `perception_figma_connect`, `_status`, `_context` | ✅ |
+| Legacy community pipeline (discover / extraction) | ✅ retained |
 
-See [features/figma_intelligence.md](./features/figma_intelligence.md).
+See [features/figma_intelligence.md](./features/figma_intelligence.md) and `perception://figma-guide`.
 
-**Boundary:** Inspiration Intelligence owns public gallery inspiration; Figma Intelligence owns project-specific Figma design context.
+**Boundary:** Inspiration Intelligence → public galleries. Design Sense → critique. Component Intelligence → components. Figma Intelligence → user's Figma connection + normalized context only.
 
 ---
 
@@ -316,7 +318,7 @@ Orchestrates **free-first SEO evidence** — Search Console, GA4, LibreCrawl, Li
 | Live provider adapters (GSC, GA4, LibreCrawl, Lighthouse, Browser) | ✅ |
 | Cross-analysis + recommendations + verification loop | ✅ |
 | Capability-aware planner + fallbacks | ✅ |
-| OpenSEO optional provider (free GSC mirror; paid gated) | ✅ partial |
+| AI-native recommendation pipeline + reasoning_context | ✅ |
 | `perception_seo_status` + `perception_seo_audit` + `perception_seo_connect` + `perception_seo_verify` | ✅ |
 
 **Do not build:** keyword databases, backlink crawlers, SERP databases.

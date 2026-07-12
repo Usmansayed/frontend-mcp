@@ -1,0 +1,36 @@
+state_id: saas.S07.new_feature.form_validation.blocked_by_auth
+name: "Feature — form on an auth-guarded route"
+description: |
+  Route requires authentication; form cannot be reached without auth gate.
+mcp_ready: true
+project_archetype: saas_dashboard
+project_maturity: M3
+lifecycle_stage: S07_verification
+project_types: [existing_project, csr]
+situation_class: auth_blocked
+current_project_condition: |
+  probe_guards indicates auth required; observe returns login redirect.
+entry_conditions: [probe_guards_shows_auth_required]
+exit_conditions: [state_restored_or_user_authenticated]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: unknown, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [auth_success]
+user_intents: [authenticate_and_reach_route]
+possible_actions: [invoke_auth_gate, restore_saved_state, ask_user_to_authenticate]
+prerequisites: [session_id]
+possible_next_states:
+  - saas.S05.new_feature.form_validation.v1
+  - global.Sxx.auth_gate.requires_human
+failure_states: [global.Sxx.auth_gate.requires_human]
+relevant_modules: [design_workflow_intelligence, visual_browser]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [session_id]
+expected_outputs: [auth_context]
+verification_requirements: [route_reachable_post_auth]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: |
+  auth_gate must not loop; requires_human hands off to user.
+discarded_as_duplicate_of: null
+first_added_in: batch1

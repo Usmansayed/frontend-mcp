@@ -1,0 +1,37 @@
+state_id: landing.S03.design.no_design_source
+name: "Design — no Figma, no design system, no references"
+description: |
+  Landing page work with zero design source. Agent must choose: pick inspiration
+  or improvise a design direction with the user.
+mcp_ready: true
+project_archetype: landing
+project_maturity: M2
+lifecycle_stage: S03_design
+project_types: [greenfield]
+situation_class: inspiration_needed
+current_project_condition: |
+  No mockups, no Figma PAT, no PDG.
+entry_conditions: [route_plan_ready, no_design_source]
+exit_conditions: [design_direction_agreed_or_reference_set_available]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: unknown, design_system: unknown, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [visual_direction, color_palette, typography]
+user_intents: [find_style_direction]
+possible_actions: [propose_style_options, run_inspiration_discovery, capture_user_style_preferences]
+prerequisites: []
+possible_next_states:
+  - landing.S03.design.inspiration_collected
+  - landing.S03.design.direction_agreed_no_references
+failure_states: [global.Sxx.upstream_degraded]
+relevant_modules: [inspiration_intelligence]
+modules_must_not_execute: [seo_intelligence, consistency_intelligence]
+dependencies: []
+expected_outputs: [style_options]
+verification_requirements: [user_agrees_direction]
+parent_cluster: null
+forest_id: F02
+mcp_ready_gap: null
+notes: |
+  Inspiration blob sessions must be closed via inspiration_session_end when leaving.
+discarded_as_duplicate_of: null
+first_added_in: batch1

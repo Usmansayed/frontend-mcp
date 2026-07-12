@@ -1,0 +1,269 @@
+schema_version: "1.0"
+description: Fan-out, lazy evaluation, and routing heuristics for the coordinator.
+
+heuristics:
+  - heuristic_id: H_CLUSTER_OVER_LEAF
+    rule: route_using_cluster_id_and_capability_posture_not_research_state_id
+    priority: 1
+
+  - heuristic_id: H_CAPABILITY_OVER_MODULE
+    rule: select_next_step_by_capability_contract_not_module_name
+    priority: 1
+
+  - heuristic_id: H_SEO_DIFF_OVER_FULL_AUDIT
+    rule: prefer_seo_graph_query_diff_when_graph_fresh
+    applies_to_clusters: [cluster.seo.audit_cycle]
+    priority: 2
+
+  - heuristic_id: H_PDG_REFRESH_BEFORE_AUDIT
+    rule: insert_design_graph_manage_when_pdg_empty
+    applies_to_clusters: [cluster.consistency.audit_cycle]
+    priority: 2
+
+  - heuristic_id: H_LAZY_SEO_UNTIL_INDEXABLE
+    rule: defer_seo_capabilities_until_lifecycle_gte_S07_verification
+    defer_capabilities: [seo_evidence_collect, seo_recommendation_verify]
+    priority: 3
+
+  - heuristic_id: H_PARALLEL_BOOTSTRAP
+    rule: allow_parallel_group_bootstrap_probe_on_cold_start
+    parallel_group: bootstrap_probe
+    priority: 4
+
+  - heuristic_id: H_PARALLEL_COMPONENT_CONSULT
+    rule: component_select_runs_internal_parallel_consult_do_not_serialize
+    capability: component_select
+    priority: 4
+
+  - heuristic_id: H_QUALITY_TRIAD_BATCH
+    rule: quality_audit_domain_triad_runs_as_module_internal_parallel
+    capability: quality_audit
+    priority: 4
+
+  - heuristic_id: H_SNAPSHOT_CACHE
+    rule: skip_design_snapshot_when_cached_snapshot_matches_scan
+    capability: design_snapshot
+    priority: 5
+
+  - heuristic_id: H_VERIFY_BUDGET
+    rule: default_verify_retry_budget_five_decrement_on_TR_VERIFY_FAIL
+    default_budget: 5
+    priority: 1
+
+  - heuristic_id: H_LEAF_HINT_TELEMETRY_ONLY
+    rule: leaf_hint_must_never_affect_routing_or_playbook_selection
+    priority: 0
+
+  - heuristic_id: H_SIGNATURE_INCLUDES_CAPABILITIES
+    rule: cluster_signature_hash_includes_capability_posture_eligible_sorted
+    priority: 1
+
+  - heuristic_id: H_FORM_CLUSTER_REQUIRES_PROBE
+    rule: form_pipeline_cluster_and_playbook_only_after_form_probe
+    priority: 1
+
+  - heuristic_id: H_QUALITY_CLUSTER_AFTER_AUDIT
+    rule: quality_audit_verify_cycle_stays_in_quality_cluster
+    priority: 2
+
+  - heuristic_id: H_DATA_UI_AFTER_IMPLEMENTATION_VERIFY
+    rule: generic_verify_success_routes_data_ui_not_form_pipeline
+    priority: 2
+
+  - heuristic_id: H_MIGRATION_AFTER_FRAMEWORK_DOCS
+    rule: framework_profile_plus_codebase_context_signals_migration
+    priority: 2
+
+  - heuristic_id: H_PRODUCTION_AFTER_DIFF
+    rule: browser_diff_signals_release_or_production_cluster
+    priority: 2
+
+# Cluster resolution scoring — consumed by ClusterResolver (evidence-driven refinement).
+cluster_resolution:
+  inertia_points: 1
+  default_cluster: cluster.discovery.bootstrap
+  playbook_affinity_points: 3
+  suggested_capability_points: 1
+  human_gates_bump:
+    cluster.global.recovery: 6
+
+  tool_affinity:
+    perception_plan_component_search:
+      cluster.component.acquisition_pipeline: 5
+    perception_probe_form:
+      cluster.feature.form_pipeline: 4
+    perception_probe_guards:
+      cluster.feature.auth_flow: 4
+    perception_flow_describe:
+      cluster.feature.flow_pipeline: 4
+    perception_plan_component_search:
+      cluster.component.acquisition_pipeline: 4
+    perception_search_components:
+      cluster.component.acquisition_pipeline: 4
+    perception_select_component_foundation:
+      cluster.component.acquisition_pipeline: 4
+    perception_integrate_component:
+      cluster.component.acquisition_pipeline: 4
+    perception_seo_audit:
+      cluster.seo.audit_cycle: 4
+    perception_seo_verify:
+      cluster.seo.audit_cycle: 4
+    perception_seo_query:
+      cluster.seo.audit_cycle: 4
+    perception_inspiration_discover:
+      cluster.design.reference_gathering: 4
+    perception_inspiration_collect:
+      cluster.design.reference_gathering: 4
+    perception_resource_search:
+      cluster.feature.resource_gap: 4
+      cluster.design.reference_gathering: 2
+    perception_figma_connect:
+      cluster.design.figma_pipeline: 4
+    perception_figma_context:
+      cluster.design.figma_pipeline: 4
+    perception_consistency_audit:
+      cluster.consistency.audit_cycle: 4
+    perception_build_design_snapshot:
+      cluster.design.review_and_snapshot: 4
+    perception_design_review:
+      cluster.design.review_and_snapshot: 4
+    perception_audit_accessibility:
+      cluster.quality.audit_cycle: 4
+    perception_audit_performance:
+      cluster.quality.audit_cycle: 4
+    perception_full_diagnosis:
+      cluster.debug.signal_class: 4
+    perception_detect_framework:
+      cluster.discovery.bootstrap: 4
+      cluster.migration.framework_or_redesign: 3
+    perception_framework_docs:
+      cluster.migration.framework_or_redesign: 4
+    perception_health:
+      cluster.discovery.bootstrap: 4
+    perception_diff:
+      cluster.production.live_and_incidents: 6
+      cluster.debug.iteration_target: 3
+      cluster.release.baseline_and_staging: 2
+
+  capability_affinity:
+    form_probe:
+      cluster.feature.form_pipeline: 5
+    route_guards_probe:
+      cluster.feature.auth_flow: 5
+    flow_describe:
+      cluster.feature.flow_pipeline: 5
+    component_search_plan:
+      cluster.component.acquisition_pipeline: 5
+    component_search:
+      cluster.component.acquisition_pipeline: 5
+    component_integrate:
+      cluster.component.acquisition_pipeline: 5
+    seo_evidence_collect:
+      cluster.seo.audit_cycle: 5
+    seo_recommendation_verify:
+      cluster.seo.audit_cycle: 5
+    inspiration_workflow:
+      cluster.design.reference_gathering: 5
+    resource_workflow:
+      cluster.feature.resource_gap: 5
+    figma_integration:
+      cluster.design.figma_pipeline: 5
+    design_consistency_audit:
+      cluster.consistency.audit_cycle: 5
+    design_snapshot:
+      cluster.design.review_and_snapshot: 5
+    quality_audit:
+      cluster.quality.audit_cycle: 5
+    runtime_diagnosis:
+      cluster.debug.signal_class: 5
+    framework_profile:
+      cluster.discovery.bootstrap: 3
+      cluster.migration.framework_or_redesign: 4
+    codebase_context:
+      cluster.migration.framework_or_redesign: 4
+    environment_probe:
+      cluster.discovery.bootstrap: 5
+    browser_diff:
+      cluster.production.live_and_incidents: 5
+      cluster.debug.iteration_target: 4
+
+  conditional_bumps:
+    - id: QUALITY_CLUSTER_HOLD
+      all_of:
+        - capability_attempted: quality_audit
+        - last_capability: browser_verify
+      bumps:
+        cluster.quality.audit_cycle: 7
+
+    - id: DATA_UI_IMPLEMENTATION_COMPLETE
+      all_of:
+        - last_capability: browser_verify
+        - verification_status: passed
+        - capability_attempted: inspiration_workflow
+      none_capability_attempted:
+        - form_probe
+        - quality_audit
+        - design_consistency_audit
+        - figma_integration
+      bumps:
+        cluster.feature.data_ui: 7
+
+    - id: DESIGN_REVIEW_CLUSTER_HOLD
+      all_of:
+        - last_capability: browser_verify
+        - verification_status: passed
+      any_capability_attempted:
+        - design_review
+        - figma_integration
+      bumps:
+        cluster.design.review_and_snapshot: 7
+
+    - id: CONSISTENCY_CLUSTER_HOLD
+      all_of:
+        - capability_attempted: design_consistency_audit
+        - last_capability: browser_verify
+      bumps:
+        cluster.consistency.audit_cycle: 7
+
+    - id: MIGRATION_CLUSTER_HOLD
+      capability_attempts_at_least:
+        framework_profile: 2
+      bumps:
+        cluster.migration.framework_or_redesign: 6
+
+    - id: MIGRATION_FRAMEWORK_DOCS
+      all_of:
+        - capability_attempted: framework_profile
+        - capability_attempted: codebase_context
+      bumps:
+        cluster.migration.framework_or_redesign: 8
+
+    - id: PRODUCTION_AFTER_DIFF
+      all_of:
+        - last_capability: browser_diff
+      bumps:
+        cluster.production.live_and_incidents: 6
+        cluster.debug.iteration_target: 4
+
+    - id: DEBUG_ON_VERIFY_FAIL
+      all_of:
+        - last_capability: browser_verify
+        - verification_status: failed
+      bumps:
+        cluster.debug.signal_class: 4
+        cluster.debug.iteration_target: 3
+
+  evidence_posture_bumps:
+    - domain: seo
+      when_not: unknown
+      bumps:
+        cluster.seo.audit_cycle: 3
+    - domain: design_system
+      when_not: unknown
+      bumps:
+        cluster.consistency.audit_cycle: 2
+        cluster.design.review_and_snapshot: 2
+    - domain: assets
+      when_not: unknown
+      bumps:
+        cluster.component.acquisition_pipeline: 2

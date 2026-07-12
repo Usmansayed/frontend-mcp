@@ -1,0 +1,35 @@
+state_id: marketing.S08.perf_remediation.clean
+name: "Quality — perf audit passes budget"
+description: |
+  All perf metrics within budget; audit archived.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S08_quality
+project_types: [existing_mature]
+situation_class: performance_remediation
+current_project_condition: |
+  Verified perf.
+entry_conditions: [budget_met]
+exit_conditions: [progress_to_seo_or_release]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: partial, design_system: partial, seo: unknown, quality: verified, assets: verified}
+unknown_evidence: [seo]
+user_intents: [progress_seo_or_release]
+possible_actions: [seo_audit, release_baseline_capture]
+prerequisites: [scan_id]
+possible_next_states:
+  - marketing.S08.seo_campaign.audit_needed
+  - marketing.S10.release_prep.regression_baseline_capture
+failure_states: []
+relevant_modules: [frontend_quality, seo_intelligence]
+modules_must_not_execute: []
+dependencies: [scan_id]
+expected_outputs: [perf_verified_marker]
+verification_requirements: [budget_met]
+parent_cluster: null
+forest_id: F06
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

@@ -1,0 +1,34 @@
+state_id: global.Sxx.verify_success_terminal
+name: "Global — verify success, episode terminal"
+description: |
+  Agent completed the task. Verification passed. Blocking empty. Ephemeral resources cleaned up.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: Sxx_any
+project_types: [existing_mature]
+situation_class: release_prep
+current_project_condition: |
+  Successful terminal state. Episode closed.
+entry_conditions: [verify_success, blocking_empty, cleanup_complete]
+exit_conditions: []
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: partial, design_system: partial, seo: verified, quality: verified, assets: partial}
+unknown_evidence: []
+user_intents: [close_episode]
+possible_actions: [report_summary_to_user]
+prerequisites: []
+possible_next_states: []
+failure_states: []
+relevant_modules: []
+modules_must_not_execute: []
+dependencies: []
+expected_outputs: [episode_close_summary]
+verification_requirements: [ephemeral_cleaned, blocking_empty, verify_success]
+parent_cluster: null
+forest_id: F12
+mcp_ready_gap: null
+notes: |
+  Canonical terminal state referenced by many forward-happy-paths.
+discarded_as_duplicate_of: null
+first_added_in: batch2

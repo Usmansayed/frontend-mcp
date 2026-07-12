@@ -1,0 +1,35 @@
+state_id: legacy.S12.legacy_maintenance.dependency_upgrade
+name: "Legacy — dependency upgrade for security"
+description: |
+  Legacy project receives a security patch upgrade only; no new feature work.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M6
+lifecycle_stage: S12_evolution
+project_types: [legacy]
+situation_class: dependency_upgrade
+current_project_condition: |
+  Owned but low-activity project needs a patch bump; regression risk to minimize.
+entry_conditions: [security_advisory]
+exit_conditions: [upgrade_landed_and_verified]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: unknown, design_system: unknown, seo: partial, quality: partial, assets: unknown}
+unknown_evidence: [regression_scope]
+user_intents: [patch_and_ship]
+possible_actions: [read_changelog, minimal_verify, deploy]
+prerequisites: [repo_root]
+possible_next_states:
+  - marketing.S11.production.live_and_monitored
+  - marketing.S07.ui_bug.visual_regression_detected
+failure_states: [global.Sxx.tooling_broken]
+relevant_modules: [framework_intelligence, codebase_intelligence, visual_browser]
+modules_must_not_execute: [seo_intelligence, figma_intelligence]
+dependencies: [repo_root]
+expected_outputs: [minimal_verify_report]
+verification_requirements: [key_pages_still_verify]
+parent_cluster: null
+forest_id: F11
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

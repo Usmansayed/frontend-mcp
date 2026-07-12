@@ -476,7 +476,34 @@ Guideline:
 
 ---
 
-## 16. Tool quick reference (secondary to playbooks)
+## 16. Playbook: Figma design context (Figma Intelligence)
+
+**When:** User asks to analyze their Figma file, implement a frame, extract tokens, or compare design with code.
+
+**Read first:** MCP resource `perception://figma-guide`.
+
+```text
+1. perception_figma_status()                         → connection + session
+2. perception_figma_connect({ pat })                 → once per user (PAT stored locally)
+3. perception_figma_context({ file_url, refresh? })  → normalized design context
+4. Pass context to Design Sense / Consistency / Component Intelligence as needed
+5. perception_observe → perception_verify for code implementation
+```
+
+| Layer | Role |
+|-------|------|
+| Connection Manager | PAT connect, validate, reuse |
+| Session Manager | Active file, page, frame, selection |
+| Console MCP Adapter | southleft/figma-console-mcp (hidden) |
+| Context Normalizer | `FigmaDesignContext` for all modules |
+
+**Do not:** Reimplement Figma APIs. Run public inspiration here — use Inspiration Intelligence. Critique designs here — use Design Sense.
+
+**Stop when:** Context retrieved and downstream task complete, or user confirms stop.
+
+---
+
+## 17. Tool quick reference (secondary to playbooks)
 
 Use tools **only as steps inside playbooks above**.
 
@@ -503,10 +530,13 @@ Use tools **only as steps inside playbooks above**.
 | `perception_resource_session_end` | Delete ephemeral resource blobs |
 | `perception_seo_status` | SEO module phase + provider catalog |
 | `perception_seo_audit` | SEO evidence → graph → recommendations |
+| `perception_figma_status` | Figma connection + session health |
+| `perception_figma_connect` | Connect Figma PAT (once) |
+| `perception_figma_context` | Normalized file, tokens, components, selection |
 
 ---
 
-## 17. Success checklist (before telling user “done”)
+## 18. Success checklist (before telling user “done”)
 
 - [ ] `perception_verify` passed for stated criteria
 - [ ] `agent_summary.blocking` is empty (or user accepted warnings)

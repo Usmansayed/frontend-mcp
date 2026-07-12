@@ -1,84 +1,76 @@
 # Figma Intelligence
 
 **Path:** `src/navigation/figma_intelligence/`  
-**Status:** Account-scoped scaffold — Community duplication + Figma Console extraction
+**Status:** Connection + coordination layer (v2)
 
-> **Public inspiration** (Dribbble, Behance, etc.) lives in [inspiration_intelligence.md](./inspiration_intelligence.md). This module is for the **user's own Figma account** — files, components, variables, and design systems.
+> **Public inspiration** lives in [inspiration_intelligence.md](./inspiration_intelligence.md). This module connects to the **user's own Figma account** and returns normalized design context.
 
-## What it is
+## Philosophy
 
-Figma Intelligence connects to the user's Figma account and converts **owned design files** into **structured design knowledge** the rest of the platform can reuse. It is an orchestration layer — not another MCP, not a Figma Console wrapper.
+Figma Intelligence has **one responsibility**:
 
-```text
-Agent → Intent → Community Intelligence → Community Discovery (no PAT)
-      → Candidate Intelligence → Ranking → Selection Planner
-      → Figma Console MCP (PAT) → Extraction → Deep Candidate Review
-      → Reference Registry → Project Design Graph → Agent
-```
+> Connect to the user's Figma account and provide structured design context to the rest of the MCP.
 
-**Architecture frozen v1** — see `figma_intelligence/docs/ARCHITECTURE_FROZEN.md`.
+It orchestrates **southleft/figma-console-mcp** — it does not reimplement Figma.
 
-## What it is not
+| Concern | Owner |
+|---------|--------|
+| Public inspiration | Inspiration Intelligence |
+| Component search / install | Component Intelligence |
+| Design critique | Design Sense Intelligence |
+| Creative assets | Resource Intelligence |
 
-| Anti-pattern | Our approach |
-|--------------|--------------|
-| Wrapper around Figma Console MCP | Console is one **provider** behind `FigmaProvider` protocol |
-| Separate MCP server | Lives inside Frontend Perception MCP |
-| Autonomous Figma editor | Read/extract only in v1 |
-| UX critique | Design Sense Intelligence |
-| Token drift enforcement | Consistency Intelligence |
-
-## Capabilities
-
-| Capability | Status |
-|------------|--------|
-| Intent parsing (inspire, extract DS, compare, reuse, learn) | ✅ |
-| Search planning with multi-intelligence hints | ✅ |
-| Community Intelligence (synonym/style/industry/component expansion) | ✅ |
-| Candidate Intelligence (`CandidateProfile` metadata) | ✅ |
-| Profile-aware ranking | ✅ |
-| Selection Planner (budget-aware retrieval) | ✅ |
-| Deep Candidate Review (post-extraction scoring) | ✅ |
-| Community Discovery Adapter (public search, no PAT) | ✅ |
-| Figma Console MCP (extraction only, PAT) | ✅ wired |
-| Architecture frozen v1 | ✅ |
-| Live extraction (requires `file_key` + PAT/bridge) | 🚧 |
-| Reference Registry + PDG ingest | 📋 planned |
-| MCP tools | 📋 planned |
-
-## Providers
-
-| ID | Backend | Best for |
-|----|---------|----------|
-| `figma_console` | southleft/figma-console-mcp | Community search, DS kit, DTCG export |
-| `official_figma` | mcp.figma.com | Owned files, org libraries, Code Connect |
-| `future` | Figwright, REST, community MCPs | TBD |
-
-## Ecosystem role
-
-Long-term knowledge flow:
+## Architecture
 
 ```text
-Figma Community → Discovery → Extraction → DesignSnapshot
-  → Component DNA → Patterns → Reference Registry → Project Design Graph
-  → Design Sense / Consistency / Component Intelligence
+User → Connect Figma → Figma Intelligence
+  ├── Connection Manager      (PAT connect, validate, store)
+  ├── Session Manager         (active file, page, frame, selection)
+  ├── Figma Console MCP Adapter (clean internal API)
+  ├── Context Normalizer      (FigmaDesignContext models)
+  ├── Design Cache            (TTL, invalidate on session change)
+  ├── Coordination Layer      (cache vs refresh vs MCP)
+  └── Health Monitor
+        ↓
+  Normalized Design Context → Agent → Other Intelligence Modules
 ```
 
-## MCP tools (planned)
+## MCP tools
 
-- `perception_figma_discover` — candidates without extraction
-- `perception_figma_pipeline` — full pipeline
-- `perception_figma_providers` — provider health + capabilities
+| Tool | Purpose |
+|------|---------|
+| `perception_figma_status` | Module phase, connection, session, health |
+| `perception_figma_connect` | PAT connect / status / disconnect |
+| `perception_figma_context` | Normalized file, pages, frames, components, variables, styles, tokens, selection |
 
-## Module docs
+**Agent guide:** `perception://figma-guide`
 
-- [ARCHITECTURE.md](../src/navigation/figma_intelligence/docs/ARCHITECTURE.md)
-- [RESEARCH.md](../src/navigation/figma_intelligence/docs/RESEARCH.md)
-- [PIPELINE.md](../src/navigation/figma_intelligence/docs/PIPELINE.md)
+## Authentication
 
-## Related modules
+1. User: "Connect my Figma account"
+2. Agent prompts for PAT (Figma → Settings → Security)
+3. `perception_figma_connect` with `pat`
+4. Token stored locally (`.cache/figma_tokens.json` or `FIGMA_TOKEN_PATH`)
+5. Never ask again unless token invalid
 
-- **Design Workflow Intelligence** — multi-step design tool workflows (complementary)
-- **Consistency Intelligence** — consumes extracted tokens via PDG (`discovery/sources/figma.py`)
-- **Design Reference Registry** — stores reference snapshots from extractions
-- **Component Intelligence** — parallel orchestration pattern (providers + planning)
+## Normalized models
+
+`FigmaDesignContext` — `File`, `Page`, `Frame`, `Component`, `Variant`, `Variable`, `Style`, `Token`, `Selection`
+
+Other modules consume these models only — never raw Figma Console MCP payloads.
+
+## Legacy pipeline
+
+Community discovery, ranking, extraction, and duplication remain for backward compatibility (`discover`, `run_pipeline`). New agent workflows use **connect + context** only.
+
+## Related docs
+
+- [FIGMA_AGENT_GUIDE.md](../src/navigation/figma_intelligence/docs/FIGMA_AGENT_GUIDE.md)
+- [ARCHITECTURE.md](../src/navigation/figma_intelligence/docs/ARCHITECTURE.md) (module internals)
+- ADR-023 in [design_decisions.md](./design_decisions.md)
+
+## Sibling integration
+
+- **Design Sense / Consistency** — critique and token comparison using normalized context
+- **Component Intelligence** — implement frames with component foundations
+- **Design Snapshot Engine** — optional snapshot from extracted context

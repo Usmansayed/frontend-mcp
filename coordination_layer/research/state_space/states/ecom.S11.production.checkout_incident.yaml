@@ -1,0 +1,35 @@
+state_id: ecom.S11.production.checkout_incident
+name: "Production — checkout flow incident (ecommerce)"
+description: |
+  Ecommerce checkout flow failing in prod; direct revenue impact.
+mcp_ready: true
+project_archetype: ecommerce
+project_maturity: M5
+lifecycle_stage: S11_production
+project_types: [existing_mature]
+situation_class: hotfix
+current_project_condition: |
+  Checkout returning errors; users blocked.
+entry_conditions: [checkout_failure_reported]
+exit_conditions: [checkout_verified_working]
+state_confidence: high
+known_evidence: {ui_runtime: regressed, codebase: partial, design_source: partial, design_system: partial, seo: partial, quality: regressed, assets: partial}
+unknown_evidence: [root_cause]
+user_intents: [restore_checkout]
+possible_actions: [probe_form_checkout, inspect_network, hotfix_pipeline]
+prerequisites: [prod_url, repo_root]
+possible_next_states:
+  - saas.S07.functional_bug.network_error_detected
+  - marketing.S11.production.hotfix_deployed
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, frontend_quality, design_workflow_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [prod_url, repo_root]
+expected_outputs: [checkout_recovery]
+verification_requirements: [checkout_success_verified]
+parent_cluster: null
+forest_id: F10
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

@@ -1,0 +1,35 @@
+state_id: marketing.S07.ui_bug.hydration_mismatch
+name: "Debug — SSR hydration mismatch"
+description: |
+  Server-rendered markup differs from client render; console reports hydration warning.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S07_verification
+project_types: [existing_mature, ssr]
+situation_class: functional_bug
+current_project_condition: |
+  Hydration warning present; layout shift may be visible.
+entry_conditions: [hydration_warning_present]
+exit_conditions: [ssr_and_csr_dom_match]
+state_confidence: high
+known_evidence: {ui_runtime: regressed, codebase: partial, design_source: unknown, design_system: partial, seo: partial, quality: partial, assets: unknown}
+unknown_evidence: [component_causing_mismatch]
+user_intents: [remove_hydration_mismatch]
+possible_actions: [locate_component_via_code_context, adjust_render_path, verify_no_warning]
+prerequisites: [session_id, repo_root]
+possible_next_states:
+  - marketing.S07.new_feature.change_scope_ready
+  - global.Sxx.verify_loop_exhausted
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, frontend_quality, codebase_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [session_id, repo_root]
+expected_outputs: [ssr_csr_parity]
+verification_requirements: [no_hydration_warning]
+parent_cluster: null
+forest_id: F05
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

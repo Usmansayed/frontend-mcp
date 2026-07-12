@@ -1,0 +1,104 @@
+schema_version: "1.0"
+description: >
+  Cluster registry — routing layer distilled from research clusters.
+  member_state_ids are telemetry references only; NEVER used for control flow.
+
+clusters:
+  - cluster_id: cluster.intent.conversation
+    default_playbook: observe_reason_act_verify.loop
+    coordination_hint: Never invoke tools; refine natural language.
+    modules_forbidden: [seo_intelligence, figma_intelligence]
+
+  - cluster_id: cluster.discovery.bootstrap
+    default_playbook: observe_reason_act_verify.loop
+    coordination_hint: Framework detection cheap; run once and cache.
+    suggested_capabilities: [framework_profile, environment_probe, codebase_context]
+
+  - cluster_id: cluster.design.reference_gathering
+    default_playbook: discover_collect_cleanup.inspiration_resource
+    coordination_hint: Blob session hygiene mandatory.
+
+  - cluster_id: cluster.design.figma_pipeline
+    default_playbook: discover_collect_cleanup.inspiration_resource
+    coordination_hint: Never loop reconnect on figma failure.
+
+  - cluster_id: cluster.design.review_and_snapshot
+    default_playbook: snapshot_review_consistency.design
+    coordination_hint: Design Sense is advisory-only.
+
+  - cluster_id: cluster.architecture.plan
+    default_playbook: observe_reason_act_verify.loop
+    coordination_hint: Conversation-heavy; no tool required to reach architecture state.
+
+  - cluster_id: cluster.component.acquisition_pipeline
+    default_playbook: search_select_integrate.component
+    coordination_hint: Live install path is mcp_ready false.
+    mcp_ready_blocks: [component_integrate_live]
+
+  - cluster_id: cluster.feature.form_pipeline
+    default_playbook: invalid_before_valid.form
+    coordination_hint: Invalid before valid (AGENT_GUIDE §4).
+    required_capabilities_sequence: [form_probe, browser_verify]
+    playbook_gate:
+      requires_last_capability: form_probe
+
+  - cluster_id: cluster.feature.flow_pipeline
+    default_playbook: observe_reason_act_verify.loop
+    coordination_hint: MCP describes flow; agent verifies each checkpoint.
+
+  - cluster_id: cluster.feature.data_ui
+    default_playbook: observe_reason_act_verify.loop
+
+  - cluster_id: cluster.feature.navigation_change
+    default_playbook: observe_reason_act_verify.loop
+
+  - cluster_id: cluster.feature.auth_flow
+    default_playbook: observe_reason_act_verify.loop
+    suggested_capabilities: [route_guards_probe, auth_gate, session_state_manage]
+
+  - cluster_id: cluster.feature.api_integration
+    default_playbook: observe_reason_act_verify.loop
+
+  - cluster_id: cluster.feature.resource_gap
+    default_playbook: discover_collect_cleanup.inspiration_resource
+
+  - cluster_id: cluster.debug.signal_class
+    default_playbook: observe_reason_act_verify.loop
+    coordination_hint: Each signal class has canonical playbook; verify loop capped.
+    suggested_capabilities: [runtime_diagnosis, browser_observe, browser_verify]
+
+  - cluster_id: cluster.debug.iteration_target
+    default_playbook: observe_reason_act_verify.loop
+
+  - cluster_id: cluster.quality.audit_cycle
+    default_playbook: observe_reason_act_verify.loop
+    coordination_hint: Parallelizable across pages.
+    suggested_capabilities: [quality_audit]
+
+  - cluster_id: cluster.quality.session_mode
+    default_playbook: observe_reason_act_verify.loop
+    coordination_hint: Session-scoped mode toggles; turn off deliberately.
+
+  - cluster_id: cluster.seo.audit_cycle
+    default_playbook: audit_fix_verify.seo
+    coordination_hint: Prefer seo_graph_query diff over full audit when graph fresh.
+    evidence_gates:
+      seo_evidence_collect: { min_posture: known, defer_until: S07_verification }
+
+  - cluster_id: cluster.consistency.audit_cycle
+    default_playbook: snapshot_review_consistency.design
+    coordination_hint: Empty PDG blocks audit — refresh first.
+
+  - cluster_id: cluster.release.baseline_and_staging
+    default_playbook: baseline_and_regression.release
+
+  - cluster_id: cluster.production.live_and_incidents
+    default_playbook: baseline_and_regression.release
+    coordination_hint: Hotfix path may compress stages.
+
+  - cluster_id: cluster.migration.framework_or_redesign
+    default_playbook: observe_reason_act_verify.loop
+
+  - cluster_id: cluster.global.recovery
+    default_playbook: global_recovery.failure
+    coordination_hint: Every planner branch must reference global recovery.

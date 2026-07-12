@@ -1,0 +1,35 @@
+state_id: marketing.S09.consistency_cleanup.design_sense_findings
+name: "Consistency — Design Sense heuristic critiques queued"
+description: |
+  Design Sense flagged hierarchy/spacing/readability issues on marketing pages.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S09_consistency
+project_types: [existing_mature]
+situation_class: consistency_cleanup
+current_project_condition: |
+  DesignReviewReport with advisories; consistency audit may be a separate axis.
+entry_conditions: [design_review_run]
+exit_conditions: [advisories_triaged]
+state_confidence: high
+known_evidence: {ui_runtime: known, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [fix_priority]
+user_intents: [improve_visual_quality]
+possible_actions: [prioritize, apply_fix]
+prerequisites: [snapshot_id]
+possible_next_states:
+  - marketing.S05.redesign.applying_fix
+  - dssite.S09.consistency_cleanup.audit_findings_open
+failure_states: []
+relevant_modules: [design_sense_intelligence, consistency_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [snapshot_id]
+expected_outputs: [triage_result]
+verification_requirements: [each_finding_has_disposition]
+parent_cluster: null
+forest_id: F08
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

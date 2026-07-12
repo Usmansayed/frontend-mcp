@@ -1,0 +1,35 @@
+state_id: marketing.S11.production.rollback_required
+name: "Production — rollback required"
+description: |
+  Hotfix insufficient or destabilizing; roll back to previous known-good release.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M5
+lifecycle_stage: S11_production
+project_types: [existing_mature]
+situation_class: hotfix
+current_project_condition: |
+  Rollback triggered; baseline in memory.
+entry_conditions: [rollback_decision]
+exit_conditions: [prior_release_live_and_verified]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: partial, quality: partial, assets: partial}
+unknown_evidence: [rollback_delta]
+user_intents: [restore_prior_state]
+possible_actions: [invoke_rollback_pipeline, verify_prior_state]
+prerequisites: [prod_url]
+possible_next_states:
+  - marketing.S11.production.live_and_monitored
+  - global.Sxx.tooling_broken
+failure_states: [global.Sxx.tooling_broken]
+relevant_modules: [visual_browser]
+modules_must_not_execute: []
+dependencies: [prod_url]
+expected_outputs: [rollback_success]
+verification_requirements: [prior_release_verified]
+parent_cluster: null
+forest_id: F10
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

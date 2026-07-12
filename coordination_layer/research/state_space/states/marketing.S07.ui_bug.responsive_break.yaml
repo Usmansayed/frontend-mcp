@@ -1,0 +1,35 @@
+state_id: marketing.S07.ui_bug.responsive_break
+name: "Debug — layout breaks at a viewport"
+description: |
+  UI is fine at desktop but breaks at mobile/tablet viewport. Requires viewport-scoped observation.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S07_verification
+project_types: [existing_mature]
+situation_class: ui_bug
+current_project_condition: |
+  session_start with alternate viewport reveals layout issues (per AGENT_GUIDE §8).
+entry_conditions: [layout_break_at_narrow_viewport]
+exit_conditions: [layout_matches_intent_at_all_viewports]
+state_confidence: high
+known_evidence: {ui_runtime: regressed, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: partial, assets: unknown}
+unknown_evidence: [breakpoints_affected]
+user_intents: [make_layout_responsive]
+possible_actions: [session_start_with_viewport, observe_at_multiple_widths, apply_css_fix, verify_at_each_viewport]
+prerequisites: [session_id]
+possible_next_states:
+  - marketing.S07.new_feature.change_scope_ready
+  - global.Sxx.verify_loop_exhausted
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, design_snapshot_engine]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [session_id]
+expected_outputs: [verified_responsive_layout]
+verification_requirements: [layout_ok_at_all_defined_viewports]
+parent_cluster: null
+forest_id: F05
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

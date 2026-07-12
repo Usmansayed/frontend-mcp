@@ -1,0 +1,36 @@
+state_id: landing.S07.new_feature.landing_hero.verified
+name: "Feature — landing hero verified"
+description: |
+  Hero renders with real copy, images, and CTA; success criteria pass.
+mcp_ready: true
+project_archetype: landing
+project_maturity: M2
+lifecycle_stage: S07_verification
+project_types: [greenfield]
+situation_class: new_feature
+current_project_condition: |
+  Hero visible; CTA click verified; blocking empty.
+entry_conditions: [content_visible, cta_verified]
+exit_conditions: [progress_to_seo_or_quality]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: known, design_system: partial, seo: unknown, quality: unknown, assets: partial}
+unknown_evidence: [seo_baseline, a11y_score]
+user_intents: [ship_landing]
+possible_actions: [capture_baseline, seo_audit_on_indexable_page]
+prerequisites: [scan_id]
+possible_next_states:
+  - landing.S08.seo_campaign.audit_needed
+  - marketing.S08.a11y_remediation.audit_needed
+  - marketing.S08.perf_remediation.audit_needed
+failure_states: []
+relevant_modules: [visual_browser, frontend_quality, seo_intelligence]
+modules_must_not_execute: []
+dependencies: [scan_id]
+expected_outputs: [verified_hero]
+verification_requirements: [all_predicates_pass, blocking_empty]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

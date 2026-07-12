@@ -1,0 +1,36 @@
+state_id: landing.S03.design.direction_agreed_no_references
+name: "Design — direction agreed verbally, no reference set"
+description: |
+  User agreed to a style direction described in prose. No image references stored.
+mcp_ready: true
+project_archetype: landing
+project_maturity: M2
+lifecycle_stage: S03_design
+project_types: [greenfield]
+situation_class: new_feature
+current_project_condition: |
+  Style brief exists (colors, typography, tone). No stored references.
+entry_conditions: [user_confirms_style_brief]
+exit_conditions: [architecture_ready_or_implementation_started]
+state_confidence: medium
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: unknown, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [detailed_visual_references]
+user_intents: [move_to_build]
+possible_actions: [proceed_to_architecture, propose_component_foundations]
+prerequisites: []
+possible_next_states:
+  - landing.S04.architecture.route_plan_ready
+  - complib.S05.component_replacement.candidate_selected
+failure_states: [global.Sxx.user_abandoned]
+relevant_modules: []
+modules_must_not_execute: [inspiration_intelligence, consistency_intelligence]
+dependencies: []
+expected_outputs: [style_brief]
+verification_requirements: [style_brief_written]
+parent_cluster: null
+forest_id: F02
+mcp_ready_gap: null
+notes: |
+  Convergence path when user is decisive.
+discarded_as_duplicate_of: null
+first_added_in: batch1

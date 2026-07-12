@@ -33,3 +33,28 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+pythonpath = ["src", "tests"]
+testpaths = ["tests"]
+addopts = [
+  "-ra",
+  "--strict-markers",
+  "-p", "no:logfire",
+]
+markers = [
+  "unit: fast unit test with no network / browser (T0)",
+  "golden: golden regression test with committed fixtures (T1)",
+  "contract: MCP handler contract test — requires sandbox on :5173 (T2)",
+  "integration: end-to-end integration test — requires sandbox and possibly companions (T3/T6)",
+  "eval: agent playbook eval — requires sandbox (T4)",
+  "stdio: MCP stdio wire protocol test (T5)",
+  "failure: failure/degraded-mode scenario (T7)",
+  "slow: takes more than 30s — excluded from default fast tier",
+  "manual: requires human interaction or external credentials (never in CI)",
+]
+filterwarnings = [
+  "ignore::DeprecationWarning:pydantic.*",
+  "ignore::UserWarning:pydantic.*",
+]

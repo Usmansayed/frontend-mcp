@@ -1,0 +1,34 @@
+state_id: marketing.S11.production.documentation_update
+name: "Production — documentation update following release"
+description: |
+  Non-code work: README, ADR, or release notes update after ship.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M5
+lifecycle_stage: S11_production
+project_types: [existing_mature]
+situation_class: documentation
+current_project_condition: |
+  Codebase stable; documentation catching up.
+entry_conditions: [release_shipped, docs_out_of_date]
+exit_conditions: [docs_updated]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: partial, design_system: partial, seo: partial, quality: verified, assets: partial}
+unknown_evidence: []
+user_intents: [keep_docs_current]
+possible_actions: [update_readme, write_adr, publish_release_notes]
+prerequisites: [repo_root]
+possible_next_states:
+  - marketing.S11.production.live_and_monitored
+failure_states: []
+relevant_modules: [codebase_intelligence]
+modules_must_not_execute: [visual_browser, seo_intelligence, figma_intelligence]
+dependencies: [repo_root]
+expected_outputs: [updated_docs]
+verification_requirements: [docs_diff_applied]
+parent_cluster: null
+forest_id: F10
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

@@ -1,0 +1,35 @@
+schema_version: "1.0"
+description: >
+  Deterministic evidence posture transitions. Applied after capability envelopes
+  are normalized into PSM evidence domains.
+
+transitions:
+  - from: unknown
+    to: partial
+    on: [capability_produced_any_evidence_in_domain]
+
+  - from: partial
+    to: known
+    on: [capability_produced_high_fidelity_evidence]
+    block_if: [blocking_nonempty]
+
+  - from: known
+    to: verified
+    on: [verify_capability_success]
+    block_if: [degraded_nonempty_unless_playbook_allows]
+
+  - from: verified
+    to: regressed
+    on: [verify_fail, blocking_new, audit_regression]
+
+  - from: regressed
+    to: verified
+    on: [verify_success_after_fix]
+
+  - from: known
+    to: partial
+    on: [evidence_stale_beyond_ttl]
+
+  - from: verified
+    to: known
+    on: [material_context_change_without_verify]

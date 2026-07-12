@@ -1,0 +1,36 @@
+state_id: marketing.S10.release_prep.staging_verified
+name: "Release — staging verified, ready for sign-off"
+description: |
+  Staging passes verification and baseline diff; awaiting human sign-off before prod.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S10_release
+project_types: [existing_mature]
+situation_class: release_prep
+current_project_condition: |
+  Verified; blocking empty; baseline diff acceptable.
+entry_conditions: [staging_verify_passed]
+exit_conditions: [signed_off_or_deferred]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: partial, design_system: partial, seo: verified, quality: verified, assets: partial}
+unknown_evidence: [prod_env]
+user_intents: [sign_off_release]
+possible_actions: [request_signoff, deploy_to_prod]
+prerequisites: []
+possible_next_states:
+  - marketing.S11.production.live_and_monitored
+  - global.Sxx.auth_gate.requires_human
+failure_states: [global.Sxx.auth_gate.requires_human]
+relevant_modules: []
+modules_must_not_execute: []
+dependencies: []
+expected_outputs: [signoff_status]
+verification_requirements: [signoff_recorded]
+parent_cluster: null
+forest_id: F09
+mcp_ready_gap: null
+notes: |
+  Sign-off is a human decision; treat as gate.
+discarded_as_duplicate_of: null
+first_added_in: batch2

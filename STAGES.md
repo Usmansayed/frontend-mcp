@@ -80,3 +80,22 @@ cd ..
 $env:PYTHONPATH="src"
 python src/run_all_phases.py
 ```
+
+---
+
+## Test tier matrix
+
+| Tier | What it covers | How to run locally | Marker | CI job |
+|------|----------------|--------------------|--------|--------|
+| **T0** | Fast unit — no browser, no network | `pytest -m unit` | `unit` | `unit-and-golden` on every PR |
+| **T1** | Golden regression — committed fixtures | `pytest -m golden` | `golden` | `unit-and-golden` |
+| **T2** | MCP handler contract — needs sandbox on :5173 | `python src/run_mcp_contract_tests.py --headless` | (script) | `contract-and-eval` |
+| **T3** | Phase integration — sandbox + companions | `python src/run_all_phases.py --headless` | `integration` | `phase-integration` (manual / nightly) |
+| **T4** | Agent eval — validation-form scenario | `python src/run_mcp_eval_validation_form.py --headless` | `eval` | `contract-and-eval` |
+| **T5** | MCP stdio wire protocol smoke | `pytest -m stdio` | `stdio` | `contract-and-eval` |
+| **T6** | Cross-module end-to-end | `pytest -m "integration and slow"` | `integration` + `slow` | manual |
+| **T7** | Failure / chaos | `pytest -m failure` | `failure` | manual |
+| **T8** | Performance / soak | `pytest -m slow` (with perf runners) | `slow` | manual |
+
+Standard artifact layout: `artifacts/{suite}/report.json` — CI uploads these on failure.
+See `docs/PRODUCTION_TEST_PLAN.md` for the full production master test plan.

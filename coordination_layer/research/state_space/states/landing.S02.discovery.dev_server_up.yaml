@@ -1,0 +1,62 @@
+state_id: landing.S02.discovery.dev_server_up
+name: "Discovery — dev server reachable, default page renders"
+description: |
+  Dev server responds; framework's default template loads.
+  Session start possible; first observe can happen.
+mcp_ready: true
+
+project_archetype: landing
+project_maturity: M1
+lifecycle_stage: S02_discovery
+project_types: [greenfield]
+situation_class: new_feature
+
+current_project_condition: |
+  `perception_health` succeeds. Default framework page renders at localhost.
+entry_conditions: [dev_server_reachable, framework_detected]
+exit_conditions: [first_real_route_rendering_or_route_plan_ready]
+state_confidence: high
+
+known_evidence:
+  ui_runtime: partial
+  codebase: partial
+  design_source: unknown
+  design_system: unknown
+  seo: unknown
+  quality: unknown
+  assets: unknown
+unknown_evidence: [content, layout_decisions]
+
+user_intents: [see_first_page, plan_pages]
+
+possible_actions:
+  - start_session
+  - observe_default_page
+  - propose_route_plan
+prerequisites: [dev_server_reachable]
+possible_next_states:
+  - landing.S02.discovery.first_route_rendering
+  - landing.S02.discovery.blank_page_after_start
+  - landing.S04.architecture.route_plan_pending
+failure_states:
+  - global.Sxx.dev_server_down
+  - global.Sxx.session_lost
+recovery_paths:
+  - from: global.Sxx.dev_server_down
+    action: health_recover
+    notes: probe, then re-issue health, then hand back
+
+relevant_modules: [visual_browser, framework_intelligence, codebase_intelligence]
+modules_must_not_execute: [seo_intelligence, figma_intelligence, component_intelligence]
+dependencies: [session_id, dev_server_url]
+
+expected_outputs: [first_scan_id]
+verification_requirements: [health_ok, default_page_visible]
+
+parent_cluster: null
+forest_id: F01
+mcp_ready_gap: null
+notes: |
+  Consumers of `scan_id` (design snapshot, SEO audit) still hold off until real content is on the page.
+discarded_as_duplicate_of: null
+first_added_in: batch1

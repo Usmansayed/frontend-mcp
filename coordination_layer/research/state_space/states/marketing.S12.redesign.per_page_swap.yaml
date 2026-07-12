@@ -1,0 +1,35 @@
+state_id: marketing.S12.redesign.per_page_swap
+name: "Redesign — per-page swap iteration"
+description: |
+  Pages swapped to new design one at a time; each verified against new brief and diffed vs before.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M5
+lifecycle_stage: S12_evolution
+project_types: [existing_mature]
+situation_class: redesign
+current_project_condition: |
+  Loop underway; some pages redesigned, some not.
+entry_conditions: [pre_redesign_baseline_captured, first_page_swapped]
+exit_conditions: [all_pages_redesigned]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: partial, quality: partial, assets: partial}
+unknown_evidence: [per_page_finalized]
+user_intents: [complete_redesign]
+possible_actions: [swap_next_page, verify_page, diff_vs_before]
+prerequisites: [session_id, repo_root]
+possible_next_states:
+  - marketing.S12.redesign.completed
+  - marketing.S07.ui_bug.visual_regression_detected
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, design_snapshot_engine, consistency_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [session_id, repo_root]
+expected_outputs: [per_page_diffs]
+verification_requirements: [each_swapped_page_verified]
+parent_cluster: null
+forest_id: F11
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

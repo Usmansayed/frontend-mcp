@@ -21,11 +21,18 @@ class LibreCrawlProvider:
 
 	async def connection_status(self, request: SeoAuditRequest) -> tuple[str, list[str]]:
 		if not base_url():
-			return 'not_configured', ['librecrawl_base_url_missing:set_LIBRECRAWL_BASE_URL']
+			return 'not_configured', ['librecrawl_base_url_missing']
 		client = self._api()
 		payload, degraded = await client.crawl_status()
 		if payload is not None:
 			return 'connected', degraded
+		if any('unauthorized' in note for note in degraded):
+			_, login_deg = await client.guest_login()
+			degraded.extend(login_deg)
+			payload, retry_deg = await client.crawl_status()
+			degraded.extend(retry_deg)
+			if payload is not None:
+				return 'connected', degraded
 		return 'degraded', degraded
 
 	async def collect(self, request: SeoAuditRequest) -> tuple[list[SeoEvidenceRef], list[str]]:
@@ -40,7 +47,7 @@ class LibreCrawlProvider:
 		payload, degraded = await client.crawl_site(url)
 		if payload is None:
 			return [], degraded or ['librecrawl_crawl_failed']
-		evidence = normalize_crawl_payload(payload)
+		evidence = normalize_crawl_payload(payload, base_url=url)
 		if not evidence:
 			degraded.append('librecrawl_no_issues_found')
 		return evidence, degraded

@@ -1,0 +1,35 @@
+state_id: global.Sxx.tooling_broken
+name: "Global — local tooling broken"
+description: |
+  Node/npm/build tooling fails; project cannot build or start.
+mcp_ready: true
+project_archetype: landing
+project_maturity: M1
+lifecycle_stage: Sxx_any
+project_types: [greenfield, existing_project]
+situation_class: degraded_upstream
+current_project_condition: |
+  Local environment broken; agent cannot proceed.
+entry_conditions: [tool_command_failed]
+exit_conditions: [tool_command_succeeds]
+state_confidence: high
+known_evidence: {ui_runtime: unknown, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [broken_component]
+user_intents: [restore_tooling]
+possible_actions: [surface_error, ask_user_to_fix_environment]
+prerequisites: []
+possible_next_states:
+  - landing.S02.discovery.stack_chosen
+  - marketing.S11.production.rollback_required
+failure_states: []
+relevant_modules: [framework_intelligence]
+modules_must_not_execute: [visual_browser, seo_intelligence, frontend_quality]
+dependencies: []
+expected_outputs: [decision]
+verification_requirements: [environment_restored]
+parent_cluster: null
+forest_id: F12
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

@@ -1,0 +1,35 @@
+state_id: marketing.S11.production.hotfix_deployed
+name: "Production — hotfix deployed and verified"
+description: |
+  Hotfix live; prod verified; incident closed.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M5
+lifecycle_stage: S11_production
+project_types: [existing_mature]
+situation_class: hotfix
+current_project_condition: |
+  Prod scan shows fixed behavior; blocking empty.
+entry_conditions: [hotfix_verified_in_prod]
+exit_conditions: [return_to_live_and_monitored]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: partial, design_system: partial, seo: partial, quality: verified, assets: partial}
+unknown_evidence: []
+user_intents: [close_incident, capture_regression]
+possible_actions: [capture_regression_baseline, update_documentation]
+prerequisites: [prod_url]
+possible_next_states:
+  - marketing.S11.production.live_and_monitored
+  - marketing.S10.release_prep.regression_baseline_capture
+failure_states: []
+relevant_modules: [visual_browser, design_snapshot_engine]
+modules_must_not_execute: []
+dependencies: [prod_url]
+expected_outputs: [regression_prevention_baseline]
+verification_requirements: [prod_healthy]
+parent_cluster: null
+forest_id: F10
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

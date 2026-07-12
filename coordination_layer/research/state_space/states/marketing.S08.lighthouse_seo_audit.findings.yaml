@@ -1,0 +1,36 @@
+state_id: marketing.S08.lighthouse_seo_audit.findings
+name: "Quality — Lighthouse SEO audit findings (parallel to SEO Intelligence)"
+description: |
+  Lighthouse SEO checks (distinct from SEO Intelligence) flag missing meta/link/robots.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S08_quality
+project_types: [existing_mature]
+situation_class: seo_campaign
+current_project_condition: |
+  Lighthouse SEO audit findings recorded. Consumer may reconcile with SEO Intelligence output.
+entry_conditions: [lighthouse_seo_findings_present]
+exit_conditions: [findings_addressed_or_deferred_to_seo_intelligence]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: partial, design_source: partial, design_system: partial, seo: partial, quality: partial, assets: unknown}
+unknown_evidence: [seo_intelligence_findings]
+user_intents: [reconcile_with_seo_intelligence]
+possible_actions: [apply_meta_fix, cross_check_with_seo_audit]
+prerequisites: [session_id]
+possible_next_states:
+  - marketing.S08.seo_campaign.audit_needed
+  - marketing.S08.a11y_remediation.audit_needed
+failure_states: []
+relevant_modules: [frontend_quality, seo_intelligence]
+modules_must_not_execute: []
+dependencies: [session_id]
+expected_outputs: [reconciled_findings]
+verification_requirements: [findings_reduced_or_reconciled]
+parent_cluster: null
+forest_id: F06
+mcp_ready_gap: null
+notes: |
+  Two distinct SEO surfaces: Lighthouse audit_seo vs perception_seo_audit.
+discarded_as_duplicate_of: null
+first_added_in: batch1

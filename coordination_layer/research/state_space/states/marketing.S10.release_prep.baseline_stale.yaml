@@ -1,0 +1,34 @@
+state_id: marketing.S10.release_prep.baseline_stale
+name: "Release — prior baseline too old, capturing new one"
+description: |
+  Existing regression baseline predates significant changes; diffs meaningless. Recapture required.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S10_release
+project_types: [existing_mature]
+situation_class: regression_baseline
+current_project_condition: |
+  Baseline drift too large; new baseline required.
+entry_conditions: [baseline_age_exceeds_threshold]
+exit_conditions: [new_baseline_captured]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: partial, quality: partial, assets: partial}
+unknown_evidence: [new_diff]
+user_intents: [refresh_baseline]
+possible_actions: [capture_new_baseline]
+prerequisites: [scan_id, snapshot_id]
+possible_next_states:
+  - marketing.S10.release_prep.regression_baseline_capture
+failure_states: []
+relevant_modules: [design_snapshot_engine, visual_browser]
+modules_must_not_execute: []
+dependencies: [scan_id, snapshot_id]
+expected_outputs: [new_baseline]
+verification_requirements: [baseline_persisted]
+parent_cluster: null
+forest_id: F09
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

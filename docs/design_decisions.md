@@ -4,13 +4,41 @@ ADR-style log. New entries at top.
 
 ---
 
-## ADR-024 — OpenSEO as optional SEO provider (2026-07-11)
+## ADR-027 — Evidence-First SEO Intelligence (2026-07-12)
 
-**Context:** OpenSEO offers keyword/SERP/backlink workflows via self-hosted MCP + DataForSEO. The app is free; data is pay-as-you-go. SEO Intelligence must remain provider-agnostic.
+**Context:** SEO Intelligence had production-shaped plumbing but untrustworthy verification (unstable evidence IDs), shallow type-level correlations, and an underused knowledge graph. Product direction: evolve from a collection of integrations into an **evidence platform** that AI and deterministic logic can build on for years.
 
-**Decision:** (1) Add `openseo` behind `SeoDataProvider` — never replace SEO Intelligence. (2) **Capability catalog** (`SeoCapabilitySpec`) exposes paid/free/fallback metadata. (3) **Planner** routes free-first; blocks OpenSEO for crawl/CWV/rendering. (4) `allow_paid_providers` gates DataForSEO capabilities. (5) No hard dependency on OpenSEO.
+**Decision:** (1) **Evidence-first pipeline** — Providers → Normalized Evidence (deterministic IDs) → Page Graph → Audit Snapshots → `reasoning_context_v2` → Recommendations → Metric Verification. (2) **Single downstream contract** — nothing bypasses `reasoning_context_v2`; Browser, Codebase, GSC, LibreCrawl, Lighthouse enrich the same model; AI never talks to providers directly. (3) **Stable evidence IDs** — `ev:{provider}:{kind}:{fingerprint}` from page URL + kind + source; same issue on same page → same ID across audits. (4) **URL-level correlation** — page-scoped hypotheses require same `page_url`; site-level only when join impossible. (5) **Composed confidence** — `provider_agreement × data_freshness × metric_strength × sample_size`, exposed transparently. (6) **Metric-based verification** — re-measure LCP, index verdict, HTTP status, severity; not evidence ID disappearance. (7) **AI interface designed now, implemented Sprint 3** — `reasoning_units[]` in v2 consumed by deterministic fallback today, host LLM tomorrow. (8) Future modules (AI Visibility, Accessibility, Performance) may reuse the evidence model.
 
-**Consequences:** Module works without OpenSEO. MCP calls OpenSEO instance MCP in Phase 2 — no embedded DataForSEO client.
+**Consequences:** `reasoning_context_v2` schema frozen at version `2.0`. Legacy `reasoning_context` v1 removed from pipeline. Graph version 2 adds `pages`, `audits`, `latest_audit_id`. Phase `ai_reasoning_v3` (Sprint 3): optional Bedrock LLM over `reasoning_units`, post-validation of `evidence_ids`, deterministic fallback on failure.
+
+---
+
+## ADR-026 — Figma Intelligence as connection + coordination layer (2026-07-12)
+
+**Context:** Figma Intelligence grew a heavy community discovery / ranking / extraction pipeline. Product direction: give agents seamless access to the user's Figma workspace via **southleft/figma-console-mcp** — not another design engine or Figma wrapper.
+
+**Decision:** (1) Refactor public surface to **connect + context** — Connection Manager, Session Manager, Console MCP Adapter, Context Normalizer, Design Cache, Coordination Layer, Health Monitor. (2) MCP tools: `perception_figma_connect`, `perception_figma_status`, `perception_figma_context`. (3) Adapter hides MCP tool names; rest of codebase consumes `FigmaDesignContext` only. (4) PAT stored locally once; session tracks active file/page/frame/selection. (5) Legacy community pipeline APIs remain but are not the primary agent path. (6) Inspiration, critique, components, assets stay in sibling modules.
+
+**Consequences:** Lightweight module aligned with SEO-style connect/status/context pattern. Design reasoning continues in Design Sense, Consistency, Component Intelligence. Future multi-file / realtime sync extends internal layers without changing public MCP tools.
+
+---
+
+## ADR-025 — AI-native SEO recommendation architecture (2026-07-12)
+
+**Context:** OpenSEO was integrated as an optional companion/provider. Product direction shifted to building the best AI-native SEO reasoning engine — not another OpenSEO wrapper.
+
+**Decision:** (1) Remove OpenSEO as a runtime dependency — no process management, adapters, planner routing, or configuration. (2) Keep five evidence providers: GSC, GA4, LibreCrawl, Lighthouse, Browser Intelligence. (3) Planner orchestrates providers only — SEO reasoning lives in the recommendation pipeline. (4) Stages: evidence collection → correlation → structured `reasoning_context` → recommendations → browser verification. (5) Every recommendation must cite evidence with root cause, business impact, and verification steps.
+
+**Consequences:** Simpler operator setup (LibreCrawl-only companion). Competitive advantage is correlation, prioritization, and verification — not more SEO data sources.
+
+## ADR-024 — OpenSEO as optional SEO provider (2026-07-11) — **Superseded by ADR-025**
+
+**Context:** OpenSEO offered keyword/SERP/backlink workflows via self-hosted MCP + DataForSEO.
+
+**Decision:** Integrated as optional provider with paid gating.
+
+**Status:** Removed. Concepts (GSC mirror, URL inspection heuristics) inform native provider design; application dependency removed.
 
 ---
 

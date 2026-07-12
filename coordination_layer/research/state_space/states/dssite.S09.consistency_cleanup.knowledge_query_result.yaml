@@ -1,0 +1,35 @@
+state_id: dssite.S09.consistency_cleanup.knowledge_query_result
+name: "Consistency — knowledge query result surfaced to agent"
+description: |
+  design_knowledge_query returned catalog data (standards, tokens, components) informing next step.
+mcp_ready: true
+project_archetype: design_system_site
+project_maturity: M4
+lifecycle_stage: S09_consistency
+project_types: [existing_mature]
+situation_class: consistency_cleanup
+current_project_condition: |
+  Query response available; agent may pivot to audit or assess.
+entry_conditions: [query_returned_nonempty]
+exit_conditions: [decision_to_audit_or_assess]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: known, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [audit_result]
+user_intents: [understand_design_system]
+possible_actions: [run_audit, assess_selector, propose_fix]
+prerequisites: [pdg_file]
+possible_next_states:
+  - dssite.S09.consistency_cleanup.audit_findings_open
+  - dssite.S09.consistency_cleanup.propose_fix_open
+failure_states: []
+relevant_modules: [consistency_intelligence]
+modules_must_not_execute: []
+dependencies: [pdg_file]
+expected_outputs: [decision_next]
+verification_requirements: [decision_recorded]
+parent_cluster: null
+forest_id: F08
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

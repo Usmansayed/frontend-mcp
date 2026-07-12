@@ -4,38 +4,113 @@ Read this guide before calling `perception_seo_*` tools.
 
 ## What this module is
 
-SEO Intelligence **orchestrates** free SEO data sources. It does not crawl the internet or sell keyword data.
+SEO Intelligence is an **evidence-first SEO platform** (ADR-027). Five evidence providers supply facts; everything flows through **`reasoning_context_v2`** — deterministic fallback always available; host LLM reasoning when Bedrock credentials are configured (Sprint 3). Browser Intelligence verifies results.
+
+**Design rule:** Nothing bypasses `reasoning_context_v2`. AI never talks to providers directly.
+
+**AI Visibility layer.** Every audit runs the AI Visibility adapter, which
+derives `ai_visibility` evidence from the collected SEO evidence and attaches
+an `ai_readiness` block to `reasoning_context_v2`. Filter recommendations by
+`category == "ai_visibility"` for AI-readiness fixes. See
+[`../ai_visibility/docs/AI_VISIBILITY_AGENT_GUIDE.md`](../ai_visibility/docs/AI_VISIBILITY_AGENT_GUIDE.md).
+
+## Two-tier modes
+
+### Development SEO (default)
+
+No authentication. Active while the agent builds a website.
+
+| Providers | Browser Intelligence, Lighthouse, LibreCrawl |
+| Validates | Metadata, schema, CWV, crawl, rendering, internal links, semantic HTML |
+
+```text
+perception_seo_audit {
+  "website_url": "https://example.com",
+  "scan_id": "...",
+  "repo_root": "/path/to/frontend"
+}
+```
+
+Pass `repo_root` so Sprint 2 can attach `codebase_hints` and `browser_code_links` to each page.
+
+Set `ai_reasoning: false` to force deterministic recommendations (no Bedrock). Omit for auto (uses LLM when AWS creds available).
+
+### Professional SEO Optimization
+
+Only when the user explicitly asks (e.g. *optimize my SEO*, *connect Search Console*, *analyze with Google data*).
+
+```text
+perception_seo_connect { "website_url": "...", "action": "connect_google" }
+perception_seo_audit { "website_url": "...", "mode": "professional" }
+```
+
+OAuth opens in the browser automatically (`interactive: true`). After connect, audits combine GSC, GA4, LibreCrawl, Lighthouse, and Browser Intelligence.
 
 ## Agent loop
 
 ```text
 1. perception_seo_status          — module phase + provider connections
-2. Connect user accounts        — Search Console / GA4 (when Phase 1 ships)
-3. perception_seo_audit         — gather evidence → graph → recommendations
-4. Fix code / config            — agent applies evidence-based fixes
-5. perception_observe + verify  — Browser Intelligence verifies rendering/index fixes
-6. Re-audit                     — measure gains
+2. perception_seo_connect         — register website_url (setup); OAuth only on demand
+3. perception_seo_audit           — evidence → page graph → snapshot → reasoning_context_v2 → recommendations
+3b. perception_seo_query          — graph queries: page.issues, audit.diff, site.traffic_signals
+4. Fix code / config              — read `reasoning_units` (sorted by `impact`), `pages[].codebase_hints`, `pages[].browser_code_links`
+5. perception_observe + verify    — Browser Intelligence verifies rendering/index fixes
+6. perception_seo_verify          — re-audit + compare graph baseline → mark verified
 ```
+
+## Onboarding (users)
+
+**Initial setup:** website URL only. SEO Intelligence is ready immediately.
+
+**On-demand auth:** when the user requests Search Console / GA4 analysis, prompt *Connect your Google Search Console* and run `perception_seo_connect` with `action=connect_google`. When they request Bing analysis, prompt *Connect your Bing Webmaster account* and run `action=connect_bing`.
+
+GSC, GA4, LibreCrawl, and Lighthouse are configured automatically. Advanced property IDs only for discovery failures.
 
 ## Hard rules
 
-- **Never** recommend without `evidence_ids`.
+- **Never** recommend without `evidence_ids` / `evidence_used`.
 - **Never** claim indexing/CWV fixes without `perception_verify`.
+- **Read** `reasoning_context_v2` (schema `2.0`) and `reasoning_units` before improvising SEO advice.
 - **Read** `agent_summary.blocking` before SEO advisory.
-- Search Console and GA4 are **user-owned** — require OAuth, not API keys we host.
-- **Do not** build custom crawlers — use LibreCrawl adapter.
+- Search Console and GA4 are **user-owned** — require OAuth.
+- **Do not** build custom crawlers — use LibreCrawl.
 
-## Provider priority
+## Evidence providers (only these)
 
-1. Google Search Console (queries, index, CWV in GSC)
-2. Google Analytics 4 (traffic, landing pages)
-3. LibreCrawl (technical SEO)
-4. Lighthouse / PageSpeed (lab CWV + SEO score)
-5. Browser Intelligence (rendering evidence via `scan_id`)
-6. Bing Webmaster (optional)
-7. **OpenSEO** (optional) — keyword/SERP/backlink only when free sources insufficient
+1. Google Search Console — queries, index, coverage
+2. Google Analytics 4 — traffic, landing pages
+3. LibreCrawl — technical crawl
+4. Lighthouse / PageSpeed — lab CWV + SEO score
+5. Browser Intelligence — rendering, DOM, console, metadata (`scan_id`)
 
-**OpenSEO:** App is free; DataForSEO usage is paid. Never route crawl/CWV/rendering to OpenSEO. Use `allow_paid_providers` only with user consent.
+## Recommendation fields
+
+Every recommendation includes:
+
+- Title, root cause, evidence used, confidence, priority (impact-weighted in Sprint 2)
+- Business impact, implementation steps, verification steps
+- `metadata.codebase_hints` when `repo_root` was provided
+
+## Sprint 2 intelligence fields
+
+| Field | Use |
+|-------|-----|
+| `reasoning_context_v2.sprint` | `"intelligence_v2"` when enrichment ran |
+| `pages[].impact` | Prioritize high-traffic / high-impression pages |
+| `pages[].codebase_hints` | Likely files to edit (`file`, `reason`, `confidence`) |
+| `pages[].browser_code_links` | Tie `scan_id` + rendering evidence to `likely_files` |
+| `reasoning_units[]` | Sorted by `impact` then `confidence` — primary fix queue |
+| `reasoning_context_v2.ai_reasoning` | `source: llm` or `deterministic_fallback`; read `validation_errors` if fallback |
+
+## Sprint 3 — AI reasoning
+
+When Bedrock is available, `perception_seo_audit` feeds `reasoning_units[]` to the host LLM. Every draft recommendation is post-validated:
+
+- Must cite `evidence_ids` from the audit snapshot
+- Must not invent large metrics absent from evidence
+- Must map to a known `reasoning_unit_id` when provided
+
+Failed validation → **deterministic fallback** (`build_recommendations`) — still trustworthy, marked in `ai_reasoning.degraded`.
 
 ## Cross-analysis playbooks
 
@@ -45,6 +120,7 @@ SEO Intelligence **orchestrates** free SEO data sources. It does not crawl the i
 | CTR dropping | GSC queries + GA4 landing pages + Lighthouse speed |
 | Poor CWV | Lighthouse + Browser layout/hydration errors |
 | JS-heavy site issues | Browser console + LibreCrawl JS render diff |
+| Opportunities | High impressions/low CTR, position 8–20, weak metadata |
 
 ## Verification
 
@@ -52,10 +128,9 @@ After every fix:
 
 ```text
 perception_observe → read blocking → perception_verify
+perception_seo_verify → compare baseline → mark recommendation verified
 ```
-
-Re-run `perception_seo_audit` to compare graph evidence.
 
 ## Phase note
 
-Current phase: **architecture_v1** — provider adapters are research stubs. `perception_seo_status` reports readiness; `perception_seo_audit` returns connection map + degraded notes until Phase 1.
+**agent_ready_v4** — Evidence-first pipeline (ADR-027) through Sprint 3, plus graph query API, provider agreement v2, partial AI validation, golden regression fixtures. Optimized for AI coding agents — not enterprise SEO dashboards.

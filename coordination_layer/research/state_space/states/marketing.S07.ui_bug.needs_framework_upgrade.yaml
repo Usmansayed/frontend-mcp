@@ -1,0 +1,35 @@
+state_id: marketing.S07.ui_bug.needs_framework_upgrade
+name: "Debug — fix requires framework/library upgrade"
+description: |
+  Root cause traced to a bug in the framework/library that requires an upgrade.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S07_verification
+project_types: [existing_mature]
+situation_class: dependency_upgrade
+current_project_condition: |
+  Upstream bug identified; project needs version bump; local fix cannot suffice.
+entry_conditions: [root_cause_upstream_bug]
+exit_conditions: [upgrade_landed_and_verified]
+state_confidence: high
+known_evidence: {ui_runtime: regressed, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: partial, assets: unknown}
+unknown_evidence: [upgrade_side_effects]
+user_intents: [upgrade_and_verify]
+possible_actions: [propose_upgrade, plan_migration_via_docs, hand_off_to_F11]
+prerequisites: [repo_root]
+possible_next_states:
+  - marketing.S12.framework_migration.plan_ready
+failure_states: [global.Sxx.tooling_broken]
+relevant_modules: [framework_intelligence, codebase_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [repo_root]
+expected_outputs: [upgrade_plan]
+verification_requirements: [upgrade_captured_in_plan]
+parent_cluster: null
+forest_id: F05
+mcp_ready_gap: null
+notes: |
+  Handoff to F11 (migration).
+discarded_as_duplicate_of: null
+first_added_in: batch1

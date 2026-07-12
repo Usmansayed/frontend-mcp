@@ -7,8 +7,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from navigation.console.buffer import ConsoleRingBuffer
-from navigation.console.models import ConsoleFilter, ConsoleLogEntry
+from navigation.frontend_quality_intelligence.console.buffer import ConsoleRingBuffer
+from navigation.frontend_quality_intelligence.console.models import ConsoleFilter, ConsoleLogEntry
 
 
 def test_buffer_levels_and_contains() -> None:

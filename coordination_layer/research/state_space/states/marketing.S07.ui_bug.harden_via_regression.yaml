@@ -1,0 +1,34 @@
+state_id: marketing.S07.ui_bug.harden_via_regression
+name: "Debug — hardening against regression after fix"
+description: |
+  Fix landed; capture regression baseline so the same bug does not slip through again.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S07_verification
+project_types: [existing_mature]
+situation_class: regression_baseline
+current_project_condition: |
+  Fix verified; ready to capture snapshot + scan as a regression baseline.
+entry_conditions: [fix_verified]
+exit_conditions: [baseline_stored]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: partial, design_system: partial, seo: unknown, quality: partial, assets: unknown}
+unknown_evidence: []
+user_intents: [prevent_recurrence]
+possible_actions: [capture_snapshot_baseline, tag_scan_baseline]
+prerequisites: [scan_id]
+possible_next_states:
+  - marketing.S10.release_prep.regression_baseline_capture
+failure_states: []
+relevant_modules: [design_snapshot_engine, visual_browser]
+modules_must_not_execute: []
+dependencies: [scan_id]
+expected_outputs: [regression_baseline_recorded]
+verification_requirements: [baseline_persisted]
+parent_cluster: null
+forest_id: F05
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

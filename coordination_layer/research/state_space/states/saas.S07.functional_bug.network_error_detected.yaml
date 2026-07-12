@@ -1,0 +1,35 @@
+state_id: saas.S07.functional_bug.network_error_detected
+name: "Debug — network 4xx/5xx blocking feature"
+description: |
+  perception_network_get shows failing endpoint(s) tied to the failing feature.
+mcp_ready: true
+project_archetype: saas_dashboard
+project_maturity: M4
+lifecycle_stage: S07_verification
+project_types: [existing_project]
+situation_class: functional_bug
+current_project_condition: |
+  Bad response codes; UI shows error state; blocking non-empty.
+entry_conditions: [network_failure_detected]
+exit_conditions: [endpoint_returns_expected_response]
+state_confidence: high
+known_evidence: {ui_runtime: regressed, codebase: partial, design_source: unknown, design_system: partial, seo: unknown, quality: partial, assets: unknown}
+unknown_evidence: [source_of_failure]
+user_intents: [restore_endpoint]
+possible_actions: [inspect_request_headers, correlate_via_code_context, escalate_to_backend, stub_response_for_dev]
+prerequisites: [session_id, repo_root]
+possible_next_states:
+  - saas.S06.new_feature.api_integration.failing
+  - global.Sxx.upstream_degraded
+failure_states: [global.Sxx.upstream_degraded]
+relevant_modules: [frontend_quality, visual_browser, codebase_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [session_id, repo_root]
+expected_outputs: [network_diagnosis]
+verification_requirements: [endpoint_success_after_fix]
+parent_cluster: null
+forest_id: F05
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

@@ -1,0 +1,35 @@
+state_id: blog.S08.seo_campaign.content_gap
+name: "SEO — blog content gap identified"
+description: |
+  Recommendations include content gaps or FAQ additions targeting AI visibility.
+mcp_ready: true
+project_archetype: blog
+project_maturity: M4
+lifecycle_stage: S08_quality
+project_types: [existing_mature]
+situation_class: ai_visibility_campaign
+current_project_condition: |
+  ai_visibility analyzers flagged content structure/FAQ gaps.
+entry_conditions: [ai_readiness_block_flags_content_gap]
+exit_conditions: [content_added_and_verified]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: partial, design_source: partial, design_system: partial, seo: known, quality: partial, assets: partial}
+unknown_evidence: [post_content_addition]
+user_intents: [close_content_gap]
+possible_actions: [draft_content, publish, re_audit]
+prerequisites: []
+possible_next_states:
+  - landing.S08.seo_campaign.re_audit_after_fix
+  - blog.S08.seo_campaign.content_gap_verified
+failure_states: [global.Sxx.upstream_degraded]
+relevant_modules: [seo_intelligence]
+modules_must_not_execute: []
+dependencies: []
+expected_outputs: [content_diff]
+verification_requirements: [content_visible_on_page]
+parent_cluster: null
+forest_id: F07
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

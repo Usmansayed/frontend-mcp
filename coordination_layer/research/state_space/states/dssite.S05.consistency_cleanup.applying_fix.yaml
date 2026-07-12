@@ -1,0 +1,35 @@
+state_id: dssite.S05.consistency_cleanup.applying_fix
+name: "Implementation — applying consistency fix"
+description: |
+  propose_fix produced a change; user applied it in code; awaiting verify.
+mcp_ready: true
+project_archetype: design_system_site
+project_maturity: M4
+lifecycle_stage: S05_implementation
+project_types: [existing_mature]
+situation_class: consistency_cleanup
+current_project_condition: |
+  Fix diff applied to codebase; page not yet re-observed.
+entry_conditions: [fix_applied]
+exit_conditions: [re_observe_and_verify]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: known, design_source: partial, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [post_fix_evidence]
+user_intents: [verify_consistency_fix]
+possible_actions: [re_observe, run_diff, consistency_verify]
+prerequisites: [scan_id]
+possible_next_states:
+  - dssite.S09.consistency_cleanup.no_deviation_detected
+  - dssite.S09.consistency_cleanup.audit_findings_open
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, consistency_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [scan_id]
+expected_outputs: [verified_fix]
+verification_requirements: [deviation_gone_after_fix]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

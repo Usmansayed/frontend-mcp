@@ -1,0 +1,35 @@
+state_id: marketing.S07.new_feature.navigation_change.verified
+name: "Feature — navigation change verified across pages"
+description: |
+  All nav links reachable; no broken destinations; nav renders consistently.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S07_verification
+project_types: [existing_mature]
+situation_class: new_feature
+current_project_condition: |
+  Nav consistent; all pages verified.
+entry_conditions: [each_link_verified]
+exit_conditions: [progress_to_release_or_seo]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: partial, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [seo_impact]
+user_intents: [ship_nav_and_check_seo]
+possible_actions: [seo_audit_after_nav_change, regression_baseline]
+prerequisites: [scan_id]
+possible_next_states:
+  - marketing.S08.seo_campaign.audit_needed
+  - marketing.S10.release_prep.regression_baseline_capture
+failure_states: []
+relevant_modules: [visual_browser, seo_intelligence]
+modules_must_not_execute: []
+dependencies: [scan_id]
+expected_outputs: [verified_nav]
+verification_requirements: [links_reachable, blocking_empty]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

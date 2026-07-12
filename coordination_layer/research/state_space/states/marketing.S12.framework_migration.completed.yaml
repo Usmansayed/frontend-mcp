@@ -1,0 +1,35 @@
+state_id: marketing.S12.framework_migration.completed
+name: "Migration — completed and verified"
+description: |
+  All pages verified on new framework; baseline recaptured.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M5
+lifecycle_stage: S12_evolution
+project_types: [existing_mature]
+situation_class: framework_migration
+current_project_condition: |
+  New framework live; regression baseline updated.
+entry_conditions: [all_pages_verified_post_migration]
+exit_conditions: [return_to_live_and_monitored]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: partial, design_system: partial, seo: partial, quality: verified, assets: partial}
+unknown_evidence: []
+user_intents: [close_migration]
+possible_actions: [document_migration, close_ticket]
+prerequisites: []
+possible_next_states:
+  - marketing.S11.production.live_and_monitored
+  - marketing.S10.release_prep.regression_baseline_capture
+failure_states: []
+relevant_modules: [visual_browser, framework_intelligence]
+modules_must_not_execute: []
+dependencies: []
+expected_outputs: [migration_close_report]
+verification_requirements: [regression_baseline_updated]
+parent_cluster: null
+forest_id: F11
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

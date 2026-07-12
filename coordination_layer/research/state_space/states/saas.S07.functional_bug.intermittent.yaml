@@ -1,0 +1,37 @@
+state_id: saas.S07.functional_bug.intermittent
+name: "Debug — intermittent failure, cannot reproduce reliably"
+description: |
+  Bug seen once but does not reproduce on subsequent observes. State_confidence low.
+mcp_ready: true
+project_archetype: saas_dashboard
+project_maturity: M4
+lifecycle_stage: S07_verification
+project_types: [existing_project]
+situation_class: functional_bug
+current_project_condition: |
+  Non-deterministic failure; agent has no stable repro.
+entry_conditions: [failure_observed_at_least_once, cannot_reproduce_immediately]
+exit_conditions: [repro_captured_or_hypothesis_shipped]
+state_confidence: low
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: unknown, design_system: partial, seo: unknown, quality: partial, assets: unknown}
+unknown_evidence: [triggering_condition]
+user_intents: [get_reliable_repro]
+possible_actions: [add_instrumentation, capture_multiple_scans, hypothesize_timing_or_race]
+prerequisites: [session_id, repo_root]
+possible_next_states:
+  - marketing.S07.ui_bug.console_error_detected
+  - saas.S07.functional_bug.network_error_detected
+  - global.Sxx.verify_loop_exhausted
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, frontend_quality, codebase_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [session_id, repo_root]
+expected_outputs: [instrumented_repro_attempt]
+verification_requirements: [either_repro_found_or_reported_to_user]
+parent_cluster: null
+forest_id: F05
+mcp_ready_gap: null
+notes: |
+  Handoff to user when repro remains elusive.
+discarded_as_duplicate_of: null
+first_added_in: batch1

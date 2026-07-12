@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from navigation.seo_intelligence.evidence.identity import normalize_page_url, stable_evidence_id
 from navigation.seo_intelligence.models import SeoEvidenceKind, SeoEvidenceRef
 
 
@@ -11,13 +12,14 @@ def normalize_ga4_report(
 	*,
 	property_id: str,
 	provider_id: str = 'analytics-ga4',
+	base_url: str = '',
 ) -> list[SeoEvidenceRef]:
 	rows = payload.get('rows') or []
 	dimension_headers = [h.get('name') for h in payload.get('dimensionHeaders') or []]
 	metric_headers = [h.get('name') for h in payload.get('metricHeaders') or []]
 	evidence: list[SeoEvidenceRef] = []
 
-	for index, row in enumerate(rows[:50]):
+	for row in rows[:50]:
 		dim_values = [v.get('value', '') for v in row.get('dimensionValues') or []]
 		metric_values = [v.get('value', '') for v in row.get('metricValues') or []]
 		dims = dict(zip(dimension_headers, dim_values, strict=False))
@@ -28,11 +30,19 @@ def normalize_ga4_report(
 		users = _float(metrics.get('activeUsers'))
 		conversions = _float(metrics.get('conversions'))
 		engagement = _float(metrics.get('engagementRate'))
+		page_url = normalize_page_url(landing, base_url=base_url) if landing.startswith('/') else landing
 
 		title = landing if not channel else f'{landing} ({channel})'
 		evidence.append(
 			SeoEvidenceRef(
-				evidence_id=f'ga4:traffic:{index}',
+				evidence_id=stable_evidence_id(
+					provider_id,
+					SeoEvidenceKind.TRAFFIC_METRIC.value,
+					page_url=page_url or landing,
+					title=title,
+					source_ref='analyticsdata.runReport',
+					metric_key=channel or landing,
+				),
 				provider_id=provider_id,
 				kind=SeoEvidenceKind.TRAFFIC_METRIC,
 				title=title,
@@ -40,7 +50,7 @@ def normalize_ga4_report(
 					f'{int(sessions)} sessions, {int(users)} users, '
 					f'{conversions:.1f} conversions, engagement {engagement * 100:.1f}%'
 				),
-				page_url=landing if landing.startswith('/') else '',
+				page_url=page_url or landing,
 				url=property_id,
 				metric_value=sessions,
 				metric_unit='sessions',

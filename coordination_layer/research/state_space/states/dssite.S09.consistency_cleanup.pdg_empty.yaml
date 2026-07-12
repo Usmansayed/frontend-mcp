@@ -1,0 +1,38 @@
+state_id: dssite.S09.consistency_cleanup.pdg_empty
+name: "Consistency — PDG empty, cannot audit"
+description: |
+  design_graph_summary reports zero standards. Consistency audit/assess/propose_fix
+  will produce empty or misleading results and must not run.
+mcp_ready: true
+project_archetype: design_system_site
+project_maturity: M2
+lifecycle_stage: S09_consistency
+project_types: [existing_mature]
+situation_class: consistency_cleanup
+current_project_condition: |
+  PDG file missing or empty.
+entry_conditions: [pdg_summary_returns_zero]
+exit_conditions: [pdg_populated_via_refresh]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: unknown, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [standards, tokens]
+user_intents: [seed_pdg_before_audit]
+possible_actions: [run_pdg_refresh]
+prerequisites: []
+possible_next_states:
+  - dssite.S09.consistency_cleanup.pdg_seeded_from_snapshot
+  - dssite.S09.consistency_cleanup.pdg_seeded_from_figma
+  - global.Sxx.pdg_refresh_failed
+failure_states: [global.Sxx.pdg_refresh_failed]
+relevant_modules: [consistency_intelligence]
+modules_must_not_execute: [consistency_intelligence__audit, consistency_intelligence__assess, consistency_intelligence__propose_fix, seo_intelligence]
+dependencies: []
+expected_outputs: [pdg_refresh_success]
+verification_requirements: [pdg_non_empty_after_refresh]
+parent_cluster: null
+forest_id: F02
+mcp_ready_gap: null
+notes: |
+  Anti-pattern: running consistency_audit against empty PDG.
+discarded_as_duplicate_of: null
+first_added_in: batch1

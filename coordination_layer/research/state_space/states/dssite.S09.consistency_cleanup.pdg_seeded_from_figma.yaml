@@ -1,0 +1,37 @@
+state_id: dssite.S09.consistency_cleanup.pdg_seeded_from_figma
+name: "Consistency — PDG seeded with Figma tokens/styles"
+description: |
+  discovery/sources/figma.py has ingested tokens and styles into the PDG. Design system evidence
+  is now `partial` at minimum.
+mcp_ready: true
+project_archetype: design_system_site
+project_maturity: M3
+lifecycle_stage: S09_consistency
+project_types: [existing_mature]
+situation_class: consistency_cleanup
+current_project_condition: |
+  PDG has some standards derived from Figma; deeper token validation still scaffold.
+entry_conditions: [figma_connected, pdg_refresh_run]
+exit_conditions: [audit_or_query_over_pdg]
+state_confidence: medium
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: known, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [full_token_validation]
+user_intents: [align_ui_with_figma_source]
+possible_actions: [summarize_pdg, run_consistency_audit, query_standards]
+prerequisites: [pdg_file_present, figma_context]
+possible_next_states:
+  - dssite.S09.consistency_cleanup.audit_findings_open
+  - dssite.S09.consistency_cleanup.pdg_empty
+failure_states: [global.Sxx.pdg_refresh_failed]
+relevant_modules: [consistency_intelligence, figma_intelligence, design_snapshot_engine]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [pdg_file, figma_context]
+expected_outputs: [pdg_summary]
+verification_requirements: [pdg_non_empty]
+parent_cluster: null
+forest_id: F02
+mcp_ready_gap: null
+notes: |
+  Token validators mostly scaffold; audit results carry advisory posture.
+discarded_as_duplicate_of: null
+first_added_in: batch1

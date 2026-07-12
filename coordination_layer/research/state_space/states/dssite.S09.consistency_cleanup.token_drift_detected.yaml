@@ -1,0 +1,36 @@
+state_id: dssite.S09.consistency_cleanup.token_drift_detected
+name: "Consistency — token drift detected"
+description: |
+  Runtime CSS values differ from token file values across multiple components.
+mcp_ready: true
+project_archetype: design_system_site
+project_maturity: M4
+lifecycle_stage: S09_consistency
+project_types: [existing_mature]
+situation_class: consistency_cleanup
+current_project_condition: |
+  Design tokens drifted; PDG shows discrepancy; validators partial (scaffold gap).
+entry_conditions: [drift_detected_by_audit_or_query]
+exit_conditions: [drift_resolved]
+state_confidence: medium
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: regressed, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [full_scope_of_drift]
+user_intents: [reconcile_tokens]
+possible_actions: [propose_token_alignment, apply_fix, verify]
+prerequisites: [pdg_file]
+possible_next_states:
+  - dssite.S05.consistency_cleanup.applying_fix
+  - dssite.S09.consistency_cleanup.exception_documented
+failure_states: [global.Sxx.pdg_refresh_failed]
+relevant_modules: [consistency_intelligence]
+modules_must_not_execute: []
+dependencies: [pdg_file]
+expected_outputs: [drift_report]
+verification_requirements: [drift_reduced_after_fix]
+parent_cluster: null
+forest_id: F08
+mcp_ready_gap: null
+notes: |
+  Token validators partial; treat outputs advisory.
+discarded_as_duplicate_of: null
+first_added_in: batch2

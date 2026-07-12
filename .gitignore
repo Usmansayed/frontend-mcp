@@ -6,13 +6,7 @@ dist/
 build/
 *.egg-info/
 artifacts/
-.cache/inspiration_blobs/
-.cache/resource_blobs/
-.cache/resource_sessions.json
-.cache/resource_icon_family.json
-.cache/resource_graph.json
-.cache/inspiration_sessions.json
-.cache/seo_graph.json
+.cache/
 node_modules/
 sandbox/node_modules/
 sandbox/dist/
@@ -23,3 +17,9 @@ browser-use/
 
 # Reference study clones — track files, not nested .git
 references/**/.git
+
+# Generated validation reports (reproduced by run_*_validation.py)
+evals/**/reports/**
+!evals/**/reports/.gitkeep
+evals/production/
+evals/coordination/score_history.jsonl

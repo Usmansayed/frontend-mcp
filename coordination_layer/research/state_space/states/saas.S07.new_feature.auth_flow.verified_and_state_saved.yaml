@@ -1,0 +1,35 @@
+state_id: saas.S07.new_feature.auth_flow.verified_and_state_saved
+name: "Feature — auth flow verified and browser state saved"
+description: |
+  Login succeeds; state_save invoked so future runs can restore auth without human input.
+mcp_ready: true
+project_archetype: saas_dashboard
+project_maturity: M3
+lifecycle_stage: S07_verification
+project_types: [existing_project]
+situation_class: new_feature
+current_project_condition: |
+  Auth verified. state_save produced state_id. Downstream flows may restore quickly.
+entry_conditions: [login_verified, state_save_success]
+exit_conditions: [progress_to_next_feature_or_quality]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: unknown, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [a11y_score]
+user_intents: [reuse_auth_state]
+possible_actions: [document_state_id, invoke_state_restore_in_future_runs]
+prerequisites: [scan_id, state_id]
+possible_next_states:
+  - saas.S05.new_feature.form_validation.v1
+  - marketing.S08.a11y_remediation.audit_needed
+failure_states: []
+relevant_modules: [design_workflow_intelligence, visual_browser]
+modules_must_not_execute: []
+dependencies: [state_id]
+expected_outputs: [saved_auth_state]
+verification_requirements: [state_restore_can_skip_login]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

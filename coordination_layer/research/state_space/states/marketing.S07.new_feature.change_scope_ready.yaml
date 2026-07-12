@@ -1,0 +1,35 @@
+state_id: marketing.S07.new_feature.change_scope_ready
+name: "Feature — targeted change ready for verification"
+description: |
+  Small scoped change (copy tweak, component swap) applied. Verify locally.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S07_verification
+project_types: [existing_mature]
+situation_class: new_feature
+current_project_condition: |
+  Change scope small; low risk; ready to verify.
+entry_conditions: [edit_applied]
+exit_conditions: [verify_passes_or_fails]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: known, design_source: partial, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [visual_regression]
+user_intents: [confirm_scoped_change]
+possible_actions: [verify_scope, diff_vs_baseline]
+prerequisites: [scan_id]
+possible_next_states:
+  - marketing.S07.new_feature.navigation_change.verified
+  - global.Sxx.verify_loop_exhausted
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser]
+modules_must_not_execute: []
+dependencies: [scan_id]
+expected_outputs: [verified_scope]
+verification_requirements: [predicates_pass]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

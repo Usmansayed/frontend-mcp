@@ -1,0 +1,35 @@
+state_id: marketing.S07.ui_bug.visual_regression_detected
+name: "Debug — visual regression detected via diff"
+description: |
+  perception_diff shows visual regression against baseline. No console errors necessarily.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S07_verification
+project_types: [existing_mature]
+situation_class: regression
+current_project_condition: |
+  Diff output shows pixel/structural differences; user has not accepted them.
+entry_conditions: [diff_shows_regression]
+exit_conditions: [regression_fixed_or_accepted]
+state_confidence: high
+known_evidence: {ui_runtime: regressed, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [regression_intent]
+user_intents: [understand_and_resolve_diff]
+possible_actions: [re_observe_with_screenshot, correlate_to_recent_commits, accept_change, roll_back]
+prerequisites: [scan_id]
+possible_next_states:
+  - marketing.S07.new_feature.change_scope_ready
+  - marketing.S07.ui_bug.snapshot_investigation
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, codebase_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [scan_id]
+expected_outputs: [regression_disposition]
+verification_requirements: [diff_now_matches_intent]
+parent_cluster: null
+forest_id: F05
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

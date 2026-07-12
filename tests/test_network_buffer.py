@@ -7,10 +7,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from navigation.network.buffer import NetworkRingBuffer, finalize_entry_metadata
-from navigation.network.cdp_parse import extract_graphql_operation
-from navigation.network.har import entries_to_har
-from navigation.network.models import NetworkEntry, NetworkFilter
+from navigation.frontend_quality_intelligence.network.buffer import NetworkRingBuffer, finalize_entry_metadata
+from navigation.frontend_quality_intelligence.network.cdp_parse import extract_graphql_operation
+from navigation.frontend_quality_intelligence.network.har import entries_to_har
+from navigation.frontend_quality_intelligence.network.models import NetworkEntry, NetworkFilter
 
 
 def test_graphql_operation_name() -> None:

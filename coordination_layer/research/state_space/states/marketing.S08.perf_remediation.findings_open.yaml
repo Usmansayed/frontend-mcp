@@ -1,0 +1,35 @@
+state_id: marketing.S08.perf_remediation.findings_open
+name: "Quality — perf below budget, remediation open"
+description: |
+  Lighthouse perf below budget; opportunities enumerated (unused JS, image sizing, LCP element).
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S08_quality
+project_types: [existing_mature]
+situation_class: performance_remediation
+current_project_condition: |
+  Findings with impact estimates and offenders.
+entry_conditions: [perf_below_budget]
+exit_conditions: [budget_met_or_deviation_accepted]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: partial, assets: partial}
+unknown_evidence: [post_fix_scores]
+user_intents: [meet_budget]
+possible_actions: [defer_scripts, resize_images, split_bundles, re_audit]
+prerequisites: [session_id, repo_root]
+possible_next_states:
+  - marketing.S08.perf_remediation.clean
+  - global.Sxx.verify_loop_exhausted
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [frontend_quality, codebase_intelligence]
+modules_must_not_execute: []
+dependencies: [session_id, repo_root]
+expected_outputs: [perf_fix_diff]
+verification_requirements: [budget_thresholds_met]
+parent_cluster: null
+forest_id: F06
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

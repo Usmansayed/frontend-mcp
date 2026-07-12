@@ -1,0 +1,35 @@
+state_id: global.Sxx.session_lost
+name: "Global — browser session lost"
+description: |
+  session_id no longer valid (browser crashed, cleaned up, or explicitly ended).
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: Sxx_any
+project_types: [existing_mature]
+situation_class: degraded_upstream
+current_project_condition: |
+  Prior scan_id/snapshot_id may still exist; new session required to continue.
+entry_conditions: [session_not_found_error]
+exit_conditions: [new_session_started]
+state_confidence: high
+known_evidence: {ui_runtime: unknown, codebase: partial, design_source: partial, design_system: partial, seo: partial, quality: partial, assets: partial}
+unknown_evidence: [live_ui_state]
+user_intents: [resume_work]
+possible_actions: [start_new_session, restore_state_from_saved]
+prerequisites: []
+possible_next_states:
+  - landing.S02.discovery.dev_server_up
+  - saas.S07.new_feature.auth_flow.verified_and_state_saved
+failure_states: [global.Sxx.dev_server_down]
+relevant_modules: [visual_browser, design_workflow_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: []
+expected_outputs: [new_session]
+verification_requirements: [health_ok_after_restart]
+parent_cluster: null
+forest_id: F12
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

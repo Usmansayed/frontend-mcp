@@ -1,0 +1,33 @@
+{
+  "name": "development_metadata_practices",
+  "website_url": "https://example.com",
+  "mode": "development",
+  "evidence": [
+    {
+      "evidence_id": "ev:librecrawl:meta:home01",
+      "provider_id": "librecrawl",
+      "kind": "technical_issue",
+      "title": "Missing title tag",
+      "summary": "Homepage missing title",
+      "page_url": "https://example.com/",
+      "severity": "medium"
+    },
+    {
+      "evidence_id": "ev:lighthouse:cwv:home01",
+      "provider_id": "lighthouse",
+      "kind": "core_web_vital",
+      "title": "Largest Contentful Paint",
+      "summary": "LCP slow",
+      "page_url": "https://example.com/",
+      "metric_value": 4100,
+      "metric_unit": "ms",
+      "severity": "high",
+      "metadata": {"auditId": "largest-contentful-paint"}
+    }
+  ],
+  "expect": {
+    "correlation_ids_contains": ["dev_practice_metadata", "dev_practice_accessibility_cwv"],
+    "min_reasoning_units": 1,
+    "min_recommendations": 1
+  }
+}

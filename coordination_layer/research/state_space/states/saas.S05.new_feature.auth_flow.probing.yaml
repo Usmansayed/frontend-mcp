@@ -1,0 +1,35 @@
+state_id: saas.S05.new_feature.auth_flow.probing
+name: "Feature — auth flow being probed for guards"
+description: |
+  Building/modifying login flow; probe_guards run to enumerate protected routes.
+mcp_ready: true
+project_archetype: saas_dashboard
+project_maturity: M3
+lifecycle_stage: S05_implementation
+project_types: [existing_project]
+situation_class: new_feature
+current_project_condition: |
+  probe_guards results in hand; login route accessible; protected routes redirect.
+entry_conditions: [probe_guards_run]
+exit_conditions: [auth_flow_implemented_and_verified]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: unknown, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [login_success_path]
+user_intents: [ship_working_login]
+possible_actions: [implement_login_form, verify_login_success, save_auth_state]
+prerequisites: [session_id]
+possible_next_states:
+  - saas.S07.new_feature.auth_flow.verified_and_state_saved
+  - global.Sxx.auth_gate.requires_human
+failure_states: [global.Sxx.auth_gate.requires_human]
+relevant_modules: [design_workflow_intelligence, visual_browser]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [session_id]
+expected_outputs: [login_evidence]
+verification_requirements: [successful_login_verified]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

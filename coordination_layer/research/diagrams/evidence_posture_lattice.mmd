@@ -1,0 +1,19 @@
+flowchart LR
+  U[unknown]
+  P[partial]
+  K[known]
+  V[verified]
+  R[regressed]
+
+  U -->|observe / detect| P
+  P -->|fresh full evidence| K
+  K -->|passes success criterion| V
+  V -->|change breaks it| R
+  R -->|re-observe + fix| P
+  R -->|hotfix + verify| V
+  P -->|user accepts as-is| K
+
+  classDef good fill:#d4f7d4,stroke:#2d7a2d,color:#000;
+  classDef bad fill:#f7d4d4,stroke:#7a2d2d,color:#000;
+  class V good
+  class R bad

@@ -1,0 +1,35 @@
+state_id: marketing.S12.framework_migration.plan_ready
+name: "Migration — framework migration plan ready"
+description: |
+  Detected current + target framework; migration guide fetched via framework_docs.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M5
+lifecycle_stage: S12_evolution
+project_types: [existing_mature]
+situation_class: framework_migration
+current_project_condition: |
+  Plan enumerates breaking changes; per-page verify strategy set.
+entry_conditions: [current_framework_detected, target_framework_selected]
+exit_conditions: [migration_started]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: known, design_source: partial, design_system: partial, seo: partial, quality: partial, assets: partial}
+unknown_evidence: [per_page_regressions]
+user_intents: [migrate_safely]
+possible_actions: [choose_incremental_or_big_bang, capture_pre_migration_baseline]
+prerequisites: [repo_root]
+possible_next_states:
+  - marketing.S12.framework_migration.incremental_progress
+  - marketing.S12.framework_migration.big_bang_progress
+failure_states: [global.Sxx.upstream_degraded]
+relevant_modules: [framework_intelligence, codebase_intelligence]
+modules_must_not_execute: [figma_intelligence, seo_intelligence]
+dependencies: [repo_root]
+expected_outputs: [migration_plan]
+verification_requirements: [plan_documented]
+parent_cluster: null
+forest_id: F11
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

@@ -1,0 +1,35 @@
+state_id: marketing.S10.release_prep.multi_page_smoke_test
+name: "Release — multi-page smoke suite"
+description: |
+  Fast smoke suite across a list of key pages before deep verify.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S10_release
+project_types: [existing_mature]
+situation_class: release_prep
+current_project_condition: |
+  Smoke suite running; per-page checkpoints minimal.
+entry_conditions: [pages_list_known, session_id]
+exit_conditions: [smoke_pass_or_fail]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: partial, quality: partial, assets: partial}
+unknown_evidence: [deep_findings]
+user_intents: [fast_pre_release_check]
+possible_actions: [iterate_pages_light_verify, choose_deeper_verify]
+prerequisites: [session_id]
+possible_next_states:
+  - marketing.S10.release_prep.staging_verify
+  - marketing.S10.release_prep.staging_regression
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser]
+modules_must_not_execute: []
+dependencies: [session_id]
+expected_outputs: [smoke_report]
+verification_requirements: [each_page_smoke_pass]
+parent_cluster: null
+forest_id: F09
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

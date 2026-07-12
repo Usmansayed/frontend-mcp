@@ -1,0 +1,36 @@
+state_id: complib.S05.component_replacement.repair_needed
+name: "Component — repairs required for framework/convention match"
+description: |
+  Dry-run report lists repairs: rename imports, adapt props, style adjustments, TypeScript fixes.
+mcp_ready: true
+project_archetype: component_library
+project_maturity: M3
+lifecycle_stage: S05_implementation
+project_types: [existing_mature]
+situation_class: component_replacement
+current_project_condition: |
+  IntegrationResult.needed_repairs non-empty. User must decide manual vs (scaffold) auto-repair.
+entry_conditions: [needed_repairs_present]
+exit_conditions: [repairs_applied_and_verified]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: known, design_source: partial, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [repair_outcome]
+user_intents: [complete_integration_cleanly]
+possible_actions: [describe_repairs_to_user, apply_repairs_locally, request_scaffold_auto_repair]
+prerequisites: [integration_plan]
+possible_next_states:
+  - complib.S07.component_replacement.integrated_and_verified
+  - complib.S05.component_replacement.integration_live_scaffold
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [component_intelligence, codebase_intelligence, framework_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [repo_root]
+expected_outputs: [repair_diff]
+verification_requirements: [repairs_applied_pass_verify]
+parent_cluster: null
+forest_id: F03
+mcp_ready_gap: null
+notes: |
+  Auto-repair execution is scaffold; describe-only mode ships.
+discarded_as_duplicate_of: null
+first_added_in: batch1

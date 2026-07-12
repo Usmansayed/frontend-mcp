@@ -1,0 +1,35 @@
+state_id: saas.S07.new_feature.multi_step_flow.all_checkpoints_verified
+name: "Feature — every flow checkpoint verified"
+description: |
+  All checkpoints pass their observable predicates. Flow can be considered verified end-to-end.
+mcp_ready: true
+project_archetype: saas_dashboard
+project_maturity: M3
+lifecycle_stage: S07_verification
+project_types: [existing_project, csr]
+situation_class: new_feature
+current_project_condition: |
+  Flow completed successfully.
+entry_conditions: [all_checkpoints_pass]
+exit_conditions: [next_feature_or_release_step]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: unknown, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [performance, a11y]
+user_intents: [ship_flow]
+possible_actions: [capture_baseline, move_on]
+prerequisites: [scan_id]
+possible_next_states:
+  - marketing.S08.a11y_remediation.audit_needed
+  - marketing.S10.release_prep.regression_baseline_capture
+failure_states: []
+relevant_modules: [design_workflow_intelligence, visual_browser]
+modules_must_not_execute: []
+dependencies: [scan_id]
+expected_outputs: [verified_flow_run]
+verification_requirements: [all_predicates_pass]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

@@ -1,0 +1,36 @@
+state_id: saas.S05.new_feature.multi_step_flow.described
+name: "Feature — multi-step flow described, checkpoints known"
+description: |
+  flow_describe returned checkpoints for a built-in flow (validation-form today).
+mcp_ready: true
+project_archetype: saas_dashboard
+project_maturity: M3
+lifecycle_stage: S05_implementation
+project_types: [existing_project, csr]
+situation_class: new_feature
+current_project_condition: |
+  Flow definition available; each checkpoint has expected observable predicates.
+entry_conditions: [flow_describe_returned]
+exit_conditions: [each_checkpoint_verified]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: unknown, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [per_checkpoint_status]
+user_intents: [ship_multi_step_flow]
+possible_actions: [execute_checkpoint_actions, verify_each_checkpoint]
+prerequisites: [flow_name_supported, session_id]
+possible_next_states:
+  - saas.S07.new_feature.multi_step_flow.all_checkpoints_verified
+  - saas.S07.new_feature.multi_step_flow.checkpoint_failure
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [design_workflow_intelligence, visual_browser]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [session_id]
+expected_outputs: [verified_flow]
+verification_requirements: [checkpoint_predicates_pass]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: |
+  flow_describe currently supports validation-form only; other names hit unknown-flow degrade.
+discarded_as_duplicate_of: null
+first_added_in: batch1

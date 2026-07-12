@@ -1,0 +1,57 @@
+state_id: landing.S02.discovery.blank_page_after_start
+name: "Discovery — dev server up but page is blank"
+description: |
+  Health passes, session starts, but the observed page renders empty (SSR error swallowed,
+  hydration error, or misconfigured entry point).
+mcp_ready: true
+
+project_archetype: landing
+project_maturity: M1
+lifecycle_stage: S02_discovery
+project_types: [greenfield]
+situation_class: functional_bug
+
+current_project_condition: |
+  Dev server reports 200 but rendered DOM has no content. Console may or may not carry errors.
+entry_conditions: [session_started, first_observe_returned_empty_content]
+exit_conditions: [content_visible_or_root_cause_identified]
+state_confidence: high
+
+known_evidence:
+  ui_runtime: partial
+  codebase: partial
+  design_source: unknown
+  design_system: unknown
+  seo: unknown
+  quality: partial
+  assets: unknown
+unknown_evidence: [entry_point_correctness, hydration_state]
+
+user_intents: [see_content, fix_blank_page]
+
+possible_actions:
+  - collect_console_errors
+  - collect_network_activity
+  - locate_entry_component
+  - re_observe_after_edit
+prerequisites: [session_id, scan_id]
+possible_next_states:
+  - landing.S02.discovery.first_route_rendering
+  - global.Sxx.verify_loop_exhausted
+failure_states:
+  - global.Sxx.verify_loop_exhausted
+
+relevant_modules: [visual_browser, frontend_quality, codebase_intelligence]
+modules_must_not_execute: [seo_intelligence, design_snapshot_engine, consistency_intelligence]
+dependencies: [session_id, scan_id, repo_root]
+
+expected_outputs: [root_cause_hypothesis]
+verification_requirements: [visible_content_present, agent_summary_blocking_empty]
+
+parent_cluster: null
+forest_id: F01
+mcp_ready_gap: null
+notes: |
+  Debugging shape lives in F05, but this state seeds it during bootstrap. Uses AGENT_GUIDE §3.
+discarded_as_duplicate_of: null
+first_added_in: batch1

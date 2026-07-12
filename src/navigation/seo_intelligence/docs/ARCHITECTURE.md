@@ -2,113 +2,142 @@
 
 ## Mission
 
-SEO Intelligence is the **orchestration layer** for search performance — not a replacement for Ahrefs, Semrush, or internet-scale crawlers.
+SEO Intelligence is an **AI-native SEO reasoning engine** — not a replacement for Ahrefs, Semrush, or third-party SEO applications.
 
-The AI agent is the brain. External tools are data providers.
+Data providers supply evidence. The knowledge graph stores context. The recommendation engine correlates signals and produces traceable fixes. Browser Intelligence verifies results.
 
 ## Philosophy
 
 | We build | We do NOT build |
 |----------|-----------------|
-| Provider adapters | Keyword databases |
-| SEO Knowledge Graph (normalized) | Backlink indexes |
-| Cross-source analysis | SERP databases |
-| Evidence-based recommendations | Internet-scale crawlers |
-| Verification loop (observe → verify) | Paid SEO SaaS lock-in |
+| Evidence-driven reasoning | Hundreds of hardcoded SEO rules |
+| Cross-source correlation | Keyword/backlink databases |
+| Prioritized recommendations | Internet-scale crawlers |
+| Closed-loop browser verification | Third-party SEO app dependencies |
+| Structured agent context | Unsupported conclusions |
 
-**100% free-first.** User-owned data (Search Console, GA4) + open tools (LibreCrawl, Lighthouse) + Browser Intelligence.
+**Evidence providers only:** Google Search Console, Google Analytics 4, LibreCrawl, Lighthouse, Browser Intelligence.
+
+## Two-tier modes
+
+| Mode | When | Auth | Providers |
+|------|------|------|-----------|
+| **Development** (default) | Building a website | None | Browser, Lighthouse, LibreCrawl |
+| **Professional** | User asks to optimize with live search data | Google OAuth on demand | GSC, GA4 + all development providers |
+
+```text
+# Development (default) — frictionless while coding
+perception_seo_audit { "website_url": "...", "scan_id": "..." }
+
+# Professional — after user requests optimization
+perception_seo_connect { "action": "connect_google", ... }
+perception_seo_audit { "website_url": "...", "mode": "professional" }
+```
 
 ## Pipeline
 
 ```text
 Website
   ↓
-Planning (provider router)
+Evidence Collection (providers)
   ↓
-Data Collection (adapters)
+Evidence Normalizer
   ↓
-SEO Knowledge Graph (normalize)
+SEO Knowledge Graph
   ↓
-Cross Analysis
+Evidence Correlation + Opportunity Detection
   ↓
-Recommendation Engine
+AI Visibility Adapter (derived AI-readiness evidence)
   ↓
-Verification Plan
+AI Recommendation Engine (structured reasoning context)
   ↓
-Agent (reason + act + verify)
+Verification Plan (Browser Intelligence)
+  ↓
+Agent (apply fix → verify → mark verified)
 ```
+
+**AI Visibility layer.** After providers collect evidence, the AI Visibility
+adapter runs analyzers documented in
+[`../ai_visibility/docs/ANALYZER_SOURCES.md`](../ai_visibility/docs/ANALYZER_SOURCES.md)
+and emits `ai_visibility` evidence. Every analyzer is grounded in Google's
+public AI search guidance. See the
+[AI Visibility agent guide](../ai_visibility/docs/AI_VISIBILITY_AGENT_GUIDE.md).
+
+## Intelligence stages
+
+### 1. Evidence collection
+
+Planner orchestrates providers only — **no SEO logic in the planner**.
+
+### 2. Evidence correlation
+
+Correlation-first analysis across providers:
+
+| Sources | Output |
+|---------|--------|
+| Search Console + LibreCrawl | Why pages aren't indexed |
+| Search Console + Lighthouse | Poor rankings caused by CWV |
+| LibreCrawl + Browser | Rendering issue preventing indexing |
+| Analytics + Search Console | Traffic drop explanation |
+
+### 3. AI reasoning
+
+Audit results include `reasoning_context` — structured JSON for the agent:
+
+```json
+{
+  "gsc": "...",
+  "ga4": "...",
+  "crawl": "...",
+  "browser": "...",
+  "lighthouse": "...",
+  "correlations": "...",
+  "knowledge_graph": "...",
+  "history": "..."
+}
+```
+
+Every recommendation includes: title, root cause, evidence used, confidence, priority, business impact, implementation steps, verification steps.
+
+### 4. Verification
+
+Browser Intelligence verifies fixes after apply. Recommendations support closed-loop verification via `perception_seo_verify`.
 
 ## Provider strategy
 
 | Provider | Tier | Auth | Role |
 |----------|------|------|------|
-| Google Search Console | P0 | OAuth | User search performance + index health |
+| Google Search Console | P0 | OAuth | Search performance + index health |
 | Google Analytics 4 | P0 | OAuth | Traffic, landing pages, conversions |
-| LibreCrawl | P0 | Local URL | Technical crawl — **do not build crawler** |
+| LibreCrawl | P0 | Local URL | Technical crawl |
 | Lighthouse / PSI | P0 | Optional API key | CWV, performance, SEO audits |
-| Browser Intelligence | P1 | scan_id | Rendering, hydration, JS errors |
-| **OpenSEO** | P1 | MCP URL | Keyword/SERP/backlink — optional, not for crawl/CWV |
-| Bing Webmaster | P2 | API key | Optional second search console |
+| Browser Intelligence | P0 | scan_id | Rendering, DOM, console, metadata |
+| Bing Webmaster | P2 | OAuth/API key | Optional second search console |
 
 ## SEO Knowledge Graph
 
-Central source of truth. **Does not duplicate raw provider payloads.**
+Stores evidence, recommendations, verification history, relationships, and confidence. Continuously improves future reasoning.
 
-Node types: `Website`, `Pages`, `Queries`, `Issues`, `CoreWebVitals`, `Redirects`, `IndexStatus`, `InternalLinks`, `Schema`, `Performance`, `Opportunities`, `Recommendations`, `VerificationStatus`.
-
-See `KNOWLEDGE_GRAPH_SCHEMA.md`.
-
-## Cross-analysis examples
-
-| Sources | Output |
-|---------|--------|
-| Search Console + LibreCrawl | Why pages aren't indexed |
-| Analytics + Search Console | Why CTR is falling |
-| Lighthouse + Browser Intelligence | Why CWV is poor |
-| Browser + LibreCrawl | Rendering problems affecting indexing |
-
-Every recommendation **must** cite `evidence_ids`.
-
-## Verification loop
-
-```text
-Analyze → Recommend → Apply (agent/code) → Verify (perception_verify) → Repeat
-```
+Node types: `Website`, `Pages`, `Queries`, `Issues`, `Opportunities`, `Recommendations`, `VerificationStatus`.
 
 ## Module boundaries
 
 | Module | Owns |
 |--------|------|
-| **SEO Intelligence** | Search performance orchestration, SEO graph, cross-analysis |
-| **Browser Intelligence** | Live page observation, DOM, screenshots |
-| **Frontend Quality** | Console, network, audits (shared Lighthouse data path TBD) |
+| **SEO Intelligence** | Evidence orchestration, graph, correlation, recommendations |
+| **Browser Intelligence** | Live page observation, DOM, screenshots, verification |
+| **Frontend Quality** | Console, network, audits |
 | **Design Sense** | UX critique — not SEO rankings |
-| **Resource Intelligence** | Creative assets — not SEO |
-
-Browser Intelligence is consumed via `providers/browser/` adapter — never duplicated.
-
-## Implementation phases
-
-| Phase | Focus |
-|-------|-------|
-| **0 (now)** | Architecture, models, graph schema, provider stubs, docs |
-| **1** | Search Console + GA4 OAuth, evidence normalization |
-| **2** | LibreCrawl + Lighthouse adapters |
-| **3** | Browser SEO bridge + cross-analysis depth |
-| **4** | MCP audit tools + verification automation |
-| **5** | Bing optional + freeze at ~85 unless user request |
 
 ## Environment
 
 ```text
 SEO_GRAPH_PATH=.cache/seo_graph.json
-LIBRECRAWL_BASE_URL=http://localhost:8080
-OPENSEO_BASE_URL=http://localhost:3001
-OPENSEO_MCP_URL=http://localhost:3001/mcp
+LIBRECRAWL_BASE_URL=http://localhost:5001
 GOOGLE_OAUTH_CLIENT_ID=...
 GOOGLE_OAUTH_CLIENT_SECRET=...
 PAGESPEED_API_KEY=...          # optional
 BING_WEBMASTER_API_KEY=...     # optional
 ```
 
-See `AUTHENTICATION.md`.
+See `AUTHENTICATION.md` and `COMPANION_SERVICES.md`.

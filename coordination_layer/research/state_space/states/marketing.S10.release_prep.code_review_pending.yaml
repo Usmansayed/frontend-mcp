@@ -1,0 +1,35 @@
+state_id: marketing.S10.release_prep.code_review_pending
+name: "Release — code review pending on the release PR"
+description: |
+  Release PR opened; awaiting human code review. MCP can pre-check but not merge.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S10_release
+project_types: [existing_mature]
+situation_class: code_review
+current_project_condition: |
+  PR open; verify + audits attached; humans review.
+entry_conditions: [pr_opened]
+exit_conditions: [pr_approved_or_changes_requested]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: partial, design_system: partial, seo: partial, quality: verified, assets: partial}
+unknown_evidence: [human_feedback]
+user_intents: [get_merged]
+possible_actions: [attach_evidence, wait_for_reviewer]
+prerequisites: []
+possible_next_states:
+  - marketing.S11.production.live_and_monitored
+  - marketing.S05.new_feature.change_scope_ready
+failure_states: [global.Sxx.auth_gate.requires_human]
+relevant_modules: []
+modules_must_not_execute: []
+dependencies: []
+expected_outputs: [reviewer_response]
+verification_requirements: [pr_state_settled]
+parent_cluster: null
+forest_id: F09
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

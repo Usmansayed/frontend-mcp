@@ -1,0 +1,36 @@
+state_id: saas.S06.new_feature.api_integration.failing
+name: "Integration — API call failing"
+description: |
+  Network buffer shows 4xx/5xx or CORS errors when fetching data for a feature.
+mcp_ready: true
+project_archetype: saas_dashboard
+project_maturity: M3
+lifecycle_stage: S06_integration
+project_types: [existing_project]
+situation_class: functional_bug
+current_project_condition: |
+  Network events show failing endpoint calls; UI in loading or error state.
+entry_conditions: [network_buffer_shows_failure]
+exit_conditions: [api_calls_succeed_or_stubbed_for_dev]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: unknown, design_system: partial, seo: unknown, quality: partial, assets: unknown}
+unknown_evidence: [server_side_state]
+user_intents: [fix_api_integration]
+possible_actions: [inspect_network_get, correlate_via_code_context, propose_endpoint_fix, mock_response_for_dev]
+prerequisites: [session_id, repo_root]
+possible_next_states:
+  - saas.S07.new_feature.multi_step_flow.all_checkpoints_verified
+  - global.Sxx.upstream_degraded
+failure_states: [global.Sxx.upstream_degraded]
+relevant_modules: [frontend_quality, visual_browser, codebase_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [session_id, repo_root]
+expected_outputs: [api_diagnosis]
+verification_requirements: [api_calls_succeed_after_fix]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: |
+  If failure is server-side, hand off to backend team via user; MCP scope is client-side.
+discarded_as_duplicate_of: null
+first_added_in: batch1

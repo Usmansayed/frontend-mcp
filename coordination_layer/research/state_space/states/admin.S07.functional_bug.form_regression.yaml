@@ -1,0 +1,35 @@
+state_id: admin.S07.functional_bug.form_regression
+name: "Debug — previously working form now failing"
+description: |
+  A form that passed verification earlier now fails an invalid or valid path.
+mcp_ready: true
+project_archetype: admin_panel
+project_maturity: M4
+lifecycle_stage: S07_verification
+project_types: [existing_project]
+situation_class: regression
+current_project_condition: |
+  Verification now fails; prior baseline exists.
+entry_conditions: [prior_verified_state_exists, current_verify_fails]
+exit_conditions: [regression_reversed]
+state_confidence: high
+known_evidence: {ui_runtime: regressed, codebase: partial, design_source: unknown, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [regressing_change]
+user_intents: [restore_form_behavior]
+possible_actions: [git_bisect_via_code_context, probe_form_again, diff_before_after]
+prerequisites: [session_id, repo_root]
+possible_next_states:
+  - saas.S07.new_feature.form_validation.verified
+  - global.Sxx.verify_loop_exhausted
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, frontend_quality, codebase_intelligence, design_workflow_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [session_id, repo_root]
+expected_outputs: [reverted_or_forward_fix]
+verification_requirements: [invalid_and_valid_both_pass_again]
+parent_cluster: null
+forest_id: F05
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

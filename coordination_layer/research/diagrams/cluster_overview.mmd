@@ -1,0 +1,76 @@
+flowchart TB
+  subgraph intent [Intent]
+    C1[cluster.intent.conversation<br/>2 members]
+  end
+
+  subgraph discovery [Discovery / Architecture]
+    C2[cluster.discovery.bootstrap<br/>6 members]
+    C6[cluster.architecture.plan<br/>2 members]
+  end
+
+  subgraph design [Design]
+    C3[cluster.design.reference_gathering<br/>5 members]
+    C4[cluster.design.figma_pipeline<br/>3 members]
+    C5[cluster.design.review_and_snapshot<br/>3 members]
+  end
+
+  subgraph feature [Feature implementation]
+    C7[cluster.component.acquisition_pipeline<br/>12 members]
+    C8[cluster.feature.form_pipeline<br/>5 members]
+    C9[cluster.feature.flow_pipeline<br/>3 members]
+    C10[cluster.feature.data_ui<br/>6 members]
+    C11[cluster.feature.navigation_change<br/>3 members]
+    C12[cluster.feature.auth_flow<br/>3 members]
+    C13[cluster.feature.api_integration<br/>2 members]
+    C14[cluster.feature.resource_gap<br/>2 members]
+  end
+
+  subgraph debug [Debug]
+    C15[cluster.debug.signal_class<br/>12 members]
+    C16[cluster.debug.iteration_target<br/>2 members]
+  end
+
+  subgraph quality [Quality & Growth]
+    C17[cluster.quality.audit_cycle<br/>10 members]
+    C18[cluster.quality.session_mode<br/>2 members]
+    C19[cluster.seo.audit_cycle<br/>12 members]
+    C20[cluster.consistency.audit_cycle<br/>14 members]
+  end
+
+  subgraph release [Release / Production]
+    C21[cluster.release.baseline_and_staging<br/>9 members]
+    C22[cluster.production.live_and_incidents<br/>10 members]
+    C23[cluster.migration.framework_or_redesign<br/>10 members]
+  end
+
+  subgraph recovery [Recovery]
+    C24[cluster.global.recovery<br/>12 members]
+  end
+
+  C1 --> C2 --> C3
+  C2 --> C6
+  C6 --> C7
+  C6 --> C8
+  C6 --> C10
+  C3 --> C7
+  C4 --> C5
+  C7 --> C8
+  C8 --> C15
+  C9 --> C15
+  C10 --> C15
+  C15 --> C16
+  C16 --> C17
+  C17 --> C19
+  C17 --> C20
+  C19 --> C21
+  C20 --> C21
+  C21 --> C22
+  C22 --> C23
+  C23 --> C21
+
+  C1 -.-> C24
+  C2 -.-> C24
+  C7 -.-> C24
+  C15 -.-> C24
+  C19 -.-> C24
+  C20 -.-> C24

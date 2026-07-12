@@ -1,0 +1,322 @@
+schema_version: '1.0'
+description: 'Cluster registry — routing layer distilled from research clusters. member_state_ids
+  are telemetry references only; NEVER used for control flow.
+
+  '
+clusters:
+- cluster_id: cluster.architecture.plan
+  default_playbook: observe_reason_act_verify.loop
+  coordination_hint: Conversation-heavy; no tool required to reach architecture state.
+  member_state_ids:
+  - landing.S04.architecture.route_plan_pending
+  - landing.S04.architecture.route_plan_ready
+  member_count: 2
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.component.acquisition_pipeline
+  default_playbook: search_select_integrate.component
+  coordination_hint: Live install path is mcp_ready false.
+  mcp_ready_blocks:
+  - component_integrate_live
+  member_state_ids:
+  - complib.S03.component_replacement.inspiration_fallback
+  - complib.S05.component_replacement.candidate_selected
+  - complib.S05.component_replacement.candidates_ranked
+  - complib.S05.component_replacement.integration_dry_run_report
+  - complib.S05.component_replacement.integration_live_scaffold
+  - complib.S05.component_replacement.license_check_pending
+  - complib.S05.component_replacement.plan_ready
+  - complib.S05.component_replacement.provider_offline
+  - complib.S05.component_replacement.query_vague
+  - complib.S05.component_replacement.repair_needed
+  - complib.S05.component_replacement.zero_candidates
+  - complib.S07.component_replacement.integrated_and_verified
+  member_count: 12
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.consistency.audit_cycle
+  default_playbook: snapshot_review_consistency.design
+  coordination_hint: Empty PDG blocks audit — refresh first.
+  member_state_ids:
+  - complib.S09.consistency_cleanup.api_stability_check
+  - dssite.S09.consistency_cleanup.audit_findings_open
+  - dssite.S09.consistency_cleanup.exception_documented
+  - dssite.S09.consistency_cleanup.knowledge_query_empty
+  - dssite.S09.consistency_cleanup.knowledge_query_result
+  - dssite.S09.consistency_cleanup.multi_page_scan
+  - dssite.S09.consistency_cleanup.no_deviation_detected
+  - dssite.S09.consistency_cleanup.pdg_empty
+  - dssite.S09.consistency_cleanup.pdg_seeded_from_figma
+  - dssite.S09.consistency_cleanup.pdg_seeded_from_snapshot
+  - dssite.S09.consistency_cleanup.propose_fix_open
+  - dssite.S09.consistency_cleanup.standards_updated
+  - dssite.S09.consistency_cleanup.token_drift_detected
+  - marketing.S09.consistency_cleanup.token_import_pending_scaffold
+  member_count: 14
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.debug.iteration_target
+  default_playbook: observe_reason_act_verify.loop
+  member_state_ids:
+  - dssite.S05.consistency_cleanup.applying_fix
+  - marketing.S05.redesign.applying_fix
+  member_count: 2
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.debug.signal_class
+  default_playbook: observe_reason_act_verify.loop
+  coordination_hint: Each signal class has canonical playbook; verify loop capped.
+  suggested_capabilities:
+  - runtime_diagnosis
+  - browser_observe
+  - browser_verify
+  member_state_ids:
+  - marketing.S07.ui_bug.accessibility_regression
+  - marketing.S07.ui_bug.console_error_detected
+  - marketing.S07.ui_bug.full_diagnosis_run
+  - marketing.S07.ui_bug.harden_via_regression
+  - marketing.S07.ui_bug.hydration_mismatch
+  - marketing.S07.ui_bug.needs_framework_upgrade
+  - marketing.S07.ui_bug.responsive_break
+  - marketing.S07.ui_bug.snapshot_investigation
+  - marketing.S07.ui_bug.user_report_no_repro
+  - marketing.S07.ui_bug.visual_regression_detected
+  - saas.S07.functional_bug.intermittent
+  - saas.S07.functional_bug.race_condition
+  member_count: 12
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.design.figma_pipeline
+  default_playbook: discover_collect_cleanup.inspiration_resource
+  coordination_hint: Never loop reconnect on figma failure.
+  member_state_ids:
+  - dssite.S09.consistency_cleanup.pdg_seeded_from_figma
+  - landing.S03.design.figma_connected
+  - landing.S03.design.figma_expected
+  member_count: 3
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.design.reference_gathering
+  default_playbook: discover_collect_cleanup.inspiration_resource
+  coordination_hint: Blob session hygiene mandatory.
+  member_state_ids:
+  - landing.S03.design.direction_agreed_no_references
+  - landing.S03.design.direction_agreed_with_references
+  - landing.S03.design.inspiration_collected
+  - landing.S03.design.no_design_source
+  - landing.S03.design.reference_registry_captured_scaffold
+  member_count: 5
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.design.review_and_snapshot
+  default_playbook: snapshot_review_consistency.design
+  coordination_hint: Design Sense is advisory-only.
+  member_state_ids:
+  - marketing.S03.design.design_review_open
+  - marketing.S03.design.pdg_empty_snapshot_ready
+  - marketing.S09.consistency_cleanup.design_sense_findings
+  member_count: 3
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.discovery.bootstrap
+  default_playbook: observe_reason_act_verify.loop
+  coordination_hint: Framework detection cheap; run once and cache.
+  suggested_capabilities:
+  - framework_profile
+  - environment_probe
+  - codebase_context
+  member_state_ids:
+  - landing.S02.discovery.blank_page_after_start
+  - landing.S02.discovery.dev_server_up
+  - landing.S02.discovery.first_route_rendering
+  - landing.S02.discovery.no_repo
+  - landing.S02.discovery.stack_chosen
+  - marketing.S02.discovery.legacy_repo_open
+  member_count: 6
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.feature.api_integration
+  default_playbook: observe_reason_act_verify.loop
+  member_state_ids:
+  - saas.S06.new_feature.api_integration.failing
+  - saas.S07.functional_bug.network_error_detected
+  member_count: 2
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.feature.auth_flow
+  default_playbook: observe_reason_act_verify.loop
+  suggested_capabilities:
+  - route_guards_probe
+  - auth_gate
+  - session_state_manage
+  member_state_ids:
+  - admin.S05.new_feature.modal_dialog.stub
+  - saas.S05.new_feature.auth_flow.probing
+  - saas.S07.new_feature.auth_flow.verified_and_state_saved
+  member_count: 3
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.feature.data_ui
+  default_playbook: observe_reason_act_verify.loop
+  member_state_ids:
+  - admin.S05.new_feature.data_table.stub
+  - admin.S06.new_feature.data_table.integrated
+  - admin.S07.new_feature.data_table.verified
+  - landing.S05.new_feature.landing_hero.stub
+  - landing.S07.new_feature.landing_hero.verified
+  - saas.S05.new_feature.chart_component.stub
+  member_count: 6
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.feature.flow_pipeline
+  default_playbook: observe_reason_act_verify.loop
+  coordination_hint: MCP describes flow; agent verifies each checkpoint.
+  member_state_ids:
+  - saas.S05.new_feature.multi_step_flow.described
+  - saas.S07.new_feature.multi_step_flow.all_checkpoints_verified
+  - saas.S07.new_feature.multi_step_flow.checkpoint_failure
+  member_count: 3
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.feature.form_pipeline
+  default_playbook: invalid_before_valid.form
+  coordination_hint: Invalid before valid (AGENT_GUIDE §4).
+  required_capabilities_sequence:
+  - form_probe
+  - browser_verify
+  playbook_gate:
+    requires_last_capability: form_probe
+  member_state_ids:
+  - admin.S07.functional_bug.form_regression
+  - saas.S05.new_feature.form_validation.v1
+  - saas.S07.new_feature.form_validation.blocked_by_auth
+  - saas.S07.new_feature.form_validation.invalid_path_verified
+  - saas.S07.new_feature.form_validation.verified
+  member_count: 5
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.feature.navigation_change
+  default_playbook: observe_reason_act_verify.loop
+  member_state_ids:
+  - marketing.S05.new_feature.navigation_change.v1
+  - marketing.S07.new_feature.change_scope_ready
+  - marketing.S07.new_feature.navigation_change.verified
+  member_count: 3
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.feature.resource_gap
+  default_playbook: discover_collect_cleanup.inspiration_resource
+  member_state_ids:
+  - landing.S06.resource_gap.icon_missing
+  - landing.S06.resource_gap.icon_provisioned
+  member_count: 2
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.global.recovery
+  default_playbook: global_recovery.failure
+  coordination_hint: Every planner branch must reference global recovery.
+  member_state_ids:
+  - global.Sxx.auth_gate.requires_human
+  - global.Sxx.dev_server_down
+  - global.Sxx.env_misconfigured
+  - global.Sxx.figma_connect_failed
+  - global.Sxx.pdg_refresh_failed
+  - global.Sxx.repo_unavailable
+  - global.Sxx.session_lost
+  - global.Sxx.tooling_broken
+  - global.Sxx.upstream_degraded
+  - global.Sxx.user_abandoned
+  - global.Sxx.verify_loop_exhausted
+  - global.Sxx.verify_success_terminal
+  member_count: 12
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.intent.conversation
+  default_playbook: observe_reason_act_verify.loop
+  coordination_hint: Never invoke tools; refine natural language.
+  modules_forbidden:
+  - seo_intelligence
+  - figma_intelligence
+  member_state_ids:
+  - landing.S01.intent.described
+  - landing.S01.intent.unclear
+  member_count: 2
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.migration.framework_or_redesign
+  default_playbook: observe_reason_act_verify.loop
+  member_state_ids:
+  - complib.S12.migration.consumer_notification
+  - legacy.S12.legacy_maintenance.dependency_upgrade
+  - marketing.S12.framework_migration.big_bang_progress
+  - marketing.S12.framework_migration.completed
+  - marketing.S12.framework_migration.incremental_progress
+  - marketing.S12.framework_migration.plan_ready
+  - marketing.S12.migration.rollback
+  - marketing.S12.redesign.baseline_before
+  - marketing.S12.redesign.completed
+  - marketing.S12.redesign.per_page_swap
+  member_count: 10
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.production.live_and_incidents
+  default_playbook: baseline_and_regression.release
+  coordination_hint: Hotfix path may compress stages.
+  member_state_ids:
+  - ecom.S11.production.checkout_incident
+  - marketing.S11.production.dependency_upgrade_offered
+  - marketing.S11.production.documentation_update
+  - marketing.S11.production.drift_scheduled_reaudit
+  - marketing.S11.production.hotfix_deployed
+  - marketing.S11.production.hotfix_requested
+  - marketing.S11.production.live_and_monitored
+  - marketing.S11.production.pdg_stale_refresh_scheduled
+  - marketing.S11.production.rollback_required
+  - marketing.S11.production.user_report_received
+  member_count: 10
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.quality.audit_cycle
+  default_playbook: observe_reason_act_verify.loop
+  coordination_hint: Parallelizable across pages.
+  suggested_capabilities:
+  - quality_audit
+  member_state_ids:
+  - marketing.S08.a11y_remediation.audit_needed
+  - marketing.S08.a11y_remediation.clean
+  - marketing.S08.a11y_remediation.findings_open
+  - marketing.S08.best_practices.audit_needed
+  - marketing.S08.best_practices.clean
+  - marketing.S08.best_practices.findings_open
+  - marketing.S08.lighthouse_seo_audit.findings
+  - marketing.S08.perf_remediation.audit_needed
+  - marketing.S08.perf_remediation.clean
+  - marketing.S08.perf_remediation.findings_open
+  member_count: 10
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.quality.session_mode
+  default_playbook: observe_reason_act_verify.loop
+  coordination_hint: Session-scoped mode toggles; turn off deliberately.
+  member_state_ids:
+  - marketing.S08.audit_mode.rolling
+  - marketing.S08.debug_mode.active
+  member_count: 2
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.release.baseline_and_staging
+  default_playbook: baseline_and_regression.release
+  member_state_ids:
+  - marketing.S10.release_prep.baseline_stale
+  - marketing.S10.release_prep.baseline_stored
+  - marketing.S10.release_prep.code_review_pending
+  - marketing.S10.release_prep.env_misconfig_pre_release
+  - marketing.S10.release_prep.multi_page_smoke_test
+  - marketing.S10.release_prep.regression_baseline_capture
+  - marketing.S10.release_prep.staging_regression
+  - marketing.S10.release_prep.staging_verified
+  - marketing.S10.release_prep.staging_verify
+  member_count: 9
+  member_state_ids_note: Telemetry only — never control flow
+- cluster_id: cluster.seo.audit_cycle
+  default_playbook: audit_fix_verify.seo
+  coordination_hint: Prefer seo_graph_query diff over full audit when graph fresh.
+  evidence_gates:
+    seo_evidence_collect:
+      min_posture: known
+      defer_until: S07_verification
+  member_state_ids:
+  - blog.S08.seo_campaign.content_gap
+  - blog.S08.seo_campaign.content_gap_verified
+  - ecom.S08.seo_campaign.ecommerce_indexability_check
+  - ecom.S08.seo_campaign.pro_mode.needs_auth
+  - landing.S08.seo_campaign.ai_readiness_reviewed
+  - landing.S08.seo_campaign.ai_visibility_disabled
+  - landing.S08.seo_campaign.audit_completed_dev
+  - landing.S08.seo_campaign.audit_needed
+  - landing.S08.seo_campaign.fix_applying
+  - landing.S08.seo_campaign.re_audit_after_fix
+  - marketing.S08.seo_campaign.audit_completed_pro
+  - marketing.S08.seo_campaign.audit_diff_open
+  - marketing.S08.seo_campaign.audit_needed
+  member_count: 13
+  member_state_ids_note: Telemetry only — never control flow
+cluster_count: 24

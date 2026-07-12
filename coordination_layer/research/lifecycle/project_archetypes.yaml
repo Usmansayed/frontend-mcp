@@ -1,0 +1,146 @@
+# Project archetype catalog
+# Every state pins one Site class + optionally one Structure + one Rendering posture + one Origin.
+# Abbreviations are used in state IDs.
+version: 1
+generated_by: "manual research"
+notes: |
+  Archetypes describe durable project shape. They are orthogonal to lifecycle stage and situation.
+  Two archetypes can coexist (e.g., saas + monorepo). State IDs use the primary site-class abbrev.
+
+site_class:
+  - id: landing
+    abbrev: landing
+    description: "Single marketing landing page, static or lightly dynamic."
+    dominant_quality_domains: [seo, performance, accessibility]
+    typical_maturity_at_start: [M1, M2]
+  - id: marketing
+    abbrev: marketing
+    description: "Multi-page marketing site with CMS-style content."
+    dominant_quality_domains: [seo, ai_visibility, performance]
+    typical_maturity_at_start: [M2, M3]
+  - id: portfolio
+    abbrev: portfolio
+    description: "Personal / studio portfolio, image-heavy."
+    dominant_quality_domains: [performance, accessibility, design_consistency]
+    typical_maturity_at_start: [M2, M3]
+  - id: blog
+    abbrev: blog
+    description: "Editorial content, chronological posts."
+    dominant_quality_domains: [seo, ai_visibility, accessibility]
+    typical_maturity_at_start: [M2, M3]
+  - id: docs
+    abbrev: docs
+    description: "Developer or product documentation site."
+    dominant_quality_domains: [seo, accessibility, search_relevance]
+    typical_maturity_at_start: [M2, M3]
+  - id: ecommerce
+    abbrev: ecom
+    description: "Product catalog, cart, checkout."
+    dominant_quality_domains: [seo, performance, functional_correctness]
+    typical_maturity_at_start: [M3, M4]
+  - id: saas_dashboard
+    abbrev: saas
+    description: "Authenticated data-heavy UI."
+    dominant_quality_domains: [functional_correctness, accessibility, performance]
+    typical_maturity_at_start: [M2, M3, M4]
+  - id: admin_panel
+    abbrev: admin
+    description: "Internal tools UI, forms and tables."
+    dominant_quality_domains: [functional_correctness, accessibility]
+    typical_maturity_at_start: [M2, M3]
+  - id: design_system_site
+    abbrev: dssite
+    description: "Public component/style documentation site."
+    dominant_quality_domains: [design_consistency, accessibility]
+    typical_maturity_at_start: [M3, M4]
+  - id: component_library
+    abbrev: complib
+    description: "Reusable component package with docs storybook."
+    dominant_quality_domains: [design_consistency, accessibility, api_stability]
+    typical_maturity_at_start: [M3, M4]
+
+structure:
+  - id: monorepo
+    abbrev: mono
+    description: "Multiple packages sharing one repo."
+    scan_note: "code_context needs package-scoped repo_root."
+  - id: single_app
+    abbrev: single
+    description: "One package, one deployable app."
+  - id: hybrid
+    abbrev: hybrid
+    description: "Mixed SSR/CSR/SSG under one framework."
+  - id: micro_frontend
+    abbrev: mfe
+    description: "Independently deployable UI shards."
+    scan_note: "Each shard may host its own dev server."
+  - id: island_architecture
+    abbrev: island
+    description: "Static shell with hydrated islands (Astro-style)."
+
+rendering:
+  - id: csr
+    abbrev: csr
+    description: "Client-rendered single-page app."
+    seo_impact: "May need SSR/prerender for indexability."
+  - id: ssr
+    abbrev: ssr
+    description: "Server-rendered on request."
+    seo_impact: "Native SEO support."
+  - id: ssg
+    abbrev: ssg
+    description: "Statically generated at build time."
+    seo_impact: "Native SEO; watch for stale content."
+  - id: pwa
+    abbrev: pwa
+    description: "Progressive web app with service worker."
+    seo_impact: "Cache invalidation risks for updated content."
+
+origin:
+  - id: greenfield
+    abbrev: green
+    description: "No prior codebase."
+    typical_evidence_posture_at_start:
+      codebase: unknown
+      design_source: unknown
+      design_system: unknown
+      seo: unknown
+  - id: existing_mature
+    abbrev: mature
+    description: "Working product, active team."
+    typical_evidence_posture_at_start:
+      codebase: partial
+      design_source: partial
+      design_system: partial
+      seo: partial
+  - id: legacy
+    abbrev: legacy
+    description: "Old stack, sparse activity."
+    typical_evidence_posture_at_start:
+      codebase: partial
+      design_source: unknown
+      design_system: unknown
+      seo: unknown
+  - id: fork
+    abbrev: fork
+    description: "Recently forked from another codebase."
+    typical_evidence_posture_at_start:
+      codebase: partial
+      design_source: unknown
+      design_system: partial
+      seo: unknown
+  - id: enterprise_constrained
+    abbrev: entcon
+    description: "Corporate policies limit tool access (no Figma PAT, no external deps)."
+    typical_evidence_posture_at_start:
+      codebase: known
+      design_source: unknown
+      design_system: known
+      seo: partial
+
+# Cross-cutting notes
+notes_cross_cutting:
+  - site_class "landing" + origin "greenfield" is the canonical demo path.
+  - site_class "ecommerce" + rendering "csr" surfaces the classic SEO problem.
+  - structure "monorepo" adds a repo_root selection decision to every state that reads the codebase.
+  - origin "enterprise_constrained" forces many `mcp_ready` cells to false (no Figma, restricted Lighthouse).

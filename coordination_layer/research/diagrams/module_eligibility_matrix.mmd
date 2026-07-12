@@ -1,0 +1,38 @@
+flowchart TB
+  subgraph legend [Legend]
+    L1[Y = eligible]
+    L2[N = anti-pattern]
+    L3[* = evidence-dependent]
+  end
+
+  subgraph stages [Lifecycle stages]
+    S01
+    S02
+    S03
+    S04
+    S05
+    S06
+    S07
+    S08
+    S09
+    S10
+    S11
+    S12
+  end
+
+  subgraph modules [Modules]
+    VB[Visual Browser: N N Y N Y Y Y Y Y Y Y Y]
+    FQ[Frontend Quality: N N N N Y* Y Y Y Y* Y Y Y]
+    CB[Codebase: N Y Y Y Y Y Y Y Y Y Y Y]
+    FW[Framework: N Y Y Y Y Y Y Y Y Y Y Y]
+    Insp[Inspiration: N N Y N N N N N N N N N]
+    Res[Resource: N N Y* N Y Y N N N N Y N]
+    Comp[Component: N N Y* Y Y Y N N Y* N N Y]
+    DSE[Design Snapshot: N N Y* N N N Y* Y* Y Y* Y* Y*]
+    DSense[Design Sense: N N Y* N N N Y* Y* Y N N N]
+    Cons[Consistency: N N Y* N N N Y* Y* Y Y* Y* Y*]
+    Figma[Figma: N N Y* N N N N N Y* N N Y*]
+    DW[Design Workflow: N N N N Y Y Y N N N Y N]
+    SEO[SEO: N N N N N N N Y N N Y Y*]
+    AIV[AI Visibility: N N N N N N N Y* N N Y* Y*]
+  end

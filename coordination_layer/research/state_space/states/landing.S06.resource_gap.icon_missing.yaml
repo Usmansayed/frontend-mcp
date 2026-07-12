@@ -1,0 +1,36 @@
+state_id: landing.S06.resource_gap.icon_missing
+name: "Integration — icon asset missing"
+description: |
+  A required icon is not present in the codebase. Resource intelligence must locate a match.
+mcp_ready: true
+project_archetype: landing
+project_maturity: M2
+lifecycle_stage: S06_integration
+project_types: [greenfield]
+situation_class: resource_gap
+current_project_condition: |
+  UI has placeholder for icon; codebase check confirms absence.
+entry_conditions: [icon_referenced_but_missing]
+exit_conditions: [icon_added_to_codebase]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [icon_family_match]
+user_intents: [find_matching_icon]
+possible_actions: [icon_search, resource_observe_bridge_for_family, license_check]
+prerequisites: [session_id, scan_id]
+possible_next_states:
+  - landing.S06.resource_gap.icon_provisioned
+  - complib.S05.component_replacement.provider_offline
+failure_states: [global.Sxx.upstream_degraded]
+relevant_modules: [resource_intelligence, codebase_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [session_id, scan_id]
+expected_outputs: [candidate_icons]
+verification_requirements: [candidate_verified_by_user_or_family_match]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: |
+  observe-bridge is the family-aware path; direct icon_search is the query-only path.
+discarded_as_duplicate_of: null
+first_added_in: batch1

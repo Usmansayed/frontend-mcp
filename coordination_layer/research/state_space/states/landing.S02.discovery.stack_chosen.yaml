@@ -1,0 +1,56 @@
+state_id: landing.S02.discovery.stack_chosen
+name: "Discovery — stack chosen, dependencies installing"
+description: |
+  User (or agent) picked a stack (Next.js / Vite+React / Astro / SvelteKit / etc.).
+  `npm/pnpm install` in progress or just completed.
+mcp_ready: true
+
+project_archetype: landing
+project_maturity: M1
+lifecycle_stage: S02_discovery
+project_types: [greenfield]
+situation_class: new_feature
+
+current_project_condition: |
+  Repo exists. `package.json` present. Dependencies installed or installing.
+entry_conditions: [package_json_present, stack_committed_to]
+exit_conditions: [dev_server_starts_successfully]
+state_confidence: high
+
+known_evidence:
+  ui_runtime: unknown
+  codebase: partial
+  design_source: unknown
+  design_system: unknown
+  seo: unknown
+  quality: unknown
+  assets: unknown
+unknown_evidence: [dev_server_health, routes, tokens]
+
+user_intents: [get_first_page_running]
+
+possible_actions:
+  - install_dependencies
+  - run_dev_server
+  - detect_framework_metadata
+prerequisites: [node_installed]
+possible_next_states:
+  - landing.S02.discovery.dev_server_up
+  - global.Sxx.tooling_broken
+failure_states:
+  - global.Sxx.tooling_broken
+
+relevant_modules: [framework_intelligence, codebase_intelligence]
+modules_must_not_execute: [visual_browser, seo_intelligence, design_snapshot_engine, component_intelligence]
+dependencies: [repo_root]
+
+expected_outputs: [framework_detected, dev_command_known]
+verification_requirements: [package_json_valid]
+
+parent_cluster: null
+forest_id: F01
+mcp_ready_gap: null
+notes: |
+  detect_framework becomes reliable once node_modules is populated.
+discarded_as_duplicate_of: null
+first_added_in: batch1

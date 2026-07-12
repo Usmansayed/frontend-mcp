@@ -1,0 +1,70 @@
+schema_version: "1.0"
+description: Hard rules from AGENT_GUIDE.md. Loop Governor enforces these deterministically.
+
+invariants:
+  - invariant_id: INV_NEVER_CLAIM_WITHOUT_VERIFY
+    source: AGENT_GUIDE §0
+    rule: never_claim_ui_work_done_without_browser_verify_success
+    severity: hard_stop
+    governor_check: after_any_act_before_episode_complete
+
+  - invariant_id: INV_NEVER_LOOP_LOGIN
+    source: AGENT_GUIDE §0
+    rule: auth_gate_requires_human_must_stop_and_ask_user
+    severity: hard_stop
+    governor_check: on_auth_gate_envelope
+
+  - invariant_id: INV_BLOCKING_BEFORE_ADVISORY
+    source: AGENT_GUIDE §0
+    rule: read_blocking_before_advisory_warnings
+    severity: gate
+    governor_check: before_design_or_seo_capabilities
+
+  - invariant_id: INV_VERIFY_FAIL_DIFF
+    source: AGENT_GUIDE §0
+    rule: on_verify_fail_reobserve_then_browser_diff
+    severity: replan
+    governor_check: on_verify_fail
+
+  - invariant_id: INV_SINGLE_SESSION
+    source: AGENT_GUIDE §1
+    rule: do_not_start_multiple_browser_sessions_without_end
+    severity: gate
+    governor_check: before_browser_session_manage_start
+
+  - invariant_id: INV_PROBE_FORM_FIRST
+    source: AGENT_GUIDE §4
+    rule: probe_form_before_fill_unknown_forms
+    severity: gate
+    governor_check: before_form_submit_capabilities
+
+  - invariant_id: INV_INVALID_BEFORE_VALID
+    source: AGENT_GUIDE §4
+    rule: invalid_submit_check_before_valid_submit_check
+    severity: sequence
+    governor_check: playbook_invalid_before_valid_form
+
+  - invariant_id: INV_FLOW_CHECKPOINTS
+    source: AGENT_GUIDE §6
+    rule: flow_describe_gives_checkpoints_agent_verifies_each
+    severity: sequence
+    governor_check: multi_step_flow_playbooks
+
+  - invariant_id: INV_DEGRADED_NEVER_UPGRADE_VERIFY
+    source: Report 08 §3.2
+    rule: verify_capability_must_not_set_verified_when_degraded_nonempty
+    severity: hard_stop
+    governor_check: on_verify_envelope_normalize
+    unless: playbook_allows_verified_with_degradation
+
+  - invariant_id: INV_RESEARCH_STATES_NOT_CONTROL_FLOW
+    source: Architecture freeze
+    rule: research_state_ids_must_not_appear_in_runtime_control_flow
+    severity: build_ci
+    governor_check: distillation_build_and_tests
+
+  - invariant_id: INV_HOST_LLM_ONLY_REASONER
+    source: Architecture freeze
+    rule: coordinator_must_not_invoke_llm_or_replace_host_reasoning
+    severity: architecture
+    governor_check: code_review

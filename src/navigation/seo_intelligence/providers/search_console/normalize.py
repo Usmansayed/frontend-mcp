@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from navigation.seo_intelligence.evidence.identity import stable_evidence_id
 from navigation.seo_intelligence.models import SeoEvidenceKind, SeoEvidenceRef
 
 _MAX_ROWS = 50
@@ -18,16 +19,27 @@ def normalize_search_analytics(
 	rows = payload.get('rows') or []
 	evidence: list[SeoEvidenceRef] = []
 	dims = dimensions or ['query']
-	for index, row in enumerate(rows[:_MAX_ROWS]):
+	for row in rows[:_MAX_ROWS]:
 		keys = row.get('keys') or []
 		label = ' / '.join(str(k) for k in keys) if keys else '(aggregate)'
 		clicks = int(row.get('clicks') or 0)
 		impressions = int(row.get('impressions') or 0)
 		ctr = float(row.get('ctr') or 0.0)
 		position = float(row.get('position') or 0.0)
+		page_dim = ''
+		if len(keys) >= 2 and 'page' in dims:
+			page_dim = str(keys[1])
+		elif len(keys) >= 1 and dims == ['page']:
+			page_dim = str(keys[0])
 		evidence.append(
 			SeoEvidenceRef(
-				evidence_id=f'gsc:query:{index}',
+				evidence_id=stable_evidence_id(
+					provider_id,
+					SeoEvidenceKind.SEARCH_QUERY.value,
+					title=label,
+					source_ref='searchanalytics.query',
+					metric_key=label,
+				),
 				provider_id=provider_id,
 				kind=SeoEvidenceKind.SEARCH_QUERY,
 				title=label,
@@ -36,6 +48,7 @@ def normalize_search_analytics(
 					f'CTR {ctr * 100:.1f}%, avg position {position:.1f}'
 				),
 				url=site_url,
+				page_url=page_dim,
 				metric_value=position,
 				metric_unit='position',
 				severity='info',
@@ -46,6 +59,7 @@ def normalize_search_analytics(
 					'ctr': ctr,
 					'keys': keys,
 					'dimensions': dims,
+					'landingPage': page_dim,
 				},
 			)
 		)
@@ -81,7 +95,12 @@ def normalize_url_inspection(
 
 	return [
 		SeoEvidenceRef(
-			evidence_id=f'gsc:inspect:{index}',
+			evidence_id=stable_evidence_id(
+				provider_id,
+				SeoEvidenceKind.INDEX_STATUS.value,
+				page_url=inspection_url,
+				source_ref='urlInspection.index',
+			),
 			provider_id=provider_id,
 			kind=SeoEvidenceKind.INDEX_STATUS,
 			title=f'Index status: {inspection_url}',

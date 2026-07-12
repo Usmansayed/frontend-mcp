@@ -1,0 +1,49 @@
+schema_version: "1.0"
+description: Global replan triggers merged with per-capability replan_triggers in R2.
+
+triggers:
+  - trigger_id: TR_VERIFY_FAIL
+    detected_when: verify_capability_returns_regressed_posture
+    replan_action: retry_if_budget_else_debug_playbook
+    parameters:
+      max_retries_ref: episode.retry_counters.verify_loop
+
+  - trigger_id: TR_BLOCKING_NONEMPTY
+    detected_when: observe_envelope_blocking_length_gt_zero
+    replan_action: insert_stabilize_runtime_before_quality_or_design
+
+  - trigger_id: TR_DEGRADED_UPSTREAM
+    detected_when: envelope_degraded_contains_provider_unavailable
+    replan_action: follow_fallback_edge_or_skip_optional_capability
+
+  - trigger_id: TR_AUTH_REQUIRED
+    detected_when: auth_gate_requires_human_true
+    replan_action: stop_set_human_gate
+
+  - trigger_id: TR_EVIDENCE_GAP
+    detected_when: required_min_posture_not_met_for_next_capability
+    replan_action: insert_gather_capability_via_requires_edge
+
+  - trigger_id: TR_INTENT_CHANGE
+    detected_when: new_intent_frame_pushed
+    replan_action: re_resolve_cluster_and_playbook
+
+  - trigger_id: TR_INVARIANT_VIOLATION
+    detected_when: loop_governor_rule_fired
+    replan_action: stop_with_reason
+
+  - trigger_id: TR_VERIFY_EXHAUSTED
+    detected_when: verify_loop_counter_gte_budget
+    replan_action: stop_suggest_full_diagnosis
+
+  - trigger_id: TR_MCP_NOT_READY
+    detected_when: capability_mcp_ready_false_and_no_fallback
+    replan_action: route_to_fallback_or_block_with_message
+
+  - trigger_id: TR_SESSION_LOST
+    detected_when: session_invalid_or_expired
+    replan_action: browser_session_manage_start_optional_state_restore
+
+  - trigger_id: TR_DEV_SERVER_DOWN
+    detected_when: environment_probe_unreachable
+    replan_action: stop_or_single_retry_then_hand_back

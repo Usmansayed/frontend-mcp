@@ -1,0 +1,37 @@
+state_id: landing.S03.design.figma_expected
+name: "Design — Figma expected, PAT not yet provided"
+description: |
+  User references Figma designs but no PAT is configured. Figma tools cannot run.
+mcp_ready: true
+project_archetype: landing
+project_maturity: M2
+lifecycle_stage: S03_design
+project_types: [greenfield]
+situation_class: new_feature
+current_project_condition: |
+  User has a Figma file in mind; PAT is missing.
+entry_conditions: [user_mentions_figma, no_figma_context]
+exit_conditions: [pat_provided_or_figma_deferred]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: unknown, design_system: unknown, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [figma_pat, figma_file_key]
+user_intents: [connect_figma]
+possible_actions: [request_pat_from_user, defer_figma_and_use_alternative]
+prerequisites: []
+possible_next_states:
+  - landing.S03.design.figma_connected
+  - landing.S03.design.no_design_source
+  - global.Sxx.figma_connect_failed
+failure_states: [global.Sxx.figma_connect_failed]
+relevant_modules: [figma_intelligence]
+modules_must_not_execute: [visual_browser, seo_intelligence]
+dependencies: []
+expected_outputs: [figma_pat_received_or_deferred]
+verification_requirements: [pat_valid_after_receipt]
+parent_cluster: null
+forest_id: F02
+mcp_ready_gap: null
+notes: |
+  Never loop reconnect on failure — hand-off to global.figma_connect_failed.
+discarded_as_duplicate_of: null
+first_added_in: batch1

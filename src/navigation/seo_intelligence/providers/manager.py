@@ -8,7 +8,6 @@ from navigation.seo_intelligence.providers.bing.provider import BingWebmasterPro
 from navigation.seo_intelligence.providers.browser.provider import BrowserSeoProvider
 from navigation.seo_intelligence.providers.librecrawl.provider import LibreCrawlProvider
 from navigation.seo_intelligence.providers.lighthouse.provider import LighthouseProvider
-from navigation.seo_intelligence.providers.openseo.provider import OpenSeoProvider
 from navigation.seo_intelligence.providers.protocol import SeoDataProvider
 from navigation.seo_intelligence.providers.search_console.provider import SearchConsoleProvider
 
@@ -26,7 +25,6 @@ class SeoProviderManager:
 			'librecrawl': LibreCrawlProvider(),
 			'lighthouse': LighthouseProvider(),
 			'browser': BrowserSeoProvider(scan_registry=scan_registry),
-			'openseo': OpenSeoProvider(),
 		}
 
 	def get(self, provider_id: str) -> SeoDataProvider | None:

@@ -1,0 +1,35 @@
+state_id: landing.S08.seo_campaign.ai_readiness_reviewed
+name: "SEO — AI visibility block reviewed"
+description: |
+  ai_readiness block in reasoning_context inspected; ai_visibility recommendations triaged.
+mcp_ready: true
+project_archetype: landing
+project_maturity: M4
+lifecycle_stage: S08_quality
+project_types: [existing_project]
+situation_class: ai_visibility_campaign
+current_project_condition: |
+  ai_visibility findings and recs are visible; some may be actionable.
+entry_conditions: [ai_readiness_block_present]
+exit_conditions: [findings_triaged_or_dismissed]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: partial, design_source: partial, design_system: partial, seo: known, quality: partial, assets: partial}
+unknown_evidence: [ai_off_page]
+user_intents: [improve_ai_readiness]
+possible_actions: [apply_ai_visibility_fix, dismiss_finding]
+prerequisites: [audit_id]
+possible_next_states:
+  - landing.S08.seo_campaign.fix_applying
+  - marketing.S10.release_prep.regression_baseline_capture
+failure_states: []
+relevant_modules: [seo_intelligence]
+modules_must_not_execute: []
+dependencies: [audit_id]
+expected_outputs: [ai_visibility_disposition]
+verification_requirements: [ai_readiness_reduces_after_fix]
+parent_cluster: null
+forest_id: F07
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

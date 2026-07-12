@@ -1,0 +1,37 @@
+state_id: landing.S08.seo_campaign.audit_needed
+name: "SEO — audit needed on newly-live landing page"
+description: |
+  Page is verified functionally and publicly reachable; SEO baseline unknown.
+mcp_ready: true
+project_archetype: landing
+project_maturity: M4
+lifecycle_stage: S08_quality
+project_types: [existing_project]
+situation_class: seo_campaign
+current_project_condition: |
+  No prior SEO audit for this URL; graph empty or stale.
+entry_conditions: [page_verified, page_indexable]
+exit_conditions: [audit_completed_or_auth_required]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: partial, assets: partial}
+unknown_evidence: [meta, indexability_signals, ai_readiness]
+user_intents: [understand_seo_baseline]
+possible_actions: [seo_status_check, seo_audit_dev_mode, seo_audit_pro_mode]
+prerequisites: [website_url]
+possible_next_states:
+  - landing.S08.seo_campaign.audit_completed_dev
+  - marketing.S08.seo_campaign.audit_completed_pro
+  - ecom.S08.seo_campaign.pro_mode.needs_auth
+failure_states: [global.Sxx.upstream_degraded]
+relevant_modules: [seo_intelligence, visual_browser, codebase_intelligence]
+modules_must_not_execute: [figma_intelligence]
+dependencies: [scan_id, website_url]
+expected_outputs: [seo_audit]
+verification_requirements: [audit_returns_reasoning_context]
+parent_cluster: null
+forest_id: F07
+mcp_ready_gap: null
+notes: |
+  include_ai_visibility defaults to true → ai_readiness block appears.
+discarded_as_duplicate_of: null
+first_added_in: batch2

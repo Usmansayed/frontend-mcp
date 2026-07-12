@@ -1,0 +1,36 @@
+state_id: complib.S05.component_replacement.plan_ready
+name: "Component — search plan ready"
+description: |
+  A SearchPlan exists with normalized query, filters, and framework hints.
+mcp_ready: true
+project_archetype: component_library
+project_maturity: M3
+lifecycle_stage: S05_implementation
+project_types: [existing_mature]
+situation_class: component_replacement
+current_project_condition: |
+  plan_component_search returned a plan; search may run.
+entry_conditions: [search_plan_exists]
+exit_conditions: [search_results_returned]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [candidate_matches]
+user_intents: [find_candidates]
+possible_actions: [search_components]
+prerequisites: [search_plan]
+possible_next_states:
+  - complib.S05.component_replacement.candidates_ranked
+  - complib.S05.component_replacement.zero_candidates
+failure_states: [global.Sxx.upstream_degraded]
+relevant_modules: [component_intelligence, framework_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [repo_root]
+expected_outputs: [component_candidates]
+verification_requirements: [search_returned_or_degraded]
+parent_cluster: null
+forest_id: F03
+mcp_ready_gap: null
+notes: |
+  Providers include shadcn ecosystem and external registries.
+discarded_as_duplicate_of: null
+first_added_in: batch1

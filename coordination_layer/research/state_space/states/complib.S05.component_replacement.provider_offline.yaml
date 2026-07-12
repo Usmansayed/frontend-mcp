@@ -1,0 +1,36 @@
+state_id: complib.S05.component_replacement.provider_offline
+name: "Component — external registry offline"
+description: |
+  Search failed because one or more registries are unreachable; envelope carries degraded[].
+mcp_ready: true
+project_archetype: component_library
+project_maturity: M3
+lifecycle_stage: S05_implementation
+project_types: [existing_mature]
+situation_class: degraded_upstream
+current_project_condition: |
+  Partial or empty search results with degraded notes.
+entry_conditions: [search_envelope_degraded]
+exit_conditions: [provider_restored_or_alternative_used]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [full_candidate_set]
+user_intents: [continue_with_partial_or_wait]
+possible_actions: [proceed_with_partial_results, retry_later, use_local_library_only]
+prerequisites: []
+possible_next_states:
+  - complib.S05.component_replacement.candidates_ranked
+  - global.Sxx.upstream_degraded
+failure_states: [global.Sxx.upstream_degraded]
+relevant_modules: [component_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: []
+expected_outputs: [decision_on_partial_results]
+verification_requirements: [degraded_notes_surfaced_to_user]
+parent_cluster: null
+forest_id: F03
+mcp_ready_gap: null
+notes: |
+  Never treat partial as verified.
+discarded_as_duplicate_of: null
+first_added_in: batch1

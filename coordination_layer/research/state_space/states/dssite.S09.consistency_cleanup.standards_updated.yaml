@@ -1,0 +1,35 @@
+state_id: dssite.S09.consistency_cleanup.standards_updated
+name: "Consistency — design system standards updated; audits stale"
+description: |
+  Tokens or standards changed in the design source; prior audits are no longer authoritative.
+mcp_ready: true
+project_archetype: design_system_site
+project_maturity: M4
+lifecycle_stage: S09_consistency
+project_types: [existing_mature]
+situation_class: redesign
+current_project_condition: |
+  Standards updated; prior audits/exceptions must be re-evaluated.
+entry_conditions: [pdg_refresh_shows_new_standards]
+exit_conditions: [audits_rerun_with_new_standards]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: known, design_system: known, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [updated_findings]
+user_intents: [align_ui_with_new_standards]
+possible_actions: [rerun_audits, review_exceptions]
+prerequisites: [pdg_file]
+possible_next_states:
+  - dssite.S09.consistency_cleanup.multi_page_scan
+  - dssite.S09.consistency_cleanup.audit_findings_open
+failure_states: [global.Sxx.pdg_refresh_failed]
+relevant_modules: [consistency_intelligence, design_snapshot_engine]
+modules_must_not_execute: []
+dependencies: [pdg_file]
+expected_outputs: [rerun_plan]
+verification_requirements: [audits_rerun]
+parent_cluster: null
+forest_id: F08
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

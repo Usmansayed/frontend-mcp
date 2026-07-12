@@ -1,0 +1,54 @@
+state_id: landing.S04.architecture.route_plan_pending
+name: "Architecture — route plan pending decision"
+description: |
+  Options for information architecture and route layout enumerated; user has not committed yet.
+mcp_ready: true
+
+project_archetype: landing
+project_maturity: M2
+lifecycle_stage: S04_architecture
+project_types: [greenfield]
+situation_class: new_feature
+
+current_project_condition: |
+  Multiple candidate route trees drafted. Framework detected. No routes beyond default landing.
+entry_conditions: [dev_server_reachable, first_route_rendering]
+exit_conditions: [route_tree_selected]
+state_confidence: high
+
+known_evidence:
+  ui_runtime: partial
+  codebase: partial
+  design_source: unknown
+  design_system: unknown
+  seo: unknown
+  quality: unknown
+  assets: unknown
+unknown_evidence: [chosen_routes, data_flow]
+
+user_intents: [choose_routes]
+
+possible_actions:
+  - enumerate_route_options
+  - discuss_data_flow
+  - decide_and_write_plan
+prerequisites: []
+possible_next_states:
+  - landing.S04.architecture.route_plan_ready
+failure_states:
+  - global.Sxx.user_abandoned
+
+relevant_modules: [codebase_intelligence, framework_intelligence]
+modules_must_not_execute: [visual_browser, seo_intelligence, consistency_intelligence, component_intelligence]
+dependencies: [repo_root]
+
+expected_outputs: [route_plan_draft]
+verification_requirements: [user_confirmation]
+
+parent_cluster: null
+forest_id: F01
+mcp_ready_gap: null
+notes: |
+  Conversation-heavy state. Verify only that user has confirmed a route plan before proceeding.
+discarded_as_duplicate_of: null
+first_added_in: batch1

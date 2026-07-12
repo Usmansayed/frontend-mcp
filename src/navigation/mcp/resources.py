@@ -82,6 +82,12 @@ def list_resources(scans: ScanRegistry | None = None) -> list[dict[str, str]]:
 			'mimeType': 'text/markdown',
 		},
 		{
+			'uri': 'perception://figma-guide',
+			'name': 'FIGMA_AGENT_GUIDE',
+			'description': 'Figma Intelligence — PAT connect, normalized design context (read before figma tools)',
+			'mimeType': 'text/markdown',
+		},
+		{
 			'uri': 'perception://eval/validation-form',
 			'name': 'Validation Form Eval',
 			'description': 'M3 eval scenario — complete using AGENT_GUIDE §4 form playbook',
@@ -171,6 +177,19 @@ def read_resource(uri: str, scans: ScanRegistry | None = None) -> tuple[str, str
 		)
 		if not path.is_file():
 			raise FileNotFoundError(f'SEO_AGENT_GUIDE.md not found at {path}')
+		return 'text/markdown', path.read_text(encoding='utf-8'), False
+
+	if uri == 'perception://figma-guide':
+		path = (
+			PROJECT_ROOT
+			/ 'src'
+			/ 'navigation'
+			/ 'figma_intelligence'
+			/ 'docs'
+			/ 'FIGMA_AGENT_GUIDE.md'
+		)
+		if not path.is_file():
+			raise FileNotFoundError(f'FIGMA_AGENT_GUIDE.md not found at {path}')
 		return 'text/markdown', path.read_text(encoding='utf-8'), False
 
 	if uri == 'perception://eval/validation-form':

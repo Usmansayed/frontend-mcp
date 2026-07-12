@@ -292,49 +292,31 @@ Agent edits file → perception_verify on live UI
 
 ---
 
-## Figma Intelligence — Community → structured knowledge (scaffold)
+## Figma Intelligence — connection + coordination (v2)
 
-Figma Intelligence mirrors the Component Intelligence pattern: **orchestration in our MCP, execution in replaceable providers**. Figma Console MCP is the first provider — not the product.
+Figma Intelligence is **not** another design engine. It connects the user's Figma account to Frontend Perception MCP via **southleft/figma-console-mcp** and returns **normalized design context** for sibling modules.
 
 ```text
-Agent query ("saas dashboard inspiration")
+User → perception_figma_connect (PAT)
         ↓
-┌───────────────────┐
-│  Intent Parser    │  inspire · extract DS · compare · reuse · learn
-└─────────┬─────────┘
-          ↓
-┌───────────────────┐
-│  Search Planner   │  provider routing + Framework/Component hints
-└─────────┬─────────┘
-          ↓
-┌───────────────────┐
-│  Community        │  Pass 1: primary · Pass 2: synonyms + styles
-│  Intelligence ⭐  │  Pass 3: component + industry expansion
-└─────────┬─────────┘
-          ↓
-┌───────────────────┐
-│  Discovery        │  execute ranked queries (provider — later)
-└─────────┬─────────┘
-          ↓
-┌───────────────────┐
-│  Candidate        │  CandidateProfile: industry, page_type, components,
-│  Intelligence ⭐  │  framework, style, patterns, confidence
-└─────────┬─────────┘
-          ↓
-┌───────────────────┐
-│  Ranking + Eval   │  score without re-opening Figma files
-└───────────────────┘
+Connection Manager → Session Manager → Console MCP Adapter
+        ↓
+Context Normalizer → Design Cache → Coordination Layer
+        ↓
+FigmaDesignContext → Agent → Design Sense / Consistency / Components / …
 ```
 
 **Creative choices:**
 
-1. **Providers return facts; intelligence decides value** — Design Sense scores quality; Consistency scores fit; Component scores reuse; Framework scores compatibility.
+1. **Orchestrate, don't reimplement** — All Figma API/MCP tool names stay inside the adapter.
 
-2. **FigmaProvider protocol** — Swap Figma Console, Official Figma MCP, Figwright, or REST without changing pipeline stages.
+2. **Connect once** — PAT stored locally; session tracks file, page, frame, selection.
 
-3. **Provider wiring last** — Figma Console executes ranked queries only after Community + Candidate brains are solid.
+3. **Cache intelligently** — TTL cache keyed by session; `refresh` bypasses when context may have changed.
 
-See [features/figma_intelligence.md](./features/figma_intelligence.md) and ADR-020.
+4. **Legacy pipeline retained** — Community discovery/ranking remains for backward compatibility; new workflows use connect + context only.
+
+See [features/figma_intelligence.md](./features/figma_intelligence.md) and ADR-026.
 
 ---
 

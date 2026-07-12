@@ -1,0 +1,56 @@
+state_id: landing.S02.discovery.first_route_rendering
+name: "Discovery — first real route rendering"
+description: |
+  Not the framework default anymore — a project-owned page renders. Blank-page path resolved.
+mcp_ready: true
+
+project_archetype: landing
+project_maturity: M2
+lifecycle_stage: S02_discovery
+project_types: [greenfield]
+situation_class: new_feature
+
+current_project_condition: |
+  A real, project-owned route renders content, however minimal. Session is stable.
+entry_conditions: [content_visible, session_id_stable]
+exit_conditions: [route_plan_ready_or_design_started]
+state_confidence: high
+
+known_evidence:
+  ui_runtime: partial
+  codebase: partial
+  design_source: unknown
+  design_system: unknown
+  seo: unknown
+  quality: unknown
+  assets: unknown
+unknown_evidence: [design_direction, additional_routes]
+
+user_intents: [design_visuals, plan_more_pages]
+
+possible_actions:
+  - propose_design_direction
+  - map_planned_routes
+  - capture_baseline_scan
+prerequisites: [session_id, scan_id]
+possible_next_states:
+  - landing.S04.architecture.route_plan_pending
+  - landing.S04.architecture.route_plan_ready
+  - landing.S03.design.no_design_source
+failure_states:
+  - global.Sxx.dev_server_down
+
+relevant_modules: [visual_browser, codebase_intelligence, framework_intelligence]
+modules_must_not_execute: [seo_intelligence, figma_intelligence, consistency_intelligence]
+dependencies: [session_id, scan_id]
+
+expected_outputs: [baseline_scan_id]
+verification_requirements: [route_owned_by_project, no_blocking]
+
+parent_cluster: null
+forest_id: F01
+mcp_ready_gap: null
+notes: |
+  Handoff point to F02 (design decisions) or F04 (trivial single-page implementation).
+discarded_as_duplicate_of: null
+first_added_in: batch1

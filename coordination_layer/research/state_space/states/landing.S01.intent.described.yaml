@@ -1,0 +1,56 @@
+state_id: landing.S01.intent.described
+name: "Landing page — intent captured"
+description: |
+  User's goal is describable in one sentence (audience, purpose, tone).
+  No code yet. Ready to move into discovery.
+mcp_ready: true
+
+project_archetype: landing
+project_maturity: M0
+lifecycle_stage: S01_intent
+project_types: [greenfield]
+situation_class: new_feature
+
+current_project_condition: |
+  Written intent statement exists; user has confirmed it.
+entry_conditions: [intent_statement_confirmed]
+exit_conditions: [discovery_started_or_stack_pre_chosen]
+state_confidence: high
+
+known_evidence:
+  ui_runtime: unknown
+  codebase: unknown
+  design_source: unknown
+  design_system: unknown
+  seo: unknown
+  quality: unknown
+  assets: unknown
+unknown_evidence: [stack_preference, hosting, deadline]
+
+user_intents: [proceed_to_stack_choice]
+
+possible_actions:
+  - propose_stack_options
+  - ask_about_stack_preference
+  - propose_scaffolding_command
+prerequisites: []
+possible_next_states:
+  - landing.S02.discovery.no_repo
+  - landing.S02.discovery.stack_chosen
+failure_states:
+  - global.Sxx.user_abandoned
+
+relevant_modules: []
+modules_must_not_execute: [visual_browser, seo_intelligence]
+dependencies: []
+
+expected_outputs: [intent_document]
+verification_requirements: [intent_written]
+
+parent_cluster: null
+forest_id: F01
+mcp_ready_gap: null
+notes: |
+  Boundary between conversation and tooling. Framework Intelligence may run once a repo exists.
+discarded_as_duplicate_of: null
+first_added_in: batch1

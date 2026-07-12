@@ -1,0 +1,35 @@
+state_id: global.Sxx.pdg_refresh_failed
+name: "Global — PDG refresh failed"
+description: |
+  design_graph_refresh could not build a graph (bad tokens file, missing source, IO error).
+mcp_ready: true
+project_archetype: design_system_site
+project_maturity: M3
+lifecycle_stage: Sxx_any
+project_types: [existing_mature]
+situation_class: degraded_upstream
+current_project_condition: |
+  PDG missing/empty; downstream consistency tools cannot audit meaningfully.
+entry_conditions: [refresh_returned_error_or_empty]
+exit_conditions: [refresh_succeeds_or_deferred]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: unknown, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [source_of_failure]
+user_intents: [refresh_or_defer]
+possible_actions: [inspect_refresh_error, fix_tokens_or_source, retry_refresh]
+prerequisites: []
+possible_next_states:
+  - dssite.S09.consistency_cleanup.pdg_seeded_from_snapshot
+  - dssite.S09.consistency_cleanup.pdg_empty
+failure_states: []
+relevant_modules: [consistency_intelligence]
+modules_must_not_execute: []
+dependencies: []
+expected_outputs: [refresh_outcome]
+verification_requirements: [pdg_populated_after_retry]
+parent_cluster: null
+forest_id: F12
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

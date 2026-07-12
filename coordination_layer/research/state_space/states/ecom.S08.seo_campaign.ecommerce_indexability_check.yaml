@@ -1,0 +1,35 @@
+state_id: ecom.S08.seo_campaign.ecommerce_indexability_check
+name: "SEO — ecommerce indexability check"
+description: |
+  Ecommerce site with CSR risk: verify indexable rendering for product pages.
+mcp_ready: true
+project_archetype: ecommerce
+project_maturity: M5
+lifecycle_stage: S08_quality
+project_types: [existing_mature, csr]
+situation_class: seo_campaign
+current_project_condition: |
+  Rendering evidence needed to confirm product pages are indexable.
+entry_conditions: [product_pages_verified_ui]
+exit_conditions: [indexability_verified]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: partial, design_source: partial, design_system: partial, seo: partial, quality: partial, assets: partial}
+unknown_evidence: [prerender_status]
+user_intents: [ensure_products_indexable]
+possible_actions: [seo_audit_with_scan_id, cross_check_with_lighthouse_seo]
+prerequisites: [scan_id, website_url]
+possible_next_states:
+  - marketing.S08.seo_campaign.audit_completed_pro
+  - marketing.S08.lighthouse_seo_audit.findings
+failure_states: [global.Sxx.upstream_degraded]
+relevant_modules: [seo_intelligence, frontend_quality, visual_browser]
+modules_must_not_execute: []
+dependencies: [scan_id]
+expected_outputs: [indexability_evidence]
+verification_requirements: [product_page_html_contains_key_content]
+parent_cluster: null
+forest_id: F07
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

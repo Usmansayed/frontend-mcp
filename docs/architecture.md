@@ -38,7 +38,7 @@ src/navigation/
 ├── design_sense_intelligence/    # UX heuristics, design reasoning
 ├── consistency_intelligence/     # Project Design Graph + consistency
 ├── inspiration_intelligence/       # Public gallery inspiration (Dribbble, Behance, …)
-├── figma_intelligence/           # User Figma account + design systems
+├── figma_intelligence/           # Figma connection + normalized design context
 ├── resource_intelligence/        # Creative assets (icons, fonts, photos, …)
 ├── seo_intelligence/             # SEO orchestration (GSC, GA4, LibreCrawl, …)
 ├── mcp/                          # MCP server (thin handlers)

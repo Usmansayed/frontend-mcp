@@ -1,0 +1,143 @@
+suite_version: "1.0.0"
+title: Execution Validation Workflows
+description: >
+  Deterministic execution-runtime validation — retry, idempotency, cancellation,
+  observability. Separate from CVW coordination workflows.
+
+workflows:
+  - workflow_id: EVW-01
+    title: Safe tool idempotency dedupe
+    description: Executing the same safe tool twice returns replay without duplicate handler work
+    steps:
+      - tool: perception_flow_describe
+        arguments:
+          flow_id: checkout
+        expect:
+          replayed: false
+          ok: true
+      - tool: perception_flow_describe
+        arguments:
+          flow_id: checkout
+        expect:
+          replayed: true
+          ok: true
+
+  - workflow_id: EVW-02
+    title: Transient failure retry then success
+    description: Safe tool retries on injected transient failure
+    failure_injection:
+      perception_flow_describe:
+        - transient
+    steps:
+      - tool: perception_flow_describe
+        arguments:
+          flow_id: checkout
+        expect:
+          ok: true
+          min_attempts: 2
+
+  - workflow_id: EVW-03
+    title: Permanent failure aborts without retry
+    description: Unknown tool classified permanent — single attempt
+    steps:
+      - tool: perception_nonexistent_tool
+        arguments: {}
+        expect:
+          ok: false
+          failure_class: permanent
+          max_attempts: 1
+
+  - workflow_id: EVW-04
+    title: Mutating tool no auto-dedupe
+    description: Mutating tools always invoke handler even with same args
+    steps:
+      - tool: perception_verify
+        arguments:
+          session_id: evw04
+        expect:
+          replayed: false
+      - tool: perception_verify
+        arguments:
+          session_id: evw04
+        expect:
+          replayed: false
+
+  - workflow_id: EVW-05
+    title: Correlation ID propagation
+    description: Compiled step shares correlation across tools
+    compiled_step:
+      capability_id: evw05
+      semantic_action: observe
+      tools:
+        - tool: perception_flow_describe
+          arguments:
+            flow_id: checkout
+        - tool: perception_code_context
+          arguments:
+            repo_root: "."
+    expect:
+      shared_correlation: true
+      min_results: 2
+
+  - workflow_id: EVW-06
+    title: Execution metadata on envelope
+    description: data.execution attached to every envelope
+    steps:
+      - tool: perception_flow_describe
+        arguments:
+          flow_id: checkout
+        expect:
+          has_execution_metadata: true
+
+  - workflow_id: EVW-07
+    title: Cancellation aborts execution
+    description: Cancelled token stops before handler completes
+    cancel_before: true
+    steps:
+      - tool: perception_flow_describe
+        arguments:
+          flow_id: checkout
+        expect:
+          cancelled: true
+
+  - workflow_id: EVW-08
+    title: Recovery hint on verify failure
+    description: Verify failure maps to TR_VERIFY_FAIL recovery trigger
+    failure_injection:
+      perception_verify:
+        - permanent
+    steps:
+      - tool: perception_verify
+        arguments:
+          session_id: evw08
+        expect:
+          ok: false
+          recovery_trigger: TR_VERIFY_FAIL
+
+  - workflow_id: EVW-09
+    title: Metrics and trace recording
+    description: Execution trace and metrics updated after calls
+    steps:
+      - tool: perception_flow_describe
+        arguments:
+          flow_id: checkout
+        expect:
+          ok: true
+    expect_metrics:
+      total_calls_min: 1
+
+  - workflow_id: EVW-10
+    title: Compiled step stops on first failure
+    description: Sequential execution halts after permanent failure
+    compiled_step:
+      capability_id: evw10
+      semantic_action: test
+      tools:
+        - tool: perception_nonexistent_tool
+          arguments: {}
+        - tool: perception_flow_describe
+          arguments:
+            flow_id: checkout
+    expect:
+      ok: false
+      max_results: 1

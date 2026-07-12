@@ -1,0 +1,36 @@
+state_id: marketing.S07.ui_bug.console_error_detected
+name: "Debug — console error blocking rendering"
+description: |
+  perception_console_get returns errors that correlate with visible UI failure.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S07_verification
+project_types: [existing_mature]
+situation_class: functional_bug
+current_project_condition: |
+  Page renders partially; console has error stack traces.
+entry_conditions: [console_errors_present, agent_summary_blocking_non_empty]
+exit_conditions: [error_removed_and_verify_passes]
+state_confidence: high
+known_evidence: {ui_runtime: regressed, codebase: partial, design_source: unknown, design_system: partial, seo: unknown, quality: partial, assets: unknown}
+unknown_evidence: [root_cause]
+user_intents: [remove_console_error]
+possible_actions: [correlate_stack_to_code, apply_fix, re_observe, verify_no_errors]
+prerequisites: [session_id, repo_root]
+possible_next_states:
+  - marketing.S07.new_feature.change_scope_ready
+  - global.Sxx.verify_loop_exhausted
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, frontend_quality, codebase_intelligence]
+modules_must_not_execute: [seo_intelligence, consistency_intelligence]
+dependencies: [session_id, repo_root]
+expected_outputs: [console_clean]
+verification_requirements: [console_error_gone_after_fix]
+parent_cluster: null
+forest_id: F05
+mcp_ready_gap: null
+notes: |
+  Follows AGENT_GUIDE §3 debugging pattern.
+discarded_as_duplicate_of: null
+first_added_in: batch1

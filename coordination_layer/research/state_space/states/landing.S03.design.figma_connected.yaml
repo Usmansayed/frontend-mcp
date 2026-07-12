@@ -1,0 +1,37 @@
+state_id: landing.S03.design.figma_connected
+name: "Design — Figma connected, context available"
+description: |
+  perception_figma_context returns a normalized FigmaDesignContext.
+mcp_ready: true
+project_archetype: landing
+project_maturity: M2
+lifecycle_stage: S03_design
+project_types: [greenfield]
+situation_class: new_feature
+current_project_condition: |
+  Figma PAT stored; frames, tokens, and styles accessible for the target file.
+entry_conditions: [figma_pat_valid, file_key_known]
+exit_conditions: [design_source_known_and_ready_to_implement]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: known, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [pdg_populated]
+user_intents: [drive_build_from_figma]
+possible_actions: [normalize_figma_context, seed_pdg_from_figma, plan_implementation_from_frames]
+prerequisites: [figma_pat, file_key]
+possible_next_states:
+  - dssite.S09.consistency_cleanup.pdg_seeded_from_figma
+  - landing.S04.architecture.route_plan_ready
+  - landing.S05.new_feature.landing_hero.stub
+failure_states: [global.Sxx.figma_connect_failed]
+relevant_modules: [figma_intelligence, consistency_intelligence, design_snapshot_engine]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [figma_context]
+expected_outputs: [figma_design_context]
+verification_requirements: [figma_context_non_empty]
+parent_cluster: null
+forest_id: F02
+mcp_ready_gap: null
+notes: |
+  Multi-file Figma is a roadmap gap; treat single-file case as reference behavior.
+discarded_as_duplicate_of: null
+first_added_in: batch1

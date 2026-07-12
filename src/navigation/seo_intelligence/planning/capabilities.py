@@ -1,29 +1,28 @@
-"""SEO capability catalog — routing, fallbacks, and cost metadata."""
+"""SEO capability catalog — provider routing only (no SEO reasoning logic)."""
 from __future__ import annotations
 
 from navigation.seo_intelligence.models import SeoCapabilitySpec
 
-# Capability routing: primary → fallbacks → final_fallback
-# OpenSEO is never primary for crawl/CWV — LibreCrawl/Lighthouse/Browser win.
+# Evidence providers: GSC, GA4, LibreCrawl, Lighthouse, Browser Intelligence.
+# Planner orchestrates collection — reasoning lives in the recommendation engine.
 
 CAPABILITY_CATALOG: dict[str, SeoCapabilitySpec] = {
 	'search_queries': SeoCapabilitySpec(
 		capability_id='search_queries',
 		display_name='Search queries (clicks, impressions, CTR)',
 		primary_provider='search-console',
-		fallback_providers=['analytics-ga4', 'openseo'],
+		fallback_providers=['analytics-ga4'],
 		requires_api_key=False,
 		requires_paid_plan=False,
-		requires_external_provider=False,
 		optional=False,
 		fallback_available=True,
-		notes='Prefer direct GSC OAuth; OpenSEO only if GSC unavailable and user has OpenSEO+GSC wired',
+		notes='Professional mode — requires Google OAuth',
 	),
 	'index_status': SeoCapabilitySpec(
 		capability_id='index_status',
 		display_name='Index coverage and crawl issues',
 		primary_provider='search-console',
-		fallback_providers=['openseo', 'librecrawl', 'browser'],
+		fallback_providers=['librecrawl', 'browser'],
 		requires_api_key=False,
 		requires_paid_plan=False,
 		optional=False,
@@ -38,6 +37,7 @@ CAPABILITY_CATALOG: dict[str, SeoCapabilitySpec] = {
 		requires_paid_plan=False,
 		optional=False,
 		fallback_available=True,
+		notes='Professional mode — requires Google OAuth',
 	),
 	'technical_crawl': SeoCapabilitySpec(
 		capability_id='technical_crawl',
@@ -49,18 +49,16 @@ CAPABILITY_CATALOG: dict[str, SeoCapabilitySpec] = {
 		requires_paid_plan=False,
 		optional=False,
 		fallback_available=True,
-		notes='Never route technical crawl to OpenSEO — LibreCrawl is authoritative',
 	),
 	'core_web_vitals': SeoCapabilitySpec(
 		capability_id='core_web_vitals',
 		display_name='Core Web Vitals and lab performance',
 		primary_provider='lighthouse',
-		fallback_providers=['search-console', 'browser'],
+		fallback_providers=['browser'],
 		requires_api_key=False,
 		requires_paid_plan=False,
 		optional=False,
 		fallback_available=True,
-		notes='Cross-analyze Lighthouse + GSC + Browser; OpenSEO not used',
 	),
 	'rendering_verification': SeoCapabilitySpec(
 		capability_id='rendering_verification',
@@ -75,90 +73,27 @@ CAPABILITY_CATALOG: dict[str, SeoCapabilitySpec] = {
 	),
 	'keyword_research': SeoCapabilitySpec(
 		capability_id='keyword_research',
-		display_name='Keyword ideas, volume, difficulty, intent',
+		display_name='Keyword ideas from owned search data',
 		primary_provider='search-console',
-		fallback_providers=['openseo'],
+		fallback_providers=[],
 		final_fallback='no_data',
 		requires_api_key=False,
 		requires_paid_plan=False,
-		openseo_requires_paid=True,
-		requires_external_provider=True,
-		external_provider='dataforseo',
-		optional=True,
-		fallback_available=True,
-		notes='GSC queries first; OpenSEO+DataForSEO only for deeper research when allowed',
-	),
-	'serp_analysis': SeoCapabilitySpec(
-		capability_id='serp_analysis',
-		display_name='Live SERP inspection and competitors',
-		primary_provider='openseo',
-		fallback_providers=[],
-		final_fallback='no_data',
-		requires_api_key=True,
-		requires_paid_plan=True,
-		requires_external_provider=True,
-		external_provider='dataforseo',
 		optional=True,
 		fallback_available=False,
-		notes='No free equivalent — only when allow_paid_providers',
-	),
-	'domain_intelligence': SeoCapabilitySpec(
-		capability_id='domain_intelligence',
-		display_name='Domain overview, ranked keywords, visibility',
-		primary_provider='openseo',
-		fallback_providers=['search-console'],
-		final_fallback='no_data',
-		requires_api_key=True,
-		openseo_requires_paid=True,
-		requires_external_provider=True,
-		external_provider='dataforseo',
-		optional=True,
-		fallback_available=True,
-	),
-	'backlinks': SeoCapabilitySpec(
-		capability_id='backlinks',
-		display_name='Backlink profile and referring domains',
-		primary_provider='openseo',
-		fallback_providers=[],
-		final_fallback='unavailable',
-		requires_api_key=True,
-		requires_paid_plan=True,
-		requires_external_provider=True,
-		external_provider='dataforseo',
-		optional=True,
-		fallback_available=False,
-		notes='Explicitly not built in MCP — OpenSEO+DataForSEO only when user opts in',
-	),
-	'rank_tracking': SeoCapabilitySpec(
-		capability_id='rank_tracking',
-		display_name='Keyword position tracking over time',
-		primary_provider='openseo',
-		fallback_providers=['search-console'],
-		final_fallback='no_data',
-		requires_api_key=True,
-		openseo_requires_paid=True,
-		requires_external_provider=True,
-		external_provider='dataforseo',
-		optional=True,
-		fallback_available=True,
-	),
-	'ai_visibility': SeoCapabilitySpec(
-		capability_id='ai_visibility',
-		display_name='AI search visibility and citations',
-		primary_provider='openseo',
-		fallback_providers=[],
-		final_fallback='no_data',
-		requires_api_key=True,
-		requires_paid_plan=True,
-		requires_external_provider=True,
-		external_provider='dataforseo',
-		optional=True,
-		fallback_available=False,
+		notes='Professional mode — GSC query evidence',
 	),
 }
 
-# Default audit bundle — free-first, no OpenSEO unless intents request it
-DEFAULT_AUDIT_CAPABILITIES: list[str] = [
+# Development SEO — no authentication; validate while building.
+DEVELOPMENT_AUDIT_CAPABILITIES: list[str] = [
+	'technical_crawl',
+	'core_web_vitals',
+	'rendering_verification',
+]
+
+# Professional SEO — live search data + technical evidence.
+PROFESSIONAL_AUDIT_CAPABILITIES: list[str] = [
 	'search_queries',
 	'index_status',
 	'traffic_metrics',
@@ -166,9 +101,5 @@ DEFAULT_AUDIT_CAPABILITIES: list[str] = [
 	'core_web_vitals',
 ]
 
-# Capabilities OpenSEO must never own (planner hard block)
-OPENSEO_BLOCKED_CAPABILITIES: frozenset[str] = frozenset({
-	'technical_crawl',
-	'core_web_vitals',
-	'rendering_verification',
-})
+# Backward-compatible alias
+DEFAULT_AUDIT_CAPABILITIES = PROFESSIONAL_AUDIT_CAPABILITIES

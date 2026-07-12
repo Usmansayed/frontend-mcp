@@ -1,0 +1,76 @@
+{
+  "bundle_version": "1.0.0",
+  "generated_at": "2026-07-12T17:54:17.632000+00:00",
+  "source_git_sha": "de75dac2486b6ecebf6d963eabeb1e634ebae162",
+  "research_state_count": 150,
+  "architecture_status": "frozen",
+  "principles": [
+    "capabilities_not_modules",
+    "host_llm_sole_reasoner",
+    "research_states_never_control_flow",
+    "capability_ids_stable_tools_via_r8"
+  ],
+  "artifacts": {
+    "anti_patterns": {
+      "path": "anti_patterns.v1.yaml",
+      "sha256": "9c0d62b5d3dff959c325de0ecd67a75c791701500dd27be2012e64a2f48be079",
+      "bytes": 2726
+    },
+    "capability_graph": {
+      "path": "capability_graph.v1.yaml",
+      "sha256": "45cadcef7b9622a03e6ac11998ed84bd73ee42d83db5bc730153150d349ab6e1",
+      "bytes": 22465
+    },
+    "cluster_registry": {
+      "path": "cluster_registry.v1.yaml",
+      "sha256": "16cbcb91b8e21e9a54cbff038e892ebf67435de7cddbb1d1b79b370f01c640f6",
+      "bytes": 14251
+    },
+    "decision_heuristics": {
+      "path": "decision_heuristics.v1.yaml",
+      "sha256": "f2955940c26375466b349cc821f7737b4588f1297cebd29f3c3944d288f53308",
+      "bytes": 8317
+    },
+    "evidence_lattice": {
+      "path": "evidence_lattice.v1.yaml",
+      "sha256": "04eff4490bce12bf0292d8d5517f9035b65b8676f96238440e8ec3ceef36ba2e",
+      "bytes": 854
+    },
+    "invariant_registry": {
+      "path": "invariant_registry.v1.yaml",
+      "sha256": "19a97930b8762f6ffebf17deb71c64ef1976437eac35b3802c0aeb589a58978a",
+      "bytes": 2365
+    },
+    "playbook_templates": {
+      "path": "playbook_templates.v1.yaml",
+      "sha256": "468840ba0e1e319161438663609aa43170f088090c821e4b940e293a6df17b6c",
+      "bytes": 7254
+    },
+    "project_situation_model.schema": {
+      "path": "project_situation_model.schema.json",
+      "sha256": "ae37dfeea809a6d93f13c83be09c61c449271332f145e3dbd699bf3a41d250b7",
+      "bytes": 7419
+    },
+    "replan_registry": {
+      "path": "replan_registry.v1.yaml",
+      "sha256": "604975edb9c798f140339e4c8361efffb5c104cc050c037214c36a7ae55a945a",
+      "bytes": 1754
+    },
+    "state_lexicon": {
+      "path": "state_lexicon.v1.json",
+      "sha256": "065a31f7bc22ee881cf9b84a226f6ab907d9e71c9e1b333f2b2a31bbab72df6b",
+      "bytes": 59934
+    },
+    "tool_bindings": {
+      "path": "tool_bindings.v1.yaml",
+      "sha256": "b816502133f63bf402ec2bd8d0c4582a09d9ab6e0d4535a8a43c3a5b63b21bdd",
+      "bytes": 9613
+    }
+  },
+  "capability_counts": {
+    "T1": 32,
+    "total": 32,
+    "edges": 8,
+    "mcp_ready_false": 1
+  }
+}

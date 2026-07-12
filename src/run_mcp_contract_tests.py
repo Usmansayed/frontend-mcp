@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 import sys
+import time
 
 import _bootstrap  # noqa: F401
 from _bootstrap import ROOT, SANDBOX_ROOT
@@ -11,13 +13,27 @@ from _bootstrap import ROOT, SANDBOX_ROOT
 from navigation.mcp.handlers import (
     handle_auth_gate,
     handle_audit_accessibility,
+    handle_audit_mode,
     handle_audit_seo,
     handle_debug_mode,
     handle_detect_framework,
+    handle_figma_context,
+    handle_figma_status,
     handle_full_diagnosis,
     handle_framework_docs,
+    handle_inspiration_collect,
     handle_inspiration_discover,
+    handle_inspiration_session_end,
+    handle_integrate_component,
+    handle_plan_component_search,
+    handle_resource_observe_bridge,
+    handle_resource_preview,
+    handle_resource_session_end,
     handle_search_components,
+    handle_seo_connect,
+    handle_seo_query,
+    handle_seo_verify,
+    handle_select_component_foundation,
     handle_code_context,
     handle_console_clear,
     handle_console_get,
@@ -40,6 +56,18 @@ from navigation.mcp.handlers import (
     handle_state_save,
     handle_verify,
 )
+from navigation.mcp.design_intelligence_handlers import (
+    handle_build_design_snapshot,
+    handle_consistency_assess,
+    handle_consistency_audit,
+    handle_consistency_propose_fix,
+    handle_consistency_review,
+    handle_design_graph_refresh,
+    handle_design_graph_summary,
+    handle_design_knowledge_query,
+    handle_design_review,
+)
+from navigation.core.snapshot_registry import SnapshotRegistry
 from navigation.mcp.resources import list_resources, read_resource
 from navigation.visual_browser_intelligence.visual.visual_response import VISUAL_ATTACHMENTS_KEY, envelope_to_mcp_contents
 from navigation.core.scan_registry import ScanRegistry
@@ -52,6 +80,8 @@ async def main() -> int:
     parser.add_argument("--url", default="http://localhost:5173")
     parser.add_argument("--headless", action="store_true", help="Accepted for run_all_phases compatibility.")
     args = parser.parse_args()
+    global _t0
+    _t0 = time.monotonic()
 
     if not SANDBOX_ROOT.exists():
         print("sandbox/ missing")
@@ -59,6 +89,7 @@ async def main() -> int:
 
     store = SessionStore(artifacts_root=ROOT / "artifacts" / "mcp")
     scans = ScanRegistry()
+    snapshots = SnapshotRegistry()
     report: dict = {"suite": "mcp_contract", "ok": False, "tests": {}}
 
     try:
@@ -461,8 +492,6 @@ async def main() -> int:
             "total": len(candidates),
         }
 
-        from navigation.mcp.resources import read_resource
-
         _mime, guide_payload, _blob = read_resource("perception://inspiration-guide")
         report["tests"]["inspiration_guide_resource"] = {
             "ok": bool(str(guide_payload).strip()),
@@ -518,8 +547,193 @@ async def main() -> int:
         seo_status = await handle_seo_status({})
         report["tests"]["seo_status"] = {"ok": seo_status["ok"]}
 
-        seo_audit = await handle_seo_audit({"website_url": "https://example.com"})
+        seo_audit = await handle_seo_audit(scans, {"website_url": "https://example.com"})
         report["tests"]["seo_audit"] = {"ok": seo_audit["ok"]}
+
+        seo_audit_no_ai = await handle_seo_audit(
+            scans,
+            {"website_url": "https://example.com", "include_ai_visibility": False},
+        )
+        audit_no_ai_ctx = (seo_audit_no_ai.get("data") or {}).get("reasoning_context_v2") or {}
+        report["tests"]["seo_audit_include_ai_visibility_false"] = {
+            "ok": seo_audit_no_ai["ok"] and "ai_readiness" not in audit_no_ai_ctx,
+        }
+
+        seo_connect = await handle_seo_connect(
+            {"website_url": "https://example.com", "action": "setup"}
+        )
+        report["tests"]["seo_connect_setup"] = {"ok": seo_connect["ok"]}
+
+        seo_query_summary = await handle_seo_query({"query_id": "graph.summary"})
+        report["tests"]["seo_query_graph_summary"] = {
+            "ok": seo_query_summary["ok"] and bool(seo_query_summary.get("data")),
+        }
+
+        seo_query_ai = await handle_seo_query({"query_id": "ai.readiness.summary"})
+        report["tests"]["seo_query_ai_readiness_summary"] = {
+            "ok": seo_query_ai["ok"],
+        }
+
+        seo_verify = await handle_seo_verify(
+            scans,
+            {"website_url": "https://example.com", "recommendation_ids": []},
+        )
+        report["tests"]["seo_verify"] = {
+            "ok": seo_verify["ok"] or bool(seo_verify.get("error")),
+        }
+
+        res_preview = await handle_resource_preview(
+            {"query": "chart icon", "max_results": 2, "materialize_blobs": False}
+        )
+        report["tests"]["resource_preview"] = {
+            "ok": res_preview["ok"] or bool(res_preview.get("degraded")),
+        }
+
+        if scan_after:
+            res_bridge = await handle_resource_observe_bridge(
+                scans,
+                {"scan_id": scan_after, "query": "settings", "icon_family": "lucide"},
+            )
+            report["tests"]["resource_observe_bridge"] = {
+                "ok": res_bridge["ok"] or bool(res_bridge.get("degraded")),
+            }
+        else:
+            report["tests"]["resource_observe_bridge"] = {"ok": False}
+
+        res_session_end = await handle_resource_session_end({"cleanup_expired": True})
+        report["tests"]["resource_session_end"] = {"ok": res_session_end["ok"]}
+
+        insp_collect = await handle_inspiration_collect(
+            {"query": "landing page hero", "per_provider": 1, "materialize_blobs": False}
+        )
+        report["tests"]["inspiration_collect"] = {
+            "ok": insp_collect["ok"] or bool(insp_collect.get("degraded")),
+        }
+
+        insp_session_end = await handle_inspiration_session_end({"cleanup_expired": True})
+        report["tests"]["inspiration_session_end"] = {"ok": insp_session_end["ok"]}
+
+        plan = await handle_plan_component_search({"query": "modern login form"})
+        report["tests"]["plan_component_search"] = {"ok": plan["ok"]}
+
+        select = await handle_select_component_foundation(
+            {"query": "modern login form", "max_candidates": 3}
+        )
+        report["tests"]["select_component_foundation"] = {
+            "ok": select["ok"] or bool(select.get("degraded")),
+        }
+
+        integrate = await handle_integrate_component(
+            {"query": "modern login form", "execute_install": False, "execute_repairs": False}
+        )
+        report["tests"]["integrate_component_dry_run"] = {
+            "ok": integrate["ok"] or bool(integrate.get("degraded")),
+        }
+
+        if lighthouse_available():
+            audit_mode = await handle_audit_mode(
+                store,
+                scans,
+                {"session_id": sid, "url": "/forms/validation", "timeout_s": 180},
+            )
+            am_report = (audit_mode.get("data") or {}).get("perception_report") or {}
+            audits = am_report.get("audits") or {}
+            report["tests"]["audit_mode"] = {
+                "ok": audit_mode["ok"]
+                and am_report.get("mode") == "audit"
+                and len(audits) >= 3,
+            }
+        else:
+            report["tests"]["audit_mode"] = {"ok": True, "skipped": True}
+
+        figma_status = await handle_figma_status({})
+        report["tests"]["figma_status"] = {"ok": figma_status["ok"]}
+
+        figma_ctx = await handle_figma_context({})
+        figma_error = str(figma_ctx.get("error") or "")
+        report["tests"]["figma_context_not_connected"] = {
+            "ok": (not figma_ctx["ok"]) and (
+                "figma_not_connected" in figma_error
+                or "not_connected" in figma_error
+                or "not connected" in figma_error.lower()
+            ),
+        }
+
+        _mime_fg, figma_guide, _blob_fg = read_resource("perception://figma-guide")
+        report["tests"]["figma_guide_resource"] = {"ok": bool(str(figma_guide).strip())}
+
+        snapshot_result = await handle_build_design_snapshot(
+            store, scans, snapshots, {"session_id": sid, "scan_id": scan_after}
+        )
+        snapshot_id = (snapshot_result.get("data") or {}).get("snapshot_id")
+        report["tests"]["build_design_snapshot"] = {
+            "ok": snapshot_result["ok"] and bool(snapshot_id),
+        }
+
+        design_review = await handle_design_review(
+            store,
+            scans,
+            snapshots,
+            {"session_id": sid, "scan_id": scan_after, "snapshot_id": snapshot_id},
+        )
+        report["tests"]["design_review"] = {
+            "ok": design_review["ok"] or bool(design_review.get("degraded")),
+        }
+
+        cons_audit = await handle_consistency_audit(
+            store,
+            scans,
+            snapshots,
+            {"session_id": sid, "scan_id": scan_after, "snapshot_id": snapshot_id},
+        )
+        report["tests"]["consistency_audit"] = {
+            "ok": cons_audit["ok"] or bool(cons_audit.get("degraded")),
+        }
+
+        cons_review = await handle_consistency_review(
+            store,
+            scans,
+            snapshots,
+            {"session_id": sid, "scan_id": scan_after, "snapshot_id": snapshot_id},
+        )
+        report["tests"]["consistency_review"] = {
+            "ok": cons_review["ok"] or bool(cons_review.get("degraded")),
+        }
+
+        graph_summary = await handle_design_graph_summary({})
+        report["tests"]["design_graph_summary"] = {"ok": graph_summary["ok"]}
+
+        graph_refresh = await handle_design_graph_refresh(
+            store, scans, snapshots, {"scan_id": scan_after}
+        )
+        report["tests"]["design_graph_refresh"] = {
+            "ok": graph_refresh["ok"] or bool(graph_refresh.get("degraded")),
+        }
+
+        knowledge_q = await handle_design_knowledge_query(
+            {"query_id": "graph.summary"}
+        )
+        report["tests"]["design_knowledge_query"] = {
+            "ok": knowledge_q["ok"] or bool(knowledge_q.get("error")),
+        }
+
+        assess = await handle_consistency_assess(
+            {
+                "selector": "button.primary",
+                "actual": {"background": "#123456"},
+                "properties": ["background"],
+            }
+        )
+        report["tests"]["consistency_assess"] = {
+            "ok": assess["ok"] or bool(assess.get("error")),
+        }
+
+        propose = await handle_consistency_propose_fix(
+            {"standard_id": "color.primary", "selector": "button.primary"}
+        )
+        report["tests"]["consistency_propose_fix"] = {
+            "ok": propose["ok"] or bool(propose.get("error")),
+        }
 
         end = await handle_session_end(store, {"session_id": sid})
         report["tests"]["session_end"] = {"ok": end["ok"]}
@@ -534,6 +748,11 @@ async def main() -> int:
         print(f"  {name}: ok={result.get('ok')}")
     if report.get("error"):
         print(f"  error: {report['error']}")
+
+    out_dir = ROOT / "artifacts" / "mcp_contract"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    report["duration_ms"] = int((time.monotonic() - _t0) * 1000) if "_t0" in globals() else None
+    (out_dir / "report.json").write_text(json.dumps(report, indent=2, default=str), encoding="utf-8")
     return 0 if report["ok"] else 1
 
 

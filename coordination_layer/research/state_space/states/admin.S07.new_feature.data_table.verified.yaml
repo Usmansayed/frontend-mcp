@@ -1,0 +1,34 @@
+state_id: admin.S07.new_feature.data_table.verified
+name: "Feature — data table fully verified"
+description: |
+  Empty, error, and populated states verified; pagination and sort behavior confirmed.
+mcp_ready: true
+project_archetype: admin_panel
+project_maturity: M3
+lifecycle_stage: S07_verification
+project_types: [existing_project, csr]
+situation_class: new_feature
+current_project_condition: |
+  All success criteria for table interactions met.
+entry_conditions: [all_table_states_verified]
+exit_conditions: [progress_to_quality]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: unknown, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [a11y_scores, perf]
+user_intents: [ship_table]
+possible_actions: [proceed_to_a11y_audit]
+prerequisites: [scan_id]
+possible_next_states:
+  - marketing.S08.a11y_remediation.audit_needed
+failure_states: []
+relevant_modules: [visual_browser, frontend_quality]
+modules_must_not_execute: []
+dependencies: [scan_id]
+expected_outputs: [verified_table]
+verification_requirements: [all_predicates_pass]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

@@ -1,0 +1,37 @@
+state_id: landing.S03.design.inspiration_collected
+name: "Design — inspiration blobs collected, awaiting curation"
+description: |
+  Discovery run produced candidates and Collect stored preview blobs in an insp_* session.
+  User has not yet chosen a direction.
+mcp_ready: true
+project_archetype: landing
+project_maturity: M2
+lifecycle_stage: S03_design
+project_types: [greenfield]
+situation_class: inspiration_needed
+current_project_condition: |
+  insp_* session open; N candidates ranked. No downstream design reference registry entry yet.
+entry_conditions: [inspiration_discover_returned, insp_session_open]
+exit_conditions: [direction_chosen_or_session_closed]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: unknown, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [chosen_reference]
+user_intents: [pick_direction]
+possible_actions: [present_candidates, capture_user_choice, close_insp_session]
+prerequisites: [insp_session_id]
+possible_next_states:
+  - landing.S03.design.direction_agreed_with_references
+  - landing.S03.design.reference_registry_captured_scaffold
+failure_states: [global.Sxx.session_lost]
+relevant_modules: [inspiration_intelligence]
+modules_must_not_execute: [seo_intelligence, consistency_intelligence]
+dependencies: [insp_session_id]
+expected_outputs: [chosen_candidate_urls]
+verification_requirements: [insp_session_cleaned_up_before_exit]
+parent_cluster: null
+forest_id: F02
+mcp_ready_gap: null
+notes: |
+  If bridging into Design Reference Registry, that leaf is mcp_ready: false (scaffold).
+discarded_as_duplicate_of: null
+first_added_in: batch1

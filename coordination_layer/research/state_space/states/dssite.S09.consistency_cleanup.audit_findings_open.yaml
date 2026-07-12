@@ -1,0 +1,37 @@
+state_id: dssite.S09.consistency_cleanup.audit_findings_open
+name: "Consistency — audit produced deviation findings"
+description: |
+  consistency_audit reports deviations from documented standards.
+  Fix proposal or acceptance pending.
+mcp_ready: true
+project_archetype: design_system_site
+project_maturity: M3
+lifecycle_stage: S09_consistency
+project_types: [existing_mature]
+situation_class: consistency_cleanup
+current_project_condition: |
+  Non-empty deviations list; each item cites standard_id + selector + expected/actual.
+entry_conditions: [consistency_audit_returned_findings]
+exit_conditions: [each_finding_has_disposition]
+state_confidence: high
+known_evidence: {ui_runtime: known, codebase: partial, design_source: partial, design_system: known, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [approved_exceptions]
+user_intents: [fix_or_accept_findings]
+possible_actions: [propose_fix, apply_fix_and_verify, mark_exception]
+prerequisites: [pdg_file, snapshot_id]
+possible_next_states:
+  - dssite.S05.consistency_cleanup.applying_fix
+  - dssite.S09.consistency_cleanup.no_deviation_detected
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [consistency_intelligence, design_sense_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [pdg_file, snapshot_id]
+expected_outputs: [dispositions]
+verification_requirements: [findings_addressed_or_accepted]
+parent_cluster: null
+forest_id: F02
+mcp_ready_gap: null
+notes: |
+  Feeds F08 for cross-page cleanup runs.
+discarded_as_duplicate_of: null
+first_added_in: batch1

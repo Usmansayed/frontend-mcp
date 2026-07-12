@@ -538,7 +538,7 @@ async def probe_nested_collectors(session: Any, base_url: str) -> dict[str, Any]
 
 async def probe_tier_a_dev_insights(session: Any, base_url: str) -> dict[str, Any]:
     """Exercise Tier A signals on /edge-lab?devtest=1 and verify capture."""
-    from .scripted_actions import click_button_text
+    from navigation.visual_browser_intelligence.actions.scripted_actions import click_button_text
     from navigation.visual_browser_intelligence.verify.verification import read_current_url
 
     collector = DevInsightsCollector()
@@ -581,7 +581,7 @@ async def probe_tier_a_dev_insights(session: Any, base_url: str) -> dict[str, An
 
 async def probe_tier_b_dev_insights(session: Any, base_url: str) -> dict[str, Any]:
     """Exercise Tier B signals on /edge-lab?devtestb=1 and verify capture."""
-    from .scripted_actions import click_button_text
+    from navigation.visual_browser_intelligence.actions.scripted_actions import click_button_text
     from navigation.visual_browser_intelligence.verify.verification import read_current_url
 
     collector = DevInsightsCollector()

@@ -1,0 +1,844 @@
+schema_version: "1.0"
+description: >
+  T1 global capability contracts — engineering intent, not individual MCP tools.
+  Public API of Coordination Intelligence. Modules integrate by registering here.
+
+design_principles:
+  - capabilities_not_modules
+  - t1_compact_and_stable
+  - tool_evolution_via_r8_only
+  - playbooks_reference_t1_only
+
+capabilities:
+  - capability_id: environment_probe
+    display_name: Probe environment readiness
+    tier: T1_global
+    kind: probe
+    requires:
+      evidence: {}
+      artifacts: []
+      environment: []
+    produces:
+      evidence:
+        ui_runtime: { posture: partial }
+      artifacts: []
+    implements:
+      - module_id: visual_browser_intelligence
+        priority: 1
+        tools_ref: environment_probe
+    degradation:
+      on_unreachable: stop
+    parallel:
+      parallelizable: true
+      parallel_group: bootstrap_probe
+    risk:
+      mutates_repo: false
+      mcp_ready: true
+      blast_radius: low
+    replan_triggers:
+      on_hard_fail: [TR_DEV_SERVER_DOWN]
+
+  - capability_id: browser_session_manage
+    display_name: Manage browser session lifecycle
+    tier: T1_global
+    kind: session
+    requires:
+      evidence: {}
+      artifacts: []
+      environment: [dev_server_reachable]
+    produces:
+      evidence: {}
+      artifacts: [session_id]
+    implements:
+      - module_id: visual_browser_intelligence
+        priority: 1
+        tools_ref: browser_session_manage
+    parallel:
+      parallelizable: false
+    risk:
+      mutates_repo: false
+      mcp_ready: true
+      blast_radius: low
+    replan_triggers:
+      on_hard_fail: [TR_SESSION_LOST]
+
+  - capability_id: framework_profile
+    display_name: Detect framework and load grounded docs
+    tier: T1_global
+    kind: collect
+    requires:
+      evidence: {}
+      artifacts: [repo_root]
+      environment: []
+    produces:
+      evidence:
+        codebase: { posture: known }
+      artifacts: []
+    implements:
+      - module_id: framework_intelligence
+        priority: 1
+        tools_ref: framework_profile
+    parallel:
+      parallelizable: true
+      parallel_group: bootstrap_probe
+    risk:
+      mutates_repo: false
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: browser_observe
+    display_name: Observe UI runtime evidence
+    tier: T1_global
+    kind: observe
+    requires:
+      evidence: {}
+      artifacts: [session_id]
+      environment: [dev_server_reachable]
+    produces:
+      evidence:
+        ui_runtime: { posture: known }
+      artifacts: [scan_id]
+    implements:
+      - module_id: visual_browser_intelligence
+        priority: 1
+        tools_ref: browser_observe
+    parallel:
+      parallelizable: false
+      mutex_with: [browser_verify]
+    risk:
+      mutates_repo: false
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: browser_act
+    display_name: Execute in-browser actions or scripts
+    tier: T1_global
+    kind: mutate
+    requires:
+      evidence:
+        ui_runtime: { min_posture: partial }
+      artifacts: [session_id]
+      environment: [dev_server_reachable]
+    produces:
+      evidence:
+        ui_runtime: { posture: partial }
+      artifacts: [scan_id]
+    implements:
+      - module_id: visual_browser_intelligence
+        priority: 1
+        tools_ref: browser_act
+    parallel:
+      parallelizable: false
+    risk:
+      mutates_remote: true
+      mcp_ready: true
+      blast_radius: medium
+
+  - capability_id: browser_verify
+    display_name: Verify UI against success criteria
+    tier: T1_global
+    kind: verify
+    requires:
+      evidence:
+        ui_runtime: { min_posture: partial }
+      artifacts: [session_id]
+      optional_artifacts: [scan_id]
+      environment: [dev_server_reachable]
+    produces:
+      evidence:
+        ui_runtime: { posture: verified }
+      artifacts: []
+      may_set: [scan_id]
+    implements:
+      - module_id: visual_browser_intelligence
+        priority: 1
+        tools_ref: browser_verify
+    degradation:
+      on_missing_scan: auto_observe_first
+      degraded_posture: partial
+    parallel:
+      parallelizable: false
+      mutex_with: [browser_observe]
+    risk:
+      mcp_ready: true
+      blast_radius: low
+    replan_triggers:
+      on_verify_fail: [TR_VERIFY_FAIL]
+      on_posture_regressed: [TR_VERIFY_FAIL]
+
+  - capability_id: browser_diff
+    display_name: Diff UI scans for regression
+    tier: T1_global
+    kind: verify
+    requires:
+      evidence: {}
+      artifacts: [session_id, scan_id]
+      environment: []
+    produces:
+      evidence:
+        quality: { posture: partial }
+      artifacts: []
+    implements:
+      - module_id: visual_browser_intelligence
+        priority: 1
+        tools_ref: browser_diff
+    parallel:
+      parallelizable: false
+    risk:
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: codebase_context
+    display_name: Resolve codebase and route context
+    tier: T1_global
+    kind: query
+    requires:
+      evidence: {}
+      artifacts: [repo_root]
+      environment: []
+    produces:
+      evidence:
+        codebase: { posture: known }
+      artifacts: []
+    implements:
+      - module_id: codebase_intelligence
+        priority: 1
+        tools_ref: codebase_context
+    parallel:
+      parallelizable: true
+      parallel_group: bootstrap_probe
+    risk:
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: form_probe
+    display_name: Probe form fields and validation rules
+    tier: T1_global
+    kind: probe
+    requires:
+      evidence: {}
+      artifacts: [session_id]
+      environment: [dev_server_reachable]
+    produces:
+      evidence:
+        ui_runtime: { posture: partial }
+      artifacts: []
+    implements:
+      - module_id: design_workflow_intelligence
+        priority: 1
+        tools_ref: form_probe
+    risk:
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: route_guards_probe
+    display_name: Probe navigation and route guards
+    tier: T1_global
+    kind: probe
+    requires:
+      evidence: {}
+      artifacts: [session_id]
+      environment: [dev_server_reachable]
+    produces:
+      evidence:
+        ui_runtime: { posture: partial }
+      artifacts: []
+    implements:
+      - module_id: design_workflow_intelligence
+        priority: 1
+        tools_ref: route_guards_probe
+    risk:
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: auth_gate
+    display_name: Evaluate authentication gate
+    tier: T1_global
+    kind: probe
+    requires:
+      evidence: {}
+      artifacts: [session_id]
+      environment: []
+    produces:
+      evidence: {}
+      constraints: [human_gates]
+    implements:
+      - module_id: design_workflow_intelligence
+        priority: 1
+        tools_ref: auth_gate
+    risk:
+      requires_human: true
+      mcp_ready: true
+      blast_radius: medium
+    replan_triggers:
+      on_requires_human: [TR_AUTH_REQUIRED]
+
+  - capability_id: flow_describe
+    display_name: Describe multi-step flow checkpoints
+    tier: T1_global
+    kind: query
+    requires:
+      evidence: {}
+      artifacts: [session_id]
+      environment: []
+    produces:
+      evidence: {}
+      artifacts: []
+    implements:
+      - module_id: design_workflow_intelligence
+        priority: 1
+        tools_ref: flow_describe
+    risk:
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: session_state_manage
+    display_name: Save, restore, or list persisted session state
+    tier: T1_global
+    kind: session
+    requires:
+      evidence: {}
+      artifacts: [session_id]
+      environment: []
+    produces:
+      evidence: {}
+      artifacts: []
+    implements:
+      - module_id: design_workflow_intelligence
+        priority: 1
+        tools_ref: session_state_manage
+    risk:
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: design_snapshot
+    display_name: Build normalized design snapshot from scan
+    tier: T1_global
+    kind: transform
+    requires:
+      evidence: {}
+      artifacts: [scan_id]
+      environment: []
+    produces:
+      evidence:
+        design_system: { posture: partial }
+      artifacts: [snapshot_id]
+    implements:
+      - module_id: design_snapshot_engine
+        priority: 1
+        tools_ref: design_snapshot
+    risk:
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: design_review
+    display_name: Advisory design critique
+    tier: T1_global
+    kind: query
+    requires:
+      evidence: {}
+      artifacts: [snapshot_id]
+      environment: []
+    produces:
+      evidence:
+        design_source: { posture: partial }
+      artifacts: []
+    implements:
+      - module_id: design_sense_intelligence
+        priority: 1
+        tools_ref: design_review
+    risk:
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: design_graph_manage
+    display_name: Refresh or query project design graph (PDG)
+    tier: T1_global
+    kind: collect
+    requires:
+      evidence: {}
+      artifacts: [repo_root]
+      optional_artifacts: [snapshot_id]
+      environment: []
+    produces:
+      evidence:
+        design_system: { posture: known }
+      artifacts: []
+    implements:
+      - module_id: consistency_intelligence
+        priority: 1
+        tools_ref: design_graph_manage
+    risk:
+      mcp_ready: true
+      blast_radius: medium
+    replan_triggers:
+      on_hard_fail: [TR_DEGRADED_UPSTREAM]
+
+  - capability_id: design_consistency_audit
+    display_name: Audit UI against design graph
+    tier: T1_global
+    kind: verify
+    requires:
+      evidence:
+        design_system: { min_posture: known }
+      artifacts: [scan_id]
+      environment: []
+    produces:
+      evidence:
+        design_system: { posture: verified }
+      artifacts: []
+    implements:
+      - module_id: consistency_intelligence
+        priority: 1
+        tools_ref: design_consistency_audit
+    risk:
+      mcp_ready: true
+      blast_radius: medium
+
+  - capability_id: design_consistency_assess
+    display_name: Assess specific selector against design graph
+    tier: T1_global
+    kind: query
+    requires:
+      evidence:
+        design_system: { min_posture: known }
+      artifacts: [scan_id]
+      environment: []
+    produces:
+      evidence:
+        design_system: { posture: known }
+      artifacts: []
+    implements:
+      - module_id: consistency_intelligence
+        priority: 1
+        tools_ref: design_consistency_assess
+    risk:
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: design_knowledge_query
+    display_name: Query design knowledge base
+    tier: T1_global
+    kind: query
+    requires:
+      evidence: {}
+      artifacts: [repo_root]
+      environment: []
+    produces:
+      evidence:
+        design_system: { posture: partial }
+      artifacts: []
+    implements:
+      - module_id: consistency_intelligence
+        priority: 1
+        tools_ref: design_knowledge_query
+    risk:
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: quality_audit
+    display_name: Run domain quality audit (Lighthouse path)
+    tier: T1_global
+    kind: verify
+    requires:
+      evidence:
+        ui_runtime: { min_posture: known }
+      artifacts: [session_id]
+      environment: [dev_server_reachable]
+    produces:
+      evidence:
+        quality: { posture: known }
+      artifacts: [audit_id]
+    implements:
+      - module_id: frontend_quality_intelligence
+        priority: 1
+        tools_ref: quality_audit
+        module_internal:
+          t2_namespace: quality
+          t2_capabilities: [a11y_audit, perf_audit, best_practices_audit, seo_audit, triad]
+    parallel:
+      parallelizable: true
+      parallel_group: quality_triad
+      mutex_with: [browser_verify]
+    risk:
+      mcp_ready: true
+      blast_radius: medium
+
+  - capability_id: runtime_diagnosis
+    display_name: Full runtime diagnosis (console, network, composite)
+    tier: T1_global
+    kind: collect
+    requires:
+      evidence: {}
+      artifacts: [session_id]
+      environment: [dev_server_reachable]
+    produces:
+      evidence:
+        quality: { posture: known }
+      artifacts: []
+    implements:
+      - module_id: frontend_quality_intelligence
+        priority: 1
+        tools_ref: runtime_diagnosis
+    risk:
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: seo_readiness
+    display_name: Confirm SEO module readiness and auth mode
+    tier: T1_global
+    kind: probe
+    requires:
+      evidence: {}
+      artifacts: []
+      environment: []
+    produces:
+      evidence:
+        seo: { posture: partial }
+      artifacts: []
+    implements:
+      - module_id: seo_intelligence
+        priority: 1
+        tools_ref: seo_readiness
+    risk:
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: seo_evidence_collect
+    display_name: Collect SEO evidence via module orchestrator
+    tier: T1_global
+    kind: collect
+    requires:
+      evidence:
+        ui_runtime: { min_posture: known }
+      artifacts: [repo_root]
+      optional_artifacts: [scan_id, session_id]
+      environment: []
+    produces:
+      evidence:
+        seo: { posture: known }
+      artifacts: []
+    implements:
+      - module_id: seo_intelligence
+        priority: 1
+        tools_ref: seo_evidence_collect
+        module_internal:
+          orchestrator_entry: true
+          t2_namespace: seo
+    risk:
+      mcp_ready: true
+      blast_radius: medium
+    replan_triggers:
+      on_degraded: [TR_DEGRADED_UPSTREAM]
+
+  - capability_id: seo_graph_query
+    display_name: Query persistent SEO graph (including audit diff)
+    tier: T1_global
+    kind: query
+    requires:
+      evidence:
+        seo: { min_posture: partial }
+      artifacts: []
+      environment: []
+    produces:
+      evidence:
+        seo: { posture: known }
+      artifacts: []
+    implements:
+      - module_id: seo_intelligence
+        priority: 1
+        tools_ref: seo_graph_query
+    risk:
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: seo_recommendation_verify
+    display_name: Verify a specific SEO recommendation is resolved
+    tier: T1_global
+    kind: verify
+    requires:
+      evidence:
+        seo: { min_posture: known }
+      artifacts: [repo_root]
+      environment: []
+    produces:
+      evidence:
+        seo: { posture: verified }
+      artifacts: []
+    implements:
+      - module_id: seo_intelligence
+        priority: 1
+        tools_ref: seo_recommendation_verify
+    risk:
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: inspiration_workflow
+    display_name: Discover, collect, and cleanup inspiration assets
+    tier: T1_global
+    kind: collect
+    requires:
+      evidence: {}
+      artifacts: []
+      environment: []
+    produces:
+      evidence:
+        design_source: { posture: partial }
+        assets: { posture: partial }
+      artifacts: []
+    implements:
+      - module_id: inspiration_intelligence
+        priority: 1
+        tools_ref: inspiration_workflow
+    risk:
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: resource_workflow
+    display_name: Search, license-check, and bridge resources to UI
+    tier: T1_global
+    kind: collect
+    requires:
+      evidence: {}
+      artifacts: []
+      optional_artifacts: [scan_id, session_id]
+      environment: []
+    produces:
+      evidence:
+        assets: { posture: known }
+      artifacts: []
+    implements:
+      - module_id: resource_intelligence
+        priority: 1
+        tools_ref: resource_workflow
+    risk:
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: figma_integration
+    display_name: Connect Figma and load design context
+    tier: T1_global
+    kind: collect
+    requires:
+      evidence: {}
+      artifacts: []
+      environment: []
+    produces:
+      evidence:
+        design_source: { posture: known }
+      artifacts: []
+    implements:
+      - module_id: figma_intelligence
+        priority: 1
+        tools_ref: figma_integration
+    risk:
+      mcp_ready: true
+      blast_radius: medium
+
+  - capability_id: component_search_plan
+    display_name: Plan component search when query is vague
+    tier: T1_global
+    kind: query
+    requires:
+      evidence: {}
+      artifacts: [repo_root]
+      environment: []
+    produces:
+      evidence: {}
+      artifacts: []
+    implements:
+      - module_id: component_intelligence
+        priority: 1
+        tools_ref: component_search_plan
+    risk:
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: component_search
+    display_name: Search component providers
+    tier: T1_global
+    kind: collect
+    requires:
+      evidence: {}
+      artifacts: [repo_root]
+      environment: []
+    produces:
+      evidence:
+        assets: { posture: partial }
+      artifacts: []
+    implements:
+      - module_id: component_intelligence
+        priority: 1
+        tools_ref: component_search
+    risk:
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: component_select
+    display_name: Select best component via multi-contract consultation
+    tier: T1_global
+    kind: query
+    requires:
+      evidence:
+        assets: { min_posture: partial }
+      artifacts: [repo_root]
+      environment: []
+    produces:
+      evidence: {}
+      artifacts: []
+    implements:
+      - module_id: component_intelligence
+        priority: 1
+        tools_ref: component_select
+        module_internal:
+          parallel_consult: [framework_profile, codebase_context, design_review, design_consistency_assess, browser_observe]
+    parallel:
+      parallelizable: true
+      parallel_group: component_selection_consult
+    risk:
+      mcp_ready: true
+      blast_radius: low
+
+  - capability_id: component_integrate
+    display_name: Integrate selected component (dry-run default)
+    tier: T1_global
+    kind: mutate
+    requires:
+      evidence:
+        assets: { min_posture: partial }
+      artifacts: [repo_root]
+      environment: []
+    produces:
+      evidence:
+        codebase: { posture: known }
+      artifacts: []
+    implements:
+      - module_id: component_intelligence
+        priority: 1
+        tools_ref: component_integrate_dry_run
+      - module_id: component_intelligence
+        priority: 2
+        tools_ref: component_integrate_live
+        condition: live_install_explicitly_requested
+    degradation:
+      on_mcp_not_ready: substitute_dry_run
+    risk:
+      mutates_repo: true
+      mcp_ready: false
+      blast_radius: high
+      mcp_ready_note: Live install scaffold only; dry-run is default path.
+    replan_triggers:
+      on_mcp_not_ready: [TR_MCP_NOT_READY]
+
+edges:
+  - from: browser_observe
+    to: design_snapshot
+    type: requires
+    notes: snapshot needs scan_id
+
+  - from: design_graph_manage
+    to: design_consistency_audit
+    type: requires
+    condition: pdg_was_empty
+
+  - from: seo_graph_query
+    to: seo_evidence_collect
+    type: supersedes
+    condition: seo_graph_exists_and_fresh
+
+  - from: component_integrate
+    to: component_integrate
+    type: fallback
+    condition: live_unavailable_use_dry_run
+    notes: Internal routing — dry-run when mcp_ready false
+
+  - from: browser_verify
+    to: browser_observe
+    type: fallback
+    condition: verify_fail_missing_scan
+
+  - from: quality_audit
+    to: browser_observe
+    type: requires
+    notes: stable page before audits
+
+  - from: seo_evidence_collect
+    to: browser_observe
+    type: enhances
+    notes: scan_id improves evidence quality
+
+  - from: browser_observe
+    to: browser_verify
+    type: mutex
+    notes: session-scoped during act phase
+
+parallel_groups:
+  bootstrap_probe:
+    parallelizable: true
+    capabilities: [environment_probe, framework_profile, codebase_context]
+    join_policy: all_complete_before_next_step
+
+  component_selection_consult:
+    parallelizable: true
+    capabilities: [component_select]
+    join_policy: module_internal_parallel
+    note: Consultation runs inside component module
+
+  quality_triad:
+    parallelizable: true
+    capabilities: [quality_audit]
+    join_policy: module_internal_parallel
+    mutex_with: [browser_verify]
+
+capability_module_index:
+  visual_browser_intelligence:
+    capabilities: [environment_probe, browser_session_manage, browser_observe, browser_act, browser_verify, browser_diff]
+  framework_intelligence:
+    capabilities: [framework_profile]
+  codebase_intelligence:
+    capabilities: [codebase_context]
+  design_workflow_intelligence:
+    capabilities: [form_probe, route_guards_probe, auth_gate, flow_describe, session_state_manage]
+  design_snapshot_engine:
+    capabilities: [design_snapshot]
+  design_sense_intelligence:
+    capabilities: [design_review]
+  consistency_intelligence:
+    capabilities: [design_graph_manage, design_consistency_audit, design_consistency_assess, design_knowledge_query]
+  frontend_quality_intelligence:
+    capabilities: [quality_audit, runtime_diagnosis]
+  seo_intelligence:
+    capabilities: [seo_readiness, seo_evidence_collect, seo_graph_query, seo_recommendation_verify]
+    orchestrator_entry: seo_evidence_collect
+  inspiration_intelligence:
+    capabilities: [inspiration_workflow]
+  resource_intelligence:
+    capabilities: [resource_workflow]
+  figma_intelligence:
+    capabilities: [figma_integration]
+  component_intelligence:
+    capabilities: [component_search_plan, component_search, component_select, component_integrate]
+    orchestrator_entry: component_integrate
+
+evidence_capability_matrix:
+  ui_runtime:
+    primary_producers: [browser_observe, browser_verify, browser_diff]
+    consumers: [browser_verify, browser_act, form_probe, seo_evidence_collect, quality_audit]
+  codebase:
+    primary_producers: [codebase_context, framework_profile, component_integrate]
+    consumers: [component_search, component_select, seo_evidence_collect]
+  design_source:
+    primary_producers: [design_review, inspiration_workflow, figma_integration]
+    consumers: [design_snapshot, design_consistency_audit]
+  design_system:
+    primary_producers: [design_snapshot, design_graph_manage, design_consistency_audit]
+    consumers: [design_consistency_audit, design_consistency_assess, component_select]
+  seo:
+    primary_producers: [seo_readiness, seo_evidence_collect, seo_graph_query]
+    consumers: [seo_recommendation_verify]
+  quality:
+    primary_producers: [quality_audit, runtime_diagnosis, browser_diff]
+    consumers: [browser_verify]
+  assets:
+    primary_producers: [inspiration_workflow, resource_workflow, component_search]
+    consumers: [component_select, component_integrate]

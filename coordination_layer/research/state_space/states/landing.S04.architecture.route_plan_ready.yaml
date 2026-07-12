@@ -1,0 +1,56 @@
+state_id: landing.S04.architecture.route_plan_ready
+name: "Architecture — route plan ready for implementation"
+description: |
+  Route tree committed. Implementation can start.
+mcp_ready: true
+
+project_archetype: landing
+project_maturity: M2
+lifecycle_stage: S04_architecture
+project_types: [greenfield]
+situation_class: new_feature
+
+current_project_condition: |
+  Route plan written; framework understood; dev server available.
+entry_conditions: [route_plan_confirmed, dev_server_reachable]
+exit_conditions: [first_feature_implementation_started]
+state_confidence: high
+
+known_evidence:
+  ui_runtime: partial
+  codebase: partial
+  design_source: unknown
+  design_system: unknown
+  seo: unknown
+  quality: unknown
+  assets: unknown
+unknown_evidence: [design_direction, component_choices]
+
+user_intents: [start_building]
+
+possible_actions:
+  - move_to_design_or_implementation
+  - draft_initial_pages
+prerequisites: [route_plan_committed]
+possible_next_states:
+  - landing.S03.design.no_design_source
+  - landing.S03.design.figma_expected
+  - landing.S05.new_feature.landing_hero.stub
+  - saas.S05.new_feature.form_validation.v1
+failure_states:
+  - global.Sxx.dev_server_down
+
+relevant_modules: [codebase_intelligence, framework_intelligence]
+modules_must_not_execute: [seo_intelligence, consistency_intelligence]
+dependencies: [repo_root]
+
+expected_outputs: [route_plan_document]
+verification_requirements: [route_plan_document_exists]
+
+parent_cluster: null
+forest_id: F01
+mcp_ready_gap: null
+notes: |
+  Fan-out is intentional: implementation may begin before design if content-first, or design may lead.
+discarded_as_duplicate_of: null
+first_added_in: batch1

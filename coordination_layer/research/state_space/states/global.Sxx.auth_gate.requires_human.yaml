@@ -1,0 +1,36 @@
+state_id: global.Sxx.auth_gate.requires_human
+name: "Global — auth gate requires human"
+description: |
+  perception_auth_gate returned requires_human=true (login, MFA, CAPTCHA). STOP.
+mcp_ready: true
+project_archetype: saas_dashboard
+project_maturity: M3
+lifecycle_stage: Sxx_any
+project_types: [existing_project]
+situation_class: auth_blocked
+current_project_condition: |
+  Human action required to proceed. Do not attempt automated retries.
+entry_conditions: [auth_gate_requires_human]
+exit_conditions: [human_completes_gate_and_state_saved]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: partial, assets: partial}
+unknown_evidence: [post_auth_state]
+user_intents: [ask_user_to_authenticate]
+possible_actions: [surface_auth_gate_details, wait_for_user_action, state_save_after_auth]
+prerequisites: [session_id]
+possible_next_states:
+  - saas.S07.new_feature.auth_flow.verified_and_state_saved
+  - marketing.S07.new_feature.change_scope_ready
+failure_states: []
+relevant_modules: [design_workflow_intelligence]
+modules_must_not_execute: []
+dependencies: [session_id]
+expected_outputs: [handoff_message]
+verification_requirements: [user_confirms_auth_or_declines]
+parent_cluster: null
+forest_id: F12
+mcp_ready_gap: null
+notes: |
+  AGENT_GUIDE hard rule: never loop login flows.
+discarded_as_duplicate_of: null
+first_added_in: batch2

@@ -1,0 +1,519 @@
+schema_version: "1.0"
+description: >
+  Coordination Intelligence validation workflows. Each workflow defines the expected
+  engineering sequence (capabilities + tools), cluster/playbook expectations, and
+  success criteria. Used by run_coordination_validation.py — not runtime control flow.
+
+workflows:
+  - workflow_id: CVW-01
+    title: Build landing page from Figma
+    engineering_goal: Greenfield landing page aligned to Figma design source
+    modules: [figma_intelligence, visual_browser_intelligence, design_snapshot_engine, design_sense_intelligence, consistency_intelligence, codebase_intelligence]
+    expected_cluster_sequence:
+      - cluster.design.figma_pipeline
+      - cluster.design.review_and_snapshot
+      - cluster.feature.data_ui
+    expected_playbook_sequence:
+      - discover_collect_cleanup.inspiration_resource
+      - snapshot_review_consistency.design
+      - observe_reason_act_verify.loop
+    expected_capabilities:
+      - figma_integration
+      - browser_session_manage
+      - browser_observe
+      - design_snapshot
+      - design_review
+      - design_graph_manage
+      - browser_verify
+    expected_tools:
+      - perception_session_start
+      - perception_figma_connect
+      - perception_figma_context
+      - perception_navigate_and_observe
+      - perception_build_design_snapshot
+      - perception_design_review
+      - perception_design_graph_refresh
+      - perception_verify
+    forbidden_early_capabilities: [seo_evidence_collect, component_search]
+    simulate_steps:
+      - tool: perception_session_start
+        ok: true
+      - tool: perception_figma_connect
+        ok: true
+      - tool: perception_figma_context
+        ok: true
+      - tool: perception_navigate_and_observe
+        ok: true
+      - tool: perception_build_design_snapshot
+        ok: true
+      - tool: perception_design_review
+        ok: true
+      - tool: perception_design_graph_refresh
+        ok: true
+      - tool: perception_verify
+        ok: true
+    success_criteria:
+      final_cluster: cluster.design.review_and_snapshot
+      playbook_complete_or: observe_reason_act_verify.loop
+      max_unnecessary_tools: 2
+
+  - workflow_id: CVW-02
+    title: Build page from inspiration only
+    engineering_goal: Design direction from inspiration without Figma
+    modules: [inspiration_intelligence, resource_intelligence, visual_browser_intelligence, design_snapshot_engine]
+    expected_cluster_sequence:
+      - cluster.design.reference_gathering
+      - cluster.feature.data_ui
+    expected_playbook_sequence:
+      - discover_collect_cleanup.inspiration_resource
+      - observe_reason_act_verify.loop
+    expected_capabilities:
+      - browser_session_manage
+      - inspiration_workflow
+      - browser_observe
+      - design_snapshot
+      - browser_verify
+    expected_tools:
+      - perception_session_start
+      - perception_inspiration_discover
+      - perception_inspiration_collect
+      - perception_inspiration_session_end
+      - perception_navigate_and_observe
+      - perception_build_design_snapshot
+      - perception_verify
+    forbidden_early_capabilities: [figma_integration, seo_evidence_collect]
+    simulate_steps:
+      - tool: perception_session_start
+        ok: true
+      - tool: perception_inspiration_discover
+        ok: true
+      - tool: perception_inspiration_collect
+        ok: true
+      - tool: perception_inspiration_session_end
+        ok: true
+      - tool: perception_navigate_and_observe
+        ok: true
+      - tool: perception_build_design_snapshot
+        ok: true
+      - tool: perception_verify
+        ok: true
+    success_criteria:
+      final_cluster: cluster.feature.data_ui
+      max_unnecessary_tools: 2
+
+  - workflow_id: CVW-03
+    title: Improve existing page
+    engineering_goal: Iterative improvement on shipped page with regression guard
+    modules: [visual_browser_intelligence, frontend_quality_intelligence, codebase_intelligence]
+    expected_cluster_sequence:
+      - cluster.discovery.bootstrap
+      - cluster.debug.iteration_target
+    expected_playbook_sequence:
+      - observe_reason_act_verify.loop
+    expected_capabilities:
+      - browser_session_manage
+      - browser_observe
+      - browser_verify
+      - browser_diff
+    expected_tools:
+      - perception_session_start
+      - perception_navigate_and_observe
+      - perception_observe
+      - perception_verify
+      - perception_diff
+    simulate_steps:
+      - tool: perception_session_start
+        ok: true
+      - tool: perception_navigate_and_observe
+        ok: true
+      - tool: perception_verify
+        ok: false
+      - tool: perception_observe
+        ok: true
+      - tool: perception_verify
+        ok: true
+      - tool: perception_diff
+        ok: true
+    recovery_expect:
+      trigger: TR_VERIFY_FAIL
+      then_capability: browser_observe
+    success_criteria:
+      governor_must_handle_verify_fail: true
+      max_unnecessary_tools: 1
+
+  - workflow_id: CVW-04
+    title: Add new feature (form validation)
+    engineering_goal: Ship validated form feature — invalid before valid
+    modules: [design_workflow_intelligence, visual_browser_intelligence]
+    expected_cluster_sequence:
+      - cluster.feature.form_pipeline
+    expected_playbook_sequence:
+      - invalid_before_valid.form
+    expected_capabilities:
+      - browser_session_manage
+      - form_probe
+      - browser_verify
+    expected_tools:
+      - perception_session_start
+      - perception_probe_form
+      - perception_verify
+      - perception_verify
+    simulate_steps:
+      - tool: perception_session_start
+        ok: true
+      - tool: perception_probe_form
+        ok: true
+      - tool: perception_verify
+        ok: true
+      - tool: perception_verify
+        ok: true
+    success_criteria:
+      final_cluster: cluster.feature.form_pipeline
+      playbook_complete: invalid_before_valid.form
+      sequence_invalid_before_valid: true
+      max_unnecessary_tools: 0
+    live_eval_runner: run_mcp_eval_validation_form
+
+  - workflow_id: CVW-05
+    title: Replace component library
+    engineering_goal: Search, select, integrate component (dry-run)
+    modules: [component_intelligence, framework_intelligence, codebase_intelligence, visual_browser_intelligence]
+    expected_cluster_sequence:
+      - cluster.component.acquisition_pipeline
+    expected_playbook_sequence:
+      - search_select_integrate.component
+    expected_capabilities:
+      - browser_session_manage
+      - component_search_plan
+      - component_search
+      - component_select
+      - component_integrate
+      - browser_verify
+    expected_tools:
+      - perception_session_start
+      - perception_plan_component_search
+      - perception_search_components
+      - perception_select_component_foundation
+      - perception_integrate_component
+      - perception_verify
+    forbidden_capabilities: [component_integrate_live]
+    simulate_steps:
+      - tool: perception_session_start
+        ok: true
+      - tool: perception_plan_component_search
+        ok: true
+      - tool: perception_search_components
+        ok: true
+      - tool: perception_select_component_foundation
+        ok: true
+      - tool: perception_integrate_component
+        ok: true
+      - tool: perception_verify
+        ok: true
+    success_criteria:
+      final_cluster: cluster.component.acquisition_pipeline
+      playbook_complete: search_select_integrate.component
+      max_unnecessary_tools: 1
+
+  - workflow_id: CVW-06
+    title: Improve accessibility
+    engineering_goal: A11y audit, fix, re-verify
+    modules: [frontend_quality_intelligence, visual_browser_intelligence]
+    expected_cluster_sequence:
+      - cluster.quality.audit_cycle
+      - cluster.debug.signal_class
+    expected_playbook_sequence:
+      - observe_reason_act_verify.loop
+    expected_capabilities:
+      - browser_session_manage
+      - browser_observe
+      - quality_audit
+      - browser_verify
+    expected_tools:
+      - perception_session_start
+      - perception_navigate_and_observe
+      - perception_audit_accessibility
+      - perception_verify
+    simulate_steps:
+      - tool: perception_session_start
+        ok: true
+      - tool: perception_navigate_and_observe
+        ok: true
+      - tool: perception_audit_accessibility
+        ok: true
+      - tool: perception_verify
+        ok: true
+    success_criteria:
+      final_cluster: cluster.quality.audit_cycle
+      max_unnecessary_tools: 2
+
+  - workflow_id: CVW-07
+    title: Improve SEO
+    engineering_goal: SEO evidence collect, fix, verify, diff
+    modules: [seo_intelligence, visual_browser_intelligence, codebase_intelligence]
+    expected_cluster_sequence:
+      - cluster.seo.audit_cycle
+    expected_playbook_sequence:
+      - audit_fix_verify.seo
+    expected_capabilities:
+      - seo_readiness
+      - seo_evidence_collect
+      - seo_recommendation_verify
+      - seo_graph_query
+    expected_tools:
+      - perception_session_start
+      - perception_seo_status
+      - perception_seo_audit
+      - perception_seo_verify
+      - perception_seo_query
+    simulate_steps:
+      - tool: perception_session_start
+        ok: true
+      - tool: perception_seo_status
+        ok: true
+      - tool: perception_seo_audit
+        ok: true
+      - tool: perception_seo_verify
+        ok: true
+      - tool: perception_seo_query
+        ok: true
+    success_criteria:
+      final_cluster: cluster.seo.audit_cycle
+      max_unnecessary_tools: 2
+
+  - workflow_id: CVW-08
+    title: Improve AI Visibility
+    engineering_goal: SEO audit with AI readiness block, verify recommendations
+    modules: [seo_intelligence, visual_browser_intelligence]
+    expected_cluster_sequence:
+      - cluster.seo.audit_cycle
+    expected_playbook_sequence:
+      - audit_fix_verify.seo
+    expected_capabilities:
+      - seo_readiness
+      - seo_evidence_collect
+      - seo_recommendation_verify
+    expected_tools:
+      - perception_session_start
+      - perception_seo_status
+      - perception_seo_audit
+      - perception_seo_verify
+    simulate_steps:
+      - tool: perception_session_start
+        ok: true
+      - tool: perception_seo_status
+        ok: true
+      - tool: perception_seo_audit
+        ok: true
+        envelope_data:
+          seo_audit:
+            ai_readiness: { score: 0.72 }
+      - tool: perception_seo_verify
+        ok: true
+    success_criteria:
+      final_cluster: cluster.seo.audit_cycle
+      max_unnecessary_tools: 1
+    live_eval_runner: run_mcp_eval_ai_visibility
+
+  - workflow_id: CVW-09
+    title: Fix responsive issues
+    engineering_goal: Debug responsive break, fix, verify at viewport
+    modules: [visual_browser_intelligence, frontend_quality_intelligence]
+    expected_cluster_sequence:
+      - cluster.debug.signal_class
+    expected_playbook_sequence:
+      - observe_reason_act_verify.loop
+    expected_capabilities:
+      - browser_session_manage
+      - browser_observe
+      - runtime_diagnosis
+      - browser_verify
+    expected_tools:
+      - perception_session_start
+      - perception_navigate_and_observe
+      - perception_full_diagnosis
+      - perception_verify
+    simulate_steps:
+      - tool: perception_session_start
+        ok: true
+      - tool: perception_navigate_and_observe
+        ok: true
+      - tool: perception_full_diagnosis
+        ok: true
+      - tool: perception_verify
+        ok: true
+    success_criteria:
+      final_cluster: cluster.debug.signal_class
+      max_unnecessary_tools: 1
+
+  - workflow_id: CVW-10
+    title: Debug runtime issues
+    engineering_goal: Console/network blocking, fix, verify
+    modules: [visual_browser_intelligence, frontend_quality_intelligence]
+    expected_cluster_sequence:
+      - cluster.debug.signal_class
+    expected_playbook_sequence:
+      - observe_reason_act_verify.loop
+    expected_capabilities:
+      - browser_observe
+      - runtime_diagnosis
+      - browser_verify
+    expected_tools:
+      - perception_session_start
+      - perception_navigate_and_observe
+      - perception_console_get
+      - perception_verify
+    simulate_steps:
+      - tool: perception_session_start
+        ok: true
+      - tool: perception_navigate_and_observe
+        ok: true
+        envelope_data:
+          agent_summary:
+            blocking: ["Uncaught TypeError: demo"]
+      - tool: perception_console_get
+        ok: true
+      - tool: perception_verify
+        ok: true
+    recovery_expect:
+      blocking_before_quality: true
+    success_criteria:
+      anti_pattern_no_seo_while_blocking: true
+      max_unnecessary_tools: 2
+
+  - workflow_id: CVW-11
+    title: Optimize performance
+    engineering_goal: Perf audit, fix, verify
+    modules: [frontend_quality_intelligence, visual_browser_intelligence]
+    expected_cluster_sequence:
+      - cluster.quality.audit_cycle
+    expected_playbook_sequence:
+      - observe_reason_act_verify.loop
+    expected_capabilities:
+      - browser_observe
+      - quality_audit
+      - browser_verify
+    expected_tools:
+      - perception_session_start
+      - perception_navigate_and_observe
+      - perception_audit_performance
+      - perception_verify
+    simulate_steps:
+      - tool: perception_session_start
+        ok: true
+      - tool: perception_navigate_and_observe
+        ok: true
+      - tool: perception_audit_performance
+        ok: true
+      - tool: perception_verify
+        ok: true
+    success_criteria:
+      final_cluster: cluster.quality.audit_cycle
+      max_unnecessary_tools: 1
+
+  - workflow_id: CVW-12
+    title: Improve consistency
+    engineering_goal: PDG refresh, consistency audit, fix, re-verify
+    modules: [consistency_intelligence, design_snapshot_engine, visual_browser_intelligence]
+    expected_cluster_sequence:
+      - cluster.consistency.audit_cycle
+    expected_playbook_sequence:
+      - snapshot_review_consistency.design
+    expected_capabilities:
+      - browser_observe
+      - design_snapshot
+      - design_graph_manage
+      - design_consistency_audit
+      - browser_verify
+    expected_tools:
+      - perception_session_start
+      - perception_navigate_and_observe
+      - perception_build_design_snapshot
+      - perception_design_graph_refresh
+      - perception_consistency_audit
+      - perception_verify
+    simulate_steps:
+      - tool: perception_session_start
+        ok: true
+      - tool: perception_navigate_and_observe
+        ok: true
+      - tool: perception_build_design_snapshot
+        ok: true
+      - tool: perception_design_graph_refresh
+        ok: true
+      - tool: perception_consistency_audit
+        ok: true
+      - tool: perception_verify
+        ok: true
+    success_criteria:
+      final_cluster: cluster.consistency.audit_cycle
+      pdg_before_audit: true
+      max_unnecessary_tools: 2
+
+  - workflow_id: CVW-13
+    title: Migrate framework
+    engineering_goal: Framework detect, incremental migration, verify checkpoints
+    modules: [framework_intelligence, codebase_intelligence, visual_browser_intelligence]
+    expected_cluster_sequence:
+      - cluster.discovery.bootstrap
+      - cluster.migration.framework_or_redesign
+    expected_playbook_sequence:
+      - observe_reason_act_verify.loop
+    expected_capabilities:
+      - framework_profile
+      - codebase_context
+      - browser_observe
+      - browser_verify
+    expected_tools:
+      - perception_detect_framework
+      - perception_framework_docs
+      - perception_code_context
+      - perception_session_start
+      - perception_navigate_and_observe
+      - perception_verify
+    simulate_steps:
+      - tool: perception_detect_framework
+        ok: true
+      - tool: perception_framework_docs
+        ok: true
+      - tool: perception_session_start
+        ok: true
+      - tool: perception_navigate_and_observe
+        ok: true
+      - tool: perception_verify
+        ok: true
+    success_criteria:
+      final_cluster: cluster.migration.framework_or_redesign
+      max_unnecessary_tools: 2
+
+  - workflow_id: CVW-14
+    title: Production maintenance
+    engineering_goal: Baseline, staging verify, diff, hotfix path
+    modules: [visual_browser_intelligence, frontend_quality_intelligence]
+    expected_cluster_sequence:
+      - cluster.release.baseline_and_staging
+      - cluster.production.live_and_incidents
+    expected_playbook_sequence:
+      - baseline_and_regression.release
+    expected_capabilities:
+      - browser_session_manage
+      - browser_observe
+      - browser_verify
+      - browser_diff
+    expected_tools:
+      - perception_session_start
+      - perception_navigate_and_observe
+      - perception_verify
+      - perception_diff
+    simulate_steps:
+      - tool: perception_session_start
+        ok: true
+      - tool: perception_navigate_and_observe
+        ok: true
+      - tool: perception_verify
+        ok: true
+      - tool: perception_diff
+        ok: true
+    success_criteria:
+      final_cluster: cluster.production.live_and_incidents
+      max_unnecessary_tools: 1

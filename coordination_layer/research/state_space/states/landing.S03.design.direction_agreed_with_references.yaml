@@ -1,0 +1,36 @@
+state_id: landing.S03.design.direction_agreed_with_references
+name: "Design — direction agreed with visual references"
+description: |
+  User committed to a direction backed by concrete inspiration URLs/blobs.
+mcp_ready: true
+project_archetype: landing
+project_maturity: M2
+lifecycle_stage: S03_design
+project_types: [greenfield]
+situation_class: new_feature
+current_project_condition: |
+  Direction agreed; references retained in conversation or as insp_* preview blobs.
+entry_conditions: [style_brief_written, references_referenced]
+exit_conditions: [architecture_or_implementation_started_or_reference_captured_to_registry]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: unknown, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [design_system_tokens]
+user_intents: [move_to_build_with_references]
+possible_actions: [proceed_to_architecture, capture_reference_snapshots_scaffold]
+prerequisites: []
+possible_next_states:
+  - landing.S04.architecture.route_plan_ready
+  - landing.S03.design.reference_registry_captured_scaffold
+failure_states: [global.Sxx.user_abandoned]
+relevant_modules: [inspiration_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: []
+expected_outputs: [style_brief_with_references]
+verification_requirements: [references_documented]
+parent_cluster: null
+forest_id: F02
+mcp_ready_gap: null
+notes: |
+  Referenceregistry capture path is currently scaffold.
+discarded_as_duplicate_of: null
+first_added_in: batch1

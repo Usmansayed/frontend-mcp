@@ -1,0 +1,35 @@
+state_id: complib.S09.consistency_cleanup.api_stability_check
+name: "Consistency — component library API stability check"
+description: |
+  Component library assessing breaking-change risk before publishing a new version.
+mcp_ready: true
+project_archetype: component_library
+project_maturity: M4
+lifecycle_stage: S09_consistency
+project_types: [monorepo, existing_mature]
+situation_class: release_prep
+current_project_condition: |
+  Design system compatibility with downstream consumers under review.
+entry_conditions: [changes_ready_for_release]
+exit_conditions: [breaking_changes_documented_or_semver_bumped]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: known, design_source: partial, design_system: known, seo: unknown, quality: partial, assets: unknown}
+unknown_evidence: [consumer_impact]
+user_intents: [ship_without_breaking_consumers]
+possible_actions: [audit_public_api, run_consistency_audit_per_component, bump_semver_or_deprecate]
+prerequisites: [pdg_file, repo_root]
+possible_next_states:
+  - marketing.S10.release_prep.regression_baseline_capture
+  - marketing.S12.framework_migration.plan_ready
+failure_states: []
+relevant_modules: [consistency_intelligence, codebase_intelligence, framework_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [repo_root, pdg_file]
+expected_outputs: [api_diff]
+verification_requirements: [breaking_changes_documented]
+parent_cluster: null
+forest_id: F08
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

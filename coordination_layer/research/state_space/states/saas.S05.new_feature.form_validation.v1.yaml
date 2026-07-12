@@ -1,0 +1,36 @@
+state_id: saas.S05.new_feature.form_validation.v1
+name: "Feature — validated form implementation started"
+description: |
+  Route exists, form spec known, validation rules documented or inferable.
+mcp_ready: true
+project_archetype: saas_dashboard
+project_maturity: M3
+lifecycle_stage: S05_implementation
+project_types: [existing_project, csr]
+situation_class: new_feature
+current_project_condition: |
+  Form scaffold present or being written; validation not yet implemented.
+entry_conditions: [route_exists, form_spec_known]
+exit_conditions: [validation_implemented_and_ready_to_verify]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: unknown, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [validation_correctness]
+user_intents: [ship_working_form]
+possible_actions: [probe_form_rules, implement_fields_and_validation, run_invalid_submit_check, run_valid_submit_check, capture_regression_baseline]
+prerequisites: [dev_server_up, affected_route_identified]
+possible_next_states:
+  - saas.S07.new_feature.form_validation.invalid_path_verified
+  - saas.S07.new_feature.form_validation.blocked_by_auth
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, design_workflow_intelligence, frontend_quality, codebase_intelligence]
+modules_must_not_execute: [seo_intelligence, figma_intelligence, component_intelligence__integrate_live]
+dependencies: [browser_session, scan_id]
+expected_outputs: [validation_code_applied]
+verification_requirements: [dev_server_reachable]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: |
+  Maps to AGENT_GUIDE §4 form pattern. SEO/AI visibility deferred until page indexable.
+discarded_as_duplicate_of: null
+first_added_in: batch1

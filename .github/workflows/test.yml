@@ -1,0 +1,202 @@
+name: Test
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    # Nightly at 03:15 UTC — runs full T3 phase integration.
+    - cron: "15 3 * * *"
+  workflow_dispatch:
+    inputs:
+      run_integration:
+        description: "Also run T3 phase integration tests"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # T0 fast unit + T1 golden — run on every PR / push.
+  unit-and-golden:
+    name: T0 unit + T1 golden
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[audits]"
+          pip install pytest pytest-asyncio pytest-timeout pyyaml
+
+      - name: Run T0 unit + T1 golden
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          pytest -m "unit or golden" -v --timeout=60
+
+  # T2 contract + T4 validation-form eval — needs sandbox on :5173.
+  contract-and-eval:
+    name: T2 contract + T4 eval (sandbox)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: sandbox/package.json
+
+      - name: Install perception engine
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[audits]"
+          pip install pytest pytest-asyncio pytest-timeout pyyaml
+
+      - name: Install Playwright + Chromium (for browser-use)
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Install sandbox
+        working-directory: sandbox
+        run: npm install
+
+      - name: Start sandbox dev server
+        working-directory: sandbox
+        run: |
+          nohup npm run dev -- --host 127.0.0.1 --port 5173 > sandbox.log 2>&1 &
+          echo "sandbox_pid=$!" >> $GITHUB_ENV
+
+      - name: Wait for sandbox
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sSf http://127.0.0.1:5173/ > /dev/null; then
+              echo "sandbox ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "sandbox failed to start"
+          cat sandbox/sandbox.log || true
+          exit 1
+
+      - name: T5 stdio smoke
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+          SEO_SKIP_COMPANION_BOOTSTRAP: "1"
+        run: pytest -m stdio -v --timeout=120
+
+      - name: T2 MCP contract suite
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+          SEO_SKIP_COMPANION_BOOTSTRAP: "1"
+        run: python src/run_mcp_contract_tests.py --url http://127.0.0.1:5173 --headless
+
+      - name: T4 validation-form eval
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+          SEO_SKIP_COMPANION_BOOTSTRAP: "1"
+        continue-on-error: true
+        run: python src/run_mcp_eval_validation_form.py --url http://127.0.0.1:5173 --headless
+
+      - name: Upload contract artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-contract-report
+          path: artifacts/**/*.json
+          if-no-files-found: ignore
+
+      - name: Stop sandbox
+        if: always()
+        run: |
+          if [ -n "${sandbox_pid:-}" ]; then
+            kill "$sandbox_pid" || true
+          fi
+
+  # T3 phase integration — nightly or manual dispatch.
+  phase-integration:
+    name: T3 phase integration (nightly)
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_integration)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: sandbox/package.json
+
+      - name: Install perception engine
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[audits]"
+          pip install pytest pytest-asyncio pytest-timeout pyyaml playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Install sandbox
+        working-directory: sandbox
+        run: npm install
+
+      - name: Start sandbox
+        working-directory: sandbox
+        run: |
+          nohup npm run dev -- --host 127.0.0.1 --port 5173 > sandbox.log 2>&1 &
+
+      - name: Wait for sandbox
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sSf http://127.0.0.1:5173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+
+      - name: Run all phases
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+          SEO_SKIP_COMPANION_BOOTSTRAP: "1"
+        run: python src/run_all_phases.py --url http://127.0.0.1:5173 --headless
+        continue-on-error: true
+
+      - name: Upload phase artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-integration-artifacts
+          path: artifacts/**
+          if-no-files-found: ignore

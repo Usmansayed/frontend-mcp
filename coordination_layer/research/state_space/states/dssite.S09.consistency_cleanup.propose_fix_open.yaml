@@ -1,0 +1,35 @@
+state_id: dssite.S09.consistency_cleanup.propose_fix_open
+name: "Consistency — fix proposals awaiting decision"
+description: |
+  consistency_propose_fix produced concrete recommended changes.
+mcp_ready: true
+project_archetype: design_system_site
+project_maturity: M4
+lifecycle_stage: S09_consistency
+project_types: [existing_mature]
+situation_class: consistency_cleanup
+current_project_condition: |
+  Fix diff proposed per deviation; user chooses to apply or accept.
+entry_conditions: [propose_fix_run]
+exit_conditions: [each_proposal_applied_or_dismissed]
+state_confidence: high
+known_evidence: {ui_runtime: known, codebase: partial, design_source: partial, design_system: known, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [apply_choice]
+user_intents: [approve_or_reject_proposals]
+possible_actions: [apply_fix_locally, mark_exception, request_alt_proposal]
+prerequisites: [pdg_file, snapshot_id]
+possible_next_states:
+  - dssite.S05.consistency_cleanup.applying_fix
+  - dssite.S09.consistency_cleanup.exception_documented
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [consistency_intelligence]
+modules_must_not_execute: []
+dependencies: [pdg_file, snapshot_id]
+expected_outputs: [decisions]
+verification_requirements: [each_proposal_disposition_recorded]
+parent_cluster: null
+forest_id: F08
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

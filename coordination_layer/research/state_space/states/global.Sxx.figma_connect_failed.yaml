@@ -1,0 +1,35 @@
+state_id: global.Sxx.figma_connect_failed
+name: "Global — Figma connection failed"
+description: |
+  perception_figma_connect failed (bad PAT, network, permissions). No auto retry.
+mcp_ready: true
+project_archetype: landing
+project_maturity: M2
+lifecycle_stage: Sxx_any
+project_types: [greenfield, existing_project]
+situation_class: degraded_upstream
+current_project_condition: |
+  Figma unavailable; downstream design/consistency paths that need it are blocked.
+entry_conditions: [figma_connect_returned_error]
+exit_conditions: [user_provides_new_pat_or_declines_figma]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: unknown, design_system: partial, seo: unknown, quality: partial, assets: partial}
+unknown_evidence: [new_credentials]
+user_intents: [reconnect_or_skip]
+possible_actions: [ask_user_for_new_pat, proceed_without_figma]
+prerequisites: []
+possible_next_states:
+  - landing.S03.design.figma_connected
+  - landing.S03.design.no_design_source
+failure_states: []
+relevant_modules: [figma_intelligence]
+modules_must_not_execute: []
+dependencies: []
+expected_outputs: [reconnect_or_skip_decision]
+verification_requirements: [decision_recorded]
+parent_cluster: null
+forest_id: F12
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

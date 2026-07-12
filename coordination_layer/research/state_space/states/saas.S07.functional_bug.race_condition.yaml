@@ -1,0 +1,35 @@
+state_id: saas.S07.functional_bug.race_condition
+name: "Debug — race condition suspected"
+description: |
+  Verify sometimes passes, sometimes fails; hypothesis is async race in data loading.
+mcp_ready: true
+project_archetype: saas_dashboard
+project_maturity: M4
+lifecycle_stage: S07_verification
+project_types: [existing_project]
+situation_class: functional_bug
+current_project_condition: |
+  Intermittent failure with timing pattern; console/network buffers inconclusive.
+entry_conditions: [intermittent_verify_results]
+exit_conditions: [race_removed_or_synchronization_added]
+state_confidence: medium
+known_evidence: {ui_runtime: regressed, codebase: partial, design_source: unknown, design_system: partial, seo: unknown, quality: partial, assets: unknown}
+unknown_evidence: [race_participants]
+user_intents: [remove_race]
+possible_actions: [add_synchronization, use_wait_for_predicates, verify_multiple_runs]
+prerequisites: [session_id, repo_root]
+possible_next_states:
+  - saas.S07.new_feature.multi_step_flow.all_checkpoints_verified
+  - saas.S07.functional_bug.intermittent
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, frontend_quality, codebase_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [session_id, repo_root]
+expected_outputs: [synchronization_diff]
+verification_requirements: [ten_consecutive_passes]
+parent_cluster: null
+forest_id: F05
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1

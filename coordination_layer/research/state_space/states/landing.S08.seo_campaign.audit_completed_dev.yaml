@@ -1,0 +1,36 @@
+state_id: landing.S08.seo_campaign.audit_completed_dev
+name: "SEO — dev-mode audit completed"
+description: |
+  perception_seo_audit in development mode produced reasoning_context_v2 with recommendations.
+mcp_ready: true
+project_archetype: landing
+project_maturity: M4
+lifecycle_stage: S08_quality
+project_types: [existing_project]
+situation_class: seo_campaign
+current_project_condition: |
+  SEO graph populated with audit + evidence + recs; AI readiness block present unless disabled.
+entry_conditions: [dev_audit_completed]
+exit_conditions: [recommendations_triaged]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: partial, design_source: partial, design_system: partial, seo: known, quality: partial, assets: partial}
+unknown_evidence: [gsc_data, ga4_data]
+user_intents: [act_on_recommendations]
+possible_actions: [seo_query_recs, apply_fix, verify_fix, derive_ai_visibility]
+prerequisites: [audit_id]
+possible_next_states:
+  - landing.S08.seo_campaign.fix_applying
+  - landing.S08.seo_campaign.ai_readiness_reviewed
+  - marketing.S10.release_prep.regression_baseline_capture
+failure_states: [global.Sxx.upstream_degraded]
+relevant_modules: [seo_intelligence]
+modules_must_not_execute: []
+dependencies: [audit_id]
+expected_outputs: [recommendations, ai_readiness_block]
+verification_requirements: [reasoning_context_schema_2_0]
+parent_cluster: null
+forest_id: F07
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

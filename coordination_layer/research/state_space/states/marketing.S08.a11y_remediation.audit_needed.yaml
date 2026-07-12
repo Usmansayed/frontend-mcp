@@ -1,0 +1,36 @@
+state_id: marketing.S08.a11y_remediation.audit_needed
+name: "Quality — a11y audit needed"
+description: |
+  Feature verification passed; accessibility audit not yet run for this page.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S08_quality
+project_types: [existing_mature]
+situation_class: accessibility_remediation
+current_project_condition: |
+  Verified functional behavior; a11y unknown.
+entry_conditions: [functional_verification_passed]
+exit_conditions: [audit_run_and_findings_triaged]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: partial, design_source: partial, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [a11y_score, findings]
+user_intents: [audit_a11y]
+possible_actions: [audit_accessibility, plan_remediation]
+prerequisites: [session_id]
+possible_next_states:
+  - marketing.S08.a11y_remediation.findings_open
+  - marketing.S08.a11y_remediation.clean
+failure_states: [global.Sxx.upstream_degraded]
+relevant_modules: [frontend_quality, visual_browser]
+modules_must_not_execute: []
+dependencies: [session_id]
+expected_outputs: [a11y_audit]
+verification_requirements: [audit_report_available_or_degraded]
+parent_cluster: null
+forest_id: F06
+mcp_ready_gap: null
+notes: |
+  Lighthouse missing → degraded but not blocked.
+discarded_as_duplicate_of: null
+first_added_in: batch1

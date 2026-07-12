@@ -1,0 +1,38 @@
+state_id: complib.S05.component_replacement.integration_dry_run_report
+name: "Component — dry-run integration report available"
+description: |
+  integrate_component (dry-run) returned IntegrationResult with needed_repairs, files_to_change.
+  No filesystem mutation.
+mcp_ready: true
+project_archetype: component_library
+project_maturity: M3
+lifecycle_stage: S05_implementation
+project_types: [existing_mature]
+situation_class: component_replacement
+current_project_condition: |
+  Report enumerates edits + repairs. User must approve or reject.
+entry_conditions: [dry_run_complete]
+exit_conditions: [user_approves_or_rejects]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: known, design_source: partial, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [approval_decision]
+user_intents: [approve_integration]
+possible_actions: [apply_edits_locally, request_alternate_candidate, request_live_install]
+prerequisites: [integration_plan]
+possible_next_states:
+  - complib.S07.component_replacement.integrated_and_verified
+  - complib.S05.component_replacement.candidates_ranked
+  - complib.S05.component_replacement.integration_live_scaffold
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [component_intelligence, codebase_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: [repo_root]
+expected_outputs: [approved_diff]
+verification_requirements: [edits_reviewable]
+parent_cluster: null
+forest_id: F03
+mcp_ready_gap: null
+notes: |
+  Live install path is a separate state (mcp_ready: false).
+discarded_as_duplicate_of: null
+first_added_in: batch1

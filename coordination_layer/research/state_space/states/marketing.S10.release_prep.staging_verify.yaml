@@ -1,0 +1,35 @@
+state_id: marketing.S10.release_prep.staging_verify
+name: "Release — verifying staging deployment"
+description: |
+  Session started against staging URL; per-page verify runs.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S10_release
+project_types: [existing_mature]
+situation_class: release_prep
+current_project_condition: |
+  Verify passes/fails as pages iterated.
+entry_conditions: [staging_reachable]
+exit_conditions: [all_pages_verified_or_regression_detected]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: known, design_source: partial, design_system: partial, seo: partial, quality: partial, assets: partial}
+unknown_evidence: [prod_diff]
+user_intents: [confirm_staging_matches_baseline]
+possible_actions: [iterate_pages, run_diff_vs_baseline]
+prerequisites: [session_id, staging_url, snapshot_id]
+possible_next_states:
+  - marketing.S10.release_prep.staging_verified
+  - marketing.S10.release_prep.staging_regression
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, design_snapshot_engine, frontend_quality]
+modules_must_not_execute: []
+dependencies: [session_id, snapshot_id]
+expected_outputs: [staging_verify_result]
+verification_requirements: [each_page_verified]
+parent_cluster: null
+forest_id: F09
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

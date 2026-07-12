@@ -1,0 +1,35 @@
+state_id: dssite.S09.consistency_cleanup.knowledge_query_empty
+name: "Consistency — knowledge query returned empty"
+description: |
+  design_knowledge_query returned no records; PDG likely empty or filter too narrow.
+mcp_ready: true
+project_archetype: design_system_site
+project_maturity: M3
+lifecycle_stage: S09_consistency
+project_types: [existing_mature]
+situation_class: consistency_cleanup
+current_project_condition: |
+  No results; suspect empty PDG.
+entry_conditions: [query_returned_empty]
+exit_conditions: [pdg_populated_or_query_broadened]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: unknown, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [pdg_content]
+user_intents: [make_query_meaningful]
+possible_actions: [pdg_refresh, broaden_query, drop_query]
+prerequisites: []
+possible_next_states:
+  - dssite.S09.consistency_cleanup.pdg_empty
+  - dssite.S09.consistency_cleanup.knowledge_query_result
+failure_states: [global.Sxx.pdg_refresh_failed]
+relevant_modules: [consistency_intelligence]
+modules_must_not_execute: []
+dependencies: []
+expected_outputs: [next_query_or_refresh]
+verification_requirements: [either_result_nonempty_or_pdg_seeded]
+parent_cluster: null
+forest_id: F08
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

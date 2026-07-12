@@ -1,0 +1,61 @@
+state_id: landing.S02.discovery.no_repo
+name: "Discovery — intent known, no repo initialized"
+description: |
+  Intent is captured but the filesystem has no project directory or `package.json`.
+  Framework Intelligence cannot detect anything yet.
+mcp_ready: true
+
+project_archetype: landing
+project_maturity: M0
+lifecycle_stage: S02_discovery
+project_types: [greenfield]
+situation_class: new_feature
+
+current_project_condition: |
+  Empty (or near-empty) filesystem. No repo. No dev server.
+entry_conditions: [intent_confirmed, filesystem_empty]
+exit_conditions: [repo_created_and_package_json_exists]
+state_confidence: high
+
+known_evidence:
+  ui_runtime: unknown
+  codebase: unknown
+  design_source: unknown
+  design_system: unknown
+  seo: unknown
+  quality: unknown
+  assets: unknown
+unknown_evidence: [stack, package_manager]
+
+user_intents: [bootstrap_project]
+
+possible_actions:
+  - suggest_scaffold_command
+  - run_scaffold_command
+  - initialize_git
+prerequisites: [node_installed]
+possible_next_states:
+  - landing.S02.discovery.stack_chosen
+  - global.Sxx.tooling_broken
+failure_states:
+  - global.Sxx.tooling_broken
+recovery_paths:
+  - from: global.Sxx.tooling_broken
+    action: prompt_user_for_node_install
+    notes: no auto-install
+
+relevant_modules: [framework_intelligence]
+modules_must_not_execute: [visual_browser, seo_intelligence, component_intelligence, figma_intelligence, design_snapshot_engine]
+dependencies: []
+
+expected_outputs: [scaffold_command_run]
+verification_requirements: [package_json_present]
+
+parent_cluster: null
+forest_id: F01
+mcp_ready_gap: null
+notes: |
+  detect_framework returns empty at this stage. framework_docs is fine to preload once
+  the user has agreed on a stack.
+discarded_as_duplicate_of: null
+first_added_in: batch1

@@ -1,0 +1,35 @@
+state_id: marketing.S11.production.pdg_stale_refresh_scheduled
+name: "Production — PDG stale, refresh scheduled"
+description: |
+  Design system on prod has diverged from PDG; refresh scheduled to bring back into sync.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M5
+lifecycle_stage: S11_production
+project_types: [existing_mature]
+situation_class: consistency_cleanup
+current_project_condition: |
+  PDG last refresh predates recent releases; standards likely stale.
+entry_conditions: [staleness_threshold_reached]
+exit_conditions: [refresh_completed]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: regressed, seo: partial, quality: partial, assets: partial}
+unknown_evidence: [refreshed_standards]
+user_intents: [refresh_pdg]
+possible_actions: [pdg_refresh, schedule_off_hours]
+prerequisites: []
+possible_next_states:
+  - dssite.S09.consistency_cleanup.pdg_seeded_from_snapshot
+  - global.Sxx.pdg_refresh_failed
+failure_states: [global.Sxx.pdg_refresh_failed]
+relevant_modules: [consistency_intelligence]
+modules_must_not_execute: [seo_intelligence]
+dependencies: []
+expected_outputs: [refresh_result]
+verification_requirements: [pdg_updated]
+parent_cluster: null
+forest_id: F10
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

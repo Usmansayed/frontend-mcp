@@ -1,0 +1,35 @@
+state_id: global.Sxx.user_abandoned
+name: "Global — user abandoned the episode"
+description: |
+  User stopped responding; agent parks the conversation. Not a failure, just an end.
+mcp_ready: true
+project_archetype: landing
+project_maturity: M0
+lifecycle_stage: Sxx_any
+project_types: [greenfield, existing_project]
+situation_class: degraded_upstream
+current_project_condition: |
+  Conversation paused with in-flight state. Cleanup of ephemeral resources triggered.
+entry_conditions: [no_user_activity_for_threshold]
+exit_conditions: [user_returns_or_session_closed]
+state_confidence: medium
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: partial, quality: partial, assets: partial}
+unknown_evidence: [user_intent_on_return]
+user_intents: [pause_gracefully]
+possible_actions: [cleanup_ephemeral_sessions, end_all_sessions]
+prerequisites: []
+possible_next_states:
+  - landing.S01.intent.described
+failure_states: []
+relevant_modules: []
+modules_must_not_execute: []
+dependencies: []
+expected_outputs: [cleanup_report]
+verification_requirements: [ephemeral_sessions_closed]
+parent_cluster: null
+forest_id: F12
+mcp_ready_gap: null
+notes: |
+  Insp_* / res_* blob sessions must be ended.
+discarded_as_duplicate_of: null
+first_added_in: batch2

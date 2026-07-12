@@ -1,0 +1,35 @@
+state_id: marketing.S11.production.drift_scheduled_reaudit
+name: "Production — periodic re-audit scheduled"
+description: |
+  Automated cadence triggers SEO/A11y re-audit against prod URL.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M5
+lifecycle_stage: S11_production
+project_types: [existing_mature]
+situation_class: seo_campaign
+current_project_condition: |
+  Cadence event fires; audit prepared.
+entry_conditions: [reaudit_cadence_trigger]
+exit_conditions: [audit_result_delta_reviewed]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: partial, design_system: partial, seo: partial, quality: partial, assets: partial}
+unknown_evidence: [new_findings]
+user_intents: [detect_drift]
+possible_actions: [seo_audit, a11y_audit, diff_vs_prior]
+prerequisites: [prod_url]
+possible_next_states:
+  - marketing.S08.seo_campaign.audit_diff_open
+  - marketing.S08.a11y_remediation.findings_open
+failure_states: [global.Sxx.upstream_degraded]
+relevant_modules: [seo_intelligence, frontend_quality]
+modules_must_not_execute: [figma_intelligence]
+dependencies: [prod_url]
+expected_outputs: [drift_delta]
+verification_requirements: [delta_reviewed]
+parent_cluster: null
+forest_id: F10
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

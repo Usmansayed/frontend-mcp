@@ -1,0 +1,35 @@
+state_id: landing.S08.seo_campaign.re_audit_after_fix
+name: "SEO — re-audit after fix; graph diff produced"
+description: |
+  Second audit run; diff vs previous shows resolved evidence.
+mcp_ready: true
+project_archetype: landing
+project_maturity: M4
+lifecycle_stage: S08_quality
+project_types: [existing_project]
+situation_class: seo_campaign
+current_project_condition: |
+  Fix confirmed resolved via seo_verify or fresh audit diff.
+entry_conditions: [re_audit_completed]
+exit_conditions: [next_rec_or_baseline_captured]
+state_confidence: high
+known_evidence: {ui_runtime: verified, codebase: known, design_source: partial, design_system: partial, seo: verified, quality: partial, assets: partial}
+unknown_evidence: [remaining_recs]
+user_intents: [continue_or_capture_baseline]
+possible_actions: [seo_query_next_recs, capture_baseline]
+prerequisites: [audit_id]
+possible_next_states:
+  - landing.S08.seo_campaign.fix_applying
+  - marketing.S10.release_prep.regression_baseline_capture
+failure_states: []
+relevant_modules: [seo_intelligence]
+modules_must_not_execute: []
+dependencies: [audit_id]
+expected_outputs: [verified_seo_fix]
+verification_requirements: [issue_no_longer_present]
+parent_cluster: null
+forest_id: F07
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

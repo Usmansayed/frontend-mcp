@@ -1,0 +1,35 @@
+state_id: marketing.S10.release_prep.staging_regression
+name: "Release — regression detected in staging"
+description: |
+  Diff vs baseline surfaces unaccepted regressions in staging build.
+mcp_ready: true
+project_archetype: marketing
+project_maturity: M4
+lifecycle_stage: S10_release
+project_types: [existing_mature]
+situation_class: regression
+current_project_condition: |
+  Staging shows differences; release blocked until resolved.
+entry_conditions: [regression_diff_present]
+exit_conditions: [regression_resolved_or_accepted]
+state_confidence: high
+known_evidence: {ui_runtime: regressed, codebase: partial, design_source: partial, design_system: partial, seo: partial, quality: partial, assets: partial}
+unknown_evidence: [root_cause]
+user_intents: [resolve_before_release]
+possible_actions: [debug_in_local, rebuild_staging, accept_change]
+prerequisites: [snapshot_id, scan_id]
+possible_next_states:
+  - marketing.S07.ui_bug.snapshot_investigation
+  - marketing.S10.release_prep.staging_verify
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, design_snapshot_engine, codebase_intelligence]
+modules_must_not_execute: []
+dependencies: [snapshot_id, scan_id]
+expected_outputs: [regression_disposition]
+verification_requirements: [regression_resolved_or_accepted]
+parent_cluster: null
+forest_id: F09
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch2

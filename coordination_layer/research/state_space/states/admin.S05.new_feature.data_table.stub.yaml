@@ -1,0 +1,35 @@
+state_id: admin.S05.new_feature.data_table.stub
+name: "Feature — data table stub in place"
+description: |
+  Table shell renders empty rows; data source not yet wired.
+mcp_ready: true
+project_archetype: admin_panel
+project_maturity: M3
+lifecycle_stage: S05_implementation
+project_types: [existing_project, csr]
+situation_class: new_feature
+current_project_condition: |
+  Table component present; header defined; body empty pending data plumbing.
+entry_conditions: [table_component_rendered]
+exit_conditions: [data_wired_and_rendered]
+state_confidence: high
+known_evidence: {ui_runtime: partial, codebase: partial, design_source: unknown, design_system: partial, seo: unknown, quality: unknown, assets: unknown}
+unknown_evidence: [data_source, pagination_behavior]
+user_intents: [see_real_data_in_table]
+possible_actions: [wire_data_source, add_pagination, verify_rendering]
+prerequisites: [session_id]
+possible_next_states:
+  - admin.S06.new_feature.data_table.integrated
+  - admin.S05.new_feature.data_table.stub
+failure_states: [global.Sxx.verify_loop_exhausted]
+relevant_modules: [visual_browser, codebase_intelligence]
+modules_must_not_execute: [seo_intelligence, figma_intelligence]
+dependencies: [session_id]
+expected_outputs: [data_wired_diff]
+verification_requirements: [rows_render_when_data_present]
+parent_cluster: null
+forest_id: F04
+mcp_ready_gap: null
+notes: null
+discarded_as_duplicate_of: null
+first_added_in: batch1
