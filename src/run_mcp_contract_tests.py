@@ -263,12 +263,10 @@ async def main() -> int:
         restored = await handle_state_restore(store, {"session_id": sid, "state_id": "mcp-test"})
         report["tests"]["state_restore"] = {"ok": restored["ok"]}
 
-        devtest = await handle_navigate_and_observe(
-            store,
-            scans,
-            {"session_id": sid, "url": "/edge-lab?devtest=1", "include_screenshot": False},
-        )
-        obs_console = ((devtest.get("data") or {}).get("observation") or {}).get("console") or {}
+        edge_lab_full = {"session_id": sid, "url": "/edge-lab?devtest=1", "include_screenshot": False, "detail": "full"}
+        devtest = await handle_navigate_and_observe(store, scans, edge_lab_full)
+        devtest_obs = (devtest.get("data") or {}).get("observation") or {}
+        obs_console = devtest_obs.get("console") or {}
         entries = obs_console.get("entries") or []
         has_console_error = any("EDGE_LAB_CONSOLE_ERROR" in str(e.get("text", "")) for e in entries)
         agent_console = (devtest.get("data") or {}).get("agent_summary", {}).get("console") or {}
@@ -308,26 +306,21 @@ async def main() -> int:
             and (after_clear.get("data") or {}).get("console", {}).get("session_total", 1) == 0,
         }
 
-        net_devtest = await handle_navigate_and_observe(
-            store,
-            scans,
-            {"session_id": sid, "url": "/edge-lab?devtest=1", "include_screenshot": False},
-        )
-        net_scan_id = net_devtest.get("scan_id")
-        obs_network = ((net_devtest.get("data") or {}).get("observation") or {}).get("network") or {}
+        net_scan_id = devtest.get("scan_id")
+        obs_network = devtest_obs.get("network") or {}
         has_404 = any(
             "dev-insights-missing" in str(e.get("url", ""))
             for e in (obs_network.get("failures") or []) + (obs_network.get("entries") or [])
         )
-        agent_network = (net_devtest.get("data") or {}).get("agent_summary", {}).get("network") or {}
+        agent_network = (devtest.get("data") or {}).get("agent_summary", {}).get("network") or {}
         report["tests"]["network_observe_failure"] = {
-            "ok": net_devtest["ok"] and has_404 and agent_network.get("failed_count", 0) >= 1,
+            "ok": devtest["ok"] and has_404 and agent_network.get("failed_count", 0) >= 1,
         }
 
         net_slow_observe = await handle_navigate_and_observe(
             store,
             scans,
-            {"session_id": sid, "url": "/edge-lab?devtestb=1", "include_screenshot": False},
+            {"session_id": sid, "url": "/edge-lab?devtestb=1", "include_screenshot": False, "detail": "full"},
         )
         slow_network = ((net_slow_observe.get("data") or {}).get("observation") or {}).get("network") or {}
         has_slow = slow_network.get("slow_count", 0) >= 1 or any(

@@ -504,6 +504,33 @@ async def collect_dev_insights_during(
         return collector.stop(url=final_url)
 
 
+async def wait_for_edge_lab_collector_signals(collector: DevInsightsCollector, url: str) -> None:
+    """Wait for Edge Lab SPA fixtures to emit expected signals before snapshot."""
+    if not url:
+        return
+    if "devtestb=1" in url:
+        await wait_until(
+            lambda: any(
+                "dev-insights-slow" in s.url for s in collector._slow_requests.values()
+            ),
+            timeout=8.0,
+        )
+    elif "devtest=1" in url:
+        await wait_until(
+            lambda: (
+                any(
+                    "EDGE_LAB_CONSOLE_ERROR" in e.text
+                    for e in collector._console_errors.values()
+                )
+                and any(
+                    "dev-insights-missing" in n.url
+                    for n in collector._network_failures.values()
+                )
+            ),
+            timeout=5.0,
+        )
+
+
 async def probe_nested_collectors(session: Any, base_url: str) -> dict[str, Any]:
     """Verify nested collectors both receive console errors (hub fan-out)."""
     from navigation.visual_browser_intelligence.verify.verification import read_current_url

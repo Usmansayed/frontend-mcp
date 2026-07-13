@@ -5,7 +5,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from navigation.frontend_quality_intelligence.dev_insights import DevInsights, DevInsightsCollector
+from navigation.frontend_quality_intelligence.dev_insights import (
+	DevInsights,
+	DevInsightsCollector,
+	wait_for_edge_lab_collector_signals,
+)
 from navigation.visual_browser_intelligence.verify.verification import evaluate_js, read_current_url, read_page_text
 from navigation.visual_browser_intelligence.visual.visual_capture import ScreenshotMode, VisualCaptureResult, capture_visuals
 
@@ -116,6 +120,7 @@ async def collect_observation(
 
 	dev_insights = None
 	if collector:
+		await wait_for_edge_lab_collector_signals(collector, url)
 		await collector.snapshot_page_signals(session)
 		dev_insights = collector.stop(url=url)
 		degraded.extend(dev_insights.degraded)
