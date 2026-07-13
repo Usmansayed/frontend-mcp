@@ -1,0 +1,29 @@
+# Coordination Sandbox — default engineering scenarios
+# Run: python -m coordination_sandbox.run --scenarios coordination_sandbox/scenarios/default.yaml
+
+scenarios:
+  - id: saas_dashboard
+    prompt: Build a SaaS dashboard
+  - id: landing_page
+    prompt: Build a landing page
+  - id: improve_dashboard
+    prompt: Improve this existing dashboard
+    existing_product: true
+  - id: replace_component_library
+    prompt: Replace the component library
+  - id: responsive_bug
+    prompt: Fix a responsive bug
+  - id: add_auth
+    prompt: Add authentication
+  - id: accessibility
+    prompt: Improve accessibility
+  - id: redesign_marketing
+    prompt: Redesign the marketing page
+  - id: production_hotfix
+    prompt: Production hotfix
+  - id: dark_mode
+    prompt: Add dark mode
+  - id: improve_spacing
+    prompt: Improve spacing
+  - id: fix_one_button
+    prompt: Fix one button
