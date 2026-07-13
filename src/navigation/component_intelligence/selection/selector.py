@@ -1,6 +1,8 @@
 """Choose best foundation from synthesized cross-module guidance."""
 from __future__ import annotations
 
+import asyncio
+
 from pathlib import Path
 
 from ..contracts import IntelligenceContracts
@@ -29,15 +31,22 @@ async def select_foundation(
 
 	guided: list[tuple[ComponentCandidate, CandidateGuidance]] = []
 	degraded: list[str] = []
-	for candidate in shortlist:
-		guidance = await collect_guidance(
+	guidance_tasks = [
+		collect_guidance(
 			candidate,
 			repo_root=repo_root,
 			parsed_query=parsed_query,
 			contracts=contracts,
 		)
-		guided.append((candidate, guidance))
-		for layer in (guidance.framework, guidance.codebase, guidance.design_sense, guidance.consistency):
+		for candidate in shortlist[:3]
+	]
+	guidance_results = await asyncio.gather(*guidance_tasks, return_exceptions=True)
+	for candidate, result in zip(shortlist[:3], guidance_results, strict=True):
+		if isinstance(result, BaseException):
+			degraded.append(f'guidance_error:{candidate.id}')
+			continue
+		guided.append((candidate, result))
+		for layer in (result.framework, result.codebase, result.design_sense, result.consistency):
 			degraded.extend(layer.degraded)
 
 	eligible = [(c, g) for c, g in guided if g.synthesis.eligible]

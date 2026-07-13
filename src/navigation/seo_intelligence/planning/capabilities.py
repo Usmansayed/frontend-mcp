@@ -85,14 +85,12 @@ CAPABILITY_CATALOG: dict[str, SeoCapabilitySpec] = {
 	),
 }
 
-# Development SEO — no authentication; validate while building.
+# Development SEO — instant browser-scan heuristics while building (no crawl/auth).
 DEVELOPMENT_AUDIT_CAPABILITIES: list[str] = [
-	'technical_crawl',
-	'core_web_vitals',
 	'rendering_verification',
 ]
 
-# Professional SEO — live search data + technical evidence.
+# Professional SEO — live search data + technical evidence (async job).
 PROFESSIONAL_AUDIT_CAPABILITIES: list[str] = [
 	'search_queries',
 	'index_status',

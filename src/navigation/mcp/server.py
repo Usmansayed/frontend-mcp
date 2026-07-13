@@ -132,7 +132,7 @@ class PerceptionMCPServer:
 
         @self._server.read_resource()
 
-        async def read_resource_handler(uri: str) -> types.TextResourceContents | types.BlobResourceContents:
+        async def read_resource_handler(uri: str) -> list[types.TextResourceContents | types.BlobResourceContents]:
 
             uri_str = str(uri)
 
@@ -140,9 +140,9 @@ class PerceptionMCPServer:
 
             if is_blob:
 
-                return types.BlobResourceContents(uri=uri_str, mimeType=mime, blob=payload)
+                return [types.BlobResourceContents(uri=uri_str, mimeType=mime, blob=payload)]
 
-            return types.TextResourceContents(uri=uri_str, mimeType=mime, text=payload)
+            return [types.TextResourceContents(uri=uri_str, mimeType=mime, text=payload)]
 
 
 
@@ -199,6 +199,12 @@ async def async_main() -> None:
         print("Install MCP: pip install mcp", file=sys.stderr)
 
         raise SystemExit(1)
+
+    import asyncio
+
+    from navigation.component_intelligence.providers.shadcn_ecosystem.catalog import warm_shadcn_catalog_cache
+
+    await asyncio.to_thread(warm_shadcn_catalog_cache)
 
     server = PerceptionMCPServer()
 

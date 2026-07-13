@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 from navigation.seo_intelligence.ai_visibility import AiVisibilityAdapter
 from navigation.seo_intelligence.knowledge.graph.store import SeoKnowledgeGraphStore
-from navigation.seo_intelligence.models import SeoAuditRequest, SeoAuditResult, SeoEvidenceRef
+from navigation.seo_intelligence.models import SeoAuditRequest, SeoAuditResult, SeoEvidenceRef, SeoAuditMode
 from navigation.seo_intelligence.planning.modes import provider_allowed, resolve_effective_mode
 from navigation.seo_intelligence.planning.planner import SeoAuditPlanner
 from navigation.seo_intelligence.providers.manager import SeoProviderManager
@@ -85,6 +85,17 @@ class SeoAuditOrchestrator:
 				out.append(result)
 		return out
 
+	async def development_audit(self, request: SeoAuditRequest) -> SeoAuditResult:
+		"""Instant Development SEO — browser scan evidence only, no companions or crawl."""
+		return await self.audit(
+			request,
+			progress_callback=None,
+			is_cancelled=None,
+			on_evidence=None,
+			skip_companions=True,
+			force_mode=SeoAuditMode.DEVELOPMENT,
+		)
+
 	async def audit(
 		self,
 		request: SeoAuditRequest,
@@ -92,6 +103,8 @@ class SeoAuditOrchestrator:
 		progress_callback: ProgressCallback | None = None,
 		is_cancelled: CancelCheck | None = None,
 		on_evidence: EvidenceCallback | None = None,
+		skip_companions: bool = False,
+		force_mode: SeoAuditMode | None = None,
 	) -> SeoAuditResult:
 		def _progress(phase: str, pct: int, message: str, **extra: Any) -> None:
 			if progress_callback is not None:
@@ -105,7 +118,7 @@ class SeoAuditOrchestrator:
 				on_evidence(item.to_dict())
 
 		degraded: list[str] = []
-		mode = resolve_effective_mode(request)
+		mode = force_mode or resolve_effective_mode(request)
 		audit_id = new_audit_id()
 		previous_audit_id = self._graph.latest_audit_id()
 		self._graph.set_website(request.website_url, property_url=request.property_url)
@@ -114,11 +127,16 @@ class SeoAuditOrchestrator:
 		if _cancelled():
 			raise asyncio.CancelledError("audit_cancelled")
 
-		if auto_start_enabled() and os.environ.get('SEO_SKIP_COMPANION_BOOTSTRAP', '').strip().lower() not in {
-			'1',
-			'true',
-			'yes',
-		}:
+		if (
+			not skip_companions
+			and mode == SeoAuditMode.PROFESSIONAL
+			and auto_start_enabled()
+			and os.environ.get('SEO_SKIP_COMPANION_BOOTSTRAP', '').strip().lower() not in {
+				'1',
+				'true',
+				'yes',
+			}
+		):
 			_, companion_notes = await ensure_companions_ready()
 			degraded.extend(companion_notes)
 

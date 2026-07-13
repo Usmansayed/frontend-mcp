@@ -29,8 +29,8 @@ _SYNC_OFFLOAD_TOOLS: frozenset[str] = frozenset(
     }
 )
 
-# Start/poll/cancel return immediately; heavy work runs in background tasks.
-_BACKGROUND_START_TOOLS: frozenset[str] = frozenset(
+# Start returns immediately; development runs inline, professional enqueues background work.
+_SYNC_FAST_SEO_TOOLS: frozenset[str] = frozenset(
     {
         "perception_seo_audit_start",
     }
@@ -38,8 +38,8 @@ _BACKGROUND_START_TOOLS: frozenset[str] = frozenset(
 
 
 def tier_for_tool(tool: str) -> ExecutionTier:
-    if tool in _BACKGROUND_START_TOOLS:
-        return ExecutionTier.BACKGROUND
+    if tool in _SYNC_FAST_SEO_TOOLS:
+        return ExecutionTier.SYNC_FAST
     if tool in _SYNC_OFFLOAD_TOOLS:
         return ExecutionTier.SYNC_OFFLOAD
     if tool.startswith("perception_audit_") or tool == "perception_audit_mode":

@@ -79,10 +79,10 @@ class SeoAuditJobStore:
         if job is None:
             return None
         job.cancel_requested = True
-        if job.terminal:
-            self.save(job)
-            return job
-        job.progress.message = "cancel_requested"
+        if not job.terminal:
+            job.status = SeoAuditJobStatus.CANCELLED
+            job.error = "cancelled_by_user"
+            job.progress.message = "cancelled"
         self.save(job)
         return job
 

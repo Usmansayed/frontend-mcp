@@ -81,7 +81,7 @@ def envelope_to_mcp_contents(result: dict[str, Any], mcp_types: Any) -> list[Any
 	attachments = list(result.get(VISUAL_ATTACHMENTS_KEY) or [])
 	payload = envelope_for_json(result)
 	contents: list[Any] = [
-		mcp_types.TextContent(type='text', text=json.dumps(payload, indent=2, default=str)),
+		mcp_types.TextContent(type='text', text=json.dumps(payload, default=str, separators=(',', ':'))),
 	]
 	seen: set[str] = set()
 	for item in attachments:

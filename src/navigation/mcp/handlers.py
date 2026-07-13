@@ -54,11 +54,16 @@ def _budget_from_args(budget_raw: dict[str, Any] | None) -> OutputBudget:
 
 
 def _detail_mode(arguments: dict[str, Any]) -> str:
-	detail = str(arguments.get('detail') or 'full').strip().lower()
-	return detail if detail in {'full', 'summary_only'} else 'full'
+	detail = str(arguments.get('detail') or 'summary_only').strip().lower()
+	if detail in {'full', 'summary_only', 'metadata_only'}:
+		return detail
+	return 'summary_only'
 
 
 def _screenshot_options(arguments: dict[str, Any]) -> tuple[bool, str, str | None, bool]:
+	detail = _detail_mode(arguments)
+	if detail == 'metadata_only' or arguments.get('no_images') is True:
+		return False, 'viewport', None, False
 	include = arguments.get('include_screenshot', True)
 	if include is False:
 		return False, 'viewport', None, True
@@ -91,10 +96,9 @@ def _observation_payload(
 	detail: str,
 	scan_id: str,
 ) -> dict[str, Any]:
-	data: dict[str, Any] = {
-		'agent_summary': summary,
-		**_visual_data_block(scan_id, obs_dict),
-	}
+	data: dict[str, Any] = {'agent_summary': summary}
+	if detail != 'metadata_only':
+		data.update(_visual_data_block(scan_id, obs_dict))
 	if detail == 'full':
 		data['observation'] = obs_dict
 	return data
@@ -236,6 +240,8 @@ async def handle_navigate_and_observe(
         )
 
     obs_dict = result.observation.to_dict() if result.observation else {}
+    if budget:
+        obs_dict = apply_observation_budget(obs_dict, budget)
     scan_rec = scans.register(
         session_id=session_id,
         run_id=rec.current_run_id,
@@ -244,23 +250,23 @@ async def handle_navigate_and_observe(
     )
     summary = agent_summary_from_observation(obs_dict)
 
-    return attach_observation_visuals(
-        make_envelope(
-            "perception_navigate_and_observe",
-            session_id=session_id,
-            run_id=rec.current_run_id,
-            scan_id=scan_rec.scan_id,
-            url=result.url,
-            degraded=result.degraded,
-            data={
-                "scan_id": scan_rec.scan_id,
-                **_observation_payload(obs_dict, summary, detail, scan_rec.scan_id),
-                "detail": detail,
-                "preflight": result.preflight.to_dict() if result.preflight else None,
-            },
-        ),
-        obs_dict,
+    envelope = make_envelope(
+        "perception_navigate_and_observe",
+        session_id=session_id,
+        run_id=rec.current_run_id,
+        scan_id=scan_rec.scan_id,
+        url=result.url,
+        degraded=result.degraded,
+        data={
+            "scan_id": scan_rec.scan_id,
+            **_observation_payload(obs_dict, summary, detail, scan_rec.scan_id),
+            "detail": detail,
+            "preflight": result.preflight.to_dict() if result.preflight else None,
+        },
     )
+    if include_shot and detail != "metadata_only":
+        return attach_observation_visuals(envelope, obs_dict)
+    return envelope
 
 
 async def handle_verify(
@@ -501,22 +507,22 @@ async def handle_observe(
         annotate_screenshot=annotate,
     )
     summary = agent_summary_from_observation(obs_dict)
-    return attach_observation_visuals(
-        make_envelope(
-            "perception_observe",
-            session_id=session_id,
-            run_id=rec.current_run_id,
-            scan_id=scan_rec.scan_id,
-            url=obs_dict.get("url") or "",
-            degraded=list(obs_dict.get("degraded") or []),
-            data={
-                "scan_id": scan_rec.scan_id,
-                **_observation_payload(obs_dict, summary, detail, scan_rec.scan_id),
-                "detail": detail,
-            },
-        ),
-        obs_dict,
+    envelope = make_envelope(
+        "perception_observe",
+        session_id=session_id,
+        run_id=rec.current_run_id,
+        scan_id=scan_rec.scan_id,
+        url=obs_dict.get("url") or "",
+        degraded=list(obs_dict.get("degraded") or []),
+        data={
+            "scan_id": scan_rec.scan_id,
+            **_observation_payload(obs_dict, summary, detail, scan_rec.scan_id),
+            "detail": detail,
+        },
     )
+    if include_shot and detail != "metadata_only":
+        return attach_observation_visuals(envelope, obs_dict)
+    return envelope
 
 
 async def handle_execute_actions(
@@ -744,8 +750,11 @@ async def handle_probe_guards(store: SessionStore, arguments: dict[str, Any]) ->
         return {**err, "tool": "perception_probe_guards"}
 
     mode = str(arguments.get("mode") or "maze")
+    restore_session = arguments.get("restore_session", True) is not False
+    url_before = await _current_url(rec.browser) if restore_session else ""
+
     if mode == "maze":
-        result = await probe_maze_guards(rec.browser, rec.base_url)
+        result = await probe_maze_guards(rec.browser, rec.base_url, restore_url=restore_session)
     elif mode == "routes":
         routes = arguments.get("routes") or []
         guards = []
@@ -764,6 +773,8 @@ async def handle_probe_guards(store: SessionStore, arguments: dict[str, Any]) ->
         from navigation.design_workflow_intelligence.state.route_guards import GuardProbeResult
 
         result = GuardProbeResult(ok=bool(guards), guards=guards)
+        if restore_session and url_before:
+            await rec.browser.navigate_to(url_before)
     else:
         return make_envelope(
             "perception_probe_guards",
@@ -772,13 +783,23 @@ async def handle_probe_guards(store: SessionStore, arguments: dict[str, Any]) ->
             error=f"unsupported mode: {mode}",
         )
 
+    url_after = await _current_url(rec.browser)
+    hygiene = {
+        "url_before": url_before,
+        "url_after": url_after,
+        "restored": bool(restore_session and url_before and url_before.rstrip("/") == url_after.rstrip("/")),
+    }
+    if restore_session and url_before and not hygiene["restored"]:
+        hygiene["degraded"] = ["session_url_changed"]
+
     return make_envelope(
         "perception_probe_guards",
         ok=result.ok,
         session_id=session_id,
         run_id=rec.current_run_id,
         error=result.error,
-        data={"probe": result.to_dict()},
+        degraded=hygiene.get("degraded", []),
+        data={"probe": result.to_dict(), "session_hygiene": hygiene},
     )
 
 
@@ -1578,6 +1599,8 @@ async def handle_select_component_foundation(arguments: dict[str, Any]) -> dict[
 
 
 async def handle_integrate_component(arguments: dict[str, Any]) -> dict[str, Any]:
+    import asyncio
+
     from navigation.component_intelligence import ComponentIntelligenceService
     from navigation.component_intelligence.integration_models import IntegrationRequest
 
@@ -1591,6 +1614,11 @@ async def handle_integrate_component(arguments: dict[str, Any]) -> dict[str, Any
     if search_plan is not None and not isinstance(search_plan, dict):
         search_plan = None
 
+    plan_only = bool(arguments.get("plan_only", True))
+    execute_install = bool(arguments.get("execute_install"))
+    if execute_install:
+        plan_only = False
+
     request = IntegrationRequest(
         query=query,
         candidate_id=candidate_id,
@@ -1598,27 +1626,70 @@ async def handle_integrate_component(arguments: dict[str, Any]) -> dict[str, Any
         preview_url=str(arguments.get("preview_url") or "").strip() or None,
         search_plan=search_plan,
         max_repair_attempts=int(arguments.get("max_repair_attempts") or 3),
-        execute_install=bool(arguments.get("execute_install")),
+        execute_install=execute_install,
         execute_repairs=bool(arguments.get("execute_repairs")),
+        plan_only=plan_only,
     )
 
     service = ComponentIntelligenceService()
-    result = await service.integrate_component(request)
+    timeout_s = 4.5 if not plan_only else 3.0
+    try:
+        result = await asyncio.wait_for(service.integrate_component(request), timeout=timeout_s)
+    except asyncio.TimeoutError:
+        partial = await service.integrate_component(
+            IntegrationRequest(
+                query=query,
+                candidate_id=candidate_id,
+                repo_root=str(repo_root),
+                preview_url=request.preview_url,
+                search_plan=search_plan,
+                plan_only=True,
+            )
+        )
+        return make_envelope(
+            "perception_integrate_component",
+            ok=True,
+            degraded=list(dict.fromkeys((partial.degraded or []) + ["integration_timeout_partial_plan"])),
+            data={
+                "integration_result": partial.to_dict(),
+                "partial": True,
+                "agent_summary": {
+                    "status": partial.status.value,
+                    "foundation": partial.selection.chosen.to_dict() if partial.selection else None,
+                    "install_commands": (
+                        partial.integration.installation_plan.install_commands
+                        if partial.integration and partial.integration.installation_plan
+                        else []
+                    ),
+                    "blocking": [],
+                    "advisory": [
+                        f"Full pipeline exceeded {timeout_s}s — returning partial plan only.",
+                        "Set plan_only=false and execute_install=true only when full install is required.",
+                    ],
+                },
+            },
+        )
+
     ok = result.status.value in ("completed", "degraded")
+    install_commands: list[str] = []
+    if result.integration and result.integration.installation_plan:
+        install_commands = list(result.integration.installation_plan.install_commands)
     return make_envelope(
         "perception_integrate_component",
         ok=ok,
         degraded=result.degraded,
         data={
             "integration_result": result.to_dict(),
+            "partial": plan_only,
             "agent_summary": {
                 "status": result.status.value,
                 "foundation": result.selection.chosen.to_dict() if result.selection else None,
+                "install_commands": install_commands,
                 "validation_passed": result.validation.passed if result.validation else False,
                 "repair_attempts": len(result.repair_attempts),
                 "blocking": (result.validation.blocking if result.validation else []),
                 "advisory": [
-                    "Integration pipeline is partially scaffolded — install/validate/repair phases evolve in place.",
+                    "Default is plan_only=true — fast install guidance without blocking.",
                     "Provide preview_url for browser validation when dev server is running.",
                 ],
             },
@@ -2089,14 +2160,15 @@ async def handle_seo_status(arguments: dict[str, Any]) -> dict[str, Any]:
         ok=True,
         data={
             "seo_status": status,
+            "ai_visibility": status.get("ai_visibility"),
             "agent_summary": {
                 "phase": status.get("phase"),
                 "integrations": status.get("integrations"),
-                    "advisory": [
-                        "Read perception://seo-guide before SEO audits.",
-                        "Default mode: development — Browser, Lighthouse, LibreCrawl, no auth.",
-                        "Professional mode (mode=professional): GSC + GA4 — OAuth only when user asks.",
-                    ],
+                "advisory": [
+                    "Read perception://seo-guide before SEO audits.",
+                    "Default mode: development — instant browser scan + AI visibility from scan_id (no crawl/auth).",
+                    "Professional mode (mode=professional): GSC + GA4 + crawl — OAuth when user asks; poll for results.",
+                ],
             },
         },
     )
@@ -2459,8 +2531,12 @@ async def handle_seo_audit(scans: ScanRegistry, arguments: dict[str, Any]) -> di
 
 
 async def handle_seo_audit_start(scans: ScanRegistry, arguments: dict[str, Any]) -> dict[str, Any]:
+    import asyncio
+
     from navigation.seo_intelligence.jobs import SeoAuditJobRunner, get_job_store
+    from navigation.seo_intelligence.models import SeoAuditMode
     from navigation.seo_intelligence.planning.modes import mode_summary, resolve_effective_mode
+    from navigation.seo_intelligence.planning.orchestrator import SeoAuditOrchestrator
     from navigation.seo_intelligence.setup.auth_requirements import audit_blocked_by_auth, auth_prompts_for_request
 
     website_url = str(arguments.get("website_url") or arguments.get("url") or "").strip()
@@ -2488,6 +2564,61 @@ async def handle_seo_audit_start(scans: ScanRegistry, arguments: dict[str, Any])
             },
         )
 
+    # Development SEO: synchronous instant audit (<2s target), no background job.
+    if effective_mode == SeoAuditMode.DEVELOPMENT:
+        if not request.scan_id:
+            return make_envelope(
+                "perception_seo_audit_start",
+                ok=False,
+                error="scan_id required for development SEO",
+                data={
+                    "mode": mode_summary(effective_mode),
+                    "agent_summary": {
+                        "blocking": ["Run perception_observe or perception_navigate_and_observe first, then pass scan_id."],
+                    },
+                },
+            )
+        orchestrator = SeoAuditOrchestrator(scan_registry=scans)
+        try:
+            result = await asyncio.wait_for(orchestrator.development_audit(request), timeout=2.0)
+        except asyncio.TimeoutError:
+            return make_envelope(
+                "perception_seo_audit_start",
+                ok=False,
+                error="development_seo_timeout",
+                degraded=setup_notes + ["development_seo_exceeded_2s"],
+                data={
+                    "mode": mode_summary(effective_mode),
+                    "agent_summary": {
+                        "blocking": ["Development SEO exceeded 2s — retry with summary_only observe or smaller page."],
+                    },
+                },
+            )
+        return make_envelope(
+            "perception_seo_audit_start",
+            ok=True,
+            data={
+                "status": "completed",
+                "instant": True,
+                "terminal": True,
+                "audit_id": result.audit_id,
+                "seo_audit": result.to_dict(),
+                "mode": mode_summary(effective_mode),
+                "agent_summary": {
+                    "website_url": website_url,
+                    "mode": effective_mode.value,
+                    "recommendation_count": len(result.recommendations),
+                    "evidence_count": len(result.evidence),
+                    "advisory": [
+                        "Development SEO completed inline — no polling required.",
+                        f"Use perception_seo_query with audit_id={result.audit_id} for graph reads.",
+                    ],
+                },
+            },
+            degraded=sorted(set(setup_notes + list(result.degraded))),
+        )
+
+    # Professional SEO: async background job.
     runner = SeoAuditJobRunner(scan_registry=scans)
     audit_job_id = runner.start(request, setup_notes=setup_notes)
     job = get_job_store().get(audit_job_id)
@@ -2498,6 +2629,7 @@ async def handle_seo_audit_start(scans: ScanRegistry, arguments: dict[str, Any])
         data={
             "audit_job_id": audit_job_id,
             "status": job.status.value if job else "queued",
+            "instant": False,
             "poll_interval_ms": 2000,
             "poll_tool": "perception_seo_audit_poll",
             "mode": mode_summary(effective_mode),

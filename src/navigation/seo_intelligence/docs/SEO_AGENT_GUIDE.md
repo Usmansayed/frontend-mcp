@@ -18,20 +18,26 @@ an `ai_readiness` block to `reasoning_context_v2`. Filter recommendations by
 
 ### Development SEO (default)
 
-No authentication. Active while the agent builds a website.
+Runs **instantly inline** (<2s target). No authentication, no crawl, no Search Console, no background job.
 
-| Providers | Browser Intelligence, Lighthouse, LibreCrawl |
-| Validates | Metadata, schema, CWV, crawl, rendering, internal links, semantic HTML |
+| Providers | Browser Intelligence + AI Visibility (derived) |
+| Validates | Metadata, semantics, headings, schema hints, internal links, a11y, lightweight technical heuristics |
+
+**Requires `scan_id`** from `perception_observe` or `perception_navigate_and_observe` first.
 
 ```text
-perception_seo_audit_start {
+perception_navigate_and_observe({ "session_id": "...", "url": "...", "detail": "summary_only" })
+→ scan_id
+
+perception_seo_audit_start({
   "website_url": "https://example.com",
   "scan_id": "...",
   "repo_root": "/path/to/frontend"
-}
+})
+→ data.status = "completed", data.instant = true — no polling
 ```
 
-Then poll with `perception_seo_audit_poll` until terminal status.
+**Localhost** (`localhost`, `127.0.0.1`) auto-detects development mode even without an explicit `mode`.
 
 Pass `repo_root` so Sprint 2 can attach `codebase_hints` and `browser_code_links` to each page.
 
@@ -39,11 +45,19 @@ Set `ai_reasoning: false` to force deterministic recommendations (no Bedrock). O
 
 ### Professional SEO Optimization
 
-Only when the user explicitly asks (e.g. *optimize my SEO*, *connect Search Console*, *analyze with Google data*).
+Only when the user explicitly asks (e.g. *full SEO audit*, *connect Search Console*, *analyze with Google data*).
+
+Runs **asynchronously** — poll until terminal.
+
+| Providers | GSC, GA4, LibreCrawl, Lighthouse, Browser Intelligence, historical evidence |
+| Flow | `seo_audit_start` → background collection → progress → partial results → final report |
 
 ```text
 perception_seo_connect { "website_url": "...", "action": "connect_google" }
-perception_seo_audit { "website_url": "...", "mode": "professional" }
+perception_seo_audit_start { "website_url": "...", "mode": "professional" }
+→ data.audit_job_id
+
+perception_seo_audit_poll({ "audit_job_id": "audit_job_..." })
 ```
 
 OAuth opens in the browser automatically (`interactive: true`). After connect, audits combine GSC, GA4, LibreCrawl, Lighthouse, and Browser Intelligence.
@@ -53,33 +67,29 @@ OAuth opens in the browser automatically (`interactive: true`). After connect, a
 ```text
 1. perception_seo_status          — module phase + provider connections
 2. perception_seo_connect         — register website_url; OAuth only on demand
-3. perception_seo_audit_start       — enqueue audit → audit_job_id (<500ms, non-blocking)
-4. perception_seo_audit_poll        — poll until completed | failed | cancelled
-5. perception_seo_query             — graph queries: page.issues, audit.diff, site.traffic_signals
-6. Fix code / config              — read reasoning_units, codebase_hints, browser_code_links
-7. perception_observe + verify    — Browser Intelligence verifies rendering/index fixes
-8. perception_seo_verify          — re-audit + compare graph baseline → mark verified
+3. perception_observe             — scan page → scan_id (use detail=summary_only for speed)
+4. perception_seo_audit_start     — development: instant result; professional: audit_job_id
+5. perception_seo_audit_poll      — professional only — poll until completed | failed | cancelled
+6. perception_seo_query           — graph queries: page.issues, audit.diff, site.traffic_signals
+7. Fix code / config              — read reasoning_units, codebase_hints, browser_code_links
+8. perception_observe + verify    — Browser Intelligence verifies rendering/index fixes
+9. perception_seo_verify          — re-audit + compare graph baseline → mark verified
 ```
 
-### Async audit (required for agents)
+### Development vs professional audit
 
-**Do not** call `perception_seo_audit` in interactive loops — it blocks the MCP server.
+**Development (default):** synchronous, returns `data.status: completed` with `data.instant: true`.
+
+**Professional:** returns `data.audit_job_id` — poll `perception_seo_audit_poll` for progress and partial evidence.
 
 ```text
-perception_seo_audit_start({
-  "website_url": "https://example.com",
-  "scan_id": "...",
-  "repo_root": "/path/to/frontend"
-})
-→ data.audit_job_id
-
 perception_seo_audit_poll({ "audit_job_id": "audit_job_..." })
 → data.seo_audit_job.status, partial evidence
 
 perception_seo_audit_cancel({ "audit_job_id": "..." })   // optional
 ```
 
-Legacy `perception_seo_audit` remains for scripts only; agents must use start + poll.
+Legacy `perception_seo_audit` remains for scripts only; agents should use `perception_seo_audit_start`.
 
 ## Onboarding (users)
 

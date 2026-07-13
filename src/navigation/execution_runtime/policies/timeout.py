@@ -20,7 +20,7 @@ class TimeoutPolicy:
         if tool in ("perception_seo_audit", "perception_seo_verify"):
             return 90.0
         if tool in ("perception_seo_audit_start", "perception_seo_audit_cancel"):
-            return 5.0
+            return 3.0
         if tool == "perception_seo_audit_poll":
             return 10.0
         if tool.startswith("perception_resolve_") or tool.startswith("perception_validate_"):
@@ -35,5 +35,10 @@ DEFAULT_TIMEOUT_POLICY = TimeoutPolicy(
         "perception_health": 10.0,
         "perception_flow_describe": 15.0,
         "perception_code_context": 30.0,
+        "perception_seo_audit_start": 3.0,
+        "perception_search_components": 8.0,
+        "perception_integrate_component": 5.0,
+        "perception_observe": 45.0,
+        "perception_navigate_and_observe": 45.0,
     },
 )

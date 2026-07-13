@@ -87,9 +87,10 @@ async def login_as_admin(session: Any, base_url: str) -> None:
     await asyncio.sleep(0.5)
 
 
-async def probe_maze_guards(session: Any, base_url: str) -> GuardProbeResult:
+async def probe_maze_guards(session: Any, base_url: str, *, restore_url: bool = True) -> GuardProbeResult:
     """Probe guards without full reload after login (SPA auth is in-memory)."""
     guards: list[RouteGuard] = []
+    url_before = await read_current_url(session)
     try:
         # Anonymous: full navigation reloads app → no auth → redirect
         g1 = await probe_route_guard(
@@ -131,6 +132,14 @@ async def probe_maze_guards(session: Any, base_url: str) -> GuardProbeResult:
             and g2.accessible
             and g3.accessible
         )
-        return GuardProbeResult(ok=ok, guards=guards)
+        result = GuardProbeResult(ok=ok, guards=guards)
+        if restore_url and url_before:
+            await session.navigate_to(url_before)
+        return result
     except Exception as exc:
+        if restore_url and url_before:
+            try:
+                await session.navigate_to(url_before)
+            except Exception:
+                pass
         return GuardProbeResult(ok=False, guards=guards, error=str(exc))

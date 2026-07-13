@@ -24,6 +24,9 @@ _SCAN_ARTIFACTS: dict[str, str] = {
 }
 
 
+_STATIC_GUIDE_CACHE: dict[str, tuple[str, str]] = {}
+
+
 def _read_md(path: Path, label: str) -> tuple[str, str, bool]:
 	if not path.is_file():
 		raise FileNotFoundError(f'{label} not found at {path}')
@@ -147,43 +150,58 @@ def list_resources(scans: ScanRegistry | None = None) -> list[dict[str, str]]:
 	return resources
 
 
+def _cached_guide(uri: str, path: Path, label: str) -> tuple[str, str, bool]:
+	if uri in _STATIC_GUIDE_CACHE:
+		mime, text = _STATIC_GUIDE_CACHE[uri]
+		return mime, text, False
+	mime, text, is_blob = _read_md(path, label)
+	if not is_blob:
+		_STATIC_GUIDE_CACHE[uri] = (mime, text)
+	return mime, text, is_blob
+
+
 def read_resource(uri: str, scans: ScanRegistry | None = None) -> tuple[str, str, bool]:
 	"""Return (mime_type, payload, is_blob). Raises KeyError if unknown."""
 	if uri == 'perception://agent-guide':
-		return _read_md(agent_guide_path(), 'AGENT_GUIDE.md')
+		return _cached_guide(uri, agent_guide_path(), 'AGENT_GUIDE.md')
 
 	if uri == 'perception://inspiration-guide':
-		return _read_md(
+		return _cached_guide(
+			uri,
 			module_doc('inspiration_intelligence', 'docs', 'INSPIRATION_AGENT_GUIDE.md'),
 			'INSPIRATION_AGENT_GUIDE.md',
 		)
 
 	if uri == 'perception://resource-guide':
-		return _read_md(
+		return _cached_guide(
+			uri,
 			module_doc('resource_intelligence', 'docs', 'RESOURCE_AGENT_GUIDE.md'),
 			'RESOURCE_AGENT_GUIDE.md',
 		)
 
 	if uri == 'perception://resolver-guide':
-		return _read_md(
+		return _cached_guide(
+			uri,
 			module_doc('resolver_intelligence', 'docs', 'RESOLVER_AGENT_GUIDE.md'),
 			'RESOLVER_AGENT_GUIDE.md',
 		)
 
 	if uri == 'perception://seo-guide':
-		return _read_md(
+		return _cached_guide(
+			uri,
 			module_doc('seo_intelligence', 'docs', 'SEO_AGENT_GUIDE.md'),
 			'SEO_AGENT_GUIDE.md',
 		)
 
 	if uri == 'perception://figma-guide':
-		return _read_md(
+		return _cached_guide(
+			uri,
 			module_doc('figma_intelligence', 'docs', 'FIGMA_AGENT_GUIDE.md'),
 			'FIGMA_AGENT_GUIDE.md',
 		)
 
 	if uri == 'perception://eval/validation-form':
-		return _read_md(validation_form_eval_path(), 'VALIDATION_FORM_EVAL.md')
+		return _cached_guide(uri, validation_form_eval_path(), 'VALIDATION_FORM_EVAL.md')
 
 	if uri.startswith('perception://scan/') and scans is not None:
 		parts = uri.split('/')

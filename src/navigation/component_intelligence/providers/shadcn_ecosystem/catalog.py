@@ -1,19 +1,42 @@
 """Shadcn registry catalog helpers."""
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
+
+from navigation.seo_intelligence.config.defaults import default_seo_cache_dir
 
 REGISTRIES_INDEX_URL = 'https://ui.shadcn.com/r/registries.json'
 DEFAULT_STYLE = 'new-york'
 _INDEX_TTL_S = 3600
+_CATALOG_TTL_S = 3600
 
 _index_cache: tuple[float, list[dict[str, Any]]] | None = None
+
+
+def _catalog_cache_dir() -> Path:
+	return default_seo_cache_dir() / 'shadcn_catalogs'
+
+
+def _catalog_cache_path(catalog_url: str) -> Path:
+	digest = hashlib.sha256(catalog_url.encode('utf-8')).hexdigest()[:20]
+	return _catalog_cache_dir() / f'{digest}.json'
+
+
+def warm_shadcn_catalog_cache() -> None:
+	"""Pre-fetch registries index + core @shadcn catalog (call at MCP startup)."""
+	try:
+		fetch_registries_index()
+		fetch_registry_catalog(DEFAULT_SHADCN_UI_ENTRY.catalog_url)
+	except Exception:
+		pass
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,14 +101,33 @@ def to_registry_entry(raw: dict[str, Any]) -> RegistryEntry | None:
 	)
 
 
-def fetch_registry_catalog(catalog_url: str) -> list[dict[str, Any]]:
+def fetch_registry_catalog(catalog_url: str, *, force_refresh: bool = False) -> list[dict[str, Any]]:
+	cache_path = _catalog_cache_path(catalog_url)
+	now = time.time()
+	if not force_refresh and cache_path.is_file():
+		try:
+			age = now - cache_path.stat().st_mtime
+			if age < _CATALOG_TTL_S:
+				payload = json.loads(cache_path.read_text(encoding='utf-8'))
+				items = payload.get('items') if isinstance(payload, dict) else None
+				if isinstance(items, list):
+					return list(items)
+		except (OSError, json.JSONDecodeError, ValueError):
+			pass
 	try:
-		with urllib.request.urlopen(catalog_url, timeout=20) as resp:
+		with urllib.request.urlopen(catalog_url, timeout=12) as resp:
 			payload = json.loads(resp.read().decode('utf-8'))
 	except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, ValueError):
 		return []
 	items = payload.get('items') if isinstance(payload, dict) else None
-	return list(items) if isinstance(items, list) else []
+	result = list(items) if isinstance(items, list) else []
+	if result:
+		try:
+			cache_path.parent.mkdir(parents=True, exist_ok=True)
+			cache_path.write_text(json.dumps({'items': result, 'cached_at': now}), encoding='utf-8')
+		except OSError:
+			pass
+	return result
 
 
 # Priority namespaces for Group A — always considered for shadcn-ecosystem search.
@@ -116,7 +158,7 @@ def select_registries_for_plan(
 	suggested_registries: list[str],
 	parsed_text: str,
 	*,
-	max_registries: int = 25,
+	max_registries: int = 8,
 ) -> list[RegistryEntry]:
 	by_ns = registry_lookup(index)
 	selected: list[RegistryEntry] = []

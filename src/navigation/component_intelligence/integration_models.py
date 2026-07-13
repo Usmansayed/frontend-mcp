@@ -213,6 +213,16 @@ class DocumentationBundle:
 	citations: list[str] = field(default_factory=list)
 	degraded: list[str] = field(default_factory=list)
 
+	@classmethod
+	def from_candidate(cls, candidate: ComponentCandidate) -> DocumentationBundle:
+		steps: list[str] = []
+		if candidate.install_method:
+			steps.append(candidate.install_method)
+		return cls(
+			installation_steps=steps,
+			degraded=['documentation_from_candidate_metadata'],
+		)
+
 	def to_dict(self) -> dict[str, Any]:
 		return {
 			'installation_steps': list(self.installation_steps),
@@ -415,9 +425,10 @@ class IntegrationRequest:
 	preview_url: str | None = None
 	search_plan: dict[str, Any] | None = None
 	max_repair_attempts: int = 3
-	max_candidates_for_guidance: int = 12
+	max_candidates_for_guidance: int = 3
 	execute_install: bool = False
 	execute_repairs: bool = False
+	plan_only: bool = True
 
 	def to_dict(self) -> dict[str, Any]:
 		return {
@@ -430,6 +441,7 @@ class IntegrationRequest:
 			'max_candidates_for_guidance': self.max_candidates_for_guidance,
 			'execute_install': self.execute_install,
 			'execute_repairs': self.execute_repairs,
+			'plan_only': self.plan_only,
 		}
 
 

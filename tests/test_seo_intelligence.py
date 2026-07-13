@@ -60,10 +60,15 @@ def test_planner_routes_keyword_research_to_gsc() -> None:
 def test_planner_routes_technical_crawl_to_librecrawl() -> None:
 	from unittest.mock import patch
 
+	from navigation.seo_intelligence.models import SeoAuditMode
 	from navigation.seo_intelligence.planning.planner import SeoAuditPlanner
 
 	planner = SeoAuditPlanner()
-	request = SeoAuditRequest(website_url='https://example.com', intents=['technical_crawl'])
+	request = SeoAuditRequest(
+		website_url='https://example.com',
+		mode=SeoAuditMode.PROFESSIONAL,
+		intents=['technical_crawl'],
+	)
 	with patch.dict('os.environ', {'LIBRECRAWL_BASE_URL': 'http://localhost:8080'}):
 		route = planner.route_capability(
 			'technical_crawl',
@@ -204,7 +209,8 @@ def test_planner_development_mode_excludes_google() -> None:
 	assert 'analytics-ga4' not in providers
 	cap_ids = {r.capability_id for r in routes}
 	assert 'search_queries' not in cap_ids
-	assert 'technical_crawl' in cap_ids
+	assert 'technical_crawl' not in cap_ids
+	assert 'rendering_verification' in cap_ids
 
 
 def test_planner_professional_mode_includes_gsc() -> None:

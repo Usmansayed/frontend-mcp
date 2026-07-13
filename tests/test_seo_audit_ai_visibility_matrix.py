@@ -20,8 +20,29 @@ from navigation.core.scan_registry import ScanRegistry
 from navigation.mcp.handlers import handle_seo_audit
 
 
+def _minimal_scan(scans: ScanRegistry) -> str:
+    record = scans.register(
+        session_id="s1",
+        run_id="r1",
+        url="https://example.com/",
+        observation={
+            "url": "https://example.com/",
+            "title": "Example",
+            "dev_insights": {
+                "issues": [{"kind": "meta", "message": "Missing meta description", "tier": "advisory"}],
+            },
+        },
+    )
+    return record.scan_id
+
+
 def _audit(**args) -> dict:
     scans = ScanRegistry()
+    if "scan_id" not in args:
+        args = {**args, "scan_id": _minimal_scan(scans)}
+    else:
+        # Caller supplied scan_id — still need the registry instance wired via handler arg
+        pass
     return asyncio.run(handle_seo_audit(scans, args))
 
 
@@ -41,7 +62,8 @@ def test_seo_audit_defaults_include_ai_visibility_true() -> None:
     result = _audit(website_url="https://example.com/")
     if not result["ok"]:
         pytest.skip(f"seo audit not runnable in this environment: {result.get('error')}")
-    ctx = (result.get("data") or {}).get("reasoning_context_v2") or {}
+    payload = (result.get("data") or {}).get("seo_audit") or {}
+    ctx = payload.get("reasoning_context_v2") or {}
     assert "ai_readiness" in ctx, "ai_readiness block must be present by default"
 
 
@@ -51,11 +73,12 @@ def test_seo_audit_include_ai_visibility_false_omits_block() -> None:
     result = _audit(website_url="https://example.com/", include_ai_visibility=False)
     if not result["ok"]:
         pytest.skip(f"seo audit not runnable in this environment: {result.get('error')}")
-    ctx = (result.get("data") or {}).get("reasoning_context_v2") or {}
+    payload = (result.get("data") or {}).get("seo_audit") or {}
+    ctx = payload.get("reasoning_context_v2") or {}
     assert "ai_readiness" not in ctx, (
         "ai_readiness block must NOT be present when include_ai_visibility=False"
     )
-    recs = (result.get("data") or {}).get("recommendations") or []
+    recs = payload.get("recommendations") or []
     assert not any(
         (r.get("category") or "").lower() == "ai_visibility" for r in recs
     ), "no ai_visibility recommendations should be emitted when disabled"

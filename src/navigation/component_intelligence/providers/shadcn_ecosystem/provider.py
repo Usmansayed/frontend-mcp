@@ -26,7 +26,7 @@ class ShadcnEcosystemProvider:
 	def __init__(
 		self,
 		*,
-		max_registries: int = 25,
+		max_registries: int = 8,
 		max_results: int = MAX_RESULTS,
 	) -> None:
 		self._max_registries = max_registries
@@ -40,11 +40,15 @@ class ShadcnEcosystemProvider:
 			raise ComponentProviderError(f'registries_index_unavailable:{exc}') from exc
 
 		search_text = build_search_text(context.parsed)
+		plan_cap = min(
+			self._max_registries,
+			max(len(context.plan.suggested_registries) + 2, 3),
+		)
 		registries = select_registries_for_plan(
 			index,
 			context.plan.suggested_registries,
 			search_text,
-			max_registries=self._max_registries,
+			max_registries=plan_cap,
 		)
 		if not registries:
 			return []

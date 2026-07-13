@@ -100,9 +100,18 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                     },
                     "detail": {
                         "type": "string",
-                        "enum": ["full", "summary_only"],
-                        "default": "full",
-                        "description": "summary_only omits DOM payload but still returns visual block + inline images",
+                        "enum": ["full", "summary_only", "metadata_only"],
+                        "default": "summary_only",
+                        "description": (
+                            "summary_only (default): agent_summary + visual_insights, no DOM. "
+                            "metadata_only: agent_summary only, no images. "
+                            "full: includes observation DOM payload."
+                        ),
+                    },
+                    "no_images": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "Skip screenshot capture and inline images (lighter than summary_only when visual_insights not needed).",
                     },
                     "budget": {
                         "type": "object",
@@ -136,9 +145,18 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                     "annotate_screenshot": {"type": "boolean", "default": True},
                     "detail": {
                         "type": "string",
-                        "enum": ["full", "summary_only"],
-                        "default": "full",
-                        "description": "summary_only omits DOM but keeps visual block + inline images",
+                        "enum": ["full", "summary_only", "metadata_only"],
+                        "default": "summary_only",
+                        "description": (
+                            "summary_only (default): agent_summary + visual_insights, no DOM. "
+                            "metadata_only: agent_summary only, no images. "
+                            "full: includes observation DOM payload."
+                        ),
+                    },
+                    "no_images": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "Skip screenshot capture and inline images.",
                     },
                     "budget": {
                         "type": "object",
@@ -752,9 +770,9 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_integrate_component",
             description=(
-                "Component Intelligence. Full orchestration: search (or candidate_id) → select foundation → "
-                "documentation reader → dependency/compatibility resolution → install → adapt → "
-                "browser validate → repair loop. Partial phases are scaffolded; returns structured status."
+                "Component Intelligence. Fast integration plan by default (<5s): search (or candidate_id) → "
+                "select foundation → dependencies + install steps + next actions. Set execute_install=true "
+                "only when the user explicitly wants mutating install/repair."
             ),
             inputSchema={
                 "type": "object",
@@ -765,6 +783,11 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                     "preview_url": {"type": "string", "description": "URL for post-install browser validation"},
                     "search_plan": {"type": "object"},
                     "max_repair_attempts": {"type": "integer", "default": 3},
+                    "plan_only": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Return partial plan quickly without mutating the repo (default).",
+                    },
                     "execute_install": {
                         "type": "boolean",
                         "default": False,
@@ -1115,8 +1138,9 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_seo_audit_start",
             description=(
-                "SEO Intelligence (async). Enqueue audit → audit_job_id (<500ms). "
-                "Poll perception_seo_audit_poll. Read perception://seo-guide. AGENT_GUIDE §15."
+                "SEO Intelligence. Development mode (default): instant inline audit (<2s) from scan_id — "
+                "no polling. Professional mode: async job — poll perception_seo_audit_poll. "
+                "Localhost auto-detects development. Read perception://seo-guide."
             ),
             inputSchema={
                 "type": "object",

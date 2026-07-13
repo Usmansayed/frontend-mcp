@@ -253,8 +253,9 @@ class SeoIntelligenceService:
 				'development': {
 					'display_name': 'Development SEO',
 					'auth_required': False,
-					'providers': ['browser', 'lighthouse', 'librecrawl'],
-					'use_while': 'Building a website — validate metadata, CWV, crawl, rendering continuously',
+					'providers': ['browser'],
+					'instant': True,
+					'use_while': 'Building a website — instant metadata, semantics, headings, schema hints, a11y from scan_id',
 				},
 				'professional': {
 					'display_name': 'Professional SEO Optimization',
