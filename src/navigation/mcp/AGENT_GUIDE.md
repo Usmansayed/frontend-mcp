@@ -1,4 +1,4 @@
-﻿# Agent Guide ΓÇö Programming the Host Agent
+﻿# Agent Guide — Programming the Host Agent
 
 **Audience:** Cursor, Claude Code, Codex, or any MCP-connected coding agent.
 
@@ -11,20 +11,20 @@ The MCP has **no LLM**. **You are the brain.** The MCP only navigates, observes,
 ## 0. Universal loop (every task)
 
 ```text
-OBSERVE  ΓåÆ  REASON  ΓåÆ  ACT  ΓåÆ  VERIFY  ΓåÆ  (repeat or STOP)
+OBSERVE  →  REASON  →  ACT  →  VERIFY  →  (repeat or STOP)
 ```
 
 | Phase | Who | What |
 |-------|-----|------|
-| **OBSERVE** | You call MCP | `perception_navigate_and_observe` or `perception_observe` ΓÇö save `scan_id` |
+| **OBSERVE** | You call MCP | `perception_navigate_and_observe` or `perception_observe` — save `scan_id` |
 | **REASON** | You (in IDE) | Read `agent_summary.blocking`, DOM, dev insights; edit code or plan script |
-| **ACT** | You call MCP | `perception_execute_script` / `perception_execute_actions` ΓÇö save `scan_id_before` |
-| **VERIFY** | You call MCP | `perception_verify(criteria)` ΓÇö never skip |
+| **ACT** | You call MCP | `perception_execute_script` / `perception_execute_actions` — save `scan_id_before` |
+| **VERIFY** | You call MCP | `perception_verify(criteria)` — never skip |
 | **STOP** | You | Task done when verify passes; or stop and ask user (auth gate, ambiguous requirements) |
 
 **Hard rules:**
 1. Never claim a UI change works without `perception_verify`.
-2. Never loop login/MFA ΓÇö if `perception_auth_gate` ΓåÆ `requires_human: true`, ask the user.
+2. Never loop login/MFA — if `perception_auth_gate` → `requires_human: true`, ask the user.
 3. Always read `blocking` before `advisory` in dev insights.
 4. On verify failure: re-observe with screenshot, then `perception_diff`.
 
@@ -35,10 +35,13 @@ OBSERVE  ΓåÆ  REASON  ΓåÆ  ACT  ΓåÆ  VERIFY  ΓåÆ  (repeat or STOP)
 **When:** Start of any frontend work in a repo.
 
 ```text
-1. perception_health({ url: base_url })           ΓåÆ if unreachable, ask user to start dev server
-2. perception_session_start({ base_url })         ΓåÆ save session_id
-3. (optional) perception_code_context(...)        ΓåÆ if you need file/route hints before opening pages
+1. perception_health({ url: base_url })           → if unreachable, ask user to start dev server
+2. perception_session_start({ base_url })         → save session_id
+3. (optional) perception_detect_framework({ repo_root })  → stack hints
+4. (optional) perception_resolve_route({ repo_root, path }) → file hints before opening pages
 ```
+
+Read `perception://resolver-guide` before any `perception_resolve_*` tool.
 
 **Stop when:** `session_id` obtained and health OK.
 
@@ -52,31 +55,31 @@ OBSERVE  ΓåÆ  REASON  ΓåÆ  ACT  ΓåÆ  VERIFY  ΓåÆ  (repeat or STOP)
 
 ```text
 OBSERVE
-  ΓåÆ perception_navigate_and_observe({ url: affected_route, include_screenshot: true })
-  ΓåÆ Record scan_id_baseline
+  → perception_navigate_and_observe({ url: affected_route, include_screenshot: true })
+  → Record scan_id_baseline
 
 REASON
-  ΓåÆ Check agent_summary.blocking (console errors, HTTP 4xx/5xx, uncaught exceptions)
-  ΓåÆ If blocking non-empty: fix code first before visual polish
-  ΓåÆ Read dom_text / a11y_tree for missing labels, wrong copy, layout clues
-  ΓåÆ (optional) perception_code_context for component file you edited
+  → Check agent_summary.blocking (console errors, HTTP 4xx/5xx, uncaught exceptions)
+  → If blocking non-empty: fix code first before visual polish
+  → Read dom_text / a11y_tree for missing labels, wrong copy, layout clues
+  → (optional) perception_resolve_component({ repo_root, name }) for the component you edited
 
 ACT
-  ΓåÆ Edit source files in repo (primary action for coding agents)
-  ΓåÆ OR perception_execute_script to toggle UI state for inspection
+  → Edit source files in repo (primary action for coding agents)
+  → OR perception_execute_script to toggle UI state for inspection
 
 VERIFY
-  ΓåÆ perception_verify({
+  → perception_verify({
        url_contains: [expected_path],
        text_contains: [expected_visible_copy],
        text_absent: [error_strings_that_should_be_gone]
      })
 
 RE-OBSERVE (if verify failed or after significant act)
-  ΓåÆ perception_observe ΓåÆ perception_diff(scan_id_baseline, scan_id_new)
+  → perception_observe → perception_diff(scan_id_baseline, scan_id_new)
 
 STOP
-  ΓåÆ verify passed AND blocking issues empty (or explicitly accepted by user)
+  → verify passed AND blocking issues empty (or explicitly accepted by user)
 ```
 
 **Screenshot:** Always `include_screenshot: true` on first observe and on any verify failure.
@@ -89,29 +92,29 @@ STOP
 
 ```text
 OBSERVE
-  ΓåÆ perception_health
-  ΓåÆ perception_navigate_and_observe({ url: broken_route })
-  ΓåÆ Read dev_insights.summary.blocking_issues FIRST
+  → perception_health
+  → perception_navigate_and_observe({ url: broken_route })
+  → Read dev_insights.summary.blocking_issues FIRST
 
 REASON
-  ΓåÆ Classify:
-      A) Console/exception ΓåÆ fix JS/runtime in repo
-      B) HTTP failure ΓåÆ fix API route, env, proxy
-      C) Blank/degraded ΓåÆ check ready_state, degraded[] on response
-      D) Wrong content ΓåÆ compare dom_text to expectation
+  → Classify:
+      A) Console/exception → fix JS/runtime in repo
+      B) HTTP failure → fix API route, env, proxy
+      C) Blank/degraded → check ready_state, degraded[] on response
+      D) Wrong content → compare dom_text to expectation
 
 ACT
-  ΓåÆ Fix code; do not only patch via execute_script unless reproducing
+  → Fix code; do not only patch via execute_script unless reproducing
 
 VERIFY
-  ΓåÆ perception_verify that blocking issues are gone
-  ΓåÆ perception_diff(before, after) ΓÇö confirm new_blocking_issues empty
+  → perception_verify that blocking issues are gone
+  → perception_diff(before, after) — confirm new_blocking_issues empty
 
 RE-OBSERVE
-  ΓåÆ After each fix, full observe on same route
+  → After each fix, full observe on same route
 
 STOP
-  ΓåÆ blocking empty + verify passes + user-visible symptom gone
+  → blocking empty + verify passes + user-visible symptom gone
 ```
 
 **Do not:** Guess the fix without observing. **Do not:** Mark done while `HTTP 4xx` or console errors remain.
@@ -124,47 +127,47 @@ STOP
 
 ```text
 OBSERVE
-  ΓåÆ perception_navigate_and_observe({ url: form_route })
+  → perception_navigate_and_observe({ url: form_route })
 
 PROBE (before filling)
-  ΓåÆ perception_probe_form({ form: "validation" })
-  ΓåÆ Learn rules: field ΓåÆ message
-  ΓåÆ Re-navigate to form route if probe left the page in a filled/valid state
+  → perception_probe_form({ form: "validation" })
+  → Learn rules: field → message
+  → Re-navigate to form route if probe left the page in a filled/valid state
 
-ACT ΓÇö phase 1 (invalid)
-  ΓåÆ perception_execute_actions([
+ACT — phase 1 (invalid)
+  → perception_execute_actions([
        { type: "click_button", text: "Validate & submit" }
      ])
   OR execute_script to clear required fields and submit
 
-VERIFY ΓÇö invalid
-  ΓåÆ perception_verify({ text_contains: [expected_error_from_probe] })
+VERIFY — invalid
+  → perception_verify({ text_contains: [expected_error_from_probe] })
 
-ACT ΓÇö phase 2 (valid)
-  ΓåÆ perception_execute_actions([
+ACT — phase 2 (valid)
+  → perception_execute_actions([
        { type: "set_input", label: "Email", value: "user@example.com" },
        { type: "set_input", label: "Phone", value: "1234567890" },
        { type: "set_input", label: "Age", value: "25" },
        { type: "click_button", text: "Validate & submit" }
      ])
-  ΓåÆ For checkboxes / custom controls, use execute_script (e.g. toggle terms checkbox)
+  → For checkboxes / custom controls, use execute_script (e.g. toggle terms checkbox)
 
-VERIFY ΓÇö valid
-  ΓåÆ perception_verify({
+VERIFY — valid
+  → perception_verify({
        text_contains: [success_message],
        text_absent: [validation_error_strings]
      })
 
 RE-OBSERVE
-  ΓåÆ If API errors in network_failures after submit, fix client/API code, re-run from OBSERVE
+  → If API errors in network_failures after submit, fix client/API code, re-run from OBSERVE
 
 STOP
-  ΓåÆ probe rules matched + invalid verify + valid verify all pass
+  → probe rules matched + invalid verify + valid verify all pass
 ```
 
 **Inputs:** Prefer `set_input` with `label`. For custom React controlled inputs or checkboxes, use `execute_script` with `input` + `change` events.
 
-**Stop (auth):** Login form that triggers `perception_auth_gate` ΓåÆ `requires_human` ΓåÆ ask user, do not brute-force.
+**Stop (auth):** Login form that triggers `perception_auth_gate` → `requires_human` → ask user, do not brute-force.
 
 ---
 
@@ -174,29 +177,29 @@ STOP
 
 ```text
 OBSERVE
-  ΓåÆ perception_probe_guards({ routes: ["/dashboard", "/admin", ...] })  // once per session if unknown
+  → perception_probe_guards({ routes: ["/dashboard", "/admin", ...] })  // once per session if unknown
 
 OBSERVE target
-  ΓåÆ perception_navigate_and_observe({ url: target_route })
+  → perception_navigate_and_observe({ url: target_route })
 
 REASON
-  ΓåÆ If redirected to /login ΓåÆ guard hit, not necessarily a bug
-  ΓåÆ perception_auth_gate ΓÇö if requires_human, STOP
+  → If redirected to /login → guard hit, not necessarily a bug
+  → perception_auth_gate — if requires_human, STOP
 
 ACT
-  ΓåÆ If authenticated flow needed:
+  → If authenticated flow needed:
        perception_state_restore({ state_id: "logged_in" })  // if previously saved
        OR guide user through login (human)
        perception_state_save({ state_id: "logged_in" }) after success
 
 VERIFY
-  ΓåÆ perception_verify({
+  → perception_verify({
        url_contains: [expected_route],
        url_not_contains: ["/login"]  // when auth should be satisfied
      })
 
 STOP
-  ΓåÆ correct URL + expected content for auth level
+  → correct URL + expected content for auth level
 ```
 
 ---
@@ -207,18 +210,18 @@ STOP
 
 ```text
 DESCRIBE
-  ΓåÆ perception_flow_describe({ flow_name: "validation-form" })
-  ΓåÆ Get ordered checkpoints + success criteria each
+  → perception_flow_describe({ flow_name: "validation-form" })
+  → Get ordered checkpoints + success criteria each
 
 FOR each checkpoint:
-  OBSERVE  ΓåÆ navigate to checkpoint URL if specified
-  REASON   ΓåÆ checkpoint instruction is for YOU, not the MCP
-  ACT      ΓåÆ code edits and/or execute_script / execute_actions
-  VERIFY   ΓåÆ perception_verify(checkpoint.success criteria)
-  ΓåÆ if fail: do not advance; fix and retry this checkpoint only
+  OBSERVE  → navigate to checkpoint URL if specified
+  REASON   → checkpoint instruction is for YOU, not the MCP
+  ACT      → code edits and/or execute_script / execute_actions
+  VERIFY   → perception_verify(checkpoint.success criteria)
+  → if fail: do not advance; fix and retry this checkpoint only
 
 STOP
-  ΓåÆ all checkpoints verified
+  → all checkpoints verified
 ```
 
 **Do not:** Skip checkpoints. **Do not:** Ask MCP to run the whole flow autonomously.
@@ -227,17 +230,17 @@ STOP
 
 ## 7. Playbook: Verification-only (regression check)
 
-**When:** User asks ΓÇ£does it still work?ΓÇ¥ after unrelated changes.
+**When:** User asks "does it still work?" after unrelated changes.
 
 ```text
 OBSERVE
-  ΓåÆ perception_navigate_and_observe({ url })
+  → perception_navigate_and_observe({ url })
 
 VERIFY
-  ΓåÆ perception_verify({ ... known good criteria ... })
+  → perception_verify({ ... known good criteria ... })
 
 STOP
-  ΓåÆ pass or report reasons[] to user with screenshot
+  → pass or report reasons[] to user with screenshot
 ```
 
 No code act unless verify fails.
@@ -250,23 +253,23 @@ No code act unless verify fails.
 
 ```text
 OBSERVE
-  ΓåÆ perception_session_start with viewport { width: 375, height: 812 }
-  ΓåÆ perception_navigate_and_observe({ include_screenshot: true })
+  → perception_session_start with viewport { width: 375, height: 812 }
+  → perception_navigate_and_observe({ include_screenshot: true })
 
 REASON
-  ΓåÆ Inspect screenshot resource + dom_text for horizontal overflow clues
+  → Inspect screenshot resource + dom_text for horizontal overflow clues
 
 ACT
-  ΓåÆ Fix CSS in repo
+  → Fix CSS in repo
 
 VERIFY
-  ΓåÆ Re-observe at same viewport; perception_verify text visible / not absent
+  → Re-observe at same viewport; perception_verify text visible / not absent
 
 REPEAT
-  ΓåÆ perception_session_end ΓåÆ new session with desktop viewport if needed
+  → perception_session_end → new session with desktop viewport if needed
 
 STOP
-  ΓåÆ criteria met at target viewport(s)
+  → criteria met at target viewport(s)
 ```
 
 ---
@@ -277,50 +280,60 @@ STOP
 
 ```text
 OBSERVE
-  ΓåÆ perception_navigate_and_observe({ url: "/edge-lab" or feature route })
+  → perception_navigate_and_observe({ url: "/edge-lab" or feature route })
 
 REASON
-  ΓåÆ Match scenario to engine probe pattern:
-      feature flag  ΓåÆ URL param or localStorage per probe docs
-      iframe        ΓåÆ may need execute_script in parent to reach frame
-      virtual list  ΓåÆ scroll via execute_script before verify item visible
-      file upload   ΓåÆ perception_execute_actions cannot upload files; use dedicated probe pattern when exposed
+  → Match scenario to engine probe pattern:
+      feature flag  → URL param or localStorage per probe docs
+      iframe        → may need execute_script in parent to reach frame
+      virtual list  → scroll via execute_script before verify item visible
+      file upload   → perception_execute_actions cannot upload files; use dedicated probe pattern when exposed
 
 ACT + VERIFY
-  ΓåÆ Per feature: act, then verify specific text/selector/state
+  → Per feature: act, then verify specific text/selector/state
 
 STOP
-  ΓåÆ feature-specific criteria met
+  → feature-specific criteria met
 ```
 
 Use `perception_flow_describe` or codebase search when unsure which probe applies.
 
 ---
 
-## 10. Playbook: Correlating code Γåö live UI
+## 10. Playbook: Correlating code ↔ live UI
 
-**When:** You changed a component and need to confirm the right file drives the page.
+**When:** You need the file that drives a route or component, or to confirm your edit matches the live page.
+
+**Read first:** `perception://resolver-guide`
 
 ```text
 OBSERVE
-  ΓåÆ perception_navigate_and_observe({ url })
+  → perception_navigate_and_observe({ url })  → save scan_id
 
-CODE
-  ΓåÆ perception_code_context({
-       query_type: "search",
-       query_kwargs: { q: "ComponentName" }
-     })
+RESOLVE (pick one)
+  → perception_resolve_route({ repo_root, path: "/forms/validation" })
+  → perception_resolve_component({ repo_root, name: "ValidationForm" })
+  → perception_resolve_design_token({ repo_root, token: "accent" })
 
 REASON
-  ΓåÆ Match button text / labels in dom_text to CRG search results
-  ΓåÆ Edit correct file
+  → Read data.resolution.status and matches[].file_path
+  → If ambiguous: perception_validate_route_claim or perception_validate_component_claim
+  → If not_found: use IDE search (follow fallback.host_search)
+
+ACT
+  → Edit matched file in repo
 
 VERIFY
-  ΓåÆ perception_verify + perception_diff after change
+  → perception_observe → perception_verify → perception_diff
+
+CORRELATE (optional)
+  → perception_correlate_live({ scan_id, resolution: data.resolution })
 
 STOP
-  ΓåÆ live UI reflects code change
+  → verify passes + resolution status resolved (or claim validated)
 ```
+
+**Do not** use `perception_code_context` for routes — it is deprecated (slow CRG graph).
 
 ---
 
@@ -331,8 +344,8 @@ STOP
 | First look at page | `navigate_and_observe` |
 | After code edit, same URL | `observe` or `navigate_and_observe` |
 | After execute_script | `verify` then `diff(before, after)` |
-| ΓÇ£What changed?ΓÇ¥ | `perception_diff` |
-| ΓÇ£Is requirement met?ΓÇ¥ | `perception_verify` |
+| "What changed?" | `perception_diff` |
+| "Is requirement met?" | `perception_verify` |
 | Verify failed | `perception_verify` (auto-screenshot) + `perception_diff` |
 
 ---
@@ -350,7 +363,7 @@ Observe, verify-fail, and diff tools **inline PNG images** in the MCP tool respo
 | `screenshot_mode` | `viewport` \| `full` \| `element` (+ `screenshot_selector` for element) |
 
 **Rules:**
-- Images are attached to the tool result ΓÇö you do not need a separate fetch for normal UI work.
+- Images are attached to the tool result — you do not need a separate fetch for normal UI work.
 - Use `annotate_screenshot: true` (default) on first observe and all verify failures.
 - Use `screenshot_mode: element` with a CSS selector for focused form/checkout debugging.
 - `perception_diff` returns side-by-side + heatmap images when both scans have screenshots.
@@ -375,8 +388,8 @@ Guideline:
 
 | Signal | Action |
 |--------|--------|
-| `perception_auth_gate` ΓåÆ `requires_human: true` | Stop; ask user to log in or complete MFA/CAPTCHA |
-| `perception_health` ΓåÆ unreachable | Stop; ask user to start dev server |
+| `perception_auth_gate` → `requires_human: true` | Stop; ask user to log in or complete MFA/CAPTCHA |
+| `perception_health` → unreachable | Stop; ask user to start dev server |
 | `degraded` contains critical signals | Tell user observation is partial |
 | Requirements ambiguous | Ask user for expected text/URL/selectors |
 | Verify fails 3+ times after fixes | Stop; report `reasons[]`, screenshot, diff summary |
@@ -387,13 +400,13 @@ Guideline:
 
 **When:** User asks for landing page / dashboard / UI inspiration from Dribbble, Behance, gallery sites.
 
-**Read first:** MCP resource `perception://inspiration-guide` ΓÇö per-site URLs, selectors, preview rules, anti-bot.
+**Read first:** MCP resource `perception://inspiration-guide` — per-site URLs, selectors, preview rules, anti-bot.
 
 ```text
-1. perception_inspiration_discover({ query })     ΓåÆ ranked candidates (fast)
-2. perception_inspiration_collect({ query })      ΓåÆ URLs + ephemeral vision blobs
+1. perception_inspiration_discover({ query })     → ranked candidates (fast)
+2. perception_inspiration_collect({ query })      → URLs + ephemeral vision blobs
 3. Open agent_view_url for live pages; use inspiration_blob for quick visual reference
-4. perception_inspiration_session_end({ session_id })  ΓåÆ delete blobs when done
+4. perception_inspiration_session_end({ session_id })  → delete blobs when done
 ```
 
 | Field | Use |
@@ -404,12 +417,12 @@ Guideline:
 | `blob_session_id` | Pass to session_end when finished |
 
 **Provider notes (summary):**
-- **Dribbble** ΓÇö HTTP WAF 202; headed browser + optional `DRIBBBLE_SESSION_COOKIE`
-- **Behance / One Page Love** ΓÇö HTTP works; OPL uses `/genre/` not `?s=`
-- **Awwwards / SiteInspire / Godly / Land-book** ΓÇö browser extract; Godly ΓåÆ `recent.design` `/i/` links
-- **Land-book** ΓÇö `land-book.com` (no www); browse fallback; skip generic og-image blobs
+- **Dribbble** — HTTP WAF 202; headed browser + optional `DRIBBBLE_SESSION_COOKIE`
+- **Behance / One Page Love** — HTTP works; OPL uses `/genre/` not `?s=`
+- **Awwwards / SiteInspire / Godly / Land-book** — browser extract; Godly → `recent.design` `/i/` links
+- **Land-book** — `land-book.com` (no www); browse fallback; skip generic og-image blobs
 
-**Do not:** Scrape galleries ad-hoc ΓÇö use MCP tools. Permanent image download is optional (`download_images`); blobs are ephemeral.
+**Do not:** Scrape galleries ad-hoc — use MCP tools. Permanent image download is optional (`download_images`); blobs are ephemeral.
 
 **Stop when:** You have enough references for the task, or user confirms stop. Always end blob session when design work completes.
 
@@ -419,12 +432,12 @@ Guideline:
 
 **When:** User needs icons, avatars, illustrations, fonts, or stock assets for a commercial project.
 
-**Read first:** MCP resource `perception://resource-guide` ΓÇö license rules, provider notes, blob fields.
+**Read first:** MCP resource `perception://resource-guide` — license rules, provider notes, blob fields.
 
 ```text
-1. perception_resource_search({ query, icon_family: "lucide" })  ΓåÆ family URLs + suggested_import
+1. perception_resource_search({ query, icon_family: "lucide" })  → family URLs + suggested_import
 2. perception_resource_preview only when family miss + reference image (blobs skipped for in-family icons)
-3. Use access_url / npm import ΓÇö not blobs ΓÇö for matched family icons
+3. Use access_url / npm import — not blobs — for matched family icons
 4. perception_resource_session_end({ session_id })
 ```
 
@@ -436,11 +449,11 @@ Guideline:
 | `resource_blob` | Only on family miss + `reference_preview_url`, or avatars/photos |
 
 **Provider notes (MVP):**
-- **Iconify / Lucide** ΓÇö commercial icons; NC collections skipped per asset
-- **DiceBear** ΓÇö preview via public API; self-host for production commercial
-- **unDraw / Storyset** ΓÇö in catalog; blobs skipped when automation prohibited
+- **Iconify / Lucide** — commercial icons; NC collections skipped per asset
+- **DiceBear** — preview via public API; self-host for production commercial
+- **unDraw / Storyset** — in catalog; blobs skipped when automation prohibited
 
-**Do not:** Scrape provider sites ad-hoc ΓÇö use MCP tools. Respect `license_warnings`.
+**Do not:** Scrape provider sites ad-hoc — use MCP tools. Respect `license_warnings`.
 
 **Stop when:** Assets selected and integrated, or user confirms stop. Always end blob session when asset work completes.
 
@@ -450,23 +463,28 @@ Guideline:
 
 **When:** User asks about search rankings, indexing, CTR, Core Web Vitals, technical SEO, or site-wide SEO audit.
 
-**Read first:** MCP resource `perception://seo-guide` ΓÇö free-first providers, verify loop, boundaries.
+**Read first:** MCP resource `perception://seo-guide` — free-first providers, verify loop, boundaries.
 
 ```text
-1. perception_seo_status()                    ΓåÆ phase + provider catalog
-2. Connect user GSC / GA4 (when Phase 1 ships) ΓÇö OAuth, user-owned data
-3. perception_seo_audit({ website_url, scan_id? })
-4. Read evidence + recommendations ΓÇö every claim has evidence_ids
-5. Fix code / config based on evidence
-6. perception_observe ΓåÆ perception_verify on affected pages
-7. Re-run perception_seo_audit to measure gains
+1. perception_seo_status()                         → phase + provider catalog
+2. perception_seo_connect(...)                       → OAuth only when user asks (professional)
+3. perception_seo_audit_start({ website_url, scan_id?, repo_root? })
+   → save audit_job_id (<500ms; non-blocking)
+4. perception_seo_audit_poll({ audit_job_id })      → until status completed | failed | cancelled
+5. Read evidence + recommendations — every claim has evidence_ids
+6. Fix code / config from evidence
+7. perception_observe → perception_verify on affected pages
+8. perception_seo_verify or perception_seo_audit_start again to measure gains
 ```
+
+**Async rule:** Never use blocking `perception_seo_audit` in agent loops — use start + poll.
+Cancel long jobs with `perception_seo_audit_cancel({ audit_job_id })`.
 
 | Provider | Role |
 |----------|------|
 | Search Console | Queries, index, crawl issues, CWV in GSC |
 | GA4 | Traffic, landing pages, conversions |
-| LibreCrawl | Technical crawl (local ΓÇö not our crawler) |
+| LibreCrawl | Technical crawl (local — not our crawler) |
 | Lighthouse | Lab CWV + SEO score |
 | Browser Intelligence | Rendering evidence via `scan_id` |
 
@@ -483,11 +501,11 @@ Guideline:
 **Read first:** MCP resource `perception://figma-guide`.
 
 ```text
-1. perception_figma_status()                         ΓåÆ connection + session
-2. perception_figma_connect({ pat })                 ΓåÆ once per user (PAT stored locally)
-3. perception_figma_context({ file_url, refresh? })  ΓåÆ normalized design context
+1. perception_figma_status()                         → connection + session
+2. perception_figma_connect({ pat })                 → once per user (PAT stored locally)
+3. perception_figma_context({ file_url, refresh? })  → normalized design context
 4. Pass context to Design Sense / Consistency / Component Intelligence as needed
-5. perception_observe ΓåÆ perception_verify for code implementation
+5. perception_observe → perception_verify for code implementation
 ```
 
 | Layer | Role |
@@ -497,7 +515,7 @@ Guideline:
 | Console MCP Adapter | southleft/figma-console-mcp (hidden) |
 | Context Normalizer | `FigmaDesignContext` for all modules |
 
-**Do not:** Reimplement Figma APIs. Run public inspiration here ΓÇö use Inspiration Intelligence. Critique designs here ΓÇö use Design Sense.
+**Do not:** Reimplement Figma APIs. Run public inspiration here — use Inspiration Intelligence. Critique designs here — use Design Sense.
 
 **Stop when:** Context retrieved and downstream task complete, or user confirms stop.
 
@@ -511,7 +529,7 @@ Use tools **only as steps inside playbooks above**.
 |------|----------|
 | `perception_session_start/end` | Bootstrap / teardown |
 | `perception_health` | Dev server up? |
-| `perception_navigate_and_observe` | Default ΓÇ£open and seeΓÇ¥ |
+| `perception_navigate_and_observe` | Default "open and see" |
 | `perception_observe` | Same URL, fresh snapshot |
 | `perception_execute_script` | Custom JS interaction |
 | `perception_execute_actions` | Click/fill by label/text |
@@ -521,7 +539,16 @@ Use tools **only as steps inside playbooks above**.
 | `perception_auth_gate` | Login/MFA detection |
 | `perception_state_save/restore` | Multi-step auth |
 | `perception_flow_describe` | Multi-step flows |
-| `perception_code_context` | Code Γåö UI correlation |
+| `perception_code_context` | **Deprecated** — use `perception_resolve_*` |
+| `perception_resolve_route` | Route → component file |
+| `perception_validate_route_claim` | Validate route/file claim |
+| `perception_resolve_component` | Component name → file |
+| `perception_validate_component_claim` | Validate component claim |
+| `perception_resolve_design_token` | Design token lookup |
+| `perception_resolve_state_owner` | State key → store file |
+| `perception_resolve_api_endpoint` | API path → handler file |
+| `perception_resolve_layout` | Layout from design snapshot |
+| `perception_correlate_live` | DOM cross-check with scan_id |
 | `perception_inspiration_discover` | Ranked inspiration candidates (fast) |
 | `perception_inspiration_collect` | URLs + ephemeral vision blobs |
 | `perception_inspiration_session_end` | Delete ephemeral inspiration blobs |
@@ -529,14 +556,18 @@ Use tools **only as steps inside playbooks above**.
 | `perception_resource_preview` | URLs + ephemeral resource vision blobs |
 | `perception_resource_session_end` | Delete ephemeral resource blobs |
 | `perception_seo_status` | SEO module phase + provider catalog |
-| `perception_seo_audit` | SEO evidence ΓåÆ graph ΓåÆ recommendations |
+| `perception_seo_audit_start` | Enqueue SEO audit (returns audit_job_id) |
+| `perception_seo_audit_poll` | Poll audit job status + partial evidence |
+| `perception_seo_audit_cancel` | Cancel background audit |
+| `perception_seo_audit` | Legacy sync audit — prefer start + poll |
+| `perception_seo_verify` | Re-audit vs graph baseline |
 | `perception_figma_status` | Figma connection + session health |
 | `perception_figma_connect` | Connect Figma PAT (once) |
 | `perception_figma_context` | Normalized file, tokens, components, selection |
 
 ---
 
-## 18. Success checklist (before telling user ΓÇ£doneΓÇ¥)
+## 18. Success checklist (before telling user "done")
 
 - [ ] `perception_verify` passed for stated criteria
 - [ ] `agent_summary.blocking` is empty (or user accepted warnings)
@@ -546,4 +577,4 @@ Use tools **only as steps inside playbooks above**.
 
 ---
 
-**Remember:** The MCP does not tell you what to do next. **These playbooks do.** Follow observe ΓåÆ reason ΓåÆ act ΓåÆ verify until the checklist passes.
+**Remember:** The MCP does not tell you what to do next. **These playbooks do.** Follow observe → reason → act → verify until the checklist passes.

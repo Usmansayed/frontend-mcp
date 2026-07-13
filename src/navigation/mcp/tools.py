@@ -342,8 +342,8 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_code_context",
             description=(
-                "Playbook: code ↔ UI correlation (AGENT_GUIDE §10). query_type: stats, search, get_route. "
-                "Supplements observe — does not replace it."
+                "DEPRECATED — prefer perception_resolve_route / perception_validate_route_claim. "
+                "Playbook: code ↔ UI correlation (AGENT_GUIDE §10)."
             ),
             inputSchema={
                 "type": "object",
@@ -353,6 +353,133 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                     "query_type": {"type": "string", "default": "stats"},
                     "query_kwargs": {"type": "object"},
                 },
+            },
+        ),
+        T(
+            name="perception_resolve_route",
+            description=(
+                "Resolver Intelligence. Route path → component file (<200ms). "
+                "Read perception://resolver-guide. AGENT_GUIDE §10."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "repo_root": {"type": "string"},
+                    "path": {"type": "string", "description": "Route path e.g. /forms/validation"},
+                    "route": {"type": "string", "description": "Alias for path"},
+                },
+                "required": ["path"],
+            },
+        ),
+        T(
+            name="perception_validate_route_claim",
+            description=(
+                "Resolver Intelligence. Validate route→file→component claim. "
+                "Read perception://resolver-guide."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "repo_root": {"type": "string"},
+                    "claim": {
+                        "type": "object",
+                        "properties": {
+                            "route": {"type": "string"},
+                            "file": {"type": "string"},
+                            "component": {"type": "object", "properties": {"name": {"type": "string"}}},
+                        },
+                    },
+                },
+                "required": ["claim"],
+            },
+        ),
+        T(
+            name="perception_resolve_component",
+            description="Resolver Intelligence. Component name → file. Read perception://resolver-guide.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "repo_root": {"type": "string"},
+                    "name": {"type": "string"},
+                },
+                "required": ["name"],
+            },
+        ),
+        T(
+            name="perception_validate_component_claim",
+            description="Resolver Intelligence. Validate component file claim. Read perception://resolver-guide.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "repo_root": {"type": "string"},
+                    "claim": {"type": "object"},
+                },
+                "required": ["claim"],
+            },
+        ),
+        T(
+            name="perception_resolve_design_token",
+            description="Resolver Intelligence. Design token → CSS/tailwind/DTCG. Read perception://resolver-guide.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "repo_root": {"type": "string"},
+                    "token": {"type": "string"},
+                },
+                "required": ["token"],
+            },
+        ),
+        T(
+            name="perception_resolve_state_owner",
+            description="Resolver Intelligence. State key/store → owner file. Read perception://resolver-guide.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "repo_root": {"type": "string"},
+                    "key": {"type": "string"},
+                    "store_name": {"type": "string"},
+                },
+            },
+        ),
+        T(
+            name="perception_resolve_api_endpoint",
+            description="Resolver Intelligence. API path → handler file. Read perception://resolver-guide.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "repo_root": {"type": "string"},
+                    "path": {"type": "string"},
+                    "method": {"type": "string"},
+                },
+                "required": ["path"],
+            },
+        ),
+        T(
+            name="perception_resolve_layout",
+            description="Resolver Intelligence. Layout regions from design snapshot. Read perception://resolver-guide.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "snapshot_id": {"type": "string"},
+                    "scan_id": {"type": "string"},
+                    "region": {"type": "string"},
+                },
+            },
+        ),
+        T(
+            name="perception_correlate_live",
+            description=(
+                "Resolver Intelligence. Cross-check resolution/claim against scan DOM. "
+                "Requires scan_id from observe. Read perception://resolver-guide."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "scan_id": {"type": "string"},
+                    "resolution": {"type": "object"},
+                    "claim": {"type": "object"},
+                },
+                "required": ["scan_id"],
             },
         ),
         T(
@@ -983,6 +1110,58 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                     },
                 },
                 "required": ["website_url"],
+            },
+        ),
+        T(
+            name="perception_seo_audit_start",
+            description=(
+                "SEO Intelligence (async). Enqueue audit → audit_job_id (<500ms). "
+                "Poll perception_seo_audit_poll. Read perception://seo-guide. AGENT_GUIDE §15."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "website_url": {"type": "string", "description": "Site to audit (required)"},
+                    "mode": {"type": "string", "enum": ["development", "professional"]},
+                    "property_url": {"type": "string"},
+                    "ga4_property_id": {"type": "string"},
+                    "bing_site_url": {"type": "string"},
+                    "scan_id": {"type": "string"},
+                    "repo_root": {"type": "string"},
+                    "providers": {"type": "array", "items": {"type": "string"}},
+                    "intents": {"type": "array", "items": {"type": "string"}},
+                    "include_cross_analysis": {"type": "boolean", "default": True},
+                    "include_recommendations": {"type": "boolean", "default": True},
+                    "include_ai_visibility": {"type": "boolean", "default": True},
+                    "ai_reasoning": {"type": "boolean"},
+                },
+                "required": ["website_url"],
+            },
+        ),
+        T(
+            name="perception_seo_audit_poll",
+            description=(
+                "SEO Intelligence (async). Poll background audit job for status, progress, and evidence deltas."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "audit_job_id": {"type": "string"},
+                    "since_evidence_seq": {
+                        "type": "integer",
+                        "description": "Return evidence_delta entries after this sequence number",
+                    },
+                },
+                "required": ["audit_job_id"],
+            },
+        ),
+        T(
+            name="perception_seo_audit_cancel",
+            description="SEO Intelligence (async). Cancel a background audit job by audit_job_id.",
+            inputSchema={
+                "type": "object",
+                "properties": {"audit_job_id": {"type": "string"}},
+                "required": ["audit_job_id"],
             },
         ),
         T(

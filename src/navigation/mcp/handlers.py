@@ -16,6 +16,7 @@ from navigation.visual_browser_intelligence.verify.verification import SuccessCr
 from navigation.core.envelope import agent_summary_from_observation, agent_summary_from_report, make_envelope
 from navigation.core.paths import default_code_repo_root
 from navigation.core.scan_registry import ScanRegistry
+from navigation.core.snapshot_registry import SnapshotRegistry
 from navigation.frontend_quality_intelligence.diff import diff_observations
 from navigation.visual_browser_intelligence.browser.session_store import SessionStore
 from navigation.visual_browser_intelligence.visual.visual_response import (
@@ -902,6 +903,7 @@ async def handle_code_context(arguments: dict[str, Any]) -> dict[str, Any]:
         "perception_code_context",
         ok=result.ok,
         error=result.error,
+        degraded=["use_perception_resolve_route", "code_context_deprecated"],
         data={
             "source": result.source,
             "summary": result.summary,
@@ -909,6 +911,154 @@ async def handle_code_context(arguments: dict[str, Any]) -> dict[str, Any]:
             "repo_root": str(repo_root),
         },
     )
+
+
+def _resolver_envelope(tool: str, result: Any) -> dict[str, Any]:
+    from navigation.resolver_intelligence.contracts import ResolverResult, ValidationResult
+
+    if isinstance(result, ValidationResult):
+        return make_envelope(
+            tool,
+            ok=result.valid,
+            data={"validation": result.to_dict()},
+            degraded=result.degraded,
+        )
+    if isinstance(result, ResolverResult):
+        return make_envelope(
+            tool,
+            ok=result.ok,
+            error=result.error,
+            data={"resolution": result.to_dict()},
+            degraded=result.degraded,
+        )
+    return make_envelope(tool, ok=False, error="invalid resolver result")
+
+
+async def handle_resolve_route(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.resolver_intelligence import ResolverIntelligenceService
+
+    path = str(arguments.get("path") or arguments.get("route") or "").strip()
+    if not path:
+        return make_envelope("perception_resolve_route", ok=False, error="path required")
+    repo_root = _default_repo_root(arguments)
+    result = ResolverIntelligenceService().resolve_route(repo_root, path)
+    return _resolver_envelope("perception_resolve_route", result)
+
+
+async def handle_validate_route_claim(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.resolver_intelligence import ResolverIntelligenceService
+
+    claim = arguments.get("claim")
+    if not isinstance(claim, dict):
+        return make_envelope("perception_validate_route_claim", ok=False, error="claim object required")
+    repo_root = _default_repo_root(arguments)
+    result = ResolverIntelligenceService().validate_route_claim(repo_root, claim)
+    return _resolver_envelope("perception_validate_route_claim", result)
+
+
+async def handle_resolve_component(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.resolver_intelligence import ResolverIntelligenceService
+
+    name = str(arguments.get("name") or "").strip()
+    if not name:
+        return make_envelope("perception_resolve_component", ok=False, error="name required")
+    repo_root = _default_repo_root(arguments)
+    result = ResolverIntelligenceService().resolve_component(repo_root, name)
+    return _resolver_envelope("perception_resolve_component", result)
+
+
+async def handle_resolve_design_token(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.resolver_intelligence import ResolverIntelligenceService
+
+    token = str(arguments.get("token") or "").strip()
+    if not token:
+        return make_envelope("perception_resolve_design_token", ok=False, error="token required")
+    repo_root = _default_repo_root(arguments)
+    result = ResolverIntelligenceService().resolve_design_token(repo_root, token)
+    return _resolver_envelope("perception_resolve_design_token", result)
+
+
+async def handle_resolve_state_owner(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.resolver_intelligence import ResolverIntelligenceService
+
+    key = str(arguments.get("key") or "").strip()
+    store_name = str(arguments.get("store_name") or "").strip()
+    if not key and not store_name:
+        return make_envelope("perception_resolve_state_owner", ok=False, error="key or store_name required")
+    repo_root = _default_repo_root(arguments)
+    result = ResolverIntelligenceService().resolve_state_owner(repo_root, key=key, store_name=store_name)
+    return _resolver_envelope("perception_resolve_state_owner", result)
+
+
+async def handle_resolve_api_endpoint(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.resolver_intelligence import ResolverIntelligenceService
+
+    path = str(arguments.get("path") or "").strip()
+    if not path:
+        return make_envelope("perception_resolve_api_endpoint", ok=False, error="path required")
+    repo_root = _default_repo_root(arguments)
+    method = str(arguments.get("method") or "").strip()
+    result = ResolverIntelligenceService().resolve_api_endpoint(repo_root, path, method=method)
+    return _resolver_envelope("perception_resolve_api_endpoint", result)
+
+
+async def handle_resolve_layout(
+    snapshots: SnapshotRegistry,
+    arguments: dict[str, Any],
+) -> dict[str, Any]:
+    from navigation.resolver_intelligence import ResolverIntelligenceService
+
+    snapshot_id = str(arguments.get("snapshot_id") or "").strip()
+    scan_id = str(arguments.get("scan_id") or "").strip()
+    record = None
+    if snapshot_id:
+        record = snapshots.get(snapshot_id)
+    elif scan_id:
+        record = snapshots.get_by_scan(scan_id)
+    if record is None:
+        return make_envelope("perception_resolve_layout", ok=False, error="snapshot_not_found")
+    region = str(arguments.get("region") or "").strip()
+    result = ResolverIntelligenceService().resolve_layout(record.snapshot, region=region)
+    return _resolver_envelope("perception_resolve_layout", result)
+
+
+async def handle_correlate_live(
+    scans: ScanRegistry,
+    arguments: dict[str, Any],
+) -> dict[str, Any]:
+    from navigation.resolver_intelligence import ResolverIntelligenceService
+
+    scan_id = str(arguments.get("scan_id") or "").strip()
+    if not scan_id:
+        return make_envelope("perception_correlate_live", ok=False, error="scan_id required")
+    record = scans.get(scan_id)
+    if record is None:
+        return make_envelope("perception_correlate_live", ok=False, error="scan_not_found")
+    scan_payload: dict[str, Any] = {
+        "observation": record.observation if isinstance(record.observation, dict) else {},
+        "agent_summary": (
+            agent_summary_from_observation(record.observation)
+            if isinstance(record.observation, dict)
+            else {}
+        ),
+    }
+    if isinstance(record.observation, dict):
+        scan_payload["dom_text"] = record.observation.get("dom_text") or ""
+    resolution = arguments.get("resolution") if isinstance(arguments.get("resolution"), dict) else None
+    claim = arguments.get("claim") if isinstance(arguments.get("claim"), dict) else None
+    result = ResolverIntelligenceService().correlate_live(scan_payload, resolution=resolution, claim=claim)
+    return _resolver_envelope("perception_correlate_live", result)
+
+
+async def handle_validate_component_claim(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.resolver_intelligence import ResolverIntelligenceService
+
+    claim = arguments.get("claim")
+    if not isinstance(claim, dict):
+        return make_envelope("perception_validate_component_claim", ok=False, error="claim object required")
+    repo_root = _default_repo_root(arguments)
+    result = ResolverIntelligenceService().validate_component_claim(repo_root, claim)
+    return _resolver_envelope("perception_validate_component_claim", result)
 
 
 def _console_filter_from_args(arguments: dict[str, Any]) -> Any:
@@ -2299,10 +2449,150 @@ async def handle_seo_audit(scans: ScanRegistry, arguments: dict[str, Any]) -> di
                 "recommendation_count": len(result.recommendations),
                 "capability_routes": [r.to_dict() for r in result.capability_routes],
                 "connections": result.connections,
-                "advisory": advisory,
+                "advisory": advisory + [
+                    "Prefer perception_seo_audit_start + perception_seo_audit_poll for long audits (non-blocking).",
+                ],
             },
         },
         degraded=result.degraded + setup_notes,
+    )
+
+
+async def handle_seo_audit_start(scans: ScanRegistry, arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.seo_intelligence.jobs import SeoAuditJobRunner, get_job_store
+    from navigation.seo_intelligence.planning.modes import mode_summary, resolve_effective_mode
+    from navigation.seo_intelligence.setup.auth_requirements import audit_blocked_by_auth, auth_prompts_for_request
+
+    website_url = str(arguments.get("website_url") or arguments.get("url") or "").strip()
+    if not website_url:
+        return make_envelope("perception_seo_audit_start", ok=False, error="website_url required")
+
+    request, setup_notes = _prepare_seo_audit_request(arguments)
+    effective_mode = resolve_effective_mode(request)
+
+    if audit_blocked_by_auth(request):
+        prompts = auth_prompts_for_request(request)
+        return make_envelope(
+            "perception_seo_audit_start",
+            ok=False,
+            error="auth_required",
+            data={
+                "auth_required": prompts,
+                "mode": effective_mode.value,
+                "agent_summary": {
+                    "blocking": [p["prompt"] for p in prompts],
+                    "advisory": [
+                        "Professional SEO requires Google OAuth — run perception_seo_connect first.",
+                    ],
+                },
+            },
+        )
+
+    runner = SeoAuditJobRunner(scan_registry=scans)
+    audit_job_id = runner.start(request, setup_notes=setup_notes)
+    job = get_job_store().get(audit_job_id)
+
+    return make_envelope(
+        "perception_seo_audit_start",
+        ok=True,
+        data={
+            "audit_job_id": audit_job_id,
+            "status": job.status.value if job else "queued",
+            "poll_interval_ms": 2000,
+            "poll_tool": "perception_seo_audit_poll",
+            "mode": mode_summary(effective_mode),
+            "agent_summary": {
+                "website_url": website_url,
+                "mode": effective_mode.value,
+                "advisory": [
+                    "Poll perception_seo_audit_poll until terminal status.",
+                    "Use perception_seo_query for fast graph reads after evidence arrives.",
+                    "Cancel with perception_seo_audit_cancel if needed.",
+                ],
+            },
+        },
+        degraded=setup_notes,
+    )
+
+
+async def handle_seo_audit_poll(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.seo_intelligence.jobs import get_job_store
+
+    audit_job_id = str(arguments.get("audit_job_id") or "").strip()
+    if not audit_job_id:
+        return make_envelope("perception_seo_audit_poll", ok=False, error="audit_job_id required")
+
+    since_seq = int(arguments.get("since_evidence_seq") or 0)
+    store = get_job_store()
+    job = store.get(audit_job_id)
+    if job is None:
+        return make_envelope("perception_seo_audit_poll", ok=False, error="audit_job_not_found")
+
+    job.poll_seq += 1
+    store.save(job)
+
+    evidence_delta = store.evidence_delta_since(audit_job_id, since_seq)
+    partial_summary: dict[str, Any] = {
+        "evidence_count": len(job.evidence_ids),
+        "recommendation_count": 0,
+    }
+    if job.seo_audit:
+        partial_summary["recommendation_count"] = len((job.seo_audit.get("recommendations") or []))
+
+    data: dict[str, Any] = {
+        **job.to_dict(),
+        "evidence_delta": evidence_delta,
+        "partial_summary": partial_summary,
+    }
+    if job.terminal and job.seo_audit:
+        data["seo_audit"] = job.seo_audit
+
+    advisory = [
+        "Poll until status is completed, failed, or cancelled.",
+        "Pass since_evidence_seq to receive only new evidence deltas.",
+    ]
+    if job.terminal and job.latest_audit_id:
+        advisory.append(f"Use perception_seo_query with audit_id={job.latest_audit_id}.")
+
+    return make_envelope(
+        "perception_seo_audit_poll",
+        ok=True,
+        data={
+            "seo_audit_job": data,
+            "agent_summary": {
+                "audit_job_id": audit_job_id,
+                "status": job.status.value,
+                "terminal": job.terminal,
+                "evidence_count": len(job.evidence_ids),
+                "advisory": advisory,
+            },
+        },
+        degraded=job.degraded,
+        error=job.error if job.status.value == "failed" else None,
+    )
+
+
+async def handle_seo_audit_cancel(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.seo_intelligence.jobs import get_job_store
+
+    audit_job_id = str(arguments.get("audit_job_id") or "").strip()
+    if not audit_job_id:
+        return make_envelope("perception_seo_audit_cancel", ok=False, error="audit_job_id required")
+
+    job = get_job_store().request_cancel(audit_job_id)
+    if job is None:
+        return make_envelope("perception_seo_audit_cancel", ok=False, error="audit_job_not_found")
+
+    return make_envelope(
+        "perception_seo_audit_cancel",
+        ok=True,
+        data={
+            "audit_job_id": audit_job_id,
+            "status": job.status.value,
+            "agent_summary": {
+                "advisory": ["Job marked cancelled; in-flight provider work may finish briefly."],
+            },
+        },
     )
 
 

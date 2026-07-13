@@ -168,7 +168,25 @@ Understands the frontend codebase via Code Review Graph (CRG).
 | Semantic search | ✅ |
 | `ICodeGraph` provider abstraction | ✅ |
 
-**MCP tools:** `perception_code_context`
+**MCP tools:** `perception_code_context` (deprecated — use Resolver Intelligence)
+
+---
+
+## 7b. Resolver Intelligence
+
+**Path:** `resolver_intelligence/`
+
+Fast deterministic code lookups — no CRG, no full-repo scan.
+
+| Capability | Status |
+|------------|--------|
+| Route → component (React Router v6) | ✅ |
+| Component / token / state / API resolvers | ✅ |
+| Claim validation + live correlate | ✅ |
+
+**MCP resource:** `perception://resolver-guide`
+
+**MCP tools:** `perception_resolve_route`, `perception_validate_route_claim`, `perception_resolve_component`, `perception_validate_component_claim`, `perception_resolve_design_token`, `perception_resolve_state_owner`, `perception_resolve_api_endpoint`, `perception_resolve_layout`, `perception_correlate_live`
 
 ---
 

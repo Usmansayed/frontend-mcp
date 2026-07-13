@@ -1,12 +1,14 @@
 """SEO audit orchestrator — evidence-first pipeline (ADR-027)."""
 from __future__ import annotations
 
+import asyncio
 import os
-from typing import TYPE_CHECKING
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 from navigation.seo_intelligence.ai_visibility import AiVisibilityAdapter
 from navigation.seo_intelligence.knowledge.graph.store import SeoKnowledgeGraphStore
-from navigation.seo_intelligence.models import SeoAuditRequest, SeoAuditResult
+from navigation.seo_intelligence.models import SeoAuditRequest, SeoAuditResult, SeoEvidenceRef
 from navigation.seo_intelligence.planning.modes import provider_allowed, resolve_effective_mode
 from navigation.seo_intelligence.planning.planner import SeoAuditPlanner
 from navigation.seo_intelligence.providers.manager import SeoProviderManager
@@ -18,6 +20,10 @@ from navigation.seo_intelligence.verification.loop import build_verification_pla
 
 if TYPE_CHECKING:
 	from navigation.core.scan_registry import ScanRegistry
+
+ProgressCallback = Callable[..., None]
+CancelCheck = Callable[[], bool]
+EvidenceCallback = Callable[[dict[str, Any]], None]
 
 
 class SeoAuditOrchestrator:
@@ -44,12 +50,69 @@ class SeoAuditOrchestrator:
 			connections[pid] = status
 		return connections
 
-	async def audit(self, request: SeoAuditRequest) -> SeoAuditResult:
+	async def _collect_providers_parallel(
+		self,
+		request: SeoAuditRequest,
+		provider_ids: list[str],
+		connections: dict[str, str],
+		degraded: list[str],
+	) -> list[tuple[str, list[SeoEvidenceRef], list[str]]]:
+		async def _collect_one(pid: str) -> tuple[str, list[SeoEvidenceRef], list[str]]:
+			provider = self._providers.get(pid)
+			if provider is None:
+				return pid, [], [f'provider_not_implemented:{pid}']
+			if connections.get(pid) == 'error':
+				return pid, [], [f'provider_error:{pid}']
+			if connections.get(pid) == 'not_configured':
+				return pid, [], [f'provider_skipped_not_configured:{pid}']
+			try:
+				evidence, collect_deg = await provider.collect(request)
+				return pid, evidence, collect_deg
+			except Exception as exc:
+				return pid, [], [f'provider_collect_error:{pid}:{exc}']
+
+		if not provider_ids:
+			return []
+
+		results = await asyncio.gather(*[_collect_one(pid) for pid in provider_ids], return_exceptions=True)
+		out: list[tuple[str, list[SeoEvidenceRef], list[str]]] = []
+		for i, result in enumerate(results):
+			pid = provider_ids[i]
+			if isinstance(result, BaseException):
+				degraded.append(f'provider_collect_exception:{pid}:{result}')
+				out.append((pid, [], []))
+			else:
+				out.append(result)
+		return out
+
+	async def audit(
+		self,
+		request: SeoAuditRequest,
+		*,
+		progress_callback: ProgressCallback | None = None,
+		is_cancelled: CancelCheck | None = None,
+		on_evidence: EvidenceCallback | None = None,
+	) -> SeoAuditResult:
+		def _progress(phase: str, pct: int, message: str, **extra: Any) -> None:
+			if progress_callback is not None:
+				progress_callback(phase, pct, message, **extra)
+
+		def _cancelled() -> bool:
+			return bool(is_cancelled and is_cancelled())
+
+		def _emit_evidence(item: SeoEvidenceRef) -> None:
+			if on_evidence is not None:
+				on_evidence(item.to_dict())
+
 		degraded: list[str] = []
 		mode = resolve_effective_mode(request)
 		audit_id = new_audit_id()
 		previous_audit_id = self._graph.latest_audit_id()
 		self._graph.set_website(request.website_url, property_url=request.property_url)
+
+		_progress("bootstrapping", 5, "companions", current_provider="companions")
+		if _cancelled():
+			raise asyncio.CancelledError("audit_cancelled")
 
 		if auto_start_enabled() and os.environ.get('SEO_SKIP_COMPANION_BOOTSTRAP', '').strip().lower() not in {
 			'1',
@@ -68,28 +131,53 @@ class SeoAuditOrchestrator:
 				if self._registry.get(pid) and provider_allowed(pid, mode)
 			]
 
-		all_evidence = []
+		pending = list(provider_ids)
+		_progress(
+			"collecting",
+			10,
+			"provider_collection",
+			current_provider=pending[0] if pending else "",
+			pending_providers=pending,
+			completed_providers=[],
+		)
+
+		all_evidence: list[SeoEvidenceRef] = []
 		queried: list[str] = []
 
-		for pid in provider_ids:
-			provider = self._providers.get(pid)
-			if provider is None:
-				degraded.append(f'provider_not_implemented:{pid}')
-				continue
-			if connections.get(pid) == 'error':
-				degraded.append(f'provider_error:{pid}')
-				continue
-			if connections.get(pid) == 'not_configured':
-				degraded.append(f'provider_skipped_not_configured:{pid}')
-				continue
+		if _cancelled():
+			raise asyncio.CancelledError("audit_cancelled")
 
-			evidence, collect_deg = await provider.collect(request)
+		collect_results = await self._collect_providers_parallel(
+			request,
+			provider_ids,
+			connections,
+			degraded,
+		)
+		for pid, evidence, collect_deg in collect_results:
 			degraded.extend(collect_deg)
-			queried.append(pid)
+			if evidence:
+				queried.append(pid)
 			for item in evidence:
 				self._graph.upsert_evidence(item, base_url=request.website_url)
+				_emit_evidence(item)
 			all_evidence.extend(evidence)
+			if pid in pending:
+				pending.remove(pid)
+			done = [p for p in provider_ids if p in queried]
+			pct = 10 + int(60 * len(done) / max(1, len(provider_ids)))
+			_progress(
+				"collecting",
+				min(pct, 70),
+				f"collected:{pid}",
+				current_provider=pid,
+				completed_providers=done,
+				pending_providers=[p for p in provider_ids if p not in done],
+			)
 
+		if _cancelled():
+			raise asyncio.CancelledError("audit_cancelled")
+
+		_progress("analyzing", 75, "ai_visibility", current_provider="ai-visibility")
 		if request.include_ai_visibility and all_evidence:
 			ai_evidence, ai_deg = AiVisibilityAdapter().derive(
 				all_evidence,
@@ -98,10 +186,12 @@ class SeoAuditOrchestrator:
 			degraded.extend(ai_deg)
 			for item in ai_evidence:
 				self._graph.upsert_evidence(item, base_url=request.website_url)
+				_emit_evidence(item)
 			all_evidence.extend(ai_evidence)
 			if ai_evidence and 'ai-visibility' not in queried:
 				queried.append('ai-visibility')
 
+		_progress("analyzing", 85, "recommendations", current_provider="recommendations")
 		graph_data = self._graph.load()
 		verification_history = graph_data.get('verification') or {}
 
@@ -151,6 +241,8 @@ class SeoAuditOrchestrator:
 			providers_queried=queried,
 		)
 		self._graph.save()
+
+		_progress("analyzing", 100, "completed", current_provider="")
 
 		return SeoAuditResult(
 			request=request,

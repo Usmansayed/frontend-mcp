@@ -26,7 +26,9 @@ from navigation.execution_runtime.models import (
 from navigation.execution_runtime.observability import ExecutionTraceEvent
 from navigation.execution_runtime.policies.config import ExecutionPolicies
 from navigation.execution_runtime.policies.failures import FailureClass, classify_failure
+from navigation.execution_runtime.handler_runner import invoke_handler
 from navigation.execution_runtime.policies.recovery import evaluate_recovery
+from navigation.execution_runtime.policies.tier import tier_for_tool
 from navigation.execution_runtime.policies.retry import RetryDecision, evaluate_retry
 
 logger = logging.getLogger(__name__)
@@ -124,7 +126,15 @@ class ToolExecutor:
 
         timeout_s = self._policies.timeout.timeout_for(tool)
         try:
-            envelope = await asyncio.wait_for(handler(args), timeout=timeout_s)
+            envelope = await asyncio.wait_for(
+                invoke_handler(
+                    handler,
+                    args,
+                    tier=tier_for_tool(tool),
+                    cancellation=self._policies.cancellation,
+                ),
+                timeout=timeout_s,
+            )
             return envelope, None
         except asyncio.TimeoutError as exc:
             return {

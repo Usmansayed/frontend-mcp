@@ -85,6 +85,12 @@ def list_resources(scans: ScanRegistry | None = None) -> list[dict[str, str]]:
 			'mimeType': 'text/markdown',
 		},
 		{
+			'uri': 'perception://resolver-guide',
+			'name': 'RESOLVER_AGENT_GUIDE',
+			'description': 'Resolver Intelligence — fast route/component/token lookup (read before resolve_* tools)',
+			'mimeType': 'text/markdown',
+		},
+		{
 			'uri': 'perception://seo-guide',
 			'name': 'SEO_AGENT_GUIDE',
 			'description': 'SEO Intelligence — free-first SEO orchestration, providers, verify loop (read before seo tools)',
@@ -156,6 +162,12 @@ def read_resource(uri: str, scans: ScanRegistry | None = None) -> tuple[str, str
 		return _read_md(
 			module_doc('resource_intelligence', 'docs', 'RESOURCE_AGENT_GUIDE.md'),
 			'RESOURCE_AGENT_GUIDE.md',
+		)
+
+	if uri == 'perception://resolver-guide':
+		return _read_md(
+			module_doc('resolver_intelligence', 'docs', 'RESOLVER_AGENT_GUIDE.md'),
+			'RESOLVER_AGENT_GUIDE.md',
 		)
 
 	if uri == 'perception://seo-guide':

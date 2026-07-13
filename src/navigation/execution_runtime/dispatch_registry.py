@@ -31,6 +31,15 @@ from navigation.mcp.handlers import (
     handle_audit_performance,
     handle_audit_seo,
     handle_code_context,
+    handle_correlate_live,
+    handle_resolve_api_endpoint,
+    handle_resolve_component,
+    handle_resolve_design_token,
+    handle_resolve_layout,
+    handle_resolve_route,
+    handle_resolve_state_owner,
+    handle_validate_component_claim,
+    handle_validate_route_claim,
     handle_console_clear,
     handle_console_get,
     handle_debug_mode,
@@ -73,6 +82,9 @@ from navigation.mcp.handlers import (
     handle_search_components,
     handle_select_component_foundation,
     handle_seo_audit,
+    handle_seo_audit_cancel,
+    handle_seo_audit_poll,
+    handle_seo_audit_start,
     handle_seo_connect,
     handle_seo_query,
     handle_seo_status,
@@ -165,6 +177,33 @@ class DispatchRegistry:
 
         async def code_context(args: dict[str, Any]) -> dict[str, Any]:
             return await handle_code_context(args)
+
+        async def resolve_route(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_resolve_route(args)
+
+        async def validate_route_claim(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_validate_route_claim(args)
+
+        async def resolve_component(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_resolve_component(args)
+
+        async def validate_component_claim(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_validate_component_claim(args)
+
+        async def resolve_design_token(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_resolve_design_token(args)
+
+        async def resolve_state_owner(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_resolve_state_owner(args)
+
+        async def resolve_api_endpoint(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_resolve_api_endpoint(args)
+
+        async def resolve_layout(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_resolve_layout(snapshots, args)
+
+        async def correlate_live(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_correlate_live(scans, args)
 
         async def console_get(args: dict[str, Any]) -> dict[str, Any]:
             return await handle_console_get(store, args)
@@ -274,6 +313,15 @@ class DispatchRegistry:
         async def seo_audit(args: dict[str, Any]) -> dict[str, Any]:
             return await handle_seo_audit(scans, args)
 
+        async def seo_audit_start(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_seo_audit_start(scans, args)
+
+        async def seo_audit_poll(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_seo_audit_poll(args)
+
+        async def seo_audit_cancel(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_seo_audit_cancel(args)
+
         async def seo_query(args: dict[str, Any]) -> dict[str, Any]:
             return await handle_seo_query(args)
 
@@ -344,6 +392,15 @@ class DispatchRegistry:
             "perception_state_list": state_list,
             "perception_flow_describe": flow_describe,
             "perception_code_context": code_context,
+            "perception_resolve_route": resolve_route,
+            "perception_validate_route_claim": validate_route_claim,
+            "perception_resolve_component": resolve_component,
+            "perception_validate_component_claim": validate_component_claim,
+            "perception_resolve_design_token": resolve_design_token,
+            "perception_resolve_state_owner": resolve_state_owner,
+            "perception_resolve_api_endpoint": resolve_api_endpoint,
+            "perception_resolve_layout": resolve_layout,
+            "perception_correlate_live": correlate_live,
             "perception_console_get": console_get,
             "perception_console_clear": console_clear,
             "perception_network_get": network_get,
@@ -380,6 +437,9 @@ class DispatchRegistry:
             "perception_seo_status": seo_status,
             "perception_seo_connect": seo_connect,
             "perception_seo_audit": seo_audit,
+            "perception_seo_audit_start": seo_audit_start,
+            "perception_seo_audit_poll": seo_audit_poll,
+            "perception_seo_audit_cancel": seo_audit_cancel,
             "perception_seo_query": seo_query,
             "perception_seo_verify": seo_verify,
             "perception_figma_status": figma_status,

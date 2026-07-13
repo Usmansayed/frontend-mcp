@@ -93,15 +93,89 @@ Returns text diff + `visual_diff` + inline side-by-side/heatmap when screenshots
 | `perception_state_save` / `restore` / `list` | Cookie/storage snapshots |
 | `perception_flow_describe` | Flow checkpoint graph |
 
-## Code context
+## Code context (deprecated)
 
 ### `perception_code_context`
+
+**Deprecated.** Use Resolver Intelligence tools instead (`perception://resolver-guide`).
 
 | Param | Default |
 |-------|---------|
 | `repo_root` | sandbox/ |
 | `query_type` | `stats` |
 | `query_kwargs` | {} |
+
+Returns `degraded: ["use_perception_resolve_route"]`.
+
+## Resolver Intelligence
+
+Read `perception://resolver-guide` before calling these tools. All return `data.resolution` or `data.validation`.
+
+**Always pass `repo_root`** (frontend app root with `package.json`).
+
+### `perception_resolve_route`
+
+Map route path → component file via static router config. Target &lt;200ms.
+
+| Param | Required |
+|-------|----------|
+| `repo_root` | recommended |
+| `path` | yes |
+
+### `perception_validate_route_claim`
+
+| Param | Required |
+|-------|----------|
+| `repo_root` | recommended |
+| `claim.route`, `claim.file`, `claim.component.name` | claim object |
+
+### `perception_resolve_component`
+
+Component name → file (`components.json` + folder conventions).
+
+| Param | Required |
+|-------|----------|
+| `name` | yes |
+
+### `perception_validate_component_claim`
+
+Validate component file/export claim.
+
+### `perception_resolve_design_token`
+
+CSS variables, tailwind config, DTCG JSON.
+
+| Param | Required |
+|-------|----------|
+| `token` | yes |
+
+### `perception_resolve_state_owner`
+
+| Param | Notes |
+|-------|-------|
+| `key` | state field name |
+| `store_name` | e.g. Cart, Auth |
+
+### `perception_resolve_api_endpoint`
+
+| Param | Required |
+|-------|----------|
+| `path` | yes |
+| `method` | optional |
+
+### `perception_resolve_layout`
+
+| Param | Notes |
+|-------|-------|
+| `snapshot_id` or `scan_id` | design snapshot source |
+| `region` | optional filter |
+
+### `perception_correlate_live`
+
+| Param | Required |
+|-------|----------|
+| `scan_id` | yes |
+| `resolution` or `claim` | for DOM cross-check |
 
 ## Console (v0.4+)
 
@@ -369,9 +443,38 @@ Register a website (default) or run on-demand OAuth when provider data is needed
 
 **On-demand OAuth:** `action=connect_google` or `connect_bing` → browser opens → sign-in → localhost callback on port 8787 → tokens stored.
 
+### `perception_seo_audit_start`
+
+Enqueue SEO audit — returns immediately with `audit_job_id`. **Preferred for agents.**
+
+| Param | Type | Default |
+|-------|------|---------|
+| `website_url` | string | required |
+| `mode` | string | `development` |
+| `scan_id` | string | optional |
+| `repo_root` | string | optional |
+
+**Returns:** `data.audit_job_id`, `data.poll_tool`, `data.poll_interval_ms`.
+
+### `perception_seo_audit_poll`
+
+Poll background audit job.
+
+| Param | Required |
+|-------|----------|
+| `audit_job_id` | yes |
+
+**Returns:** `data.seo_audit_job` (status, progress, partial evidence).
+
+### `perception_seo_audit_cancel`
+
+| Param | Required |
+|-------|----------|
+| `audit_job_id` | yes |
+
 ### `perception_seo_audit`
 
-**Development mode (default):** Browser, Lighthouse, LibreCrawl — no auth. **Professional mode:** adds GSC/GA4 when user requests live search optimization (`mode=professional`).
+**Legacy — blocks MCP server.** Use `perception_seo_audit_start` + `perception_seo_audit_poll` instead.
 
 | Param | Type | Default |
 |-------|------|---------|
@@ -405,8 +508,12 @@ Re-audit and compare against graph baseline to close recommendation verification
 
 | URI | Content |
 |-----|---------|
-| `perception://agent-guide` | AGENT_GUIDE.md |
-| `perception://seo-guide` | SEO_AGENT_GUIDE.md |
+| `perception://agent-guide` | AGENT_GUIDE.md — main playbooks |
+| `perception://resolver-guide` | Resolver Intelligence — resolve_* tools |
+| `perception://seo-guide` | SEO_AGENT_GUIDE.md — async audit loop |
+| `perception://inspiration-guide` | Inspiration Intelligence |
+| `perception://resource-guide` | Resource Intelligence |
+| `perception://figma-guide` | Figma Intelligence |
 | `perception://eval/validation-form` | Eval scenario |
 | `perception://scan/{id}/report.json` | Full observation (+ embedded `perception_report` when present) |
 | `perception://scan/{id}/diagnosis.json` | Structured `PerceptionReport` |

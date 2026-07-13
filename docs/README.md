@@ -27,6 +27,7 @@ Platform docs for the ultimate frontend MCP for AI coding agents.
 | [features/audits.md](./features/audits.md) | ✅ v0.6 |
 | [features/reports.md](./features/reports.md) | ✅ v0.7 |
 | [features/framework_intelligence.md](./features/framework_intelligence.md) | ✅ v1.0 |
+| [features/resolver_intelligence.md](./features/resolver_intelligence.md) | ✅ resolve_* / validate_* |
 | [features/component_intelligence.md](./features/component_intelligence.md) | ✅ Phase 1 search |
 | [features/component_intelligence_architecture.md](./features/component_intelligence_architecture.md) | 🚧 full orchestrator pipeline |
 | [features/design_sense_intelligence.md](./features/design_sense_intelligence.md) | 🚧 review orchestration |
@@ -39,7 +40,13 @@ Platform docs for the ultimate frontend MCP for AI coding agents.
 
 ## Agent playbooks
 
-Runtime playbooks for host agents: [AGENT_GUIDE.md](../AGENT_GUIDE.md) (also MCP resource `perception://agent-guide`).
+| Resource | Description |
+|----------|-------------|
+| [AGENT_GUIDE.md](../AGENT_GUIDE.md) | Main playbooks — `perception://agent-guide` |
+| [RESOLVER_AGENT_GUIDE.md](../src/navigation/resolver_intelligence/docs/RESOLVER_AGENT_GUIDE.md) | Code ↔ UI resolvers — `perception://resolver-guide` |
+| [SEO_AGENT_GUIDE.md](../src/navigation/seo_intelligence/docs/SEO_AGENT_GUIDE.md) | Async SEO — `perception://seo-guide` |
+
+**Agent loop:** `health` → `session_start` → `observe` → `resolve_*` → edit code → `verify`
 
 ## References (study only)
 

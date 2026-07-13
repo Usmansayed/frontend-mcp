@@ -24,12 +24,14 @@ No authentication. Active while the agent builds a website.
 | Validates | Metadata, schema, CWV, crawl, rendering, internal links, semantic HTML |
 
 ```text
-perception_seo_audit {
+perception_seo_audit_start {
   "website_url": "https://example.com",
   "scan_id": "...",
   "repo_root": "/path/to/frontend"
 }
 ```
+
+Then poll with `perception_seo_audit_poll` until terminal status.
 
 Pass `repo_root` so Sprint 2 can attach `codebase_hints` and `browser_code_links` to each page.
 
@@ -50,13 +52,34 @@ OAuth opens in the browser automatically (`interactive: true`). After connect, a
 
 ```text
 1. perception_seo_status          — module phase + provider connections
-2. perception_seo_connect         — register website_url (setup); OAuth only on demand
-3. perception_seo_audit           — evidence → page graph → snapshot → reasoning_context_v2 → recommendations
-3b. perception_seo_query          — graph queries: page.issues, audit.diff, site.traffic_signals
-4. Fix code / config              — read `reasoning_units` (sorted by `impact`), `pages[].codebase_hints`, `pages[].browser_code_links`
-5. perception_observe + verify    — Browser Intelligence verifies rendering/index fixes
-6. perception_seo_verify          — re-audit + compare graph baseline → mark verified
+2. perception_seo_connect         — register website_url; OAuth only on demand
+3. perception_seo_audit_start       — enqueue audit → audit_job_id (<500ms, non-blocking)
+4. perception_seo_audit_poll        — poll until completed | failed | cancelled
+5. perception_seo_query             — graph queries: page.issues, audit.diff, site.traffic_signals
+6. Fix code / config              — read reasoning_units, codebase_hints, browser_code_links
+7. perception_observe + verify    — Browser Intelligence verifies rendering/index fixes
+8. perception_seo_verify          — re-audit + compare graph baseline → mark verified
 ```
+
+### Async audit (required for agents)
+
+**Do not** call `perception_seo_audit` in interactive loops — it blocks the MCP server.
+
+```text
+perception_seo_audit_start({
+  "website_url": "https://example.com",
+  "scan_id": "...",
+  "repo_root": "/path/to/frontend"
+})
+→ data.audit_job_id
+
+perception_seo_audit_poll({ "audit_job_id": "audit_job_..." })
+→ data.seo_audit_job.status, partial evidence
+
+perception_seo_audit_cancel({ "audit_job_id": "..." })   // optional
+```
+
+Legacy `perception_seo_audit` remains for scripts only; agents must use start + poll.
 
 ## Onboarding (users)
 
