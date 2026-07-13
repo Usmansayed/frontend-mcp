@@ -47,6 +47,26 @@ Read `perception://resolver-guide` before any `perception_resolve_*` tool.
 
 **Do not:** Start multiple sessions unless you ended the previous one.
 
+**Health response fields:** `package_version`, `server_version`, `browser_runtime_available`, `recommended_next_tool`.
+
+---
+
+## 1b. Observe detail levels & scan reuse
+
+| `detail` | Payload | When to use |
+|----------|---------|-------------|
+| `summary_only` (default) | `agent_summary`, images, no `observation` blob | First pass, layout/copy checks |
+| `full` | Includes `observation` with console/network entries | Debugging errors, API failures, console lines |
+| `metadata_only` | `agent_summary` only, no images | Cheapest status check |
+
+**Scan reuse:** Save `scan_id` from every `navigate_and_observe` / `observe`. Reuse for:
+- `perception_diff` (before/after)
+- `perception_seo_audit_start` (development mode — instant audit)
+- `perception_correlate_live` (with resolver resolution)
+- Scan resources (`perception://scan/{scan_id}/…`)
+
+**Serial execution:** Call browser tools **one at a time** per `session_id`. Parallel MCP batches can corrupt session state.
+
 ---
 
 ## 2. Playbook: Page inspection (new or changed UI)

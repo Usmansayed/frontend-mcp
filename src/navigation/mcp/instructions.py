@@ -43,7 +43,11 @@ Hard rules:
 - probe_form before unknown forms.
 - Do not use perception_code_context — use perception_resolve_* (<200ms).
 - SEO: development — perception_seo_audit_start only (scan_id required); professional — start + poll. Never block on perception_seo_audit.
-- Call MCP tools one at a time (no parallel batches).
+- Call MCP tools **one at a time** (no parallel batches on one session_id).
+- observe detail: summary_only (default) | full (console/network entries) | metadata_only (lightest).
+- Reuse scan_id from observe for seo_audit_start (dev) and diff.
+
+Tool groups (tools/list _meta.group): Session, Browser, Quality, Resolver, Component, Design, SEO, Resources, Inspiration, Figma, Diagnostics, Coordinator.
 
 Eval smoke test: perception://eval/validation-form
 """

@@ -24,7 +24,8 @@ Env override: `FRONTEND_PERCEPTION_DEFAULT_REPO_ROOT`.
 ## Standard loop (code ↔ live UI)
 
 ```text
-1. perception_navigate_and_observe({ url })     → save scan_id
+1. perception_navigate_and_observe({ url, detail: "summary_only" })  → save scan_id
+   (use detail: "full" when you need observation.console / observation.network)
 2. perception_resolve_route({
      repo_root, path: "/forms/validation"
    })

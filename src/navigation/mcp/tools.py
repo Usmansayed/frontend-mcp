@@ -6,8 +6,11 @@ from typing import Any
 
 def perception_tools(mcp_types: Any) -> list[Any]:
     """Return Tool list; mcp_types is mcp.types when MCP is installed."""
+    from navigation.mcp.tool_catalog import apply_tool_catalog
+
     T = mcp_types.Tool
-    return [
+    return apply_tool_catalog(
+        [
         T(
             name="perception_health",
             description=(
@@ -1565,4 +1568,6 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                 "required": ["episode_id"],
             },
         ),
-    ]
+    ],
+        T,
+    )

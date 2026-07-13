@@ -4,6 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from navigation.visual_browser_intelligence.browser.browser_session_manager import BrowserSessionManager
 from navigation.visual_browser_intelligence.browser.session_store import SessionStore
 from navigation.visual_browser_intelligence.observe.preflight import preflight_check
 from navigation.visual_browser_intelligence.verify.verification import evaluate_js, read_current_url
@@ -31,9 +32,14 @@ class PerceptionBrowseResult:
 class PerceptionBrowserRuntime:
 	"""Headed perception browser — same SessionStore as perception_session_start."""
 
-	def __init__(self, *, artifacts_root: Path | None = None) -> None:
+	def __init__(
+		self,
+		*,
+		artifacts_root: Path | None = None,
+		manager: BrowserSessionManager | None = None,
+	) -> None:
 		root = artifacts_root or Path.cwd() / 'artifacts' / 'inspiration_browser'
-		self._store = SessionStore(artifacts_root=root)
+		self._store = SessionStore(artifacts_root=root, manager=manager or BrowserSessionManager.get())
 		self._session_id: str | None = None
 		self._rec: Any = None
 

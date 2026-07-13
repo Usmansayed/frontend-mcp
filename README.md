@@ -44,10 +44,14 @@ Your coding agent (Cursor/Claude/Codex) remains the brain.
 
 Both PyPI names install the same MCP server:
 
-| Package | Install |
-|---------|---------|
-| `frontend-perception-engine` | `pip install frontend-perception-engine` |
-| `frontend-mcp` (alias) | `pip install frontend-mcp` |
+| Package | Install / upgrade |
+|---------|-------------------|
+| `frontend-perception-engine` | `pip install --upgrade frontend-perception-engine` |
+| `frontend-mcp` (alias) | `pip install --upgrade frontend-mcp` |
+
+Use `--upgrade` when a version is already installed — plain `pip install` may leave an older release in place.
+
+**Do not mix** PyPI installs with `pip install -e .` in this repo; editable installs can leave broken metadata that blocks upgrades. Use one or the other.
 
 Recommended (quiet output + next steps):
 

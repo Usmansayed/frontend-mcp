@@ -69,6 +69,7 @@ from navigation.core.snapshot_registry import SnapshotRegistry
 
 from navigation.execution_runtime.runtime import ExecutionRuntime, configure
 
+from navigation.visual_browser_intelligence.browser.browser_session_manager import BrowserSessionManager
 from navigation.visual_browser_intelligence.browser.session_store import SessionStore
 
 from navigation.visual_browser_intelligence.visual.visual_response import envelope_to_mcp_contents
@@ -85,7 +86,8 @@ class PerceptionMCPServer:
 
             raise RuntimeError("mcp package not installed. pip install mcp")
 
-        self._store = SessionStore()
+        self._browser_manager = BrowserSessionManager.get()
+        self._store = SessionStore(manager=self._browser_manager)
 
         self._scans = ScanRegistry()
 
@@ -187,7 +189,7 @@ class PerceptionMCPServer:
 
                     server_name="frontend-perception",
 
-                    server_version="1.1.5",
+                    server_version="1.1.6",
 
                     capabilities=self._server.get_capabilities(
 

@@ -114,6 +114,8 @@ def _require_session(store: SessionStore, session_id: str) -> tuple[Any | None, 
 
 
 async def handle_health(arguments: dict[str, Any]) -> dict[str, Any]:
+    from importlib.metadata import PackageNotFoundError, version
+
     url = str(arguments.get("url") or "http://localhost:5173")
     reachable = False
     status: int | None = None
@@ -129,12 +131,40 @@ async def handle_health(arguments: dict[str, Any]) -> dict[str, Any]:
     except Exception as exc:
         error = str(exc)
 
+    engine_ver = frontend_mcp_ver = None
+    try:
+        engine_ver = version("frontend-perception-engine")
+    except PackageNotFoundError:
+        pass
+    try:
+        frontend_mcp_ver = version("frontend-mcp")
+    except PackageNotFoundError:
+        pass
+
+    browser_available = True
+    try:
+        import browser_use  # noqa: F401
+    except ImportError:
+        browser_available = False
+
+    recommended = "perception_session_start" if reachable else None
+    if not reachable:
+        recommended = None
+
     return make_envelope(
         "perception_health",
         ok=reachable,
         url=url,
         error=None if reachable else (error or f"unreachable (status={status})"),
-        data={"reachable": reachable, "status": status},
+        data={
+            "reachable": reachable,
+            "status": status,
+            "server_version": "1.1.6",
+            "package_version": engine_ver,
+            "frontend_mcp_version": frontend_mcp_ver,
+            "browser_runtime_available": browser_available,
+            "recommended_next_tool": recommended,
+        },
     )
 
 

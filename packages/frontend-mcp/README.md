@@ -7,8 +7,8 @@ Deterministic browser runtime + fast code resolvers for AI coding agents.
 ## Install
 
 ```bash
-pip install frontend-mcp
-frontend-mcp-install    # writes Cursor mcp.json
+pip install --upgrade frontend-mcp
+frontend-mcp-install    # optional: prints Cursor config
 frontend-mcp
 ```
 

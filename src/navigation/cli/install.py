@@ -13,7 +13,7 @@ import time
 from collections.abc import Sequence
 from pathlib import Path
 
-PACKAGE_NAME = 'frontend-perception-engine'
+DEFAULT_PACKAGE_NAME = 'frontend-perception-engine'
 _SPINNER_FRAMES = '|/-\\'
 
 
@@ -45,6 +45,14 @@ class _Spinner:
 			time.sleep(0.1)
 
 
+def _resolve_install_package() -> str:
+	"""Match PyPI package to the install entry point (frontend-mcp vs engine)."""
+	prog = Path(sys.argv[0]).name.lower()
+	if prog.startswith('frontend-mcp'):
+		return 'frontend-mcp'
+	return DEFAULT_PACKAGE_NAME
+
+
 def _pip_available() -> bool:
 	result = subprocess.run(
 		[sys.executable, '-m', 'pip', '--version'],
@@ -53,12 +61,18 @@ def _pip_available() -> bool:
 	return result.returncode == 0
 
 
-def _build_install_command(*, upgrade: bool, editable: str | None) -> list[str]:
+def _build_install_command(
+	*,
+	package: str,
+	upgrade: bool,
+	editable: str | None,
+	force_reinstall: bool = False,
+) -> list[str]:
 	target: list[str]
 	if editable is not None:
 		target = ['-e', editable]
 	else:
-		target = [PACKAGE_NAME]
+		target = [package]
 
 	if _pip_available():
 		cmd = [
@@ -69,7 +83,9 @@ def _build_install_command(*, upgrade: bool, editable: str | None) -> list[str]:
 			'-q',
 			'--disable-pip-version-check',
 		]
-		if upgrade:
+		if force_reinstall:
+			cmd.append('--force-reinstall')
+		elif upgrade:
 			cmd.append('--upgrade')
 		cmd.extend(target)
 		return cmd
@@ -77,14 +93,16 @@ def _build_install_command(*, upgrade: bool, editable: str | None) -> list[str]:
 	uv = shutil.which('uv')
 	if uv is not None:
 		cmd = [uv, 'pip', 'install', '-q']
-		if upgrade:
+		if force_reinstall:
+			cmd.append('--reinstall')
+		elif upgrade:
 			cmd.append('--upgrade')
 		cmd.extend(target)
 		return cmd
 
 	raise SystemExit(
 		'No installer available. Install pip or uv, or use:\n'
-		'  uvx --from frontend-perception-engine frontend-perception-mcp\n',
+		'  uvx --from frontend-mcp frontend-mcp\n',
 	)
 
 
@@ -96,49 +114,48 @@ def _build_browser_install_command() -> list[str]:
 	return cmd
 
 
-def _run_quiet(cmd: Sequence[str], *, label: str) -> None:
+def _run_quiet(cmd: Sequence[str], *, label: str) -> subprocess.CompletedProcess[str]:
 	with _Spinner(label):
-		result = subprocess.run(
+		return subprocess.run(
 			list(cmd),
 			capture_output=True,
 			text=True,
 		)
-	if result.returncode != 0:
-		sys.stderr.write(f'\nInstallation failed ({label}).\n')
-		if result.stderr.strip():
-			sys.stderr.write(result.stderr.strip() + '\n')
-		raise SystemExit(result.returncode or 1)
 
 
-def _installed_version() -> str | None:
+def _installed_version(package: str) -> str | None:
 	try:
 		from importlib.metadata import version
 
-		return version(PACKAGE_NAME)
+		return version(package)
 	except Exception:
 		return None
 
 
-def _print_success(*, with_browser: bool) -> None:
-	version = _installed_version()
-	version_suffix = f' ({version})' if version else ''
-	sys.stdout.write(f'\n  OK  Successfully installed {PACKAGE_NAME}{version_suffix}\n\n')
+def _print_success(*, package: str, with_browser: bool) -> None:
+	engine_version = _installed_version(DEFAULT_PACKAGE_NAME)
+	alias_version = _installed_version('frontend-mcp')
+	version_bits: list[str] = []
+	if package == 'frontend-mcp' and alias_version:
+		version_bits.append(f'frontend-mcp {alias_version}')
+	if engine_version:
+		version_bits.append(f'frontend-perception-engine {engine_version}')
+	version_suffix = f' ({", ".join(version_bits)})' if version_bits else ''
+	sys.stdout.write(f'\n  OK  Successfully installed {package}{version_suffix}\n\n')
 	sys.stdout.write('  Run MCP server:\n')
-	sys.stdout.write('    frontend-perception-mcp\n\n')
-	sys.stdout.write('  Or with uvx (no global install):\n')
-	sys.stdout.write('    uvx --from frontend-perception-engine frontend-perception-mcp\n\n')
-	sys.stdout.write('  Or shorter PyPI name:\n')
+	sys.stdout.write('    frontend-mcp\n')
+	sys.stdout.write('    # or: frontend-perception-mcp\n\n')
+	sys.stdout.write('  Or with uvx (always latest from PyPI):\n')
 	sys.stdout.write('    uvx --from frontend-mcp frontend-mcp\n\n')
-	sys.stdout.write('  Cursor MCP config (either name):\n')
+	sys.stdout.write('  Cursor MCP config:\n')
 	sys.stdout.write('    {\n')
 	sys.stdout.write('      "mcpServers": {\n')
 	sys.stdout.write('        "frontend-perception": {\n')
 	sys.stdout.write('          "command": "uvx",\n')
-	sys.stdout.write('          "args": ["--from", "frontend-perception-engine", "frontend-perception-mcp"]\n')
+	sys.stdout.write('          "args": ["--from", "frontend-mcp", "frontend-mcp"]\n')
 	sys.stdout.write('        }\n')
 	sys.stdout.write('      }\n')
 	sys.stdout.write('    }\n')
-	sys.stdout.write('\n  Alias package: pip install frontend-mcp  →  frontend-mcp / frontend-mcp-install\n')
 	if with_browser:
 		sys.stdout.write('\n  Chromium is ready for Browser Use.\n')
 	sys.stdout.flush()
@@ -146,14 +163,13 @@ def _print_success(*, with_browser: bool) -> None:
 
 def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 	parser = argparse.ArgumentParser(
-		prog='frontend-perception-install',
-		description='Install frontend-perception-engine with minimal output.',
+		prog=_resolve_install_package() + '-install',
+		description='Install the latest Frontend Perception MCP from PyPI.',
 	)
 	parser.add_argument(
-		'-U',
-		'--upgrade',
+		'--no-upgrade',
 		action='store_true',
-		help='Upgrade an existing installation.',
+		help='Skip upgrading to latest PyPI (only install if missing).',
 	)
 	parser.add_argument(
 		'-e',
@@ -169,26 +185,67 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 	return parser.parse_args(list(argv) if argv is not None else None)
 
 
+def _install_package(
+	*,
+	package: str,
+	upgrade: bool,
+	editable: str | None,
+	label: str,
+) -> None:
+	cmd = _build_install_command(package=package, upgrade=upgrade, editable=editable)
+	result = _run_quiet(cmd, label=label)
+	if result.returncode == 0:
+		return
+
+	stderr = result.stderr or ''
+	if editable is None and 'uninstall-no-record-file' in stderr:
+		sys.stderr.write(
+			'\nDetected a broken prior install (editable leftover). Retrying with --force-reinstall...\n',
+		)
+		retry = _build_install_command(
+			package=package,
+			upgrade=False,
+			editable=None,
+			force_reinstall=True,
+		)
+		result = _run_quiet(retry, label=f'Reinstalling {package}')
+		if result.returncode == 0:
+			return
+		stderr = result.stderr or stderr
+
+	sys.stderr.write(f'\nInstallation failed ({label}).\n')
+	if stderr.strip():
+		sys.stderr.write(stderr.strip() + '\n')
+	if 'uninstall-no-record-file' in stderr:
+		sys.stderr.write(
+			'\nManual fix: remove orphan folders in site-packages matching '
+			'frontend_perception_engine-*.dist-info that lack a RECORD file, then rerun install.\n',
+		)
+	raise SystemExit(result.returncode or 1)
+
+
 def main(argv: Sequence[str] | None = None) -> None:
 	args = _parse_args(argv)
+	package = _resolve_install_package()
+	upgrade = not args.no_upgrade
 
 	if args.editable is not None:
 		editable_path = str(Path(args.editable).expanduser().resolve())
-		label = 'Installing frontend-perception-engine (editable)'
+		label = f'Installing {DEFAULT_PACKAGE_NAME} (editable)'
 	else:
 		editable_path = None
-		label = 'Installing frontend-perception-engine'
+		label = f'Installing latest {package} from PyPI'
 
 	if (
-		not args.upgrade
+		not upgrade
 		and editable_path is None
-		and _installed_version() is not None
+		and _installed_version(package if package == 'frontend-mcp' else DEFAULT_PACKAGE_NAME) is not None
 		and not _pip_available()
 	):
-		_print_success(with_browser=False)
+		_print_success(package=package, with_browser=False)
 		return
 
-	_run_quiet(_build_install_command(upgrade=args.upgrade, editable=editable_path), label=label)
+	_install_package(package=package, upgrade=upgrade, editable=editable_path, label=label)
 
 	if args.with_browser:
 		browser_cmd = _build_browser_install_command()
@@ -198,9 +255,14 @@ def main(argv: Sequence[str] | None = None) -> None:
 				'Install uv (https://docs.astral.sh/uv/) or run: uvx playwright install chromium\n',
 			)
 		else:
-			_run_quiet(browser_cmd, label='Setting up Chromium')
+			result = _run_quiet(browser_cmd, label='Setting up Chromium')
+			if result.returncode != 0:
+				sys.stderr.write('\nBrowser setup failed.\n')
+				if result.stderr.strip():
+					sys.stderr.write(result.stderr.strip() + '\n')
+				raise SystemExit(result.returncode or 1)
 
-	_print_success(with_browser=args.with_browser)
+	_print_success(package=package, with_browser=args.with_browser)
 
 
 if __name__ == '__main__':

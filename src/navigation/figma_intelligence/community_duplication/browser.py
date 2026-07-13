@@ -11,7 +11,7 @@ from navigation.figma_intelligence.community_duplication.file_key_resolver impor
 	resolve_file_key_from_payload,
 )
 from navigation.figma_intelligence.community_duplication.models import DuplicationResult
-from navigation.frontend_quality_intelligence.network.service import SessionNetworkService
+from navigation.visual_browser_intelligence.browser.browser_session_manager import BrowserSessionManager
 from navigation.visual_browser_intelligence.observe.preflight import wait_for_page_ready
 from navigation.visual_browser_intelligence.verify.verification import (
 	evaluate_js,
@@ -58,7 +58,9 @@ class CommunityDuplicationBrowser:
 		self._session_cookie = session_cookie.strip()
 		self._timeout_s = timeout_s
 		self._browser: Any = None
-		self._network = SessionNetworkService()
+		self._network: Any = None
+		self._manager = BrowserSessionManager.get()
+		self._lease_id: str | None = None
 
 	async def __aenter__(self) -> CommunityDuplicationBrowser:
 		await self.start()
@@ -68,30 +70,24 @@ class CommunityDuplicationBrowser:
 		await self.close()
 
 	async def start(self) -> None:
-		from browser_use import BrowserProfile, BrowserSession
-
-		self._browser = BrowserSession(
-			browser_profile=BrowserProfile(
-				headless=self._headless,
-				viewport={'width': 1920, 'height': 1080},
-			)
+		managed = await self._manager.acquire(
+			base_url='https://www.figma.com',
+			headless=self._headless,
+			viewport_width=1920,
+			viewport_height=1080,
 		)
-		await self._browser.start()
-		await self._network.attach(self._browser)
+		self._browser = managed.browser
+		self._network = managed.network
+		self._lease_id = managed.lease_id
 		if self._session_cookie:
 			await self._inject_cookies(self._session_cookie)
 
 	async def close(self) -> None:
-		try:
-			self._network.detach()
-		except Exception:
-			pass
-		if self._browser:
-			try:
-				await self._browser.kill()
-			except Exception:
-				pass
+		if self._browser is not None:
+			await self._manager.release()
 		self._browser = None
+		self._network = None
+		self._lease_id = None
 
 	async def duplicate_community_file(
 		self,

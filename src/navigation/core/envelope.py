@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from navigation.mcp.agent_guidance import attach_guidance
+
 CONTRACT_VERSION = "1.0"
 
 
@@ -18,8 +20,9 @@ def make_envelope(
     error: str | None = None,
     degraded: list[str] | None = None,
     data: dict[str, Any] | None = None,
+    agent_guidance: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
-    return {
+    env: dict[str, Any] = {
         "contract_version": CONTRACT_VERSION,
         "tool": tool,
         "ok": ok,
@@ -31,6 +34,9 @@ def make_envelope(
         "degraded": list(degraded or []),
         "data": data or {},
     }
+    if agent_guidance:
+        env["agent_guidance"] = list(agent_guidance)
+    return attach_guidance(env)
 
 
 def envelope_json(**kwargs: Any) -> str:
