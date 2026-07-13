@@ -17,6 +17,8 @@ def enrich_reasoning_context_v2(
 	repo_root: str = '',
 	scan_id: str = '',
 	base_url: str = '',
+	include_crg: bool = True,
+	fast_codebase: bool = False,
 ) -> dict[str, Any]:
 	"""Codebase hints, browser↔code links, impact ranking — still v2 schema."""
 	website = str((ctx.get('meta') or {}).get('website_url') or base_url)
@@ -32,6 +34,8 @@ def enrich_reasoning_context_v2(
 			page_url=url,
 			repo_root=repo_root,
 			base_url=website,
+			include_crg=include_crg,
+			fast=fast_codebase,
 		)
 		page['codebase_hints'] = hints
 		page['browser_code_links'] = _browser_code_links(page_evidence, hints, scan_id=scan_id)

@@ -1,6 +1,16 @@
 # MCP Tool Performance Classification
 
-Production readiness guide for Frontend Perception MCP tools. Targets reflect v1.1.1 polish goals.
+Production readiness guide for Frontend Perception MCP tools. **Optimize for engineering value, not benchmark scores.**
+
+## Performance philosophy
+
+| Workflow | Priority | Latency guidance |
+|----------|----------|------------------|
+| Very frequent tools (health, verify, resolve_*) | Latency first | <2s warm |
+| Browser observation | Rich evidence once; trim serialization | 2–5s observe OK |
+| Component search / integrate | Match quality first | 3–5s search OK; integrate plan 3–8s |
+| Development SEO | Usefulness first; partial OK | 2–5s budget; `ok:true` partial on timeout |
+| Professional SEO | Async background | Enqueue <500ms; poll |
 
 ## Classification tiers
 
@@ -35,7 +45,7 @@ All `perception_resolve_*` and `perception_validate_*` tools: **<2s** via sync o
 
 | Tool | Tier | Target |
 |------|------|--------|
-| `perception_seo_audit_start` (development) | Fast | <2s inline, requires `scan_id` |
+| `perception_seo_audit_start` (development) | Fast | 2–5s inline; requires `scan_id`; returns `partial` with recommendations if budget exceeded |
 | `perception_seo_audit_start` (professional) | Background only | <500ms enqueue → poll |
 | `perception_seo_audit_poll` | Fast | <200ms |
 | `perception_seo_connect` | Background only | OAuth — user-paced |
@@ -49,9 +59,9 @@ All `perception_resolve_*` and `perception_validate_*` tools: **<2s** via sync o
 
 | Tool | Tier | Target |
 |------|------|--------|
-| `perception_search_components` | Needs optimization → Fast | <2s with warm shadcn catalog cache (startup + disk) |
+| `perception_search_components` | Needs optimization | 2–5s acceptable for better registry coverage (12 registries default) |
 | `perception_select_component_foundation` | Needs optimization | Parallel guidance; bounded candidates |
-| `perception_integrate_component` | Fast (plan_only default) | <5s; partial plan on timeout; never 60s block |
+| `perception_integrate_component` | Fast (plan_only default) | 3–8s plan; partial plan on timeout; never 60s block |
 | `perception_integrate_component` (execute_install) | Background only | Explicit user intent only |
 
 **Cache:** `.cache/shadcn_catalogs/` — warmed at MCP startup via `warm_shadcn_catalog_cache()`.

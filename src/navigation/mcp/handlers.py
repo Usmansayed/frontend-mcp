@@ -1632,7 +1632,7 @@ async def handle_integrate_component(arguments: dict[str, Any]) -> dict[str, Any
     )
 
     service = ComponentIntelligenceService()
-    timeout_s = 4.5 if not plan_only else 3.0
+    timeout_s = 12.0 if not plan_only else 8.0
     try:
         result = await asyncio.wait_for(service.integrate_component(request), timeout=timeout_s)
     except asyncio.TimeoutError:
@@ -2564,7 +2564,7 @@ async def handle_seo_audit_start(scans: ScanRegistry, arguments: dict[str, Any])
             },
         )
 
-    # Development SEO: synchronous instant audit (<2s target), no background job.
+    # Development SEO: synchronous instant audit (2–5s usefulness-first budget).
     if effective_mode == SeoAuditMode.DEVELOPMENT:
         if not request.scan_id:
             return make_envelope(
@@ -2579,28 +2579,25 @@ async def handle_seo_audit_start(scans: ScanRegistry, arguments: dict[str, Any])
                 },
             )
         orchestrator = SeoAuditOrchestrator(scan_registry=scans)
-        try:
-            result = await asyncio.wait_for(orchestrator.development_audit(request), timeout=2.0)
-        except asyncio.TimeoutError:
-            return make_envelope(
-                "perception_seo_audit_start",
-                ok=False,
-                error="development_seo_timeout",
-                degraded=setup_notes + ["development_seo_exceeded_2s"],
-                data={
-                    "mode": mode_summary(effective_mode),
-                    "agent_summary": {
-                        "blocking": ["Development SEO exceeded 2s — retry with summary_only observe or smaller page."],
-                    },
-                },
+        budget_s = float(arguments.get("budget_s") or 5.0)
+        result, partial = await orchestrator.development_audit_bounded(request, budget_s=budget_s)
+        advisory = [
+            "Development SEO completed inline — no polling required.",
+            f"Use perception_seo_query with audit_id={result.audit_id} for graph reads.",
+        ]
+        if partial:
+            advisory.insert(
+                0,
+                f"Partial audit returned within {budget_s}s budget — rerun with professional mode for full crawl.",
             )
         return make_envelope(
             "perception_seo_audit_start",
             ok=True,
             data={
-                "status": "completed",
+                "status": "completed" if not partial else "partial",
                 "instant": True,
                 "terminal": True,
+                "partial": partial,
                 "audit_id": result.audit_id,
                 "seo_audit": result.to_dict(),
                 "mode": mode_summary(effective_mode),
@@ -2609,10 +2606,7 @@ async def handle_seo_audit_start(scans: ScanRegistry, arguments: dict[str, Any])
                     "mode": effective_mode.value,
                     "recommendation_count": len(result.recommendations),
                     "evidence_count": len(result.evidence),
-                    "advisory": [
-                        "Development SEO completed inline — no polling required.",
-                        f"Use perception_seo_query with audit_id={result.audit_id} for graph reads.",
-                    ],
+                    "advisory": advisory,
                 },
             },
             degraded=sorted(set(setup_notes + list(result.degraded))),

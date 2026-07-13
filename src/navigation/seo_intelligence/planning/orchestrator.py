@@ -96,6 +96,76 @@ class SeoAuditOrchestrator:
 			force_mode=SeoAuditMode.DEVELOPMENT,
 		)
 
+	async def development_audit_bounded(
+		self,
+		request: SeoAuditRequest,
+		*,
+		budget_s: float = 5.0,
+	) -> tuple[SeoAuditResult, bool]:
+		"""Development SEO with usefulness-first budget. Returns (result, partial)."""
+		try:
+			result = await asyncio.wait_for(self.development_audit(request), timeout=budget_s)
+			return result, False
+		except asyncio.TimeoutError:
+			return await self._partial_development_audit(request), True
+
+	async def _partial_development_audit(self, request: SeoAuditRequest) -> SeoAuditResult:
+		"""Fast partial audit — browser evidence + deterministic recommendations only."""
+		degraded: list[str] = ['development_seo_partial_budget']
+		audit_id = new_audit_id()
+		connections = await self._probe_connections(request)
+		provider = self._providers.get('browser')
+		all_evidence: list[SeoEvidenceRef] = []
+		if provider is not None:
+			evidence, collect_deg = await provider.collect(request)
+			degraded.extend(collect_deg)
+			all_evidence.extend(evidence)
+			for item in evidence:
+				self._graph.upsert_evidence(item, base_url=request.website_url)
+
+		recommendations: list = []
+		cross_analysis: list[dict] = []
+		reasoning_context_v2: dict = {}
+		if all_evidence:
+			recommendations, cross_analysis, reasoning_context_v2 = run_recommendation_pipeline(
+				all_evidence,
+				audit_id=audit_id,
+				mode=SeoAuditMode.DEVELOPMENT,
+				website_url=request.website_url,
+				repo_root='',
+				scan_id=request.scan_id or '',
+				providers=connections,
+				include_recommendations=True,
+				ai_reasoning=False,
+				include_ai_visibility=request.include_ai_visibility,
+			)
+
+		self._graph.save_audit_snapshot(
+			audit_id,
+			evidence=all_evidence,
+			recommendations=recommendations,
+			reasoning_context_v2=reasoning_context_v2,
+			mode=SeoAuditMode.DEVELOPMENT.value,
+			providers_queried=['browser'] if all_evidence else [],
+		)
+		self._graph.save()
+
+		return SeoAuditResult(
+			request=request,
+			audit_id=audit_id,
+			mode=SeoAuditMode.DEVELOPMENT.value,
+			evidence=all_evidence,
+			recommendations=recommendations,
+			providers_queried=['browser'] if all_evidence else [],
+			capability_routes=[],
+			connections=connections,
+			cross_analysis=cross_analysis,
+			reasoning_context=reasoning_context_v2,
+			verification=build_verification_plan(recommendations) if recommendations else {},
+			degraded=sorted(set(degraded)),
+			graph_summary=self._graph.summary(),
+		)
+
 	async def audit(
 		self,
 		request: SeoAuditRequest,

@@ -42,6 +42,15 @@ class CapabilityRouter:
         if not contract:
             return GateResult(False, capability_id, reason="unknown_capability")
 
+        defer_reason = self._anti_pattern_defers(psm, capability_id)
+        if defer_reason:
+            return GateResult(
+                False,
+                capability_id,
+                reason=defer_reason,
+                gather_first="browser_verify",
+            )
+
         if self._anti_pattern_blocks(psm, capability_id):
             return GateResult(False, capability_id, reason="anti_pattern_block")
 
@@ -83,7 +92,23 @@ class CapabilityRouter:
                 return True
             if when == "repo_root_missing" and not psm.artifacts.repo_root:
                 return True
+            if when == "no_scan_id_and_no_snapshot_id":
+                if not psm.artifacts.scan_id and not psm.artifacts.snapshot_id:
+                    return True
         return False
+
+    def _anti_pattern_defers(self, psm: ProjectSituationModel, capability_id: str) -> str | None:
+        attempts = psm.episode.retry_counters.get("capability_attempts") or {}
+        for rule in self._bundle.anti_patterns.get("rules") or []:
+            when = rule.get("when")
+            deferred = rule.get("defer_capabilities") or []
+            if capability_id not in deferred:
+                continue
+            if when == "same_page_rapid_iteration":
+                observe_count = int(attempts.get("browser_observe", 0))
+                if observe_count >= 2 and psm.artifacts.scan_id:
+                    return str(rule.get("reason") or "anti_pattern_defer:rapid_iteration")
+        return None
 
     @staticmethod
     def _gather_for_domain(domain: str) -> str | None:

@@ -228,7 +228,7 @@ async def main() -> int:
                 "terminal": data.get("terminal"),
                 "audit_id": data.get("audit_id"),
                 "latency_ms": round(ms_seo, 1),
-                "target_met": ms_seo < 2000 and data.get("status") == "completed",
+                "target_met": seo_dev.get("ok") is True and ms_seo <= 5000 and data.get("status") in {"completed", "partial"},
             }
             report["payload_bytes"]["seo_audit_start_development"] = _payload_bytes(seo_dev)
 

@@ -26,7 +26,7 @@ class ShadcnEcosystemProvider:
 	def __init__(
 		self,
 		*,
-		max_registries: int = 8,
+		max_registries: int = 12,
 		max_results: int = MAX_RESULTS,
 	) -> None:
 		self._max_registries = max_registries

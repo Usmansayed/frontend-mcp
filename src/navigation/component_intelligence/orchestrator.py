@@ -115,7 +115,7 @@ class ComponentOrchestrator:
 					selection=selection,
 					contracts=self._contracts,
 				),
-				timeout=1.5,
+				timeout=3.0,
 			)
 		except (asyncio.TimeoutError, Exception):
 			from .integration_models import DocumentationBundle

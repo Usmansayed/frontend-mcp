@@ -9,6 +9,7 @@ from navigation.coordination_intelligence.models import (
     CompiledStep,
     CoordinatorBriefing,
     ProjectSituationModel,
+    posture_meets_min,
 )
 from navigation.coordination_intelligence.planning.capability_router import CapabilityRouter
 from navigation.coordination_intelligence.planning.cluster_resolver import ClusterResolver
@@ -169,6 +170,7 @@ class CoordinationIntelligenceService:
             return
 
         self._router.compute_capability_posture(psm)
+        self._maybe_advance_cached_observe(psm)
         refresh_cluster_signature(psm)
 
         playbook_id = self._selector.select_playbook_id(psm)
@@ -218,6 +220,21 @@ class CoordinationIntelligenceService:
         psm.briefing.suggested_next_capability = capability_id
         psm.briefing.suggested_semantic_action = semantic_action
         psm.briefing.compiled_step_preview = compiled.to_dict() if compiled else None
+
+    def _maybe_advance_cached_observe(self, psm: ProjectSituationModel) -> None:
+        """Skip redundant observe when a fresh scan_id already satisfies ui_runtime."""
+        if not psm.artifacts.scan_id:
+            return
+        ui = psm.evidence.domains.get("ui_runtime")
+        if ui is None or not posture_meets_min(ui.posture, "partial"):
+            return
+        step = self._selector.current_step(psm)
+        if not step or step.get("capability") != "browser_observe":
+            return
+        step_id = step.get("step_id")
+        if not step_id or step_id in psm.episode.completed_step_ids:
+            return
+        self._selector.mark_step_complete(psm, step_id)
 
     def _to_briefing(self, psm: ProjectSituationModel) -> CoordinatorBriefing:
         preview = psm.briefing.compiled_step_preview

@@ -43,6 +43,7 @@ try:
     from mcp.server import NotificationOptions, Server
 
     from mcp.server.models import InitializationOptions
+    from mcp.server.lowlevel.helper_types import ReadResourceContents
 
 
 
@@ -130,19 +131,33 @@ class PerceptionMCPServer:
 
 
 
+        @self._server.list_resource_templates()
+
+        async def list_resource_templates_handler() -> list[types.ResourceTemplate]:
+            return [
+                types.ResourceTemplate(
+                    uriTemplate="perception://scan/{scan_id}/{artifact}",
+                    name="scan_artifact",
+                    description="Observation artifacts for a scan (report, screenshots, HAR)",
+                    mimeType="application/octet-stream",
+                ),
+            ]
+
         @self._server.read_resource()
 
-        async def read_resource_handler(uri: str) -> list[types.TextResourceContents | types.BlobResourceContents]:
-
+        async def read_resource_handler(uri: str) -> list[ReadResourceContents]:
             uri_str = str(uri)
-
             mime, payload, is_blob = read_resource(uri_str, self._scans)
-
             if is_blob:
+                import base64
 
-                return [types.BlobResourceContents(uri=uri_str, mimeType=mime, blob=payload)]
-
-            return [types.TextResourceContents(uri=uri_str, mimeType=mime, text=payload)]
+                return [
+                    ReadResourceContents(
+                        content=base64.b64decode(payload),
+                        mime_type=mime or "application/octet-stream",
+                    )
+                ]
+            return [ReadResourceContents(content=payload, mime_type=mime or "text/plain")]
 
 
 
@@ -172,7 +187,7 @@ class PerceptionMCPServer:
 
                     server_name="frontend-perception",
 
-                    server_version="0.11.0",
+                    server_version="1.1.2",
 
                     capabilities=self._server.get_capabilities(
 

@@ -157,6 +157,29 @@ def test_mcp_stdio_smoke() -> None:
         _send(proc, {
             "jsonrpc": "2.0",
             "id": 5,
+            "method": "resources/list",
+            "params": {},
+        })
+        resources_resp = _read_response(proc, timeout_s=15.0)
+        resources = resources_resp.get("result", {}).get("resources", [])
+        assert len(resources) >= 7, f"expected >=7 resources, got {len(resources)}"
+        uris = {r.get("uri") for r in resources}
+        assert "perception://agent-guide" in uris
+
+        _send(proc, {
+            "jsonrpc": "2.0",
+            "id": 6,
+            "method": "resources/read",
+            "params": {"uri": "perception://agent-guide"},
+        })
+        guide_resp = _read_response(proc, timeout_s=15.0)
+        contents = guide_resp.get("result", {}).get("contents", [])
+        assert contents, guide_resp.get("error")
+        assert len(contents[0].get("text", "")) > 1000
+
+        _send(proc, {
+            "jsonrpc": "2.0",
+            "id": 7,
             "method": "tools/call",
             "params": {"name": "perception_this_tool_does_not_exist", "arguments": {}},
         })

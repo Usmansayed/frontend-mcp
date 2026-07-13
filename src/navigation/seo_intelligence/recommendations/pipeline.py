@@ -125,6 +125,10 @@ def run_recommendation_pipeline(
 
 		base_url=website_url,
 
+		include_crg=mode == SeoAuditMode.PROFESSIONAL,
+
+		fast_codebase=mode == SeoAuditMode.DEVELOPMENT,
+
 	)
 
 	if include_ai_visibility:
@@ -147,13 +151,19 @@ def run_recommendation_pipeline(
 
 		)
 
+		effective_ai = ai_reasoning
+
+		if effective_ai is None and mode == SeoAuditMode.DEVELOPMENT:
+
+			effective_ai = False
+
 		ai_recs, ai_meta = try_ai_recommendations(
 
 			reasoning_context_v2,
 
 			evidence,
 
-			ai_reasoning=ai_reasoning,
+			ai_reasoning=effective_ai,
 
 		)
 

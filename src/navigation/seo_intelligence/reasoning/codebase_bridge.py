@@ -24,8 +24,10 @@ def build_codebase_hints(
 	page_url: str,
 	repo_root: str = '',
 	base_url: str = '',
+	include_crg: bool = True,
+	fast: bool = False,
 ) -> list[dict[str, Any]]:
-	"""Heuristic file hints — optional CRG search when available."""
+	"""Heuristic file hints — optional CRG search when available (skip CRG in fast dev paths)."""
 	if not repo_root.strip():
 		return []
 
@@ -38,7 +40,7 @@ def build_codebase_hints(
 	hints: list[dict[str, Any]] = []
 	seen: set[str] = set()
 
-	for path in _candidate_files(root, segment):
+	for path in _candidate_files(root, segment, fast=fast):
 		rel = str(path.relative_to(root)).replace('\\', '/')
 		if rel in seen:
 			continue
@@ -53,7 +55,7 @@ def build_codebase_hints(
 			'source': 'heuristic',
 		})
 
-	hints.extend(_crg_hints(repo_root, segment, keywords))
+	hints.extend(_crg_hints(repo_root, segment, keywords) if include_crg else [])
 	hints.sort(key=lambda h: -float(h.get('score') or 0))
 	return hints[:8]
 
@@ -110,7 +112,7 @@ def _keywords_from_evidence(evidence: list[SeoEvidenceRef]) -> list[str]:
 	return list(dict.fromkeys(w for w in words if w))
 
 
-def _candidate_files(root: Path, segment: str) -> list[Path]:
+def _candidate_files(root: Path, segment: str, *, fast: bool = False) -> list[Path]:
 	candidates: list[Path] = []
 	if segment:
 		for pattern in (
@@ -122,6 +124,8 @@ def _candidate_files(root: Path, segment: str) -> list[Path]:
 			f'**/app/**/{segment}/**',
 		):
 			candidates.extend(root.glob(pattern))
+	if fast:
+		return list(dict.fromkeys(candidates))[:20]
 
 	for path in root.rglob('*'):
 		if not path.is_file():

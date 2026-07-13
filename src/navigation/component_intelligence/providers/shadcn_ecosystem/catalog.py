@@ -158,7 +158,7 @@ def select_registries_for_plan(
 	suggested_registries: list[str],
 	parsed_text: str,
 	*,
-	max_registries: int = 8,
+	max_registries: int = 12,
 ) -> list[RegistryEntry]:
 	by_ns = registry_lookup(index)
 	selected: list[RegistryEntry] = []
