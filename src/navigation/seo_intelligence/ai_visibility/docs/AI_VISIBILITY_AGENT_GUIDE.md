@@ -16,7 +16,7 @@ AI-readiness signals grounded in Google's public AI search guidance.
 ## Agent loop
 
 ```text
-1. perception_seo_audit { website_url, scan_id?, include_ai_visibility: true }
+1. perception_seo_audit_start { website_url, scan_id, include_ai_visibility: true }
 2. Read reasoning_context_v2.ai_readiness         — overall + per-dimension
 3. Read recommendations where category == "ai_visibility"
 4. Apply fixes in code / CMS

@@ -274,6 +274,8 @@ Detect frontend stack from `package.json`, lockfiles, configs, and folder struct
 
 ### `perception_framework_docs`
 
+**Deprecated for agent hot paths** — heavy Grounded Docs fetch (Node.js 22+). Prefer host Context7 / IDE docs; use `perception_detect_framework` for stack metadata only.
+
 Detect project → fetch version-aware framework docs on demand (Grounded Docs) → return normalized docs for one topic.
 
 | Param | Type | Default |
@@ -445,16 +447,19 @@ Register a website (default) or run on-demand OAuth when provider data is needed
 
 ### `perception_seo_audit_start`
 
-Enqueue SEO audit — returns immediately with `audit_job_id`. **Preferred for agents.**
+Start SEO audit. **Preferred for agents.**
 
 | Param | Type | Default |
 |-------|------|---------|
 | `website_url` | string | required |
 | `mode` | string | `development` |
-| `scan_id` | string | optional |
+| `scan_id` | string | required for development |
 | `repo_root` | string | optional |
+| `budget_s` | number | `5.0` (development only) |
 
-**Returns:** `data.audit_job_id`, `data.poll_tool`, `data.poll_interval_ms`.
+**Development (default):** synchronous inline result — `data.status: "completed"`, `data.instant: true`, `data.seo_audit` payload. No polling. Browser + AI Visibility only (requires `scan_id`).
+
+**Professional:** returns `data.audit_job_id`, `data.poll_tool`, `data.poll_interval_ms` — poll with `perception_seo_audit_poll`.
 
 ### `perception_seo_audit_poll`
 
@@ -510,7 +515,7 @@ Re-audit and compare against graph baseline to close recommendation verification
 |-----|---------|
 | `perception://agent-guide` | AGENT_GUIDE.md — main playbooks |
 | `perception://resolver-guide` | Resolver Intelligence — resolve_* tools |
-| `perception://seo-guide` | SEO_AGENT_GUIDE.md — async audit loop |
+| `perception://seo-guide` | SEO_AGENT_GUIDE.md — Development inline vs Professional poll |
 | `perception://inspiration-guide` | Inspiration Intelligence |
 | `perception://resource-guide` | Resource Intelligence |
 | `perception://figma-guide` | Figma Intelligence |

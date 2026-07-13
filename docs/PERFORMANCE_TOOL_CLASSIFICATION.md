@@ -78,7 +78,8 @@ All `perception_resolve_*` and `perception_validate_*` tools: **<2s** via sync o
 
 | Tool | Tier | Notes |
 |------|------|-------|
-| `perception_code_context` | Needs optimization | 30s cap; sync offload |
+| `perception_code_context` | **Deprecated** | 30s cap; use `perception_resolve_*` |
+| `perception_framework_docs` | **Deprecated** | Heavy offload; prefer host docs / Context7 |
 | `perception_inspiration_discover` | Background only | External sites |
 | `perception_audit_*` | Background only | Lighthouse subprocess |
 | `perception_figma_*` | Needs optimization | Network-bound |

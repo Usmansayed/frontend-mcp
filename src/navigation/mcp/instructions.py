@@ -22,14 +22,14 @@ Playbooks by task:
   §8  Viewport                 → session viewport + screenshot
   §9  Edge UI                  → edge-lab routes
   §10 Code ↔ live UI           → resolver-guide, resolve_*, correlate_live
-  §13 Inspiration              → inspiration-guide
-  §14 Creative assets          → resource-guide
-  §15 SEO                      → seo-guide, audit_start + poll (not blocking audit)
+  §14 Inspiration              → inspiration-guide
+  §15 Creative assets          → resource-guide
+  §16 SEO                      → seo-guide; dev audit_start inline, pro start + poll
 
 Guides (read before tool families):
   perception://agent-guide       — main playbooks (required)
   perception://resolver-guide    — resolve_route, resolve_component, validate_*
-  perception://seo-guide         — async SEO audit loop
+  perception://seo-guide         — Development (inline) vs Professional (poll) SEO
   perception://inspiration-guide — gallery tools
   perception://resource-guide    — icons/fonts/assets
   perception://figma-guide       — Figma PAT + context
@@ -42,7 +42,7 @@ Hard rules:
 - perception_auth_gate requires_human → STOP, ask user.
 - probe_form before unknown forms.
 - Do not use perception_code_context — use perception_resolve_* (<200ms).
-- SEO: perception_seo_audit_start + poll — never block on perception_seo_audit.
+- SEO: development — perception_seo_audit_start only (scan_id required); professional — start + poll. Never block on perception_seo_audit.
 - Call MCP tools one at a time (no parallel batches).
 
 Eval smoke test: perception://eval/validation-form

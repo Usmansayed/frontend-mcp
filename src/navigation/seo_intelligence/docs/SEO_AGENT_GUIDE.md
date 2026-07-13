@@ -18,7 +18,7 @@ an `ai_readiness` block to `reasoning_context_v2`. Filter recommendations by
 
 ### Development SEO (default)
 
-Runs **instantly inline** (<2s target). No authentication, no crawl, no Search Console, no background job.
+Runs **instantly inline** (2–5s usefulness-first budget). No authentication, no crawl, no Search Console, no background job.
 
 | Providers | Browser Intelligence + AI Visibility (derived) |
 | Validates | Metadata, semantics, headings, schema hints, internal links, a11y, lightweight technical heuristics |
@@ -137,7 +137,7 @@ Every recommendation includes:
 
 ## Sprint 3 — AI reasoning
 
-When Bedrock is available, `perception_seo_audit` feeds `reasoning_units[]` to the host LLM. Every draft recommendation is post-validated:
+When Bedrock is available, `perception_seo_audit_start` (development or completed professional audit) feeds `reasoning_units[]` to the host LLM. Every draft recommendation is post-validated:
 
 - Must cite `evidence_ids` from the audit snapshot
 - Must not invent large metrics absent from evidence

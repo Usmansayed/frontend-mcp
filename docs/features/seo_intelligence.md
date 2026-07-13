@@ -33,8 +33,10 @@ We do not build Ahrefs, Semrush, third-party SEO apps, or internet-scale crawler
 ### Development (default)
 
 ```text
-Browser + Lighthouse + LibreCrawl → Knowledge Graph → Dev best practices → Recommendations
+Browser Intelligence + AI Visibility (derived) → Knowledge Graph → Dev best practices → Recommendations
 ```
+
+Requires `scan_id` from observe. No LibreCrawl, Lighthouse, or OAuth in development mode.
 
 ### Professional (on demand)
 
@@ -70,6 +72,9 @@ Google / Bing OAuth only when user requests provider-specific analysis
 |------|--------|
 | `perception_seo_status` | ✅ |
 | `perception_seo_connect` | ✅ setup + on-demand OAuth |
-| `perception_seo_audit` | ✅ full pipeline + reasoning context |
+| `perception_seo_audit_start` | ✅ development inline; professional async |
+| `perception_seo_audit_poll` | ✅ professional mode |
+| `perception_seo_audit_cancel` | ✅ |
+| `perception_seo_audit` | ⚠️ legacy sync — scripts only |
 | `perception_seo_verify` | ✅ closed-loop verification |
 | `perception://seo-guide` | ✅ |

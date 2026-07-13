@@ -691,9 +691,10 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_framework_docs",
             description=(
-                "Framework Intelligence (v1). Detect project metadata, fetch version-aware framework "
-                "documentation on demand via Grounded Docs, and return a normalized response. "
-                "Requires Node.js 22+ (npx). Override with GROUNDED_DOCS_CLI / GROUNDED_DOCS_STORE_PATH."
+                "DEPRECATED for agent hot paths — heavy Grounded Docs fetch. "
+                "Prefer host Context7 / IDE docs. Detect + fetch version-aware framework "
+                "documentation on demand via Grounded Docs. Requires Node.js 22+ (npx). "
+                "Override with GROUNDED_DOCS_CLI / GROUNDED_DOCS_STORE_PATH."
             ),
             inputSchema={
                 "type": "object",
@@ -1138,7 +1139,7 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_seo_audit_start",
             description=(
-                "SEO Intelligence. Development mode (default): instant inline audit (<2s) from scan_id — "
+                "SEO Intelligence. Development mode (default): instant inline audit (2–5s) from scan_id — "
                 "no polling. Professional mode: async job — poll perception_seo_audit_poll. "
                 "Localhost auto-detects development. Read perception://seo-guide."
             ),
@@ -1235,7 +1236,7 @@ def perception_tools(mcp_types: Any) -> list[Any]:
             name="perception_seo_query",
             description=(
                 "Query the SEO knowledge graph — page issues, audit diff, traffic signals. "
-                "Omit query_id to list available queries. Run perception_seo_audit first."
+                "Omit query_id to list available queries. Run perception_seo_audit_start first to populate the graph."
             ),
             inputSchema={
                 "type": "object",

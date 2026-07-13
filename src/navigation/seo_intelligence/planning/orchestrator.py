@@ -40,14 +40,30 @@ class SeoAuditOrchestrator:
 		self._planner = SeoAuditPlanner(self._registry)
 		self._graph = graph or SeoKnowledgeGraphStore()
 
-	async def _probe_connections(self, request: SeoAuditRequest) -> dict[str, str]:
-		connections: dict[str, str] = {}
-		for pid in self._providers.list_live_provider_ids():
+	async def _probe_connections(
+		self,
+		request: SeoAuditRequest,
+		*,
+		provider_ids: list[str] | None = None,
+	) -> dict[str, str]:
+		mode = resolve_effective_mode(request)
+		if provider_ids is None and mode == SeoAuditMode.DEVELOPMENT:
+			provider_ids = ['browser']
+
+		all_ids = self._providers.list_live_provider_ids()
+		targets = provider_ids if provider_ids is not None else all_ids
+
+		async def _probe_one(pid: str) -> tuple[str, str]:
 			provider = self._providers.get(pid)
 			if provider is None:
-				continue
+				return pid, 'not_configured'
 			status, _ = await provider.connection_status(request)
-			connections[pid] = status
+			return pid, status
+
+		probed = await asyncio.gather(*[_probe_one(pid) for pid in targets])
+		connections = dict(probed)
+		for pid in all_ids:
+			connections.setdefault(pid, 'not_configured')
 		return connections
 
 	async def _collect_providers_parallel(
@@ -148,7 +164,7 @@ class SeoAuditOrchestrator:
 			mode=SeoAuditMode.DEVELOPMENT.value,
 			providers_queried=['browser'] if all_evidence else [],
 		)
-		self._graph.save()
+		self._graph.save(compact=True)
 
 		return SeoAuditResult(
 			request=request,
@@ -290,7 +306,7 @@ class SeoAuditOrchestrator:
 
 		if all_evidence and (request.include_recommendations or request.include_cross_analysis):
 			snapshot_diff = None
-			if previous_audit_id:
+			if mode == SeoAuditMode.PROFESSIONAL and previous_audit_id:
 				snapshot_diff = self._graph.build_snapshot_diff(audit_id, previous_audit_id)
 
 			recommendations, cross_analysis, reasoning_context_v2 = run_recommendation_pipeline(
@@ -328,7 +344,7 @@ class SeoAuditOrchestrator:
 			mode=mode.value,
 			providers_queried=queried,
 		)
-		self._graph.save()
+		self._graph.save(compact=mode == SeoAuditMode.DEVELOPMENT)
 
 		_progress("analyzing", 100, "completed", current_provider="")
 

@@ -22,16 +22,18 @@ Data providers supply evidence. The knowledge graph stores context. The recommen
 
 | Mode | When | Auth | Providers |
 |------|------|------|-----------|
-| **Development** (default) | Building a website | None | Browser, Lighthouse, LibreCrawl |
-| **Professional** | User asks to optimize with live search data | Google OAuth on demand | GSC, GA4 + all development providers |
+| **Development** (default) | Building a website | None | Browser Intelligence + AI Visibility (derived) |
+| **Professional** | User asks to optimize with live search data | Google OAuth on demand | GSC, GA4, LibreCrawl, Lighthouse, Browser Intelligence |
 
 ```text
 # Development (default) — frictionless while coding
-perception_seo_audit { "website_url": "...", "scan_id": "..." }
+perception_observe → scan_id
+perception_seo_audit_start { "website_url": "...", "scan_id": "..." }
 
 # Professional — after user requests optimization
 perception_seo_connect { "action": "connect_google", ... }
-perception_seo_audit { "website_url": "...", "mode": "professional" }
+perception_seo_audit_start { "website_url": "...", "mode": "professional" }
+perception_seo_audit_poll { "audit_job_id": "..." }
 ```
 
 ## Pipeline

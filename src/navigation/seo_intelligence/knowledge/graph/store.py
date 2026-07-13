@@ -33,11 +33,16 @@ class SeoKnowledgeGraphStore:
 		self._data = self._empty_graph()
 		return self._data
 
-	def save(self) -> None:
+	def save(self, *, compact: bool = False) -> None:
 		data = self.load()
 		data['updated_at'] = time.time()
 		self._path.parent.mkdir(parents=True, exist_ok=True)
-		self._path.write_text(json.dumps(data, indent=2), encoding='utf-8')
+		payload = (
+			json.dumps(data, separators=(',', ':'))
+			if compact
+			else json.dumps(data, indent=2)
+		)
+		self._path.write_text(payload, encoding='utf-8')
 
 	def _empty_graph(self) -> dict[str, Any]:
 		return {

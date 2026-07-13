@@ -350,7 +350,7 @@ STOP
 
 ---
 
-## 11. Visual evidence (v0.5)
+## 12. Visual evidence (v0.5)
 
 Observe, verify-fail, and diff tools **inline PNG images** in the MCP tool response (annotated viewport by default).
 
@@ -370,12 +370,12 @@ Observe, verify-fail, and diff tools **inline PNG images** in the MCP tool respo
 
 ---
 
-## 11.1 Observe detail levels (M4)
+## 12.1 Observe detail levels (M4)
 
 Use `detail` on observe tools when payload size matters:
 
-- `detail: "full"` (default): full observation payload (DOM/a11y/dev insights) + visual block + inline images
-- `detail: "summary_only"`: compact `agent_summary` + visual block + inline images (no DOM text)
+- `detail: "summary_only"` (default): compact `agent_summary` + visual block + inline images (no DOM text)
+- `detail: "full"`: full observation payload (DOM/a11y/dev insights) + visual block + inline images
 
 Guideline:
 - Start with `full` on first look and on failures.
@@ -384,7 +384,7 @@ Guideline:
 
 ---
 
-## 12. When to STOP and ask the human
+## 13. When to STOP and ask the human
 
 | Signal | Action |
 |--------|--------|
@@ -396,7 +396,7 @@ Guideline:
 
 ---
 
-## 13. Playbook: Design inspiration (public galleries)
+## 14. Playbook: Design inspiration (public galleries)
 
 **When:** User asks for landing page / dashboard / UI inspiration from Dribbble, Behance, gallery sites.
 
@@ -428,7 +428,7 @@ Guideline:
 
 ---
 
-## 14. Playbook: Creative assets (Resource Intelligence)
+## 15. Playbook: Creative assets (Resource Intelligence)
 
 **When:** User needs icons, avatars, illustrations, fonts, or stock assets for a commercial project.
 
@@ -459,25 +459,27 @@ Guideline:
 
 ---
 
-## 15. Playbook: SEO orchestration (SEO Intelligence)
+## 16. Playbook: SEO orchestration (SEO Intelligence)
 
 **When:** User asks about search rankings, indexing, CTR, Core Web Vitals, technical SEO, or site-wide SEO audit.
 
-**Read first:** MCP resource `perception://seo-guide` — free-first providers, verify loop, boundaries.
+**Read first:** MCP resource `perception://seo-guide` — Development vs Professional modes, verify loop, boundaries.
 
 ```text
 1. perception_seo_status()                         → phase + provider catalog
-2. perception_seo_connect(...)                       → OAuth only when user asks (professional)
-3. perception_seo_audit_start({ website_url, scan_id?, repo_root? })
-   → save audit_job_id (<500ms; non-blocking)
-4. perception_seo_audit_poll({ audit_job_id })      → until status completed | failed | cancelled
+2. perception_observe / navigate_and_observe       → scan_id (required for development)
+3. perception_seo_audit_start({ website_url, scan_id, repo_root? })
+   Development (default): inline result — data.status=completed, data.instant=true (2–5s; no poll)
+   Professional: data.audit_job_id → perception_seo_audit_poll until terminal
+4. perception_seo_connect(...)                     → OAuth only when user asks (professional)
 5. Read evidence + recommendations — every claim has evidence_ids
 6. Fix code / config from evidence
 7. perception_observe → perception_verify on affected pages
 8. perception_seo_verify or perception_seo_audit_start again to measure gains
 ```
 
-**Async rule:** Never use blocking `perception_seo_audit` in agent loops — use start + poll.
+**Async rule:** Never use blocking `perception_seo_audit` in agent loops.
+Development: `audit_start` only (no poll). Professional: `audit_start` + poll.
 Cancel long jobs with `perception_seo_audit_cancel({ audit_job_id })`.
 
 | Provider | Role |
@@ -494,7 +496,7 @@ Cancel long jobs with `perception_seo_audit_cancel({ audit_job_id })`.
 
 ---
 
-## 16. Playbook: Figma design context (Figma Intelligence)
+## 17. Playbook: Figma design context (Figma Intelligence)
 
 **When:** User asks to analyze their Figma file, implement a frame, extract tokens, or compare design with code.
 
@@ -521,7 +523,7 @@ Cancel long jobs with `perception_seo_audit_cancel({ audit_job_id })`.
 
 ---
 
-## 17. Tool quick reference (secondary to playbooks)
+## 18. Tool quick reference (secondary to playbooks)
 
 Use tools **only as steps inside playbooks above**.
 
@@ -556,7 +558,7 @@ Use tools **only as steps inside playbooks above**.
 | `perception_resource_preview` | URLs + ephemeral resource vision blobs |
 | `perception_resource_session_end` | Delete ephemeral resource blobs |
 | `perception_seo_status` | SEO module phase + provider catalog |
-| `perception_seo_audit_start` | Enqueue SEO audit (returns audit_job_id) |
+| `perception_seo_audit_start` | Dev: inline audit from scan_id; Pro: enqueue + poll |
 | `perception_seo_audit_poll` | Poll audit job status + partial evidence |
 | `perception_seo_audit_cancel` | Cancel background audit |
 | `perception_seo_audit` | Legacy sync audit — prefer start + poll |
@@ -567,7 +569,7 @@ Use tools **only as steps inside playbooks above**.
 
 ---
 
-## 18. Success checklist (before telling user "done")
+## 19. Success checklist (before telling user "done")
 
 - [ ] `perception_verify` passed for stated criteria
 - [ ] `agent_summary.blocking` is empty (or user accepted warnings)

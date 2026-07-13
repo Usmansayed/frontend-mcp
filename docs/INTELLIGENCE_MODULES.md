@@ -60,7 +60,7 @@ Understands the frontend stack and fetches version-aware documentation.
 | Documentation cache | ✅ |
 | Normalized `FrameworkKnowledgeResponse` | ✅ |
 
-**MCP tools:** `perception_detect_framework`, `perception_framework_docs`
+**MCP tools:** `perception_detect_framework`, `perception_framework_docs` (deprecated for agent hot paths — prefer host docs)
 
 See [features/framework_intelligence.md](./features/framework_intelligence.md).
 

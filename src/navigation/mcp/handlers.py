@@ -1632,7 +1632,7 @@ async def handle_integrate_component(arguments: dict[str, Any]) -> dict[str, Any
     )
 
     service = ComponentIntelligenceService()
-    timeout_s = 12.0 if not plan_only else 8.0
+    timeout_s = 10.0 if not plan_only else 5.0
     try:
         result = await asyncio.wait_for(service.integrate_component(request), timeout=timeout_s)
     except asyncio.TimeoutError:
@@ -2188,7 +2188,7 @@ async def handle_seo_query(arguments: dict[str, Any]) -> dict[str, Any]:
                 "agent_summary": {
                     "advisory": [
                         "Pass query_id e.g. page.issues, audit.diff, site.traffic_signals, graph.summary.",
-                        "Run perception_seo_audit first to populate the graph.",
+                        "Run perception_seo_audit_start first to populate the graph.",
                     ],
                 },
             },

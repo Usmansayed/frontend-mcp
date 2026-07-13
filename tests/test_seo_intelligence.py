@@ -195,6 +195,68 @@ def test_implicit_professional_from_search_intent() -> None:
 		assert audit_blocked_by_auth(request) is True
 
 
+def test_development_probe_skips_non_browser_providers() -> None:
+	from navigation.core.scan_registry import ScanRegistry
+	from navigation.seo_intelligence.models import SeoAuditMode
+	from navigation.seo_intelligence.planning.orchestrator import SeoAuditOrchestrator
+
+	scans = ScanRegistry()
+	record = scans.register(
+		session_id='s1',
+		run_id='r1',
+		url='http://localhost:5173/',
+		observation={'url': 'http://localhost:5173/', 'dev_insights': {'issues': []}},
+	)
+	request = SeoAuditRequest(
+		website_url='http://localhost:5173/',
+		scan_id=record.scan_id,
+		mode=SeoAuditMode.DEVELOPMENT,
+	)
+
+	async def _run() -> None:
+		orch = SeoAuditOrchestrator(scan_registry=scans)
+		connections = await orch._probe_connections(request)
+		assert connections['browser'] == 'connected'
+		assert connections.get('librecrawl') == 'not_configured'
+		assert connections.get('search-console') == 'not_configured'
+
+	asyncio.run(_run())
+
+
+def test_development_audit_fast_with_scan() -> None:
+	from navigation.core.scan_registry import ScanRegistry
+	from navigation.seo_intelligence.models import SeoAuditMode
+	from navigation.seo_intelligence.planning.orchestrator import SeoAuditOrchestrator
+
+	scans = ScanRegistry()
+	record = scans.register(
+		session_id='s1',
+		run_id='r1',
+		url='http://localhost:5173/forms/validation',
+		observation={
+			'url': 'http://localhost:5173/forms/validation',
+			'dev_insights': {
+				'issues': [{'kind': 'meta', 'message': 'Missing meta description', 'tier': 'advisory'}],
+			},
+		},
+	)
+	request = SeoAuditRequest(
+		website_url='http://localhost:5173/forms/validation',
+		scan_id=record.scan_id,
+		repo_root=str(Path(__file__).resolve().parents[1] / 'sandbox'),
+		mode=SeoAuditMode.DEVELOPMENT,
+	)
+
+	async def _run() -> None:
+		orch = SeoAuditOrchestrator(scan_registry=scans)
+		result = await orch.development_audit(request)
+		assert result.evidence
+		assert result.recommendations
+		assert result.mode == 'development'
+
+	asyncio.run(_run())
+
+
 def test_planner_development_mode_excludes_google() -> None:
 	from navigation.seo_intelligence.models import SeoAuditMode
 	from navigation.seo_intelligence.planning.planner import SeoAuditPlanner
