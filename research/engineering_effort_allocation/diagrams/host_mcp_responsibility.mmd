@@ -1,0 +1,37 @@
+%% Host LLM vs MCP responsibility — amplify, don't compete
+flowchart TB
+  subgraph Host["Host Agent — Frontier LLM"]
+    H1[Intent and tradeoffs]
+    H2[Design brief / interpretation]
+    H3[Implementation strategy]
+    H4[Code generation]
+    H5[When to ignore advisory]
+  end
+
+  subgraph Coord["Coordination Intelligence — Advisory"]
+    C1[Task scope and visual impact]
+    C2[Intelligence Budget]
+    C3[EQG / ROI score]
+    C4[Suggest next capability OR STOP]
+  end
+
+  subgraph MCP["MCP Deterministic Runtime"]
+    M1[Browser truth / screenshots]
+    M2[Inspiration / resources / components]
+    M3[Snapshots / review / consistency]
+    M4[Resolve / verify / validate]
+  end
+
+  H1 --> C1
+  C4 -->|recommend evidence| M1
+  C4 --> M2
+  C4 --> M3
+  C4 --> M4
+  M1 -->|facts E| H2
+  M2 --> H2
+  M3 --> H2
+  M4 -->|pass/fail| H4
+  H2 --> H3 --> H4
+  H4 -->|re-enter| C1
+  C3 --> C4
+  C2 --> C4

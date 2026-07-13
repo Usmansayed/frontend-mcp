@@ -8,8 +8,10 @@ build/
 .pytest_cache/
 .code-review-graph/
 
-# Runtime output (regenerated locally)
-artifacts/
+# Runtime output (regenerated locally) — keep coordination bundled runtime tracked
+/artifacts/
+sandbox/artifacts/
+src/artifacts/
 .cache/
 
 node_modules/

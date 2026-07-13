@@ -1,0 +1,26 @@
+%% Visual impact tiers → allowed MCP spend
+flowchart LR
+  subgraph V4["V4 Very High"]
+    V4a[Layout / nav / hierarchy]
+    V4b[Inspiration / design language]
+    V4c[Component foundations / DS]
+  end
+
+  subgraph V3["V3 High"]
+    V3a[Forms / cards / charts]
+    V3b[Spacing system]
+  end
+
+  subgraph V2["V2 Medium"]
+    V2a[Icons / type polish]
+    V2b[Consistency / motion]
+  end
+
+  subgraph V1["V1 Low"]
+    V1a[Pixel padding / micro tweak]
+  end
+
+  V4 -->|Heavy+Medium allowed| S4[Orient + one critique cycle]
+  V3 -->|Medium allowed| S3[Selective review / component]
+  V2 -->|Fast+Instant| S2[Resource / light audit]
+  V1 -->|Instant only| S1[Observe + verify — no design Heavy]

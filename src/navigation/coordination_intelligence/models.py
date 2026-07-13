@@ -207,6 +207,10 @@ class BriefingState:
     suggested_semantic_action: str | None = None
     compiled_step_preview: dict[str, Any] | None = None
     stop_reason: str | None = None
+    routing_rationale: str | None = None
+    benefit_claim: str | None = None
+    skip_condition: str | None = None
+    investment: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -214,6 +218,10 @@ class BriefingState:
             "suggested_semantic_action": self.suggested_semantic_action,
             "compiled_step_preview": self.compiled_step_preview,
             "stop_reason": self.stop_reason,
+            "routing_rationale": self.routing_rationale,
+            "benefit_claim": self.benefit_claim,
+            "skip_condition": self.skip_condition,
+            "investment": dict(self.investment) if self.investment else None,
         }
 
 
@@ -293,6 +301,10 @@ class CoordinatorBriefing:
     suggested_semantic_action: str | None
     compiled_step: CompiledStep | None
     psm_summary: dict[str, Any]
+    routing_rationale: str | None = None
+    benefit_claim: str | None = None
+    skip_condition: str | None = None
+    investment: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -302,6 +314,10 @@ class CoordinatorBriefing:
             "suggested_semantic_action": self.suggested_semantic_action,
             "compiled_step": self.compiled_step.to_dict() if self.compiled_step else None,
             "psm_summary": self.psm_summary,
+            "routing_rationale": self.routing_rationale,
+            "benefit_claim": self.benefit_claim,
+            "skip_condition": self.skip_condition,
+            "investment": dict(self.investment) if self.investment else None,
         }
 
 

@@ -189,7 +189,7 @@ class PerceptionMCPServer:
 
                     server_name="frontend-perception",
 
-                    server_version="1.1.6",
+                    server_version="1.1.7",
 
                     capabilities=self._server.get_capabilities(
 

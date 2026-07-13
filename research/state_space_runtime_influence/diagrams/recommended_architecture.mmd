@@ -1,0 +1,19 @@
+%% Recommended architecture — corpus influences runtime without FSM
+flowchart TB
+  SS[150 research states SoT] -->|build distill| R12[R12 Situation Policy Catalog]
+  SS -->|build| R11[R11 Lexicon telemetry]
+  SS -.->|not control| X[No leaf FSM at runtime]
+
+  R12 --> Disc[PSM discriminators]
+  Life[Lifecycle + maturity bands] --> Disc
+  Evid[Live evidence domains] --> Disc
+
+  Disc --> Inv[Intelligence Budget / EQG priors / allow-forbid]
+  R3[R3 24 Clusters] --> PB[Playbook family]
+  Inv --> Brief[Advisory briefing]
+  PB --> Brief
+  R7[R7 Heuristics] --> Brief
+
+  Brief --> Host[Host LLM reasons and implements]
+  Host --> MCP[MCP deterministic evidence]
+  MCP --> Evid

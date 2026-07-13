@@ -1,0 +1,27 @@
+%% Lifecycle bands drive Engineering Investment
+flowchart LR
+  subgraph Early["Early S01-S04"]
+    E1[High budget]
+    E2[V4 ceiling]
+    E3[Orient layout/DS/foundations]
+  end
+
+  subgraph Mid["Mid S05-S07"]
+    M1[Medium budget]
+    M2[Feature + verify]
+    M3[Selective critique]
+  end
+
+  subgraph Late["Late S08-S10"]
+    L1[Strict ROI]
+    L2[Quality / SEO when ready]
+    L3[Consistency if PDG mature]
+  end
+
+  subgraph Prod["Production S11-S12"]
+    P1[Low design spend]
+    P2[Hotfix compress]
+    P3[Protect live / regression]
+  end
+
+  Early --> Mid --> Late --> Prod

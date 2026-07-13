@@ -1,0 +1,11 @@
+%% Diminishing returns on design critique loops
+flowchart TD
+  L0[First paint / v0] --> R1[Design review 1 — structural EQG high]
+  R1 --> H1[Host applies blocking findings]
+  H1 --> R2[Design review 2 — EQG medium]
+  R2 --> D{Findings mostly V2/V1?}
+  D -->|no blocking left| STOP[Hard DR: STOP — host polish]
+  D -->|blocking remains| H2[Host fixes]
+  H2 --> R3[Design review 3+]
+  R3 --> STOP
+  STOP --> V[Verify once — Instant]

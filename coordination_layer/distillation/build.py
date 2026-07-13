@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""P0 distillation build — research corpus → runtime artifacts (R0–R11).
+"""P0 distillation build — research corpus → runtime artifacts (R0–R12).
 
-Does not modify MCP behavior. Produces validated YAML/JSON under coordination_layer/runtime/.
+Does not modify MCP behavior. Produces validated YAML/JSON under coordination_layer/runtime/
+and syncs a copy into the wheel-bundled artifacts path for installed packages.
 """
 
 from __future__ import annotations
@@ -9,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -35,6 +37,14 @@ RESEARCH = COORD / "research"
 SOURCES = COORD / "distillation" / "sources"
 SCHEMAS = COORD / "distillation" / "schemas"
 RUNTIME = COORD / "runtime"
+BUNDLED_RUNTIME = (
+    ROOT
+    / "src"
+    / "navigation"
+    / "coordination_intelligence"
+    / "artifacts"
+    / "runtime"
+)
 STATES_DIR = RESEARCH / "state_space" / "states"
 CLUSTER_INDEX = RESEARCH / "state_space" / "abstracted" / "cluster_index.md"
 STATE_GRAPH_INDEX = RESEARCH / "state_space" / "state_graph_index.json"
@@ -51,6 +61,7 @@ SOURCE_ARTIFACTS = {
     "tool_bindings.v1.yaml": "tool_bindings.v1.yaml",
     "anti_patterns.v1.yaml": "anti_patterns.v1.yaml",
     "evidence_lattice.v1.yaml": "evidence_lattice.v1.yaml",
+    "situation_policy_catalog.v1.yaml": "situation_policy_catalog.v1.yaml",
 }
 
 
@@ -382,9 +393,17 @@ def main() -> int:
     manifest = build_manifest(artifact_paths, cap_counts)
     manifest_path = RUNTIME / "manifest.json"
     dump_json(manifest, manifest_path)
+    artifact_paths["manifest"] = manifest_path
 
-    total_bytes = sum(p.stat().st_size for p in artifact_paths.values())
+    # Keep installed-package loader path in sync (loader prefers bundled runtime/).
+    BUNDLED_RUNTIME.mkdir(parents=True, exist_ok=True)
+    for path in RUNTIME.iterdir():
+        if path.is_file():
+            shutil.copy2(path, BUNDLED_RUNTIME / path.name)
+
+    total_bytes = sum(p.stat().st_size for p in artifact_paths.values() if p.name != "manifest.json")
     print(f"OK: {len(artifact_paths)} artifacts -> {RUNTIME}")
+    print(f"    synced -> {BUNDLED_RUNTIME}")
     print(f"    states: {state_lexicon['state_count']}, T1 capabilities: {cap_counts['T1']}")
     print(f"    bundle size: {total_bytes:,} bytes")
     if total_bytes > 500_000:

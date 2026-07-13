@@ -13,6 +13,11 @@ from navigation.coordination_intelligence.models import (
 )
 from navigation.coordination_intelligence.planning.capability_router import CapabilityRouter
 from navigation.coordination_intelligence.planning.cluster_resolver import ClusterResolver
+from navigation.coordination_intelligence.planning.effort_allocator import (
+    apply_decision_to_briefing,
+    debit_budget,
+    evaluate_allocation,
+)
 from navigation.coordination_intelligence.planning.loop_governor import LoopGovernor
 from navigation.coordination_intelligence.planning.playbook_selector import PlaybookSelector
 from navigation.coordination_intelligence.planning.step_compiler import StepCompiler
@@ -98,6 +103,19 @@ class CoordinationIntelligenceService:
         self._runtime.apply_envelope(episode_id, envelope, capability_id=capability_id)
         psm = self._runtime.require(episode_id)
 
+        # Debit intelligence budget for successful capability completions
+        catalog = self._bundle.situation_policy_catalog or {}
+        if catalog and capability_id and envelope.get("ok"):
+            from navigation.coordination_intelligence.planning.situation_policy import capability_cost
+
+            cost = capability_cost(catalog, capability_id)
+            if capability_id == "browser_observe" and psm.artifacts.scan_id:
+                # First observe still costs; subsequent with scan already present are cheap
+                attempts = psm.episode.retry_counters.get("capability_attempts") or {}
+                if int(attempts.get("browser_observe", 0)) > 1:
+                    cost = 0
+            debit_budget(psm, cost, capability_id)
+
         self._cluster_resolver.resolve(psm)
         self._governor.advance_if_satisfied(
             psm,
@@ -152,6 +170,10 @@ class CoordinationIntelligenceService:
             "suggested_semantic_action": briefing.suggested_semantic_action,
             "stop_reason": briefing.stop_reason,
             "psm_summary": briefing.psm_summary,
+            "routing_rationale": briefing.routing_rationale,
+            "benefit_claim": briefing.benefit_claim,
+            "skip_condition": briefing.skip_condition,
+            "investment": briefing.investment,
         }
         return envelope
 
@@ -161,12 +183,20 @@ class CoordinationIntelligenceService:
         *,
         step_context: dict[str, Any] | None = None,
     ) -> None:
+        catalog = self._bundle.situation_policy_catalog or {}
+
         stop = self._governor.should_stop(psm)
         if stop:
             psm.briefing.stop_reason = stop
             psm.briefing.suggested_next_capability = None
             psm.briefing.suggested_semantic_action = None
             psm.briefing.compiled_step_preview = None
+            if catalog:
+                decision = evaluate_allocation(psm, catalog, capability_id=None)
+                apply_decision_to_briefing(psm, decision)
+                psm.briefing.routing_rationale = (
+                    f"governor_stop={stop}; {decision.routing_rationale}"
+                )
             return
 
         self._router.compute_capability_posture(psm)
@@ -180,6 +210,12 @@ class CoordinationIntelligenceService:
             psm.briefing.suggested_next_capability = None
             psm.briefing.suggested_semantic_action = None
             psm.briefing.compiled_step_preview = None
+            if catalog:
+                decision = evaluate_allocation(psm, catalog, capability_id=None)
+                apply_decision_to_briefing(psm, decision)
+                psm.briefing.routing_rationale = (
+                    f"playbook_complete; {decision.routing_rationale}"
+                )
             return
 
         if step.get("host_llm_only"):
@@ -187,6 +223,15 @@ class CoordinationIntelligenceService:
             psm.briefing.suggested_semantic_action = step.get("semantic_action")
             psm.briefing.compiled_step_preview = None
             psm.briefing.stop_reason = None
+            if catalog:
+                decision = evaluate_allocation(psm, catalog, capability_id=None)
+                apply_decision_to_briefing(psm, decision)
+                psm.briefing.routing_rationale = (
+                    f"host_llm_only={step.get('semantic_action')}; {decision.routing_rationale}"
+                )
+                psm.briefing.benefit_claim = (
+                    "Host should reason/implement; MCP already supplied deterministic evidence."
+                )
             return
 
         capability_id = step.get("capability")
@@ -200,7 +245,26 @@ class CoordinationIntelligenceService:
             psm.briefing.suggested_next_capability = gate.gather_first
             psm.briefing.suggested_semantic_action = None
             psm.briefing.compiled_step_preview = None
+            if catalog:
+                decision = evaluate_allocation(
+                    psm, catalog, capability_id=gate.gather_first or capability_id
+                )
+                apply_decision_to_briefing(psm, decision)
+                psm.briefing.routing_rationale = (
+                    f"gate={gate.reason}; {decision.routing_rationale}"
+                )
             return
+
+        # Engineering Investment / ROI gate (advisory)
+        if catalog:
+            decision = evaluate_allocation(psm, catalog, capability_id=capability_id)
+            apply_decision_to_briefing(psm, decision)
+            if not decision.recommend:
+                psm.briefing.stop_reason = decision.stop_reason
+                psm.briefing.suggested_next_capability = None
+                psm.briefing.suggested_semantic_action = "host_reason_or_implement"
+                psm.briefing.compiled_step_preview = None
+                return
 
         ctx = dict(step_context or {})
         ref = step.get("success_criteria_ref")
@@ -220,6 +284,9 @@ class CoordinationIntelligenceService:
         psm.briefing.suggested_next_capability = capability_id
         psm.briefing.suggested_semantic_action = semantic_action
         psm.briefing.compiled_step_preview = compiled.to_dict() if compiled else None
+        if catalog:
+            decision = evaluate_allocation(psm, catalog, capability_id=capability_id)
+            apply_decision_to_briefing(psm, decision)
 
     def _maybe_advance_cached_observe(self, psm: ProjectSituationModel) -> None:
         """Skip redundant observe when a fresh scan_id already satisfies ui_runtime."""
@@ -263,5 +330,11 @@ class CoordinationIntelligenceService:
                 "auth_status": psm.episode.auth_status,
                 "blocking_count": len(psm.evidence.blocking),
                 "last_capability": psm.episode.retry_counters.get("last_capability"),
+                "situation_policy_id": psm.episode.retry_counters.get("situation_policy_id"),
+                "investment_band": psm.episode.retry_counters.get("investment_band"),
             },
+            routing_rationale=psm.briefing.routing_rationale,
+            benefit_claim=psm.briefing.benefit_claim,
+            skip_condition=psm.briefing.skip_condition,
+            investment=psm.briefing.investment,
         )

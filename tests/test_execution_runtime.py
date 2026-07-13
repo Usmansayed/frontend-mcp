@@ -29,8 +29,12 @@ def runtime() -> ExecutionRuntime:
 @pytest.mark.unit
 def test_dispatch_registry_covers_all_mcp_tools() -> None:
     class _StubToolType:
-        def __init__(self, name: str, description: str, inputSchema: dict) -> None:
+        def __init__(self, name: str, description: str, inputSchema: dict, **kwargs: object) -> None:
             self.name = name
+            self.description = description
+            self.inputSchema = inputSchema
+            for key, value in kwargs.items():
+                setattr(self, key, value)
 
     class _StubTypes:
         Tool = _StubToolType

@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://frontend-perception.dev/schemas/project_situation_model.v1.json",
+  "title": "Project Situation Model",
+  "description": "Runtime representation of current project condition. Host LLM reasons; coordinator reads/writes PSM deterministically.",
+  "type": "object",
+  "required": ["schema_version", "episode_id", "project_id", "updated_at", "situation", "evidence", "constraints", "episode", "artifacts", "briefing"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "episode_id": { "type": "string", "pattern": "^ep_" },
+    "project_id": { "type": "string", "minLength": 1 },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "situation": {
+      "type": "object",
+      "required": [
+        "situation_class",
+        "lifecycle_stage",
+        "project_maturity",
+        "cluster_id",
+        "cluster_signature",
+        "capability_posture"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "situation_class": { "type": "string" },
+        "lifecycle_stage": {
+          "type": "string",
+          "pattern": "^S(0[1-9]|1[0-2]|xx)_(intent|discovery|design|architecture|implementation|integration|verification|quality|consistency|release|production|evolution|any)$"
+        },
+        "project_maturity": { "type": "string", "pattern": "^M[0-6]$" },
+        "cluster_id": { "type": "string", "pattern": "^cluster\\." },
+        "cluster_signature": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "leaf_hint": {
+          "type": ["string", "null"],
+          "description": "Telemetry/debug only. MUST NOT influence planning or routing."
+        },
+        "capability_posture": {
+          "type": "object",
+          "description": "Eligible/blocked/deferred T1 capabilities. Included in cluster_signature hash.",
+          "required": ["eligible", "blocked", "deferred"],
+          "additionalProperties": false,
+          "properties": {
+            "eligible": { "type": "array", "items": { "type": "string" } },
+            "blocked": { "type": "array", "items": { "type": "string" } },
+            "deferred": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["domains", "blocking", "degraded", "unknown_gaps"],
+      "additionalProperties": false,
+      "properties": {
+        "domains": {
+          "type": "object",
+          "required": ["ui_runtime", "codebase", "design_source", "design_system", "seo", "quality", "assets"],
+          "additionalProperties": false,
+          "properties": {
+            "ui_runtime": { "$ref": "#/$defs/EvidenceDomainState" },
+            "codebase": { "$ref": "#/$defs/EvidenceDomainState" },
+            "design_source": { "$ref": "#/$defs/EvidenceDomainState" },
+            "design_system": { "$ref": "#/$defs/EvidenceDomainState" },
+            "seo": { "$ref": "#/$defs/EvidenceDomainState" },
+            "quality": { "$ref": "#/$defs/EvidenceDomainState" },
+            "assets": { "$ref": "#/$defs/EvidenceDomainState" }
+          }
+        },
+        "blocking": { "type": "array", "items": { "type": "string" } },
+        "degraded": { "type": "array", "items": { "type": "string" } },
+        "unknown_gaps": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "required": ["mcp_ready_blocks", "modules_forbidden", "invariants_active", "human_gates"],
+      "additionalProperties": false,
+      "properties": {
+        "mcp_ready_blocks": { "type": "array", "items": { "type": "string" } },
+        "modules_forbidden": { "type": "array", "items": { "type": "string" } },
+        "invariants_active": { "type": "array", "items": { "type": "string" } },
+        "human_gates": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "episode": {
+      "type": "object",
+      "required": ["active_playbook_id", "active_step_id", "intent_stack", "retry_counters", "confidence"],
+      "additionalProperties": false,
+      "properties": {
+        "active_playbook_id": { "type": ["string", "null"] },
+        "active_step_id": { "type": ["string", "null"] },
+        "intent_stack": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["intent", "pushed_at"],
+            "properties": {
+              "intent": { "type": "string" },
+              "pushed_at": { "type": "string", "format": "date-time" }
+            }
+          }
+        },
+        "retry_counters": {
+          "type": "object",
+          "required": ["verify_loop", "capability_attempts"],
+          "properties": {
+            "verify_loop": { "type": "integer", "minimum": 0 },
+            "capability_attempts": {
+              "type": "object",
+              "additionalProperties": { "type": "integer", "minimum": 0 }
+            }
+          }
+        },
+        "confidence": { "type": "string", "enum": ["high", "medium", "low"] }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "required": ["session_id", "scan_id", "snapshot_id", "audit_id", "repo_root", "website_url", "persistent"],
+      "additionalProperties": false,
+      "properties": {
+        "session_id": { "type": ["string", "null"] },
+        "scan_id": { "type": ["string", "null"] },
+        "snapshot_id": { "type": ["string", "null"] },
+        "audit_id": { "type": ["string", "null"] },
+        "repo_root": { "type": ["string", "null"] },
+        "website_url": { "type": ["string", "null"] },
+        "persistent": {
+          "type": "object",
+          "required": ["seo_graph_path", "pdg_path", "figma_connected"],
+          "properties": {
+            "seo_graph_path": { "type": ["string", "null"] },
+            "pdg_path": { "type": ["string", "null"] },
+            "figma_connected": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "briefing": {
+      "type": "object",
+      "required": [
+        "suggested_next_capability",
+        "suggested_semantic_action",
+        "compiled_step_preview",
+        "stop_reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "suggested_next_capability": { "type": ["string", "null"] },
+        "suggested_semantic_action": { "type": ["string", "null"] },
+        "compiled_step_preview": { "type": ["object", "null"] },
+        "stop_reason": { "type": ["string", "null"] }
+      }
+    }
+  },
+  "$defs": {
+    "EvidenceDomainState": {
+      "type": "object",
+      "required": ["posture", "updated_at", "source_capability", "artifact_refs", "staleness_ttl_seconds"],
+      "additionalProperties": false,
+      "properties": {
+        "posture": {
+          "type": "string",
+          "enum": ["unknown", "partial", "known", "verified", "regressed"]
+        },
+        "updated_at": { "type": ["string", "null"], "format": "date-time" },
+        "source_capability": { "type": ["string", "null"] },
+        "artifact_refs": { "type": "object", "additionalProperties": { "type": "string" } },
+        "staleness_ttl_seconds": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    }
+  }
+}

@@ -1,0 +1,227 @@
+schema_version: '1.0'
+description: 'Playbook templates reference T1 capabilities and semantic actions only.
+  Research state IDs MUST NOT appear in steps or routing fields.
+
+  '
+playbooks:
+- playbook_id: observe_reason_act_verify.loop
+  version: '1.0'
+  description: Universal OBSERVE → REASON → ACT → VERIFY loop for browser-grounded
+    work.
+  applies_to_clusters:
+  - cluster.feature.data_ui
+  - cluster.feature.navigation_change
+  - cluster.feature.auth_flow
+  - cluster.feature.api_integration
+  - cluster.feature.flow_pipeline
+  - cluster.debug.signal_class
+  - cluster.debug.iteration_target
+  - cluster.quality.audit_cycle
+  - cluster.migration.framework_or_redesign
+  - cluster.discovery.bootstrap
+  - cluster.architecture.plan
+  - cluster.intent.conversation
+  steps:
+  - step_id: observe
+    semantic_action: observe_current_page
+    capability: browser_observe
+  - step_id: verify
+    semantic_action: verify_success_criteria
+    capability: browser_verify
+    note: REASON and ACT are host-LLM responsibilities between observe and verify.
+  retry_budget: 5
+  on_exhaust: TR_VERIFY_EXHAUSTED
+  host_llm_phases:
+  - reason
+  - act
+- playbook_id: invalid_before_valid.form
+  version: '1.0'
+  description: Form validation pattern — invalid path before valid path (AGENT_GUIDE
+    §4).
+  applies_to_clusters:
+  - cluster.feature.form_pipeline
+  steps:
+  - step_id: probe
+    semantic_action: probe_form_rules
+    capability: form_probe
+  - step_id: invalid_path
+    semantic_action: run_invalid_submit_check
+    capability: browser_verify
+    success_criteria_ref: form_invalid_criteria
+  - step_id: valid_path
+    semantic_action: run_valid_submit_check
+    capability: browser_verify
+    success_criteria_ref: form_valid_criteria
+  retry_budget: 5
+  on_exhaust: TR_VERIFY_EXHAUSTED
+  sequence_constraints:
+  - invalid_path_before: valid_path
+- playbook_id: audit_fix_verify.seo
+  version: '1.0'
+  description: SEO campaign audit → fix → verify loop with graph diff preference.
+  applies_to_clusters:
+  - cluster.seo.audit_cycle
+  steps:
+  - step_id: readiness
+    semantic_action: confirm_seo_readiness
+    capability: seo_readiness
+  - step_id: collect
+    semantic_action: collect_seo_evidence
+    capability: seo_evidence_collect
+  - step_id: triage
+    semantic_action: triage_seo_recommendations
+    capability: null
+    host_llm_only: true
+  - step_id: verify_fix
+    semantic_action: verify_seo_recommendation
+    capability: seo_recommendation_verify
+  - step_id: diff_check
+    semantic_action: query_seo_audit_diff
+    capability: seo_graph_query
+  retry_budget: 5
+  on_exhaust: TR_VERIFY_EXHAUSTED
+- playbook_id: snapshot_review_consistency.design
+  version: '1.0'
+  description: Design snapshot → review → consistency audit pipeline.
+  applies_to_clusters:
+  - cluster.design.review_and_snapshot
+  - cluster.consistency.audit_cycle
+  steps:
+  - step_id: observe
+    semantic_action: observe_target_page
+    capability: browser_observe
+  - step_id: snapshot
+    semantic_action: build_design_snapshot
+    capability: design_snapshot
+  - step_id: review
+    semantic_action: run_design_review
+    capability: design_review
+    optional: true
+  - step_id: pdg_refresh
+    semantic_action: refresh_design_graph_if_needed
+    capability: design_graph_manage
+    condition: pdg_empty
+  - step_id: audit
+    semantic_action: run_consistency_audit
+    capability: design_consistency_audit
+  - step_id: verify
+    semantic_action: verify_consistency_fix
+    capability: browser_verify
+  retry_budget: 5
+  on_exhaust: TR_VERIFY_EXHAUSTED
+- playbook_id: search_select_integrate.component
+  version: '1.0'
+  description: Component acquisition — plan, search, select, integrate (dry-run default).
+  applies_to_clusters:
+  - cluster.component.acquisition_pipeline
+  steps:
+  - step_id: plan
+    semantic_action: plan_component_search
+    capability: component_search_plan
+    optional: true
+  - step_id: search
+    semantic_action: search_components
+    capability: component_search
+  - step_id: select
+    semantic_action: select_component_foundation
+    capability: component_select
+  - step_id: integrate
+    semantic_action: integrate_component
+    capability: component_integrate
+  - step_id: verify
+    semantic_action: verify_integration
+    capability: browser_verify
+  retry_budget: 5
+  on_exhaust: TR_VERIFY_EXHAUSTED
+- playbook_id: discover_collect_cleanup.inspiration_resource
+  version: '1.0'
+  description: Ephemeral blob session discipline for inspiration and resources.
+  applies_to_clusters:
+  - cluster.design.reference_gathering
+  - cluster.design.figma_pipeline
+  - cluster.feature.resource_gap
+  steps:
+  - step_id: discover
+    semantic_action: discover_or_search_assets
+    capability: inspiration_workflow
+  - step_id: collect
+    semantic_action: collect_selected_assets
+    capability: resource_workflow
+    optional: true
+  - step_id: cleanup
+    semantic_action: end_ephemeral_sessions
+    capability: inspiration_workflow
+    required_on_exit: true
+  retry_budget: 3
+  on_exhaust: TR_VERIFY_EXHAUSTED
+- playbook_id: baseline_and_regression.release
+  version: '1.0'
+  description: Release baseline capture, staging verify, and diff.
+  applies_to_clusters:
+  - cluster.release.baseline_and_staging
+  - cluster.production.live_and_incidents
+  steps:
+  - step_id: baseline_observe
+    semantic_action: capture_regression_baseline
+    capability: browser_observe
+  - step_id: staging_verify
+    semantic_action: verify_staging_pages
+    capability: browser_verify
+  - step_id: diff
+    semantic_action: diff_against_baseline
+    capability: browser_diff
+  retry_budget: 3
+  on_exhaust: TR_VERIFY_EXHAUSTED
+  human_gates:
+  - release_sign_off
+- playbook_id: global_recovery.failure
+  version: '1.0'
+  description: Canonical recovery strategies for global failure cluster.
+  applies_to_clusters:
+  - cluster.global.recovery
+  steps:
+  - step_id: classify
+    semantic_action: classify_global_failure
+    capability: null
+    host_llm_only: true
+  - step_id: recover
+    semantic_action: execute_recovery_strategy
+    capability: null
+    recovery_map_ref: global_recovery_strategies
+  retry_budget: 1
+  on_exhaust: TR_INVARIANT_VIOLATION
+global_recovery_strategies:
+  dev_server_down:
+    capability: environment_probe
+    human_maybe: true
+  auth_gate_requires_human:
+    stop: true
+    human_required: true
+  figma_connect_failed:
+    capability: figma_integration
+    human_required: true
+  upstream_degraded:
+    action: continue_with_degraded_notes
+  verify_loop_exhausted:
+    stop: true
+    human_required: true
+  tooling_broken:
+    stop: true
+    human_required: true
+  pdg_refresh_failed:
+    capability: design_graph_manage
+    retry_once: true
+  session_lost:
+    capability: browser_session_manage
+  repo_unavailable:
+    stop: true
+    human_maybe: true
+  env_misconfigured:
+    stop: true
+    human_required: true
+  user_abandoned:
+    capabilities:
+    - browser_session_manage
+    - inspiration_workflow
+  verify_success_terminal:
+    action: episode_complete

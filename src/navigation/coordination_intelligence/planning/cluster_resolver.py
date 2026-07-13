@@ -136,20 +136,44 @@ class ClusterResolver:
 
     @staticmethod
     def _infer_lifecycle_stage(psm: ProjectSituationModel) -> str:
+        # Intent keyword hint (host-provided) — never research leaf IDs
+        for frame in reversed(psm.episode.intent_stack):
+            from navigation.coordination_intelligence.planning.situation_policy import intent_suggests_stage
+
+            hinted = intent_suggests_stage(frame.intent)
+            if hinted:
+                return hinted
+
         if psm.constraints.human_gates:
             return "Sxx_any"
-        if psm.episode.verification_status == "passed":
+        if psm.episode.verification_status == "passed" and psm.episode.completed_step_ids:
+            # Prefer late verification band when verify already succeeded
+            if psm.situation.lifecycle_stage in (
+                "S08_quality",
+                "S09_consistency",
+                "S10_release",
+                "S11_production",
+            ):
+                return psm.situation.lifecycle_stage
             return "S07_verification"
-        if psm.episode.completed_step_ids:
-            return "S07_verification"
+        if psm.episode.completed_step_ids and psm.episode.verification_status != "passed":
+            return "S05_implementation"
+
         domains = psm.evidence.domains
         known_count = sum(1 for d in domains.values() if d.posture not in ("unknown",))
-        if known_count == 0:
+        design_src = domains["design_source"].posture not in ("unknown",)
+        design_sys = domains["design_system"].posture not in ("unknown",)
+        assets = domains["assets"].posture not in ("unknown",)
+        figma = bool((psm.artifacts.persistent or {}).get("figma_connected"))
+
+        if known_count == 0 and not figma:
             return "S02_discovery"
+        if (design_src or assets or figma) and domains["ui_runtime"].posture == "unknown":
+            return "S03_design"
         if domains["ui_runtime"].posture in ("known", "verified", "partial", "regressed"):
             return "S05_implementation"
         if domains["seo"].posture not in ("unknown",):
             return "S08_quality"
-        if domains["design_system"].posture not in ("unknown",):
+        if design_sys:
             return "S09_consistency"
         return psm.situation.lifecycle_stage or "S05_implementation"

@@ -36,6 +36,7 @@ class PSMRuntime:
         playbook_id: str | None = None,
         situation_class: str = "new_feature",
         lifecycle_stage: str = "S05_implementation",
+        project_maturity: str = "M3",
         repo_root: str | None = None,
         website_url: str | None = None,
         session_id: str | None = None,
@@ -45,6 +46,7 @@ class PSMRuntime:
         situation = SituationState(
             situation_class=situation_class,
             lifecycle_stage=lifecycle_stage,
+            project_maturity=project_maturity,
             cluster_id=cluster_id or "cluster.feature.form_pipeline",
             leaf_hint=leaf_hint,
         )

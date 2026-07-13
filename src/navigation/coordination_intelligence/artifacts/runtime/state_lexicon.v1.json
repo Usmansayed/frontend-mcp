@@ -1,0 +1,1509 @@
+{
+  "schema_version": "1.0",
+  "telemetry_only": true,
+  "description": "Research state lexicon for debugging, analytics, and leaf_hint telemetry. MUST NOT influence planning or routing.",
+  "generated_from": "research/state_space/states/*.yaml",
+  "state_count": 150,
+  "states": {
+    "admin.S05.new_feature.data_table.stub": {
+      "leaf_hint": "admin.S05.new_feature.data_table.stub",
+      "cluster_id": "cluster.feature.data_ui",
+      "lifecycle_stage": "S05_implementation",
+      "situation_class": "new_feature",
+      "project_archetype": "admin_panel",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "admin.S05.new_feature.modal_dialog.stub": {
+      "leaf_hint": "admin.S05.new_feature.modal_dialog.stub",
+      "cluster_id": "cluster.feature.auth_flow",
+      "lifecycle_stage": "S05_implementation",
+      "situation_class": "new_feature",
+      "project_archetype": "admin_panel",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "admin.S06.new_feature.data_table.integrated": {
+      "leaf_hint": "admin.S06.new_feature.data_table.integrated",
+      "cluster_id": "cluster.feature.data_ui",
+      "lifecycle_stage": "S06_integration",
+      "situation_class": "new_feature",
+      "project_archetype": "admin_panel",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "admin.S07.functional_bug.form_regression": {
+      "leaf_hint": "admin.S07.functional_bug.form_regression",
+      "cluster_id": "cluster.feature.form_pipeline",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "regression",
+      "project_archetype": "admin_panel",
+      "mcp_ready": true,
+      "forest_id": "F05",
+      "telemetry_only": true
+    },
+    "admin.S07.new_feature.data_table.verified": {
+      "leaf_hint": "admin.S07.new_feature.data_table.verified",
+      "cluster_id": "cluster.feature.data_ui",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "new_feature",
+      "project_archetype": "admin_panel",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "blog.S08.seo_campaign.content_gap": {
+      "leaf_hint": "blog.S08.seo_campaign.content_gap",
+      "cluster_id": "cluster.seo.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "ai_visibility_campaign",
+      "project_archetype": "blog",
+      "mcp_ready": true,
+      "forest_id": "F07",
+      "telemetry_only": true
+    },
+    "blog.S08.seo_campaign.content_gap_verified": {
+      "leaf_hint": "blog.S08.seo_campaign.content_gap_verified",
+      "cluster_id": "cluster.seo.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "ai_visibility_campaign",
+      "project_archetype": "blog",
+      "mcp_ready": true,
+      "forest_id": "F07",
+      "telemetry_only": true
+    },
+    "complib.S03.component_replacement.inspiration_fallback": {
+      "leaf_hint": "complib.S03.component_replacement.inspiration_fallback",
+      "cluster_id": "cluster.component.acquisition_pipeline",
+      "lifecycle_stage": "S03_design",
+      "situation_class": "inspiration_needed",
+      "project_archetype": "component_library",
+      "mcp_ready": true,
+      "forest_id": "F03",
+      "telemetry_only": true
+    },
+    "complib.S05.component_replacement.candidate_selected": {
+      "leaf_hint": "complib.S05.component_replacement.candidate_selected",
+      "cluster_id": "cluster.component.acquisition_pipeline",
+      "lifecycle_stage": "S05_implementation",
+      "situation_class": "component_replacement",
+      "project_archetype": "component_library",
+      "mcp_ready": true,
+      "forest_id": "F03",
+      "telemetry_only": true
+    },
+    "complib.S05.component_replacement.candidates_ranked": {
+      "leaf_hint": "complib.S05.component_replacement.candidates_ranked",
+      "cluster_id": "cluster.component.acquisition_pipeline",
+      "lifecycle_stage": "S05_implementation",
+      "situation_class": "component_replacement",
+      "project_archetype": "component_library",
+      "mcp_ready": true,
+      "forest_id": "F03",
+      "telemetry_only": true
+    },
+    "complib.S05.component_replacement.integration_dry_run_report": {
+      "leaf_hint": "complib.S05.component_replacement.integration_dry_run_report",
+      "cluster_id": "cluster.component.acquisition_pipeline",
+      "lifecycle_stage": "S05_implementation",
+      "situation_class": "component_replacement",
+      "project_archetype": "component_library",
+      "mcp_ready": true,
+      "forest_id": "F03",
+      "telemetry_only": true
+    },
+    "complib.S05.component_replacement.integration_live_scaffold": {
+      "leaf_hint": "complib.S05.component_replacement.integration_live_scaffold",
+      "cluster_id": "cluster.component.acquisition_pipeline",
+      "lifecycle_stage": "S05_implementation",
+      "situation_class": "component_replacement",
+      "project_archetype": "component_library",
+      "mcp_ready": false,
+      "forest_id": "F03",
+      "telemetry_only": true
+    },
+    "complib.S05.component_replacement.license_check_pending": {
+      "leaf_hint": "complib.S05.component_replacement.license_check_pending",
+      "cluster_id": "cluster.component.acquisition_pipeline",
+      "lifecycle_stage": "S05_implementation",
+      "situation_class": "component_replacement",
+      "project_archetype": "component_library",
+      "mcp_ready": true,
+      "forest_id": "F03",
+      "telemetry_only": true
+    },
+    "complib.S05.component_replacement.plan_ready": {
+      "leaf_hint": "complib.S05.component_replacement.plan_ready",
+      "cluster_id": "cluster.component.acquisition_pipeline",
+      "lifecycle_stage": "S05_implementation",
+      "situation_class": "component_replacement",
+      "project_archetype": "component_library",
+      "mcp_ready": true,
+      "forest_id": "F03",
+      "telemetry_only": true
+    },
+    "complib.S05.component_replacement.provider_offline": {
+      "leaf_hint": "complib.S05.component_replacement.provider_offline",
+      "cluster_id": "cluster.component.acquisition_pipeline",
+      "lifecycle_stage": "S05_implementation",
+      "situation_class": "degraded_upstream",
+      "project_archetype": "component_library",
+      "mcp_ready": true,
+      "forest_id": "F03",
+      "telemetry_only": true
+    },
+    "complib.S05.component_replacement.query_vague": {
+      "leaf_hint": "complib.S05.component_replacement.query_vague",
+      "cluster_id": "cluster.component.acquisition_pipeline",
+      "lifecycle_stage": "S05_implementation",
+      "situation_class": "component_replacement",
+      "project_archetype": "component_library",
+      "mcp_ready": true,
+      "forest_id": "F03",
+      "telemetry_only": true
+    },
+    "complib.S05.component_replacement.repair_needed": {
+      "leaf_hint": "complib.S05.component_replacement.repair_needed",
+      "cluster_id": "cluster.component.acquisition_pipeline",
+      "lifecycle_stage": "S05_implementation",
+      "situation_class": "component_replacement",
+      "project_archetype": "component_library",
+      "mcp_ready": true,
+      "forest_id": "F03",
+      "telemetry_only": true
+    },
+    "complib.S05.component_replacement.zero_candidates": {
+      "leaf_hint": "complib.S05.component_replacement.zero_candidates",
+      "cluster_id": "cluster.component.acquisition_pipeline",
+      "lifecycle_stage": "S05_implementation",
+      "situation_class": "component_replacement",
+      "project_archetype": "component_library",
+      "mcp_ready": true,
+      "forest_id": "F03",
+      "telemetry_only": true
+    },
+    "complib.S07.component_replacement.integrated_and_verified": {
+      "leaf_hint": "complib.S07.component_replacement.integrated_and_verified",
+      "cluster_id": "cluster.component.acquisition_pipeline",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "component_replacement",
+      "project_archetype": "component_library",
+      "mcp_ready": true,
+      "forest_id": "F03",
+      "telemetry_only": true
+    },
+    "complib.S09.consistency_cleanup.api_stability_check": {
+      "leaf_hint": "complib.S09.consistency_cleanup.api_stability_check",
+      "cluster_id": "cluster.consistency.audit_cycle",
+      "lifecycle_stage": "S09_consistency",
+      "situation_class": "release_prep",
+      "project_archetype": "component_library",
+      "mcp_ready": true,
+      "forest_id": "F08",
+      "telemetry_only": true
+    },
+    "complib.S12.migration.consumer_notification": {
+      "leaf_hint": "complib.S12.migration.consumer_notification",
+      "cluster_id": "cluster.migration.framework_or_redesign",
+      "lifecycle_stage": "S12_evolution",
+      "situation_class": "framework_migration",
+      "project_archetype": "component_library",
+      "mcp_ready": true,
+      "forest_id": "F11",
+      "telemetry_only": true
+    },
+    "dssite.S05.consistency_cleanup.applying_fix": {
+      "leaf_hint": "dssite.S05.consistency_cleanup.applying_fix",
+      "cluster_id": "cluster.debug.iteration_target",
+      "lifecycle_stage": "S05_implementation",
+      "situation_class": "consistency_cleanup",
+      "project_archetype": "design_system_site",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "dssite.S09.consistency_cleanup.audit_findings_open": {
+      "leaf_hint": "dssite.S09.consistency_cleanup.audit_findings_open",
+      "cluster_id": "cluster.consistency.audit_cycle",
+      "lifecycle_stage": "S09_consistency",
+      "situation_class": "consistency_cleanup",
+      "project_archetype": "design_system_site",
+      "mcp_ready": true,
+      "forest_id": "F02",
+      "telemetry_only": true
+    },
+    "dssite.S09.consistency_cleanup.exception_documented": {
+      "leaf_hint": "dssite.S09.consistency_cleanup.exception_documented",
+      "cluster_id": "cluster.consistency.audit_cycle",
+      "lifecycle_stage": "S09_consistency",
+      "situation_class": "consistency_cleanup",
+      "project_archetype": "design_system_site",
+      "mcp_ready": true,
+      "forest_id": "F08",
+      "telemetry_only": true
+    },
+    "dssite.S09.consistency_cleanup.knowledge_query_empty": {
+      "leaf_hint": "dssite.S09.consistency_cleanup.knowledge_query_empty",
+      "cluster_id": "cluster.consistency.audit_cycle",
+      "lifecycle_stage": "S09_consistency",
+      "situation_class": "consistency_cleanup",
+      "project_archetype": "design_system_site",
+      "mcp_ready": true,
+      "forest_id": "F08",
+      "telemetry_only": true
+    },
+    "dssite.S09.consistency_cleanup.knowledge_query_result": {
+      "leaf_hint": "dssite.S09.consistency_cleanup.knowledge_query_result",
+      "cluster_id": "cluster.consistency.audit_cycle",
+      "lifecycle_stage": "S09_consistency",
+      "situation_class": "consistency_cleanup",
+      "project_archetype": "design_system_site",
+      "mcp_ready": true,
+      "forest_id": "F08",
+      "telemetry_only": true
+    },
+    "dssite.S09.consistency_cleanup.multi_page_scan": {
+      "leaf_hint": "dssite.S09.consistency_cleanup.multi_page_scan",
+      "cluster_id": "cluster.consistency.audit_cycle",
+      "lifecycle_stage": "S09_consistency",
+      "situation_class": "consistency_cleanup",
+      "project_archetype": "design_system_site",
+      "mcp_ready": true,
+      "forest_id": "F08",
+      "telemetry_only": true
+    },
+    "dssite.S09.consistency_cleanup.no_deviation_detected": {
+      "leaf_hint": "dssite.S09.consistency_cleanup.no_deviation_detected",
+      "cluster_id": "cluster.consistency.audit_cycle",
+      "lifecycle_stage": "S09_consistency",
+      "situation_class": "consistency_cleanup",
+      "project_archetype": "design_system_site",
+      "mcp_ready": true,
+      "forest_id": "F02",
+      "telemetry_only": true
+    },
+    "dssite.S09.consistency_cleanup.pdg_empty": {
+      "leaf_hint": "dssite.S09.consistency_cleanup.pdg_empty",
+      "cluster_id": "cluster.consistency.audit_cycle",
+      "lifecycle_stage": "S09_consistency",
+      "situation_class": "consistency_cleanup",
+      "project_archetype": "design_system_site",
+      "mcp_ready": true,
+      "forest_id": "F02",
+      "telemetry_only": true
+    },
+    "dssite.S09.consistency_cleanup.pdg_seeded_from_figma": {
+      "leaf_hint": "dssite.S09.consistency_cleanup.pdg_seeded_from_figma",
+      "cluster_id": "cluster.design.figma_pipeline",
+      "lifecycle_stage": "S09_consistency",
+      "situation_class": "consistency_cleanup",
+      "project_archetype": "design_system_site",
+      "mcp_ready": true,
+      "forest_id": "F02",
+      "telemetry_only": true
+    },
+    "dssite.S09.consistency_cleanup.pdg_seeded_from_snapshot": {
+      "leaf_hint": "dssite.S09.consistency_cleanup.pdg_seeded_from_snapshot",
+      "cluster_id": "cluster.consistency.audit_cycle",
+      "lifecycle_stage": "S09_consistency",
+      "situation_class": "consistency_cleanup",
+      "project_archetype": "design_system_site",
+      "mcp_ready": true,
+      "forest_id": "F02",
+      "telemetry_only": true
+    },
+    "dssite.S09.consistency_cleanup.propose_fix_open": {
+      "leaf_hint": "dssite.S09.consistency_cleanup.propose_fix_open",
+      "cluster_id": "cluster.consistency.audit_cycle",
+      "lifecycle_stage": "S09_consistency",
+      "situation_class": "consistency_cleanup",
+      "project_archetype": "design_system_site",
+      "mcp_ready": true,
+      "forest_id": "F08",
+      "telemetry_only": true
+    },
+    "dssite.S09.consistency_cleanup.standards_updated": {
+      "leaf_hint": "dssite.S09.consistency_cleanup.standards_updated",
+      "cluster_id": "cluster.consistency.audit_cycle",
+      "lifecycle_stage": "S09_consistency",
+      "situation_class": "redesign",
+      "project_archetype": "design_system_site",
+      "mcp_ready": true,
+      "forest_id": "F08",
+      "telemetry_only": true
+    },
+    "dssite.S09.consistency_cleanup.token_drift_detected": {
+      "leaf_hint": "dssite.S09.consistency_cleanup.token_drift_detected",
+      "cluster_id": "cluster.consistency.audit_cycle",
+      "lifecycle_stage": "S09_consistency",
+      "situation_class": "consistency_cleanup",
+      "project_archetype": "design_system_site",
+      "mcp_ready": true,
+      "forest_id": "F08",
+      "telemetry_only": true
+    },
+    "ecom.S08.seo_campaign.ecommerce_indexability_check": {
+      "leaf_hint": "ecom.S08.seo_campaign.ecommerce_indexability_check",
+      "cluster_id": "cluster.seo.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "seo_campaign",
+      "project_archetype": "ecommerce",
+      "mcp_ready": true,
+      "forest_id": "F07",
+      "telemetry_only": true
+    },
+    "ecom.S08.seo_campaign.pro_mode.needs_auth": {
+      "leaf_hint": "ecom.S08.seo_campaign.pro_mode.needs_auth",
+      "cluster_id": "cluster.seo.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "auth_blocked",
+      "project_archetype": "ecommerce",
+      "mcp_ready": true,
+      "forest_id": "F07",
+      "telemetry_only": true
+    },
+    "ecom.S11.production.checkout_incident": {
+      "leaf_hint": "ecom.S11.production.checkout_incident",
+      "cluster_id": "cluster.production.live_and_incidents",
+      "lifecycle_stage": "S11_production",
+      "situation_class": "hotfix",
+      "project_archetype": "ecommerce",
+      "mcp_ready": true,
+      "forest_id": "F10",
+      "telemetry_only": true
+    },
+    "global.Sxx.auth_gate.requires_human": {
+      "leaf_hint": "global.Sxx.auth_gate.requires_human",
+      "cluster_id": "cluster.global.recovery",
+      "lifecycle_stage": "Sxx_any",
+      "situation_class": "auth_blocked",
+      "project_archetype": "saas_dashboard",
+      "mcp_ready": true,
+      "forest_id": "F12",
+      "telemetry_only": true
+    },
+    "global.Sxx.dev_server_down": {
+      "leaf_hint": "global.Sxx.dev_server_down",
+      "cluster_id": "cluster.global.recovery",
+      "lifecycle_stage": "Sxx_any",
+      "situation_class": "degraded_upstream",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F12",
+      "telemetry_only": true
+    },
+    "global.Sxx.env_misconfigured": {
+      "leaf_hint": "global.Sxx.env_misconfigured",
+      "cluster_id": "cluster.global.recovery",
+      "lifecycle_stage": "Sxx_any",
+      "situation_class": "degraded_upstream",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F12",
+      "telemetry_only": true
+    },
+    "global.Sxx.figma_connect_failed": {
+      "leaf_hint": "global.Sxx.figma_connect_failed",
+      "cluster_id": "cluster.global.recovery",
+      "lifecycle_stage": "Sxx_any",
+      "situation_class": "degraded_upstream",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F12",
+      "telemetry_only": true
+    },
+    "global.Sxx.pdg_refresh_failed": {
+      "leaf_hint": "global.Sxx.pdg_refresh_failed",
+      "cluster_id": "cluster.global.recovery",
+      "lifecycle_stage": "Sxx_any",
+      "situation_class": "degraded_upstream",
+      "project_archetype": "design_system_site",
+      "mcp_ready": true,
+      "forest_id": "F12",
+      "telemetry_only": true
+    },
+    "global.Sxx.repo_unavailable": {
+      "leaf_hint": "global.Sxx.repo_unavailable",
+      "cluster_id": "cluster.global.recovery",
+      "lifecycle_stage": "Sxx_any",
+      "situation_class": "degraded_upstream",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F12",
+      "telemetry_only": true
+    },
+    "global.Sxx.session_lost": {
+      "leaf_hint": "global.Sxx.session_lost",
+      "cluster_id": "cluster.global.recovery",
+      "lifecycle_stage": "Sxx_any",
+      "situation_class": "degraded_upstream",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F12",
+      "telemetry_only": true
+    },
+    "global.Sxx.tooling_broken": {
+      "leaf_hint": "global.Sxx.tooling_broken",
+      "cluster_id": "cluster.global.recovery",
+      "lifecycle_stage": "Sxx_any",
+      "situation_class": "degraded_upstream",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F12",
+      "telemetry_only": true
+    },
+    "global.Sxx.upstream_degraded": {
+      "leaf_hint": "global.Sxx.upstream_degraded",
+      "cluster_id": "cluster.global.recovery",
+      "lifecycle_stage": "Sxx_any",
+      "situation_class": "degraded_upstream",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F12",
+      "telemetry_only": true
+    },
+    "global.Sxx.user_abandoned": {
+      "leaf_hint": "global.Sxx.user_abandoned",
+      "cluster_id": "cluster.global.recovery",
+      "lifecycle_stage": "Sxx_any",
+      "situation_class": "degraded_upstream",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F12",
+      "telemetry_only": true
+    },
+    "global.Sxx.verify_loop_exhausted": {
+      "leaf_hint": "global.Sxx.verify_loop_exhausted",
+      "cluster_id": "cluster.global.recovery",
+      "lifecycle_stage": "Sxx_any",
+      "situation_class": "functional_bug",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F12",
+      "telemetry_only": true
+    },
+    "global.Sxx.verify_success_terminal": {
+      "leaf_hint": "global.Sxx.verify_success_terminal",
+      "cluster_id": "cluster.global.recovery",
+      "lifecycle_stage": "Sxx_any",
+      "situation_class": "release_prep",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F12",
+      "telemetry_only": true
+    },
+    "landing.S01.intent.described": {
+      "leaf_hint": "landing.S01.intent.described",
+      "cluster_id": "cluster.intent.conversation",
+      "lifecycle_stage": "S01_intent",
+      "situation_class": "new_feature",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F01",
+      "telemetry_only": true
+    },
+    "landing.S01.intent.unclear": {
+      "leaf_hint": "landing.S01.intent.unclear",
+      "cluster_id": "cluster.intent.conversation",
+      "lifecycle_stage": "S01_intent",
+      "situation_class": "new_feature",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F01",
+      "telemetry_only": true
+    },
+    "landing.S02.discovery.blank_page_after_start": {
+      "leaf_hint": "landing.S02.discovery.blank_page_after_start",
+      "cluster_id": "cluster.discovery.bootstrap",
+      "lifecycle_stage": "S02_discovery",
+      "situation_class": "functional_bug",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F01",
+      "telemetry_only": true
+    },
+    "landing.S02.discovery.dev_server_up": {
+      "leaf_hint": "landing.S02.discovery.dev_server_up",
+      "cluster_id": "cluster.discovery.bootstrap",
+      "lifecycle_stage": "S02_discovery",
+      "situation_class": "new_feature",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F01",
+      "telemetry_only": true
+    },
+    "landing.S02.discovery.first_route_rendering": {
+      "leaf_hint": "landing.S02.discovery.first_route_rendering",
+      "cluster_id": "cluster.discovery.bootstrap",
+      "lifecycle_stage": "S02_discovery",
+      "situation_class": "new_feature",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F01",
+      "telemetry_only": true
+    },
+    "landing.S02.discovery.no_repo": {
+      "leaf_hint": "landing.S02.discovery.no_repo",
+      "cluster_id": "cluster.discovery.bootstrap",
+      "lifecycle_stage": "S02_discovery",
+      "situation_class": "new_feature",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F01",
+      "telemetry_only": true
+    },
+    "landing.S02.discovery.stack_chosen": {
+      "leaf_hint": "landing.S02.discovery.stack_chosen",
+      "cluster_id": "cluster.discovery.bootstrap",
+      "lifecycle_stage": "S02_discovery",
+      "situation_class": "new_feature",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F01",
+      "telemetry_only": true
+    },
+    "landing.S03.design.direction_agreed_no_references": {
+      "leaf_hint": "landing.S03.design.direction_agreed_no_references",
+      "cluster_id": "cluster.design.reference_gathering",
+      "lifecycle_stage": "S03_design",
+      "situation_class": "new_feature",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F02",
+      "telemetry_only": true
+    },
+    "landing.S03.design.direction_agreed_with_references": {
+      "leaf_hint": "landing.S03.design.direction_agreed_with_references",
+      "cluster_id": "cluster.design.reference_gathering",
+      "lifecycle_stage": "S03_design",
+      "situation_class": "new_feature",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F02",
+      "telemetry_only": true
+    },
+    "landing.S03.design.figma_connected": {
+      "leaf_hint": "landing.S03.design.figma_connected",
+      "cluster_id": "cluster.design.figma_pipeline",
+      "lifecycle_stage": "S03_design",
+      "situation_class": "new_feature",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F02",
+      "telemetry_only": true
+    },
+    "landing.S03.design.figma_expected": {
+      "leaf_hint": "landing.S03.design.figma_expected",
+      "cluster_id": "cluster.design.figma_pipeline",
+      "lifecycle_stage": "S03_design",
+      "situation_class": "new_feature",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F02",
+      "telemetry_only": true
+    },
+    "landing.S03.design.inspiration_collected": {
+      "leaf_hint": "landing.S03.design.inspiration_collected",
+      "cluster_id": "cluster.design.reference_gathering",
+      "lifecycle_stage": "S03_design",
+      "situation_class": "inspiration_needed",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F02",
+      "telemetry_only": true
+    },
+    "landing.S03.design.no_design_source": {
+      "leaf_hint": "landing.S03.design.no_design_source",
+      "cluster_id": "cluster.design.reference_gathering",
+      "lifecycle_stage": "S03_design",
+      "situation_class": "inspiration_needed",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F02",
+      "telemetry_only": true
+    },
+    "landing.S03.design.reference_registry_captured_scaffold": {
+      "leaf_hint": "landing.S03.design.reference_registry_captured_scaffold",
+      "cluster_id": "cluster.design.reference_gathering",
+      "lifecycle_stage": "S03_design",
+      "situation_class": "inspiration_needed",
+      "project_archetype": "landing",
+      "mcp_ready": false,
+      "forest_id": "F02",
+      "telemetry_only": true
+    },
+    "landing.S04.architecture.route_plan_pending": {
+      "leaf_hint": "landing.S04.architecture.route_plan_pending",
+      "cluster_id": "cluster.architecture.plan",
+      "lifecycle_stage": "S04_architecture",
+      "situation_class": "new_feature",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F01",
+      "telemetry_only": true
+    },
+    "landing.S04.architecture.route_plan_ready": {
+      "leaf_hint": "landing.S04.architecture.route_plan_ready",
+      "cluster_id": "cluster.architecture.plan",
+      "lifecycle_stage": "S04_architecture",
+      "situation_class": "new_feature",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F01",
+      "telemetry_only": true
+    },
+    "landing.S05.new_feature.landing_hero.stub": {
+      "leaf_hint": "landing.S05.new_feature.landing_hero.stub",
+      "cluster_id": "cluster.feature.data_ui",
+      "lifecycle_stage": "S05_implementation",
+      "situation_class": "new_feature",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "landing.S06.resource_gap.icon_missing": {
+      "leaf_hint": "landing.S06.resource_gap.icon_missing",
+      "cluster_id": "cluster.feature.resource_gap",
+      "lifecycle_stage": "S06_integration",
+      "situation_class": "resource_gap",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "landing.S06.resource_gap.icon_provisioned": {
+      "leaf_hint": "landing.S06.resource_gap.icon_provisioned",
+      "cluster_id": "cluster.feature.resource_gap",
+      "lifecycle_stage": "S06_integration",
+      "situation_class": "resource_gap",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "landing.S07.new_feature.landing_hero.verified": {
+      "leaf_hint": "landing.S07.new_feature.landing_hero.verified",
+      "cluster_id": "cluster.feature.data_ui",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "new_feature",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "landing.S08.seo_campaign.ai_readiness_reviewed": {
+      "leaf_hint": "landing.S08.seo_campaign.ai_readiness_reviewed",
+      "cluster_id": "cluster.seo.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "ai_visibility_campaign",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F07",
+      "telemetry_only": true
+    },
+    "landing.S08.seo_campaign.ai_visibility_disabled": {
+      "leaf_hint": "landing.S08.seo_campaign.ai_visibility_disabled",
+      "cluster_id": "cluster.seo.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "seo_campaign",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F07",
+      "telemetry_only": true
+    },
+    "landing.S08.seo_campaign.audit_completed_dev": {
+      "leaf_hint": "landing.S08.seo_campaign.audit_completed_dev",
+      "cluster_id": "cluster.seo.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "seo_campaign",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F07",
+      "telemetry_only": true
+    },
+    "landing.S08.seo_campaign.audit_needed": {
+      "leaf_hint": "landing.S08.seo_campaign.audit_needed",
+      "cluster_id": "cluster.seo.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "seo_campaign",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F07",
+      "telemetry_only": true
+    },
+    "landing.S08.seo_campaign.fix_applying": {
+      "leaf_hint": "landing.S08.seo_campaign.fix_applying",
+      "cluster_id": "cluster.seo.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "seo_campaign",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F07",
+      "telemetry_only": true
+    },
+    "landing.S08.seo_campaign.re_audit_after_fix": {
+      "leaf_hint": "landing.S08.seo_campaign.re_audit_after_fix",
+      "cluster_id": "cluster.seo.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "seo_campaign",
+      "project_archetype": "landing",
+      "mcp_ready": true,
+      "forest_id": "F07",
+      "telemetry_only": true
+    },
+    "legacy.S12.legacy_maintenance.dependency_upgrade": {
+      "leaf_hint": "legacy.S12.legacy_maintenance.dependency_upgrade",
+      "cluster_id": "cluster.migration.framework_or_redesign",
+      "lifecycle_stage": "S12_evolution",
+      "situation_class": "dependency_upgrade",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F11",
+      "telemetry_only": true
+    },
+    "marketing.S02.discovery.legacy_repo_open": {
+      "leaf_hint": "marketing.S02.discovery.legacy_repo_open",
+      "cluster_id": "cluster.discovery.bootstrap",
+      "lifecycle_stage": "S02_discovery",
+      "situation_class": "new_feature",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F01",
+      "telemetry_only": true
+    },
+    "marketing.S03.design.design_review_open": {
+      "leaf_hint": "marketing.S03.design.design_review_open",
+      "cluster_id": "cluster.design.review_and_snapshot",
+      "lifecycle_stage": "S03_design",
+      "situation_class": "redesign",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F02",
+      "telemetry_only": true
+    },
+    "marketing.S03.design.pdg_empty_snapshot_ready": {
+      "leaf_hint": "marketing.S03.design.pdg_empty_snapshot_ready",
+      "cluster_id": "cluster.design.review_and_snapshot",
+      "lifecycle_stage": "S03_design",
+      "situation_class": "new_feature",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F02",
+      "telemetry_only": true
+    },
+    "marketing.S05.new_feature.navigation_change.v1": {
+      "leaf_hint": "marketing.S05.new_feature.navigation_change.v1",
+      "cluster_id": "cluster.feature.navigation_change",
+      "lifecycle_stage": "S05_implementation",
+      "situation_class": "new_feature",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "marketing.S05.redesign.applying_fix": {
+      "leaf_hint": "marketing.S05.redesign.applying_fix",
+      "cluster_id": "cluster.debug.iteration_target",
+      "lifecycle_stage": "S05_implementation",
+      "situation_class": "redesign",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "marketing.S07.new_feature.change_scope_ready": {
+      "leaf_hint": "marketing.S07.new_feature.change_scope_ready",
+      "cluster_id": "cluster.feature.navigation_change",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "new_feature",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "marketing.S07.new_feature.navigation_change.verified": {
+      "leaf_hint": "marketing.S07.new_feature.navigation_change.verified",
+      "cluster_id": "cluster.feature.navigation_change",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "new_feature",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "marketing.S07.ui_bug.accessibility_regression": {
+      "leaf_hint": "marketing.S07.ui_bug.accessibility_regression",
+      "cluster_id": "cluster.debug.signal_class",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "accessibility_remediation",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F05",
+      "telemetry_only": true
+    },
+    "marketing.S07.ui_bug.console_error_detected": {
+      "leaf_hint": "marketing.S07.ui_bug.console_error_detected",
+      "cluster_id": "cluster.debug.signal_class",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "functional_bug",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F05",
+      "telemetry_only": true
+    },
+    "marketing.S07.ui_bug.full_diagnosis_run": {
+      "leaf_hint": "marketing.S07.ui_bug.full_diagnosis_run",
+      "cluster_id": "cluster.debug.signal_class",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "ui_bug",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F05",
+      "telemetry_only": true
+    },
+    "marketing.S07.ui_bug.harden_via_regression": {
+      "leaf_hint": "marketing.S07.ui_bug.harden_via_regression",
+      "cluster_id": "cluster.debug.signal_class",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "regression_baseline",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F05",
+      "telemetry_only": true
+    },
+    "marketing.S07.ui_bug.hydration_mismatch": {
+      "leaf_hint": "marketing.S07.ui_bug.hydration_mismatch",
+      "cluster_id": "cluster.debug.signal_class",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "functional_bug",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F05",
+      "telemetry_only": true
+    },
+    "marketing.S07.ui_bug.needs_framework_upgrade": {
+      "leaf_hint": "marketing.S07.ui_bug.needs_framework_upgrade",
+      "cluster_id": "cluster.debug.signal_class",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "dependency_upgrade",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F05",
+      "telemetry_only": true
+    },
+    "marketing.S07.ui_bug.responsive_break": {
+      "leaf_hint": "marketing.S07.ui_bug.responsive_break",
+      "cluster_id": "cluster.debug.signal_class",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "ui_bug",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F05",
+      "telemetry_only": true
+    },
+    "marketing.S07.ui_bug.snapshot_investigation": {
+      "leaf_hint": "marketing.S07.ui_bug.snapshot_investigation",
+      "cluster_id": "cluster.debug.signal_class",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "regression",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F05",
+      "telemetry_only": true
+    },
+    "marketing.S07.ui_bug.user_report_no_repro": {
+      "leaf_hint": "marketing.S07.ui_bug.user_report_no_repro",
+      "cluster_id": "cluster.debug.signal_class",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "ui_bug",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F05",
+      "telemetry_only": true
+    },
+    "marketing.S07.ui_bug.visual_regression_detected": {
+      "leaf_hint": "marketing.S07.ui_bug.visual_regression_detected",
+      "cluster_id": "cluster.debug.signal_class",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "regression",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F05",
+      "telemetry_only": true
+    },
+    "marketing.S08.a11y_remediation.audit_needed": {
+      "leaf_hint": "marketing.S08.a11y_remediation.audit_needed",
+      "cluster_id": "cluster.quality.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "accessibility_remediation",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F06",
+      "telemetry_only": true
+    },
+    "marketing.S08.a11y_remediation.clean": {
+      "leaf_hint": "marketing.S08.a11y_remediation.clean",
+      "cluster_id": "cluster.quality.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "accessibility_remediation",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F06",
+      "telemetry_only": true
+    },
+    "marketing.S08.a11y_remediation.findings_open": {
+      "leaf_hint": "marketing.S08.a11y_remediation.findings_open",
+      "cluster_id": "cluster.quality.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "accessibility_remediation",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F06",
+      "telemetry_only": true
+    },
+    "marketing.S08.audit_mode.rolling": {
+      "leaf_hint": "marketing.S08.audit_mode.rolling",
+      "cluster_id": "cluster.quality.session_mode",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "performance_remediation",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F06",
+      "telemetry_only": true
+    },
+    "marketing.S08.best_practices.audit_needed": {
+      "leaf_hint": "marketing.S08.best_practices.audit_needed",
+      "cluster_id": "cluster.quality.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "performance_remediation",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F06",
+      "telemetry_only": true
+    },
+    "marketing.S08.best_practices.clean": {
+      "leaf_hint": "marketing.S08.best_practices.clean",
+      "cluster_id": "cluster.quality.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "performance_remediation",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F06",
+      "telemetry_only": true
+    },
+    "marketing.S08.best_practices.findings_open": {
+      "leaf_hint": "marketing.S08.best_practices.findings_open",
+      "cluster_id": "cluster.quality.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "performance_remediation",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F06",
+      "telemetry_only": true
+    },
+    "marketing.S08.debug_mode.active": {
+      "leaf_hint": "marketing.S08.debug_mode.active",
+      "cluster_id": "cluster.quality.session_mode",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "functional_bug",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F06",
+      "telemetry_only": true
+    },
+    "marketing.S08.lighthouse_seo_audit.findings": {
+      "leaf_hint": "marketing.S08.lighthouse_seo_audit.findings",
+      "cluster_id": "cluster.quality.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "seo_campaign",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F06",
+      "telemetry_only": true
+    },
+    "marketing.S08.perf_remediation.audit_needed": {
+      "leaf_hint": "marketing.S08.perf_remediation.audit_needed",
+      "cluster_id": "cluster.quality.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "performance_remediation",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F06",
+      "telemetry_only": true
+    },
+    "marketing.S08.perf_remediation.clean": {
+      "leaf_hint": "marketing.S08.perf_remediation.clean",
+      "cluster_id": "cluster.quality.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "performance_remediation",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F06",
+      "telemetry_only": true
+    },
+    "marketing.S08.perf_remediation.findings_open": {
+      "leaf_hint": "marketing.S08.perf_remediation.findings_open",
+      "cluster_id": "cluster.quality.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "performance_remediation",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F06",
+      "telemetry_only": true
+    },
+    "marketing.S08.seo_campaign.audit_completed_pro": {
+      "leaf_hint": "marketing.S08.seo_campaign.audit_completed_pro",
+      "cluster_id": "cluster.seo.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "seo_campaign",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F07",
+      "telemetry_only": true
+    },
+    "marketing.S08.seo_campaign.audit_diff_open": {
+      "leaf_hint": "marketing.S08.seo_campaign.audit_diff_open",
+      "cluster_id": "cluster.seo.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "regression",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F07",
+      "telemetry_only": true
+    },
+    "marketing.S08.seo_campaign.audit_needed": {
+      "leaf_hint": "marketing.S08.seo_campaign.audit_needed",
+      "cluster_id": "cluster.seo.audit_cycle",
+      "lifecycle_stage": "S08_quality",
+      "situation_class": "seo_campaign",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F07",
+      "telemetry_only": true
+    },
+    "marketing.S09.consistency_cleanup.design_sense_findings": {
+      "leaf_hint": "marketing.S09.consistency_cleanup.design_sense_findings",
+      "cluster_id": "cluster.design.review_and_snapshot",
+      "lifecycle_stage": "S09_consistency",
+      "situation_class": "consistency_cleanup",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F08",
+      "telemetry_only": true
+    },
+    "marketing.S09.consistency_cleanup.token_import_pending_scaffold": {
+      "leaf_hint": "marketing.S09.consistency_cleanup.token_import_pending_scaffold",
+      "cluster_id": "cluster.consistency.audit_cycle",
+      "lifecycle_stage": "S09_consistency",
+      "situation_class": "consistency_cleanup",
+      "project_archetype": "marketing",
+      "mcp_ready": false,
+      "forest_id": "F08",
+      "telemetry_only": true
+    },
+    "marketing.S10.release_prep.baseline_stale": {
+      "leaf_hint": "marketing.S10.release_prep.baseline_stale",
+      "cluster_id": "cluster.release.baseline_and_staging",
+      "lifecycle_stage": "S10_release",
+      "situation_class": "regression_baseline",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F09",
+      "telemetry_only": true
+    },
+    "marketing.S10.release_prep.baseline_stored": {
+      "leaf_hint": "marketing.S10.release_prep.baseline_stored",
+      "cluster_id": "cluster.release.baseline_and_staging",
+      "lifecycle_stage": "S10_release",
+      "situation_class": "release_prep",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F09",
+      "telemetry_only": true
+    },
+    "marketing.S10.release_prep.code_review_pending": {
+      "leaf_hint": "marketing.S10.release_prep.code_review_pending",
+      "cluster_id": "cluster.release.baseline_and_staging",
+      "lifecycle_stage": "S10_release",
+      "situation_class": "code_review",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F09",
+      "telemetry_only": true
+    },
+    "marketing.S10.release_prep.env_misconfig_pre_release": {
+      "leaf_hint": "marketing.S10.release_prep.env_misconfig_pre_release",
+      "cluster_id": "cluster.release.baseline_and_staging",
+      "lifecycle_stage": "S10_release",
+      "situation_class": "degraded_upstream",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F09",
+      "telemetry_only": true
+    },
+    "marketing.S10.release_prep.multi_page_smoke_test": {
+      "leaf_hint": "marketing.S10.release_prep.multi_page_smoke_test",
+      "cluster_id": "cluster.release.baseline_and_staging",
+      "lifecycle_stage": "S10_release",
+      "situation_class": "release_prep",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F09",
+      "telemetry_only": true
+    },
+    "marketing.S10.release_prep.regression_baseline_capture": {
+      "leaf_hint": "marketing.S10.release_prep.regression_baseline_capture",
+      "cluster_id": "cluster.release.baseline_and_staging",
+      "lifecycle_stage": "S10_release",
+      "situation_class": "regression_baseline",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F09",
+      "telemetry_only": true
+    },
+    "marketing.S10.release_prep.staging_regression": {
+      "leaf_hint": "marketing.S10.release_prep.staging_regression",
+      "cluster_id": "cluster.release.baseline_and_staging",
+      "lifecycle_stage": "S10_release",
+      "situation_class": "regression",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F09",
+      "telemetry_only": true
+    },
+    "marketing.S10.release_prep.staging_verified": {
+      "leaf_hint": "marketing.S10.release_prep.staging_verified",
+      "cluster_id": "cluster.release.baseline_and_staging",
+      "lifecycle_stage": "S10_release",
+      "situation_class": "release_prep",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F09",
+      "telemetry_only": true
+    },
+    "marketing.S10.release_prep.staging_verify": {
+      "leaf_hint": "marketing.S10.release_prep.staging_verify",
+      "cluster_id": "cluster.release.baseline_and_staging",
+      "lifecycle_stage": "S10_release",
+      "situation_class": "release_prep",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F09",
+      "telemetry_only": true
+    },
+    "marketing.S11.production.dependency_upgrade_offered": {
+      "leaf_hint": "marketing.S11.production.dependency_upgrade_offered",
+      "cluster_id": "cluster.production.live_and_incidents",
+      "lifecycle_stage": "S11_production",
+      "situation_class": "dependency_upgrade",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F10",
+      "telemetry_only": true
+    },
+    "marketing.S11.production.documentation_update": {
+      "leaf_hint": "marketing.S11.production.documentation_update",
+      "cluster_id": "cluster.production.live_and_incidents",
+      "lifecycle_stage": "S11_production",
+      "situation_class": "documentation",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F10",
+      "telemetry_only": true
+    },
+    "marketing.S11.production.drift_scheduled_reaudit": {
+      "leaf_hint": "marketing.S11.production.drift_scheduled_reaudit",
+      "cluster_id": "cluster.production.live_and_incidents",
+      "lifecycle_stage": "S11_production",
+      "situation_class": "seo_campaign",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F10",
+      "telemetry_only": true
+    },
+    "marketing.S11.production.hotfix_deployed": {
+      "leaf_hint": "marketing.S11.production.hotfix_deployed",
+      "cluster_id": "cluster.production.live_and_incidents",
+      "lifecycle_stage": "S11_production",
+      "situation_class": "hotfix",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F10",
+      "telemetry_only": true
+    },
+    "marketing.S11.production.hotfix_requested": {
+      "leaf_hint": "marketing.S11.production.hotfix_requested",
+      "cluster_id": "cluster.production.live_and_incidents",
+      "lifecycle_stage": "S11_production",
+      "situation_class": "hotfix",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F10",
+      "telemetry_only": true
+    },
+    "marketing.S11.production.live_and_monitored": {
+      "leaf_hint": "marketing.S11.production.live_and_monitored",
+      "cluster_id": "cluster.production.live_and_incidents",
+      "lifecycle_stage": "S11_production",
+      "situation_class": "release_prep",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F09",
+      "telemetry_only": true
+    },
+    "marketing.S11.production.pdg_stale_refresh_scheduled": {
+      "leaf_hint": "marketing.S11.production.pdg_stale_refresh_scheduled",
+      "cluster_id": "cluster.production.live_and_incidents",
+      "lifecycle_stage": "S11_production",
+      "situation_class": "consistency_cleanup",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F10",
+      "telemetry_only": true
+    },
+    "marketing.S11.production.rollback_required": {
+      "leaf_hint": "marketing.S11.production.rollback_required",
+      "cluster_id": "cluster.production.live_and_incidents",
+      "lifecycle_stage": "S11_production",
+      "situation_class": "hotfix",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F10",
+      "telemetry_only": true
+    },
+    "marketing.S11.production.user_report_received": {
+      "leaf_hint": "marketing.S11.production.user_report_received",
+      "cluster_id": "cluster.production.live_and_incidents",
+      "lifecycle_stage": "S11_production",
+      "situation_class": "ui_bug",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F10",
+      "telemetry_only": true
+    },
+    "marketing.S12.framework_migration.big_bang_progress": {
+      "leaf_hint": "marketing.S12.framework_migration.big_bang_progress",
+      "cluster_id": "cluster.migration.framework_or_redesign",
+      "lifecycle_stage": "S12_evolution",
+      "situation_class": "framework_migration",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F11",
+      "telemetry_only": true
+    },
+    "marketing.S12.framework_migration.completed": {
+      "leaf_hint": "marketing.S12.framework_migration.completed",
+      "cluster_id": "cluster.migration.framework_or_redesign",
+      "lifecycle_stage": "S12_evolution",
+      "situation_class": "framework_migration",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F11",
+      "telemetry_only": true
+    },
+    "marketing.S12.framework_migration.incremental_progress": {
+      "leaf_hint": "marketing.S12.framework_migration.incremental_progress",
+      "cluster_id": "cluster.migration.framework_or_redesign",
+      "lifecycle_stage": "S12_evolution",
+      "situation_class": "framework_migration",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F11",
+      "telemetry_only": true
+    },
+    "marketing.S12.framework_migration.plan_ready": {
+      "leaf_hint": "marketing.S12.framework_migration.plan_ready",
+      "cluster_id": "cluster.migration.framework_or_redesign",
+      "lifecycle_stage": "S12_evolution",
+      "situation_class": "framework_migration",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F11",
+      "telemetry_only": true
+    },
+    "marketing.S12.migration.rollback": {
+      "leaf_hint": "marketing.S12.migration.rollback",
+      "cluster_id": "cluster.migration.framework_or_redesign",
+      "lifecycle_stage": "S12_evolution",
+      "situation_class": "framework_migration",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F11",
+      "telemetry_only": true
+    },
+    "marketing.S12.redesign.baseline_before": {
+      "leaf_hint": "marketing.S12.redesign.baseline_before",
+      "cluster_id": "cluster.migration.framework_or_redesign",
+      "lifecycle_stage": "S12_evolution",
+      "situation_class": "redesign",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F11",
+      "telemetry_only": true
+    },
+    "marketing.S12.redesign.completed": {
+      "leaf_hint": "marketing.S12.redesign.completed",
+      "cluster_id": "cluster.migration.framework_or_redesign",
+      "lifecycle_stage": "S12_evolution",
+      "situation_class": "redesign",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F11",
+      "telemetry_only": true
+    },
+    "marketing.S12.redesign.per_page_swap": {
+      "leaf_hint": "marketing.S12.redesign.per_page_swap",
+      "cluster_id": "cluster.migration.framework_or_redesign",
+      "lifecycle_stage": "S12_evolution",
+      "situation_class": "redesign",
+      "project_archetype": "marketing",
+      "mcp_ready": true,
+      "forest_id": "F11",
+      "telemetry_only": true
+    },
+    "saas.S05.new_feature.auth_flow.probing": {
+      "leaf_hint": "saas.S05.new_feature.auth_flow.probing",
+      "cluster_id": "cluster.feature.auth_flow",
+      "lifecycle_stage": "S05_implementation",
+      "situation_class": "new_feature",
+      "project_archetype": "saas_dashboard",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "saas.S05.new_feature.chart_component.stub": {
+      "leaf_hint": "saas.S05.new_feature.chart_component.stub",
+      "cluster_id": "cluster.feature.data_ui",
+      "lifecycle_stage": "S05_implementation",
+      "situation_class": "new_feature",
+      "project_archetype": "saas_dashboard",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "saas.S05.new_feature.form_validation.v1": {
+      "leaf_hint": "saas.S05.new_feature.form_validation.v1",
+      "cluster_id": "cluster.feature.form_pipeline",
+      "lifecycle_stage": "S05_implementation",
+      "situation_class": "new_feature",
+      "project_archetype": "saas_dashboard",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "saas.S05.new_feature.multi_step_flow.described": {
+      "leaf_hint": "saas.S05.new_feature.multi_step_flow.described",
+      "cluster_id": "cluster.feature.flow_pipeline",
+      "lifecycle_stage": "S05_implementation",
+      "situation_class": "new_feature",
+      "project_archetype": "saas_dashboard",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "saas.S06.new_feature.api_integration.failing": {
+      "leaf_hint": "saas.S06.new_feature.api_integration.failing",
+      "cluster_id": "cluster.feature.api_integration",
+      "lifecycle_stage": "S06_integration",
+      "situation_class": "functional_bug",
+      "project_archetype": "saas_dashboard",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "saas.S07.functional_bug.intermittent": {
+      "leaf_hint": "saas.S07.functional_bug.intermittent",
+      "cluster_id": "cluster.debug.signal_class",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "functional_bug",
+      "project_archetype": "saas_dashboard",
+      "mcp_ready": true,
+      "forest_id": "F05",
+      "telemetry_only": true
+    },
+    "saas.S07.functional_bug.network_error_detected": {
+      "leaf_hint": "saas.S07.functional_bug.network_error_detected",
+      "cluster_id": "cluster.feature.api_integration",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "functional_bug",
+      "project_archetype": "saas_dashboard",
+      "mcp_ready": true,
+      "forest_id": "F05",
+      "telemetry_only": true
+    },
+    "saas.S07.functional_bug.race_condition": {
+      "leaf_hint": "saas.S07.functional_bug.race_condition",
+      "cluster_id": "cluster.debug.signal_class",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "functional_bug",
+      "project_archetype": "saas_dashboard",
+      "mcp_ready": true,
+      "forest_id": "F05",
+      "telemetry_only": true
+    },
+    "saas.S07.new_feature.auth_flow.verified_and_state_saved": {
+      "leaf_hint": "saas.S07.new_feature.auth_flow.verified_and_state_saved",
+      "cluster_id": "cluster.feature.auth_flow",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "new_feature",
+      "project_archetype": "saas_dashboard",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "saas.S07.new_feature.form_validation.blocked_by_auth": {
+      "leaf_hint": "saas.S07.new_feature.form_validation.blocked_by_auth",
+      "cluster_id": "cluster.feature.form_pipeline",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "auth_blocked",
+      "project_archetype": "saas_dashboard",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "saas.S07.new_feature.form_validation.invalid_path_verified": {
+      "leaf_hint": "saas.S07.new_feature.form_validation.invalid_path_verified",
+      "cluster_id": "cluster.feature.form_pipeline",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "new_feature",
+      "project_archetype": "saas_dashboard",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "saas.S07.new_feature.form_validation.verified": {
+      "leaf_hint": "saas.S07.new_feature.form_validation.verified",
+      "cluster_id": "cluster.feature.form_pipeline",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "new_feature",
+      "project_archetype": "saas_dashboard",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "saas.S07.new_feature.multi_step_flow.all_checkpoints_verified": {
+      "leaf_hint": "saas.S07.new_feature.multi_step_flow.all_checkpoints_verified",
+      "cluster_id": "cluster.feature.flow_pipeline",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "new_feature",
+      "project_archetype": "saas_dashboard",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    },
+    "saas.S07.new_feature.multi_step_flow.checkpoint_failure": {
+      "leaf_hint": "saas.S07.new_feature.multi_step_flow.checkpoint_failure",
+      "cluster_id": "cluster.feature.flow_pipeline",
+      "lifecycle_stage": "S07_verification",
+      "situation_class": "functional_bug",
+      "project_archetype": "saas_dashboard",
+      "mcp_ready": true,
+      "forest_id": "F04",
+      "telemetry_only": true
+    }
+  }
+}

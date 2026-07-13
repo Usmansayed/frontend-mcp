@@ -1,0 +1,12 @@
+%% Intelligence Budget and ROI decision loop
+flowchart TD
+  A[PSM: scope, impact ceiling, budget remaining] --> B[Eligible capabilities from playbook + gates]
+  B --> C[For each C: estimate cost and EQG]
+  C --> D{ROI = EQG / cost}
+  D -->|best ROI below threshold| E[stop_reason: roi / DR / budget]
+  D -->|best ROI OK and affordable| F[Suggest C + benefit claim + skip condition]
+  E --> G[Host reasons or implements with existing evidence]
+  F --> H[Host optionally calls MCP tool]
+  H --> I[Debit budget / update polish_loops / apply_envelope]
+  I --> A
+  G --> A
