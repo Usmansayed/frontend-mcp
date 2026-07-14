@@ -211,6 +211,7 @@ class BriefingState:
     benefit_claim: str | None = None
     skip_condition: str | None = None
     investment: dict[str, Any] | None = None
+    engineering_strategy: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -222,6 +223,9 @@ class BriefingState:
             "benefit_claim": self.benefit_claim,
             "skip_condition": self.skip_condition,
             "investment": dict(self.investment) if self.investment else None,
+            "engineering_strategy": (
+                dict(self.engineering_strategy) if self.engineering_strategy else None
+            ),
         }
 
 
@@ -305,6 +309,7 @@ class CoordinatorBriefing:
     benefit_claim: str | None = None
     skip_condition: str | None = None
     investment: dict[str, Any] | None = None
+    engineering_strategy: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -318,6 +323,9 @@ class CoordinatorBriefing:
             "benefit_claim": self.benefit_claim,
             "skip_condition": self.skip_condition,
             "investment": dict(self.investment) if self.investment else None,
+            "engineering_strategy": (
+                dict(self.engineering_strategy) if self.engineering_strategy else None
+            ),
         }
 
 

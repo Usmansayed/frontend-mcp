@@ -21,6 +21,13 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                 "type": "object",
                 "properties": {
                     "url": {"type": "string", "description": "Base URL, e.g. http://localhost:5173"},
+                    "intent": {
+                        "type": "string",
+                        "description": (
+                            "Optional task description for bootstrap Engineering Strategy "
+                            "(full strategy after session_start with intent)."
+                        ),
+                    },
                 },
             },
         ),
@@ -28,12 +35,25 @@ def perception_tools(mcp_types: Any) -> list[Any]:
             name="perception_session_start",
             description=(
                 "Playbook: session bootstrap (AGENT_GUIDE §1). Start browser session. "
-                "Call once per task; reuse session_id for all following tools."
+                "Call once per task; reuse session_id for all following tools. "
+                "Pass intent describing the engineering task for Engineering Strategy."
             ),
             inputSchema={
                 "type": "object",
                 "properties": {
                     "base_url": {"type": "string", "description": "App base URL"},
+                    "intent": {
+                        "type": "string",
+                        "description": (
+                            "Natural-language task intent (e.g. 'Build a SaaS dashboard', "
+                            "'Production hotfix for login button'). Drives R12 policy + "
+                            "agent_summary.engineering_strategy."
+                        ),
+                    },
+                    "repo_root": {
+                        "type": "string",
+                        "description": "Optional absolute repo root for codebase evidence routing",
+                    },
                     "headless": {"type": "boolean", "default": True},
                     "viewport": {
                         "type": "object",
@@ -840,6 +860,15 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                 "type": "object",
                 "properties": {
                     "query": {"type": "string", "description": "Inspiration search query"},
+                    "session_id": {
+                        "type": "string",
+                        "description": "Browser session — binds seed Spec to episode when present",
+                    },
+                    "bind_as_reference": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Bind inspiration seed Spec as reference for SpecDiff gate",
+                    },
                     "per_provider": {"type": "integer", "default": 4},
                     "provider_ids": {
                         "type": "array",
@@ -1323,15 +1352,24 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                     "frame_id": {"type": "string"},
                     "selection_node_ids": {"type": "array", "items": {"type": "string"}},
                     "refresh": {"type": "boolean", "default": False},
+                    "session_id": {
+                        "type": "string",
+                        "description": "Browser session for binding seed Spec to episode",
+                    },
+                    "bind_as_reference": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "Bind Figma seed Spec as reference for SpecDiff gate",
+                    },
                 },
             },
         ),
         T(
             name="perception_build_design_snapshot",
             description=(
-                "Design pipeline: build structured DesignSnapshot from scan_id or session. "
-                "Run after perception_observe. Returns snapshot_id + typography/color/layout reports. "
-                "Never critiques — extraction only."
+                "Design pipeline: build DesignSnapshot + FrontendEngineeringSpec from scan_id/session. "
+                "bind_as_reference=true captures Spec as episode reference; default remeasures current Spec "
+                "and returns spec_revision_gate (SpecDiff vs bound reference). Never critiques — facts + Spec only."
             ),
             inputSchema={
                 "type": "object",
@@ -1339,6 +1377,20 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                     "session_id": {"type": "string"},
                     "scan_id": {"type": "string", "description": "Preferred — from perception_observe"},
                     "snapshot_id": {"type": "string", "description": "Return existing snapshot"},
+                    "bind_as_reference": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "Bind compiled Spec as reference for later SpecDiff revision gate",
+                    },
+                    "role": {
+                        "type": "string",
+                        "enum": ["current", "reference"],
+                        "description": "Alias for bind: role=reference binds Spec as reference",
+                    },
+                    "reference_engineering_spec": {
+                        "type": "object",
+                        "description": "Optional explicit reference Spec (overrides episode bind)",
+                    },
                     "use_designlang": {
                         "type": "boolean",
                         "default": False,
@@ -1350,9 +1402,8 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_design_review",
             description=(
-                "Design Sense Intelligence: full design review from snapshot. "
-                "Pass scan_id from observe or snapshot_id. Agent must NOT build ReviewRequest manually. "
-                "Returns consolidated findings, blocking issues, reference comparisons, recommendations."
+                "Design Sense + SpecDiff: review from snapshot. Prefers bound reference Spec over registry. "
+                "Returns engineering_spec, engineering_delta, spec_revision_gate."
             ),
             inputSchema={
                 "type": "object",
@@ -1369,7 +1420,11 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                     "compare_references": {
                         "type": "boolean",
                         "default": True,
-                        "description": "Compare against reference registry (Stripe, Linear, etc.)",
+                        "description": "Fallback to design-reference-registry when no Spec bound",
+                    },
+                    "reference_engineering_spec": {
+                        "type": "object",
+                        "description": "Optional explicit reference Spec",
                     },
                     "use_designlang": {"type": "boolean", "default": False},
                 },

@@ -84,7 +84,10 @@ class CommunityDuplicationBrowser:
 
 	async def close(self) -> None:
 		if self._browser is not None:
-			await self._manager.release()
+			await self._manager.release(
+				isolated=False,
+				lease_id=self._lease_id,
+			)
 		self._browser = None
 		self._network = None
 		self._lease_id = None

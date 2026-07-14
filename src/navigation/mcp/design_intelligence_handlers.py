@@ -45,7 +45,7 @@ async def _build_or_load_snapshot(
 		return None, None, make_envelope('', ok=False, error='session_id, scan_id, or snapshot_id required')
 
 	try:
-		rec = store.require(session_id)
+		rec = await store.ensure(session_id)
 	except KeyError as exc:
 		return None, None, make_envelope('', ok=False, error=str(exc))
 
@@ -104,10 +104,94 @@ async def handle_build_design_snapshot(
 	if err:
 		return {**err, 'tool': 'perception_build_design_snapshot'}
 
+	from navigation.engineering_knowledge import compile_live_spec, compile_reference_spec
+	from navigation.engineering_knowledge.reference_binding import (
+		bind_reference_spec,
+		evaluate_revision_gate,
+		get_reference_spec,
+		resolve_psm_for_session,
+	)
+
+	session_id = str(
+		arguments.get('session_id') or (snap_rec.session_id if snap_rec else '') or ''
+	)
+	bind_as_reference = bool(arguments.get('bind_as_reference', False))
+	role = str(arguments.get('role') or ('reference' if bind_as_reference else 'current')).lower()
+	psm = resolve_psm_for_session(session_id or None)
+
+	if role in ('reference', 'bind'):
+		eng_spec = compile_reference_spec(
+			snapshot,
+			provenance={'bound_as': 'reference', 'url': snapshot.url},
+		)
+		spec_dict = eng_spec.to_dict()
+		bind_meta = bind_reference_spec(
+			eng_spec,
+			session_id=session_id or None,
+			psm=psm,
+			source='design_snapshot_reference',
+			note='Bound from perception_build_design_snapshot(bind_as_reference/role=reference)',
+		)
+		if psm is not None:
+			try:
+				from navigation.coordination_intelligence.integration.bridge import get_coordinator_bridge
+
+				get_coordinator_bridge().service.runtime.save(psm)
+			except Exception:
+				pass
+		gate = evaluate_revision_gate(eng_spec, eng_spec, phase='reference_captured')
+		unresolved = list(spec_dict.get('unresolved_by_impact') or [])
+		return make_envelope(
+			'perception_build_design_snapshot',
+			ok=True,
+			session_id=session_id or None,
+			scan_id=snap_rec.scan_id if snap_rec else snapshot.scan_id,
+			url=snapshot.url,
+			data={
+				'snapshot_id': snap_rec.snapshot_id if snap_rec else '',
+				'scan_id': snap_rec.scan_id if snap_rec else snapshot.scan_id,
+				'snapshot_summary': _snapshot_summary(snapshot),
+				'snapshot': snapshot.to_dict(),
+				'engineering_spec': spec_dict,
+				'reference_engineering_spec': spec_dict,
+				'spec_role': 'reference',
+				'reference_bind': bind_meta,
+				'spec_revision_gate': gate,
+				'agent_summary': {
+					'engineering_spec_coverage': spec_dict.get('coverage'),
+					'unresolved_engineering_decisions': unresolved[:8],
+					'spec_revision_gate': gate,
+					'coordinator_headline': gate.get('host_action'),
+					'advisory': [
+						'Reference Spec bound. Implement from Spec, then remeasure (bind_as_reference=false) for SpecDiff gate.',
+					],
+				},
+			},
+			degraded=list(snapshot.degraded),
+		)
+
+	# Current (post-draft) Spec + SpecDiff vs bound reference
+	eng_spec = compile_live_spec(snapshot)
+	spec_dict = eng_spec.to_dict()
+	ref_spec, ref_meta = get_reference_spec(
+		session_id=session_id or None,
+		psm=psm,
+		reference_spec=arguments.get('reference_engineering_spec')
+		if isinstance(arguments.get('reference_engineering_spec'), dict)
+		else None,
+	)
+	gate = evaluate_revision_gate(eng_spec, ref_spec, phase='current')
+	if ref_meta:
+		gate['reference_meta'] = ref_meta
+	unresolved = list(spec_dict.get('unresolved_by_impact') or [])
+	headline = gate.get('host_action')
+	if not ref_spec and unresolved:
+		headline = unresolved[0].get('why') or headline
+
 	return make_envelope(
 		'perception_build_design_snapshot',
 		ok=True,
-		session_id=str(arguments.get('session_id') or (snap_rec.session_id if snap_rec else '')),
+		session_id=session_id or None,
 		scan_id=snap_rec.scan_id if snap_rec else snapshot.scan_id,
 		url=snapshot.url,
 		data={
@@ -115,6 +199,20 @@ async def handle_build_design_snapshot(
 			'scan_id': snap_rec.scan_id if snap_rec else snapshot.scan_id,
 			'snapshot_summary': _snapshot_summary(snapshot),
 			'snapshot': snapshot.to_dict(),
+			'engineering_spec': spec_dict,
+			'spec_role': 'current',
+			'spec_revision_gate': gate,
+			'engineering_delta': gate.get('engineering_delta'),
+			'agent_summary': {
+				'engineering_spec_coverage': spec_dict.get('coverage'),
+				'unresolved_engineering_decisions': unresolved[:8],
+				'spec_revision_gate': gate,
+				'revision_required': gate.get('revision_required'),
+				'coordinator_headline': headline,
+				'advisory': [
+					'Closed loop: if revision_required, fix drifts listed in spec_revision_gate then remeasure.',
+				],
+			},
 		},
 		degraded=list(snapshot.degraded),
 	)
@@ -133,6 +231,90 @@ async def handle_design_review(
 	if err:
 		return {**err, 'tool': 'perception_design_review'}
 
+	from navigation.engineering_knowledge import (
+		compile_from_snapshot_dict,
+		compile_live_spec,
+		diff_specs,
+	)
+	from navigation.engineering_knowledge.reference_binding import (
+		evaluate_revision_gate,
+		get_reference_spec,
+		resolve_psm_for_session,
+	)
+
+	session_id = str(
+		arguments.get('session_id') or (snap_rec.session_id if snap_rec else '') or ''
+	)
+	psm = resolve_psm_for_session(session_id or None)
+	current_spec = compile_live_spec(snapshot)
+	engineering_delta = None
+	reference_spec_summary = None
+	ref_source = None
+
+	# Prefer bound episode/session reference Spec over design-reference-registry
+	bound_ref, bound_meta = get_reference_spec(
+		session_id=session_id or None,
+		psm=psm,
+		reference_spec=arguments.get('reference_engineering_spec')
+		if isinstance(arguments.get('reference_engineering_spec'), dict)
+		else None,
+	)
+	if bound_ref is not None:
+		engineering_delta = diff_specs(bound_ref, current_spec).to_dict()
+		ref_source = bound_meta.get('source') or 'bound'
+		reference_spec_summary = {
+			'source': ref_source,
+			'meta': bound_meta,
+			'coverage': bound_ref.to_dict().get('coverage'),
+			'top_resolved': [
+				d.to_dict()
+				for d in sorted(
+					(x for x in bound_ref.decisions.values() if x.status == 'resolved'),
+					key=lambda d: -d.impact_weight,
+				)[:8]
+			],
+		}
+	elif compare_references:
+		try:
+			from navigation.design_reference_registry.seeds import default_reference_registry
+
+			reg = default_reference_registry()
+			similar = reg.find_similar(snapshot, limit=1, user_task=user_task)
+			if similar:
+				best = similar[0]
+				entry = reg.get(best.reference_id)
+				if entry and entry.snapshot:
+					ref_spec = compile_from_snapshot_dict(
+						entry.snapshot,
+						source_kind='reference',
+						provenance={
+							'reference_id': entry.id,
+							'reference_name': entry.name,
+							'source_url': entry.source_url,
+						},
+					)
+					engineering_delta = diff_specs(ref_spec, current_spec).to_dict()
+					ref_source = 'registry'
+					reference_spec_summary = {
+						'reference_id': entry.id,
+						'reference_name': entry.name,
+						'source': 'registry',
+						'coverage': ref_spec.to_dict().get('coverage'),
+						'top_resolved': [
+							d.to_dict()
+							for d in sorted(
+								(x for x in ref_spec.decisions.values() if x.status == 'resolved'),
+								key=lambda d: -d.impact_weight,
+							)[:8]
+						],
+					}
+		except Exception:
+			engineering_delta = None
+
+	revision_gate = evaluate_revision_gate(current_spec, bound_ref, phase='current')
+	if bound_meta:
+		revision_gate['reference_meta'] = bound_meta
+
 	request = review_request_from_snapshot(
 		snapshot,
 		user_task=user_task,
@@ -141,22 +323,61 @@ async def handle_design_review(
 	report = await DesignSenseService().review(request, compare_references=compare_references)
 
 	blocking = [f for f in report.findings if f.severity == 'blocking']
+	spec_dict = current_spec.to_dict()
+	delta_top = list((engineering_delta or {}).get('top_by_impact') or [])
+	# Prefer SpecDiff engineering actions when available
+	spec_actions = [
+		{
+			'decision_id': d.get('decision_id'),
+			'kind': d.get('kind'),
+			'severity': d.get('severity'),
+			'impact_weight': d.get('impact_weight'),
+			'detail': d.get('detail'),
+			'from': d.get('from_value'),
+			'to': d.get('to_value'),
+		}
+		for d in delta_top[:10]
+	]
+	gate_blocks = list(revision_gate.get('blocking_drifts') or [])
+	headline = (
+		revision_gate.get('host_action')
+		if revision_gate.get('reference_bound')
+		else (
+			(delta_top[0].get('detail') if delta_top else None)
+			or (spec_dict.get('unresolved_by_impact') or [{}])[0].get('why')
+			or report.summary
+		)
+	)
+
 	return make_envelope(
 		'perception_design_review',
 		ok=True,
-		session_id=str(arguments.get('session_id') or (snap_rec.session_id if snap_rec else '')),
+		session_id=session_id or None,
 		scan_id=snap_rec.scan_id if snap_rec else snapshot.scan_id,
 		url=snapshot.url,
 		data={
 			'snapshot_id': snap_rec.snapshot_id if snap_rec else '',
-			'passed': report.passed,
+			'engineering_spec': spec_dict,
+			'engineering_delta': engineering_delta,
+			'reference_engineering_spec': reference_spec_summary,
+			'spec_revision_gate': revision_gate,
+			'reference_source': ref_source,
+			'passed': (
+				report.passed
+				and not revision_gate.get('revision_required')
+				and not any(
+					i.get('severity') == 'blocking'
+					for i in ((engineering_delta or {}).get('items') or [])
+				)
+			),
 			'summary': report.summary,
 			'finding_count': len(report.findings),
-			'blocking_count': len(blocking),
+			'blocking_count': len(blocking) + len(gate_blocks),
 			'blocking_findings': [f.to_dict() for f in blocking[:10]],
 			'top_findings': [f.to_dict() for f in report.findings[:12]],
 			'prioritized_recommendations': (
-				report.consensus.prioritized_recommendations if report.consensus else []
+				spec_actions
+				or (report.consensus.prioritized_recommendations if report.consensus else [])
 			),
 			'consensus_removed_duplicates': (
 				report.consensus.removed_duplicates if report.consensus else 0
@@ -165,6 +386,16 @@ async def handle_design_review(
 			'consulted_reviewers': report.consulted_reviewers,
 			'consulted_providers': report.consulted_providers,
 			'report': report.to_dict(),
+			'agent_summary': {
+				'engineering_delta_top': delta_top[:8],
+				'unresolved_engineering_decisions': spec_dict.get('unresolved_by_impact', [])[:8],
+				'spec_revision_gate': revision_gate,
+				'revision_required': revision_gate.get('revision_required'),
+				'coordinator_headline': headline,
+				'advisory': [
+					'Prefer engineering_delta (SpecDiff) over English findings for rebuild decisions.',
+				],
+			},
 		},
 		degraded=list(report.degraded),
 	)

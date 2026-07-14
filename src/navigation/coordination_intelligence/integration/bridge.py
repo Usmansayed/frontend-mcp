@@ -66,6 +66,10 @@ class CoordinatorBridge:
         args = arguments or {}
         session_id = _extract_session_id(args, envelope)
         project_id = str(args.get("project_id") or "default")
+
+        if tool_name == "perception_health":
+            return self._attach_health_strategy(args, envelope)
+
         episode_id = self._bindings.resolve(
             session_id=session_id,
             project_id=project_id,
@@ -123,7 +127,10 @@ class CoordinatorBridge:
             if repo_root:
                 psm.artifacts.repo_root = repo_root
             psm.artifacts.session_id = session_id
-            self._service.runtime.save(psm)
+            if intent:
+                self._service.push_intent(existing, intent)
+            else:
+                self._service.runtime.save(psm)
             return existing
 
         psm = self._service.episode_start(
@@ -138,6 +145,21 @@ class CoordinatorBridge:
         self._bindings.bind_session(session_id, psm.episode_id)
         self._bindings.bind_project(project_id, psm.episode_id)
         return psm.episode_id
+
+    def _attach_health_strategy(
+        self,
+        args: dict[str, Any],
+        envelope: dict[str, Any],
+    ) -> dict[str, Any]:
+        from navigation.coordination_intelligence.planning.engineering_strategy import (
+            compile_bootstrap_strategy,
+            surface_engineering_strategy,
+        )
+
+        catalog = self._service.runtime.bundle.situation_policy_catalog or {}
+        intent = args.get("intent")
+        strategy = compile_bootstrap_strategy(catalog, intent=str(intent) if intent else None)
+        return surface_engineering_strategy(envelope, strategy)
 
 
 def _extract_session_id(args: dict[str, Any], envelope: dict[str, Any]) -> str | None:

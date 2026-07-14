@@ -106,12 +106,21 @@ class FlowRunner:
         return CheckpointResult(cp.name, result.ok, "scripted", result.url, reasons=result.reasons)
 
     async def run_flow(self, flow: FlowGraph) -> FlowRunResult:
-        from browser_use import BrowserProfile, BrowserSession
+        from navigation.visual_browser_intelligence.browser.browser_session_manager import (
+            BrowserSessionManager,
+        )
 
-        session = BrowserSession(browser_profile=BrowserProfile(headless=self.headless))
+        manager = BrowserSessionManager.get()
         results: list[CheckpointResult] = []
+        managed = None
         try:
-            await session.start()
+            managed = await manager.acquire(
+                base_url=self.base_url,
+                headless=self.headless,
+                viewport_width=1920,
+                viewport_height=1080,
+            )
+            session = managed.browser
             await session.navigate_to(self.base_url)
 
             for cp in flow.checkpoints:
@@ -129,10 +138,14 @@ class FlowRunner:
         except Exception as exc:
             return FlowRunResult(flow.name, False, results, error=str(exc))
         finally:
-            try:
-                await session.kill()
-            except Exception:
-                pass
+            if managed is not None:
+                try:
+                    await manager.release(
+                        isolated=managed.isolated,
+                        lease_id=managed.lease_id,
+                    )
+                except Exception:
+                    pass
 
         ok = bool(results) and all(r.ok for r in results)
         return FlowRunResult(flow.name, ok, results)

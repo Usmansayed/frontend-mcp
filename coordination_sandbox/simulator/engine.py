@@ -9,6 +9,7 @@ from coordination_sandbox.brain.effort_allocator import (
     debit_budget,
     evaluate_allocation,
 )
+from coordination_sandbox.brain.engineering_strategy import compile_engineering_strategy
 from coordination_sandbox.brain.playbook_plan import plan_for_scope
 from coordination_sandbox.brain.situation_policy import derive_discriminators, match_policy
 
@@ -69,6 +70,10 @@ class ScenarioResult:
     initial_discriminators: dict[str, str]
     decision_trace: list[dict[str, Any]]
     tech_lead_summary: str
+    engineering_strategy_initial: dict[str, Any]
+    engineering_strategy_final: dict[str, Any]
+    influence_level_initial: str
+    influence_level_final: str
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -93,8 +98,8 @@ def simulate_prompt(
     disc0 = derive_discriminators(psm)
     policy0 = match_policy(catalog, disc0)
     inv0 = policy0.get("investment") or {}
-    # Seed budget from matched policy before first evaluation
     evaluate_allocation(psm, catalog, capability_id=None)
+    strategy_initial = compile_engineering_strategy(psm, catalog).to_dict()
 
     plan = plan_for_scope(disc0["task_scope"], prompt)
 
@@ -203,6 +208,8 @@ def simulate_prompt(
         for c in ("inspiration_workflow", "component_select", "design_review", "design_snapshot")
     )
 
+    strategy_final = compile_engineering_strategy(psm, catalog).to_dict()
+
     summary = _tech_lead_summary(
         prompt=prompt,
         disc=disc_f,
@@ -214,6 +221,7 @@ def simulate_prompt(
         value=value,
         design_oriented=design_oriented,
         stop_recs=stop_recs,
+        strategy=strategy_final,
     )
 
     return ScenarioResult(
@@ -250,6 +258,10 @@ def simulate_prompt(
         initial_discriminators=disc0,
         decision_trace=[r.to_dict() for r in records],
         tech_lead_summary=summary,
+        engineering_strategy_initial=strategy_initial,
+        engineering_strategy_final=strategy_final,
+        influence_level_initial=strategy_initial.get("influence_level", "unknown"),
+        influence_level_final=strategy_final.get("influence_level", "unknown"),
     )
 
 
@@ -265,6 +277,7 @@ def _tech_lead_summary(
     value: float,
     design_oriented: bool,
     stop_recs: list[str],
+    strategy: dict[str, Any] | None = None,
 ) -> str:
     skip_names = [s["capability_id"] for s in skipped]
     heavy_skipped = [
@@ -274,13 +287,23 @@ def _tech_lead_summary(
     ]
     parts = [
         f"For '{prompt}' scope={disc.get('task_scope')} band={disc.get('lifecycle_band')} policy={policy_id}.",
+    ]
+    if strategy:
+        parts.append(
+            f"Influence={strategy.get('influence_level')} phase={strategy.get('engineering_phase')}. "
+            f"{strategy.get('summary', '')}"
+        )
+        unresolved = strategy.get("unresolved_decisions") or []
+        if unresolved:
+            parts.append(f"Top decision: {unresolved[0].get('title')}.")
+    parts.extend([
         f"Invested {budget_spent}/{budget_total} intelligence units for ~{value:.1f} EQG.",
         (
             "Entered a design-oriented workflow."
             if design_oriented
             else "Stayed correctness / incremental (not design-heavy)."
         ),
-    ]
+    ])
     if heavy_skipped:
         parts.append(f"Suppressed expensive work: {', '.join(heavy_skipped)}.")
     if stop_recs:

@@ -113,6 +113,18 @@ def _require_session(store: SessionStore, session_id: str) -> tuple[Any | None, 
         return None, make_envelope("", ok=False, error=str(exc))
 
 
+async def _ensure_session(
+    store: SessionStore, session_id: str
+) -> tuple[Any | None, dict[str, Any] | None]:
+    """Async session resolve — recovers browser if user closed the window."""
+    if not session_id:
+        return None, make_envelope("", ok=False, error="session_id required")
+    try:
+        return await store.ensure(session_id), None
+    except KeyError as exc:
+        return None, make_envelope("", ok=False, error=str(exc))
+
+
 async def handle_health(arguments: dict[str, Any]) -> dict[str, Any]:
     from importlib.metadata import PackageNotFoundError, version
 
@@ -147,6 +159,12 @@ async def handle_health(arguments: dict[str, Any]) -> dict[str, Any]:
     except ImportError:
         browser_available = False
 
+    from navigation.visual_browser_intelligence.browser.browser_session_manager import (
+        BrowserSessionManager,
+    )
+
+    browser_manager = BrowserSessionManager.get().diagnostics()
+
     recommended = "perception_session_start" if reachable else None
     if not reachable:
         recommended = None
@@ -159,10 +177,11 @@ async def handle_health(arguments: dict[str, Any]) -> dict[str, Any]:
         data={
             "reachable": reachable,
             "status": status,
-            "server_version": "1.1.7",
+            "server_version": "1.2.0.dev2",
             "package_version": engine_ver,
             "frontend_mcp_version": frontend_mcp_ver,
             "browser_runtime_available": browser_available,
+            "browser_manager": browser_manager,
             "recommended_next_tool": recommended,
         },
     )
@@ -228,7 +247,7 @@ async def handle_navigate_and_observe(
         )
 
     try:
-        rec = store.require(session_id)
+        rec = await store.ensure(session_id)
     except KeyError as exc:
         return make_envelope("perception_navigate_and_observe", ok=False, error=str(exc))
 
@@ -310,7 +329,7 @@ async def handle_verify(
         return make_envelope("perception_verify", ok=False, error="session_id required")
 
     try:
-        rec = store.require(session_id)
+        rec = await store.ensure(session_id)
     except KeyError as exc:
         return make_envelope("perception_verify", ok=False, error=str(exc))
 
@@ -369,7 +388,7 @@ async def handle_execute_script(
         )
 
     try:
-        rec = store.require(session_id)
+        rec = await store.ensure(session_id)
     except KeyError as exc:
         return make_envelope("perception_execute_script", ok=False, error=str(exc))
 
@@ -492,7 +511,7 @@ async def handle_navigate(store: SessionStore, arguments: dict[str, Any]) -> dic
     if not session_id or not url_arg:
         return make_envelope("perception_navigate", ok=False, error="session_id and url required")
 
-    rec, err = _require_session(store, session_id)
+    rec, err = await _ensure_session(store, session_id)
     if err:
         return {**err, "tool": "perception_navigate"}
 
@@ -519,7 +538,7 @@ async def handle_observe(
     if not session_id:
         return make_envelope("perception_observe", ok=False, error="session_id required")
 
-    rec, err = _require_session(store, session_id)
+    rec, err = await _ensure_session(store, session_id)
     if err:
         return {**err, "tool": "perception_observe"}
 
@@ -573,7 +592,7 @@ async def handle_execute_actions(
     if not isinstance(actions, list) or not actions:
         return make_envelope("perception_execute_actions", ok=False, error="actions list required")
 
-    rec, err = _require_session(store, session_id)
+    rec, err = await _ensure_session(store, session_id)
     if err:
         return {**err, "tool": "perception_execute_actions"}
 
@@ -717,7 +736,7 @@ async def handle_auth_gate(store: SessionStore, arguments: dict[str, Any]) -> di
     if not session_id:
         return make_envelope("perception_auth_gate", ok=False, error="session_id required")
 
-    rec, err = _require_session(store, session_id)
+    rec, err = await _ensure_session(store, session_id)
     if err:
         return {**err, "tool": "perception_auth_gate"}
 
@@ -744,7 +763,7 @@ async def handle_probe_form(store: SessionStore, arguments: dict[str, Any]) -> d
     if not session_id:
         return make_envelope("perception_probe_form", ok=False, error="session_id required")
 
-    rec, err = _require_session(store, session_id)
+    rec, err = await _ensure_session(store, session_id)
     if err:
         return {**err, "tool": "perception_probe_form"}
 
@@ -775,7 +794,7 @@ async def handle_probe_guards(store: SessionStore, arguments: dict[str, Any]) ->
     if not session_id:
         return make_envelope("perception_probe_guards", ok=False, error="session_id required")
 
-    rec, err = _require_session(store, session_id)
+    rec, err = await _ensure_session(store, session_id)
     if err:
         return {**err, "tool": "perception_probe_guards"}
 
@@ -843,7 +862,7 @@ async def handle_state_save(store: SessionStore, arguments: dict[str, Any]) -> d
             error="session_id and state_id required",
         )
 
-    rec, err = _require_session(store, session_id)
+    rec, err = await _ensure_session(store, session_id)
     if err:
         return {**err, "tool": "perception_state_save"}
 
@@ -868,7 +887,7 @@ async def handle_state_restore(store: SessionStore, arguments: dict[str, Any]) -
             error="session_id and state_id required",
         )
 
-    rec, err = _require_session(store, session_id)
+    rec, err = await _ensure_session(store, session_id)
     if err:
         return {**err, "tool": "perception_state_restore"}
 
@@ -890,7 +909,7 @@ async def handle_state_list(store: SessionStore, arguments: dict[str, Any]) -> d
     if not session_id:
         return make_envelope("perception_state_list", ok=False, error="session_id required")
 
-    rec, err = _require_session(store, session_id)
+    rec, err = await _ensure_session(store, session_id)
     if err:
         return {**err, "tool": "perception_state_list"}
 
@@ -1134,7 +1153,7 @@ async def handle_console_get(store: SessionStore, arguments: dict[str, Any]) -> 
         return make_envelope("perception_console_get", ok=False, error="session_id required")
 
     try:
-        rec = store.require(session_id)
+        rec = await store.ensure(session_id)
     except KeyError as exc:
         return make_envelope("perception_console_get", ok=False, error=str(exc))
 
@@ -1160,7 +1179,7 @@ async def handle_console_clear(store: SessionStore, arguments: dict[str, Any]) -
         return make_envelope("perception_console_clear", ok=False, error="session_id required")
 
     try:
-        rec = store.require(session_id)
+        rec = await store.ensure(session_id)
     except KeyError as exc:
         return make_envelope("perception_console_clear", ok=False, error=str(exc))
 
@@ -1196,7 +1215,7 @@ async def handle_network_get(store: SessionStore, arguments: dict[str, Any]) -> 
         return make_envelope("perception_network_get", ok=False, error="session_id required")
 
     try:
-        rec = store.require(session_id)
+        rec = await store.ensure(session_id)
     except KeyError as exc:
         return make_envelope("perception_network_get", ok=False, error=str(exc))
 
@@ -1225,7 +1244,7 @@ async def handle_network_clear(store: SessionStore, arguments: dict[str, Any]) -
         return make_envelope("perception_network_clear", ok=False, error="session_id required")
 
     try:
-        rec = store.require(session_id)
+        rec = await store.ensure(session_id)
     except KeyError as exc:
         return make_envelope("perception_network_clear", ok=False, error=str(exc))
 
@@ -1268,7 +1287,7 @@ async def _handle_audit(
         return make_envelope(tool_name, ok=False, error="session_id required")
 
     try:
-        rec = store.require(session_id)
+        rec = await store.ensure(session_id)
     except KeyError as exc:
         return make_envelope(tool_name, ok=False, error=str(exc))
 
@@ -1393,7 +1412,7 @@ async def _handle_diagnosis(
     if not session_id:
         return make_envelope(tool_name, ok=False, error="session_id required")
 
-    rec, err = _require_session(store, session_id)
+    rec, err = await _ensure_session(store, session_id)
     if err:
         return {**err, "tool": tool_name}
 
@@ -1832,20 +1851,76 @@ async def handle_inspiration_collect(arguments: dict[str, Any]) -> dict[str, Any
     )
     hits = list(manifest.get("hits") or [])
     ok = bool(hits) or bool(manifest.get("provider_summary"))
+
+    from navigation.engineering_knowledge import compile_inspiration_seed_spec
+
+    profiles: list[dict] = []
+    for h in hits[:8]:
+        meta = h.get("metadata") if isinstance(h, dict) else None
+        if isinstance(meta, dict) and isinstance(meta.get("profile"), dict):
+            profiles.append(meta["profile"])
+        elif isinstance(h, dict) and isinstance(h.get("profile"), dict):
+            profiles.append(h["profile"])
+
+    eng_spec_obj = compile_inspiration_seed_spec(
+        query=query,
+        hits=hits,
+        profiles=profiles,
+    )
+    eng_spec = eng_spec_obj.to_dict()
+
+    from navigation.engineering_knowledge.reference_binding import (
+        bind_reference_spec,
+        resolve_psm_for_session,
+    )
+
+    browser_session_id = str(arguments.get("session_id") or "").strip() or None
+    bind_as_reference = bool(arguments.get("bind_as_reference", True))
+    bind_meta = None
+    if bind_as_reference:
+        psm = resolve_psm_for_session(browser_session_id)
+        bind_meta = bind_reference_spec(
+            eng_spec_obj,
+            session_id=browser_session_id or (manifest.get("blob_session_id") or None),
+            psm=psm,
+            source="inspiration_seed",
+            note="Soft priors from inspiration — remeasure live page to harden geometry",
+        )
+        if psm is not None:
+            try:
+                from navigation.coordination_intelligence.integration.bridge import (
+                    get_coordinator_bridge,
+                )
+
+                get_coordinator_bridge().service.runtime.save(psm)
+            except Exception:
+                pass
+
     return make_envelope(
         "perception_inspiration_collect",
         ok=ok,
+        session_id=browser_session_id,
         data={
             "inspiration_collection": manifest,
+            "engineering_spec": eng_spec,
+            "reference_bind": bind_meta,
             "agent_summary": {
                 "query": query,
                 "total_hits": manifest.get("total_hits", 0),
                 "total_with_urls": manifest.get("total_with_urls", 0),
                 "blob_session_id": manifest.get("blob_session_id", ""),
                 "top_hits": hits[:8],
+                "unresolved_engineering_decisions": eng_spec.get("unresolved_by_impact", [])[:8],
+                "reference_bound": bool(bind_meta and bind_meta.get("bound")),
+                "coordinator_headline": (
+                    (eng_spec.get("unresolved_by_impact") or [{}])[0].get("why")
+                    if eng_spec.get("unresolved_by_impact")
+                    else "Inspiration seed Spec bound — measure top agent_view_url into DesignSnapshot."
+                ),
                 "blocking": [] if hits else ["no_inspiration_hits"],
                 "advisory": [
                     "Open agent_view_url for live pages; use inspiration_blob for vision.",
+                    "engineering_spec is a seed Spec (soft priors). After draft, remeasure with perception_build_design_snapshot for SpecDiff gate.",
                     "Call perception_inspiration_session_end when design work is complete.",
                 ],
             },
@@ -2915,17 +2990,83 @@ async def handle_figma_context(arguments: dict[str, Any]) -> dict[str, Any]:
         advisory.append(f"degraded:{','.join(context.degraded[:5])}")
     if context.file is None:
         advisory.append("Set file_url or file_key to load a Figma file.")
+
+    from navigation.engineering_knowledge import compile_figma_seed_spec
+
+    seed_ctx = {
+        "file_key": context.file.file_key if context.file else None,
+        "tokens": {
+            (t.get("name") or t.get("id") or str(i)): (t.get("value") or t.get("color") or t)
+            for i, t in enumerate(list(context.tokens or [])[:40])
+            if isinstance(t, dict) or True
+        },
+        "fonts": [],
+        "frames": [],
+    }
+    # Normalize tokens list → dict when tokens are objects
+    token_map: dict = {}
+    for t in list(context.tokens or [])[:40]:
+        if isinstance(t, dict):
+            name = str(t.get("name") or t.get("id") or "")
+            val = t.get("value") or t.get("color") or t.get("hex")
+            if name and val is not None:
+                token_map[name] = val
+                low = name.lower()
+                if "primary" in low or "accent" in low or "brand" in low:
+                    token_map["primary"] = val
+        elif isinstance(t, str):
+            token_map[t] = t
+    seed_ctx["tokens"] = token_map
+    eng_spec_obj = compile_figma_seed_spec(seed_ctx)
+    eng_spec = eng_spec_obj.to_dict()
+    advisory.append(
+        "engineering_spec is a Figma seed Spec — verify with live DesignSnapshot after implementation."
+    )
+
+    from navigation.engineering_knowledge.reference_binding import (
+        bind_reference_spec,
+        resolve_psm_for_session,
+    )
+
+    browser_session_id = str(arguments.get("session_id") or "").strip() or None
+    bind_as_reference = bool(arguments.get("bind_as_reference", False))
+    bind_meta = None
+    if bind_as_reference:
+        psm = resolve_psm_for_session(browser_session_id)
+        bind_meta = bind_reference_spec(
+            eng_spec_obj,
+            session_id=browser_session_id,
+            psm=psm,
+            source="figma_seed",
+            note="Figma seed Spec — harden via live DesignSnapshot after implementation",
+        )
+        if psm is not None:
+            try:
+                from navigation.coordination_intelligence.integration.bridge import (
+                    get_coordinator_bridge,
+                )
+
+                get_coordinator_bridge().service.runtime.save(psm)
+            except Exception:
+                pass
+        advisory.append("Figma seed Spec bound as reference for SpecDiff gate.")
+
     return make_envelope(
         "perception_figma_context",
         ok=True,
+        session_id=browser_session_id,
         data={
             "figma_context": payload,
+            "engineering_spec": eng_spec,
+            "reference_bind": bind_meta,
             "agent_summary": {
                 "connected": context.connected,
                 "file_key": context.file.file_key if context.file else None,
                 "component_count": len(context.components),
                 "token_count": len(context.tokens),
                 "cache_hit": bool((context.cache or {}).get("hit")),
+                "unresolved_engineering_decisions": eng_spec.get("unresolved_by_impact", [])[:8],
+                "reference_bound": bool(bind_meta and bind_meta.get("bound")),
                 "advisory": advisory,
             },
         },

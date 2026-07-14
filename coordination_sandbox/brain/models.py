@@ -89,6 +89,8 @@ class EpisodeState:
     verification_status: str = "unknown"
     completed_step_ids: list[str] = field(default_factory=list)
     retry_counters: dict[str, Any] = field(default_factory=dict)
+    active_playbook_id: str | None = None
+    active_step_id: str | None = None
 
 
 @dataclass

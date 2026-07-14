@@ -25,5 +25,15 @@ scenarios:
     prompt: Add dark mode
   - id: improve_spacing
     prompt: Improve spacing
+  - id: marketing_site
+    prompt: Build a marketing site
+  - id: component_library
+    prompt: Build a component library from scratch
+  - id: feature_addition
+    prompt: Add a new feature to the dashboard
+    existing_product: true
+  - id: seo_improvement
+    prompt: Improve SEO for the landing page
+    existing_product: true
   - id: fix_one_button
     prompt: Fix one button

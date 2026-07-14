@@ -52,11 +52,12 @@ class PerceptionBrowserRuntime:
 		return self._rec.browser if self._rec else None
 
 	async def start(self, *, base_url: str, headless: bool = False) -> str:
+		# Match MCP default viewport so we reuse the primary browser (no second window).
 		self._rec = await self._store.start(
 			base_url=base_url,
 			headless=headless,
-			viewport_width=1440,
-			viewport_height=900,
+			viewport_width=1920,
+			viewport_height=1080,
 		)
 		self._session_id = self._rec.session_id
 		return self._session_id
@@ -75,6 +76,11 @@ class PerceptionBrowserRuntime:
 		screenshot: bool = True,
 		ready_timeout: float = 15.0,
 	) -> PerceptionBrowseResult:
+		if self._session_id:
+			try:
+				self._rec = await self._store.ensure(self._session_id)
+			except KeyError:
+				return PerceptionBrowseResult(ok=False, url=url, error='perception_session_not_started')
 		if self._rec is None:
 			return PerceptionBrowseResult(ok=False, url=url, error='perception_session_not_started')
 
@@ -107,6 +113,8 @@ class PerceptionBrowserRuntime:
 		)
 
 	async def execute_script(self, script: str) -> Any:
+		if self._session_id:
+			self._rec = await self._store.ensure(self._session_id)
 		if self._rec is None:
 			raise RuntimeError('perception_session_not_started')
 		return await evaluate_js(self._rec.browser, script)

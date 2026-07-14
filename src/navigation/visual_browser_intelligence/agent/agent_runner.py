@@ -89,7 +89,7 @@ class PerceptionAgentRunner:
             )
 
         try:
-            from browser_use import Agent, BrowserProfile
+            from browser_use import Agent
         except ImportError as exc:
             return AgentRunResult(
                 task=task,
@@ -109,27 +109,39 @@ class PerceptionAgentRunner:
             f"Open {self.start_url} first if you are not already on the Navigation Maze app."
         )
 
-        profile = BrowserProfile(headless=self.headless)
-
-        self._record(
-            "browser_use.agent_init",
-            {
-                "model": self.model or os.getenv("BEDROCK_MODEL", "amazon.nova-pro-v1:0"),
-                "hint_injected": hint.ok,
-                "max_steps": self.max_steps,
-            },
+        from navigation.visual_browser_intelligence.browser.browser_session_manager import (
+            BrowserSessionManager,
         )
 
-        agent = Agent(
-            task=full_task,
-            llm=llm,
-            browser_profile=profile,
-            use_vision=self.use_vision,
-            extend_system_message=graph_context,
-            initial_actions=[{"navigate": {"url": self.start_url, "new_tab": False}}],
-        )
-
+        manager = BrowserSessionManager.get()
+        managed = None
         try:
+            managed = await manager.acquire(
+                base_url=self.start_url,
+                headless=self.headless,
+                viewport_width=1920,
+                viewport_height=1080,
+            )
+
+            self._record(
+                "browser_use.agent_init",
+                {
+                    "model": self.model or os.getenv("BEDROCK_MODEL", "amazon.nova-pro-v1:0"),
+                    "hint_injected": hint.ok,
+                    "max_steps": self.max_steps,
+                    "browser_id": managed.browser_id,
+                },
+            )
+
+            agent = Agent(
+                task=full_task,
+                llm=llm,
+                browser_session=managed.browser,
+                use_vision=self.use_vision,
+                extend_system_message=graph_context,
+                initial_actions=[{"navigate": {"url": self.start_url, "new_tab": False}}],
+            )
+
             history = await agent.run(max_steps=self.max_steps)
             final = history.final_result()
             success = bool(history.is_successful())
@@ -154,12 +166,18 @@ class PerceptionAgentRunner:
             return AgentRunResult(
                 task=task,
                 success=False,
-                steps_taken=len(self.timeline),
+                steps_taken=0,
                 final_result=None,
                 hint=hint,
                 timeline=self.timeline,
                 error=str(exc),
             )
+        finally:
+            if managed is not None:
+                await manager.release(
+                    isolated=managed.isolated,
+                    lease_id=managed.lease_id,
+                )
 
     def run_sync(self, task: str) -> AgentRunResult:
         return asyncio.run(self.run(task))

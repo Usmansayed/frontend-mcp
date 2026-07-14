@@ -3,14 +3,19 @@
 MCP_INSTRUCTIONS = """\
 Frontend Perception MCP — deterministic browser runtime (no LLM inside this server).
 
-YOU are the brain. This server returns facts only — never "next step" suggestions.
+YOU are the brain. This server returns facts only — never generic "next step" suggestions.
 Read perception://agent-guide at session start.
 
 Universal loop (AGENT_GUIDE §0):
-  OBSERVE → REASON → ACT → VERIFY → repeat or STOP
+  STRATEGIZE → OBSERVE → REASON → ACT → VERIFY → repeat or STOP
+
+STRATEGIZE (before planning):
+  Read agent_summary.engineering_strategy on health and session_start.
+  Resolve unresolved structural decisions before broad implementation.
+  Evidence and tools serve engineering decisions — not the other way around.
 
 Bootstrap (§1):
-  perception_health → perception_session_start → save session_id
+  perception_health → perception_session_start({ base_url, intent }) → save session_id
 
 Playbooks by task:
   §2  Page inspection        → navigate_and_observe, verify, diff
@@ -39,6 +44,7 @@ Hard rules:
 - Never skip verify after execute_script or execute_actions.
 - LOOK at inline images from observe/verify/diff.
 - Read agent_summary.blocking before advisory.
+- After drafting UI vs a bound reference Spec: remeasure with perception_build_design_snapshot and honor spec_revision_gate (revision_required → revise drifts).
 - perception_auth_gate requires_human → STOP, ask user.
 - probe_form before unknown forms.
 - Do not use perception_code_context — use perception_resolve_* (<200ms).

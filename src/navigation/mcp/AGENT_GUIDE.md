@@ -11,11 +11,12 @@ The MCP has **no LLM**. **You are the brain.** The MCP only navigates, observes,
 ## 0. Universal loop (every task)
 
 ```text
-OBSERVE  →  REASON  →  ACT  →  VERIFY  →  (repeat or STOP)
+STRATEGIZE  →  OBSERVE  →  REASON  →  ACT  →  VERIFY  →  (repeat or STOP)
 ```
 
 | Phase | Who | What |
 |-------|-----|------|
+| **STRATEGIZE** | You read MCP | `agent_summary.engineering_strategy` from `perception_health` / `perception_session_start` / observe responses — unresolved decisions, influence level, risks, stop conditions |
 | **OBSERVE** | You call MCP | `perception_navigate_and_observe` or `perception_observe` — save `scan_id` |
 | **REASON** | You (in IDE) | Read `agent_summary.blocking`, DOM, dev insights; edit code or plan script |
 | **ACT** | You call MCP | `perception_execute_script` / `perception_execute_actions` — save `scan_id_before` |
@@ -23,10 +24,45 @@ OBSERVE  →  REASON  →  ACT  →  VERIFY  →  (repeat or STOP)
 | **STOP** | You | Task done when verify passes; or stop and ask user (auth gate, ambiguous requirements) |
 
 **Hard rules:**
-1. Never claim a UI change works without `perception_verify`.
-2. Never loop login/MFA — if `perception_auth_gate` → `requires_human: true`, ask the user.
-3. Always read `blocking` before `advisory` in dev insights.
-4. On verify failure: re-observe with screenshot, then `perception_diff`.
+1. Read `engineering_strategy` before planning implementation — especially `unresolved_decisions` and `influence_level`.
+2. Never claim a UI change works without `perception_verify`.
+3. Never loop login/MFA — if `perception_auth_gate` → `requires_human: true`, ask the user.
+4. Always read `blocking` before `advisory` in dev insights.
+5. On verify failure: re-observe with screenshot, then `perception_diff`.
+6. After a draft UI: remeasure with `perception_build_design_snapshot` and honor `spec_revision_gate` — if `revision_required`, revise before claiming done.
+
+**Closed loop (reference Spec → draft → SpecDiff gate):**
+
+```text
+Reference Spec bound
+  (inspiration seed / Figma seed / build_design_snapshot bind_as_reference=true)
+       ↓
+Host implements from Spec decisions
+       ↓
+Remeasure: perception_build_design_snapshot (default / current)
+       ↓
+spec_revision_gate → revision_required?
+       ↓ yes → revise drifts → remeasure
+       ↓ no  → perception_verify → STOP
+```
+
+| Step | Tool | What to read |
+|------|------|----------------|
+| Bind reference | `perception_inspiration_collect` / `perception_build_design_snapshot({ bind_as_reference: true })` / Figma `bind_as_reference` | `engineering_spec`, `reference_bind` |
+| Draft | Your code edits | Spec decisions by impact — not gallery tags |
+| Gate | `perception_build_design_snapshot` (default) or `perception_design_review` | `agent_summary.spec_revision_gate` |
+| Pass | `passed: true` | Then `perception_verify` |
+
+Do not treat gallery URLs or English design-review prose as the engineering source of truth — the Spec and SpecDiff are.
+
+**Influence levels** (`engineering_strategy.influence_level`):
+
+| Level | Meaning |
+|-------|---------|
+| `structural` | Resolve layout, foundation, and hierarchy decisions before substantial coding |
+| `balanced` | Gather missing evidence, then implement with verify |
+| `minimal` | Hotfix / surgical — observe, fix, verify only |
+| `maintenance` | Production posture — verify correctness; defer new design investment |
 
 ---
 
@@ -35,8 +71,9 @@ OBSERVE  →  REASON  →  ACT  →  VERIFY  →  (repeat or STOP)
 **When:** Start of any frontend work in a repo.
 
 ```text
-1. perception_health({ url: base_url })           → if unreachable, ask user to start dev server
-2. perception_session_start({ base_url })         → save session_id
+1. perception_health({ url: base_url, intent?: task_description })
+2. perception_session_start({ base_url, intent: '<engineering task>' })  → save session_id
+   → Read agent_summary.engineering_strategy before planning
 3. (optional) perception_detect_framework({ repo_root })  → stack hints
 4. (optional) perception_resolve_route({ repo_root, path }) → file hints before opening pages
 ```
@@ -45,9 +82,9 @@ Read `perception://resolver-guide` before any `perception_resolve_*` tool.
 
 **Stop when:** `session_id` obtained and health OK.
 
-**Do not:** Start multiple sessions unless you ended the previous one.
+**Do not:** Start multiple sessions unless you ended the previous one. The MCP keeps **one** Chromium window per process — inspiration/design tools reuse it. You may close that window anytime; the next browser tool recreates it.
 
-**Health response fields:** `package_version`, `server_version`, `browser_runtime_available`, `recommended_next_tool`.
+**Health response fields:** `package_version`, `server_version`, `browser_runtime_available`, `browser_manager` (alive/connected/idle/restarts), `recommended_next_tool`.
 
 ---
 
@@ -424,9 +461,13 @@ Guideline:
 
 ```text
 1. perception_inspiration_discover({ query })     → ranked candidates (fast)
-2. perception_inspiration_collect({ query })      → URLs + ephemeral vision blobs
-3. Open agent_view_url for live pages; use inspiration_blob for quick visual reference
-4. perception_inspiration_session_end({ session_id })  → delete blobs when done
+2. perception_inspiration_collect({ query, session_id? })
+     → URLs + blobs + seed engineering_spec (bound as soft reference by default)
+3. Optionally measure a live reference page:
+   perception_navigate_and_observe → perception_build_design_snapshot({ bind_as_reference: true })
+4. Implement from Spec decisions; then remeasure:
+   perception_build_design_snapshot → read spec_revision_gate
+5. perception_inspiration_session_end({ session_id })  → delete blobs when done
 ```
 
 | Field | Use |
@@ -435,6 +476,8 @@ Guideline:
 | `preview_url` | CDN / og:image when available |
 | `inspiration_blob` | Ephemeral medium JPEG (~24h TTL) |
 | `blob_session_id` | Pass to session_end when finished |
+| `engineering_spec` | Seed Spec (soft priors) — bind as reference; harden via Snapshot |
+| `spec_revision_gate` | Post-draft SpecDiff vs bound reference |
 
 **Provider notes (summary):**
 - **Dribbble** — HTTP WAF 202; headed browser + optional `DRIBBBLE_SESSION_COOKIE`

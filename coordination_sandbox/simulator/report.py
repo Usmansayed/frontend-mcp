@@ -15,6 +15,18 @@ def format_text_report(result: ScenarioResult) -> str:
     lines.append("=" * 72)
     lines.append(result.tech_lead_summary)
     lines.append("")
+    if result.engineering_strategy_initial:
+        es = result.engineering_strategy_initial
+        lines.append("ENGINEERING STRATEGY (initial)")
+        lines.append("-" * 72)
+        lines.append(f"  influence_level:  {es.get('influence_level')}")
+        lines.append(f"  engineering_phase: {es.get('engineering_phase')}")
+        lines.append(f"  summary:          {es.get('summary')}")
+        lines.append(f"  what_matters_now: {es.get('what_matters_now')}")
+        unresolved = es.get("unresolved_decisions") or []
+        if unresolved:
+            lines.append(f"  unresolved:         {unresolved[0].get('title')}")
+        lines.append("")
     lines.append(f"Project state:          {result.project_state}")
     lines.append(f"Lifecycle stage:        {result.lifecycle_stage}")
     lines.append(f"Situation policy (start): {result.initial_situation_policy_id}")

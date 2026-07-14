@@ -1,4 +1,12 @@
-"""Shared browser episode lifecycle — one Chromium per MCP process when possible."""
+"""Browser Session Manager — single source of truth for Chromium lifecycle.
+
+Professional-desktop rules:
+  - One primary browser per MCP process.
+  - Tools acquire/reuse; they never launch or kill browsers themselves.
+  - User may close the window anytime; next acquire recovers transparently.
+  - No profile-mismatch auto-isolation (that spawned extra headed windows).
+  - Isolated browsers only with PERCEPTION_ALLOW_ISOLATED_BROWSER=1 (exceptional).
+"""
 from __future__ import annotations
 
 import asyncio
@@ -29,10 +37,14 @@ class ManagedBrowser:
     console: SessionConsoleService = field(default_factory=SessionConsoleService)
     network: SessionNetworkService = field(default_factory=SessionNetworkService)
     lease_id: str = field(default_factory=lambda: f"lease_{uuid.uuid4().hex[:12]}")
+    browser_id: str = field(default_factory=lambda: f"br_{uuid.uuid4().hex[:12]}")
+    launched_at: float = field(default_factory=time.monotonic)
+    last_activity_at: float = field(default_factory=time.monotonic)
+    isolated: bool = False
 
 
 class BrowserSessionManager:
-    """Owns Chromium launch, reuse, idle shutdown, and explicit reset."""
+    """Owns Chromium launch, reuse, recovery, idle shutdown, and process exit."""
 
     _default: BrowserSessionManager | None = None
 
@@ -46,8 +58,16 @@ class BrowserSessionManager:
             else os.environ.get("PERCEPTION_BROWSER_IDLE_TIMEOUT_S", _DEFAULT_IDLE_TIMEOUT_S)
         )
         self._idle_task: asyncio.Task[None] | None = None
+        # Exceptional only (env-gated) — not used in normal MCP operation
         self._isolated_browsers: dict[str, ManagedBrowser] = {}
         self._isolated_refs: dict[str, int] = {}
+        self._logical_sessions: set[str] = set()
+        self._restart_count = 0
+        self._last_close_reason: str | None = None
+        self._last_disconnect_at: float | None = None
+        self._allow_isolated = os.environ.get(
+            "PERCEPTION_ALLOW_ISOLATED_BROWSER", ""
+        ).strip().lower() in ("1", "true", "yes")
 
     @classmethod
     def get(cls) -> BrowserSessionManager:
@@ -67,51 +87,134 @@ class BrowserSessionManager:
     def ref_count(self) -> int:
         return self._ref_count
 
+    @property
+    def restart_count(self) -> int:
+        return self._restart_count
+
+    def register_logical_session(self, session_id: str) -> None:
+        if session_id:
+            self._logical_sessions.add(session_id)
+
+    def unregister_logical_session(self, session_id: str) -> None:
+        self._logical_sessions.discard(session_id)
+
+    def diagnostics(self) -> dict[str, Any]:
+        """Snapshot for perception_health — no side effects."""
+        managed = self._managed
+        idle_seconds: float | None = None
+        browser_running = False
+        browser_connected = False
+        browser_id = None
+        owned_pages = 0
+        headless = None
+        if managed is not None:
+            browser_id = managed.browser_id
+            headless = managed.headless
+            idle_seconds = round(time.monotonic() - managed.last_activity_at, 1)
+            browser = managed.browser
+            try:
+                if hasattr(browser, "is_cdp_connected"):
+                    connected = browser.is_cdp_connected
+                    browser_connected = bool(
+                        connected() if callable(connected) else connected
+                    )
+                else:
+                    browser_connected = True
+            except Exception:
+                browser_connected = False
+            browser_running = browser_connected
+            try:
+                if hasattr(browser, "get_pages"):
+                    pages = browser.get_pages
+                    result = pages() if callable(pages) else pages
+                    if asyncio.iscoroutine(result):
+                        owned_pages = -1  # async; use tabs sync path below
+                    elif result is not None:
+                        owned_pages = len(list(result))
+                if owned_pages <= 0 and hasattr(browser, "get_tabs"):
+                    tabs = browser.get_tabs
+                    result = tabs() if callable(tabs) else tabs
+                    if not asyncio.iscoroutine(result) and result is not None:
+                        owned_pages = len(list(result))
+            except Exception:
+                owned_pages = 0
+
+        return {
+            "browser_running": browser_running and managed is not None,
+            "browser_connected": browser_connected and managed is not None,
+            "browser_id": browser_id,
+            "headless": headless,
+            "active_sessions": len(self._logical_sessions),
+            "active_leases": self._ref_count,
+            "active_tools": self._ref_count,
+            "idle_seconds": idle_seconds if managed is not None else None,
+            "owned_pages": max(0, owned_pages) if managed is not None else 0,
+            "restart_count": self._restart_count,
+            "isolated_browsers": len(self._isolated_browsers),
+            "last_close_reason": self._last_close_reason,
+            "idle_timeout_s": self._idle_timeout_s,
+            "allow_isolated": self._allow_isolated,
+        }
+
     async def acquire(
         self,
         *,
-        base_url: str,
+        base_url: str = "",
         headless: bool = True,
         viewport_width: int = 1920,
         viewport_height: int = 1080,
         isolated: bool = False,
+        logical_session_id: str | None = None,
     ) -> ManagedBrowser:
-        """Return a shared browser, launching only when none is alive."""
+        """Acquire the primary browser (launch or reuse). Never auto-spawns duplicates."""
         async with self._lock:
             self._cancel_idle_timer()
-            normalized_url = base_url.rstrip("/")
+            normalized_url = (base_url or "").rstrip("/")
 
             if isolated:
-                return await self._acquire_isolated(
-                    base_url=normalized_url,
-                    headless=headless,
-                    viewport_width=viewport_width,
-                    viewport_height=viewport_height,
+                if self._allow_isolated:
+                    logger.warning(
+                        "isolated browser requested (exceptional) — lease will be tracked separately"
+                    )
+                    managed = await self._acquire_isolated(
+                        base_url=normalized_url,
+                        headless=headless,
+                        viewport_width=viewport_width,
+                        viewport_height=viewport_height,
+                    )
+                    if logical_session_id:
+                        self._logical_sessions.add(logical_session_id)
+                    return managed
+                logger.warning(
+                    "isolated=True ignored — single browser policy "
+                    "(set PERCEPTION_ALLOW_ISOLATED_BROWSER=1 to override)"
                 )
 
-            if self._managed is not None and await self._is_alive(self._managed.browser):
-                if self._profile_incompatible(self._managed, headless, viewport_width, viewport_height):
-                    if self._ref_count > 0:
-                        logger.debug(
-                            "profile mismatch with active refs — isolated browser "
-                            "(headless=%s viewport=%sx%s)",
-                            headless,
-                            viewport_width,
-                            viewport_height,
-                        )
-                        return await self._acquire_isolated(
-                            base_url=normalized_url,
-                            headless=headless,
-                            viewport_width=viewport_width,
-                            viewport_height=viewport_height,
-                        )
-                    await self._kill_managed()
-                else:
-                    self._ref_count += 1
-                    self._touch()
-                    await self._ensure_base_url(self._managed, normalized_url)
-                    return self._managed
+            await self._reconcile_dead_primary(reason_hint="acquire")
 
+            if self._managed is not None and await self._is_alive(self._managed):
+                # Soft profile: keep existing Chromium; never spawn a second window.
+                if self._profile_differs(self._managed, headless, viewport_width, viewport_height):
+                    logger.info(
+                        "profile request differs (asked headless=%s %sx%s, have headless=%s %sx%s) "
+                        "— reusing primary browser",
+                        headless,
+                        viewport_width,
+                        viewport_height,
+                        self._managed.headless,
+                        self._managed.viewport_width,
+                        self._managed.viewport_height,
+                    )
+                self._ref_count += 1
+                self._touch()
+                await self._ensure_base_url(self._managed, normalized_url)
+                if logical_session_id:
+                    self._logical_sessions.add(logical_session_id)
+                return self._managed
+
+            recovering = self._ref_count > 0 or bool(self._logical_sessions) or (
+                self._last_close_reason in ("acquire", "ensure_alive", "user_closed", "crashed")
+            )
             managed = await self._launch(
                 base_url=normalized_url,
                 headless=headless,
@@ -119,18 +222,44 @@ class BrowserSessionManager:
                 viewport_height=viewport_height,
             )
             self._managed = managed
-            self._ref_count = 1
+            # Preserve existing leases that survived a dead-browser clear, then add this acquire.
+            self._ref_count = max(self._ref_count, 0) + 1
+            if recovering and self._last_close_reason:
+                self._restart_count += 1
+            if logical_session_id:
+                self._logical_sessions.add(logical_session_id)
             return managed
 
-    async def release(self, *, isolated: bool = False, lease_id: str | None = None) -> None:
+    async def release(
+        self,
+        *,
+        isolated: bool = False,
+        lease_id: str | None = None,
+        logical_session_id: str | None = None,
+    ) -> None:
         async with self._lock:
+            if logical_session_id:
+                self._logical_sessions.discard(logical_session_id)
+
             if isolated and lease_id:
                 refs = self._isolated_refs.get(lease_id, 0) - 1
                 if refs <= 0:
                     managed = self._isolated_browsers.pop(lease_id, None)
                     self._isolated_refs.pop(lease_id, None)
                     if managed:
-                        await self._kill_one(managed)
+                        await self._kill_one(managed, reason="isolated_release")
+                else:
+                    self._isolated_refs[lease_id] = refs
+                return
+
+            # If caller thought this was isolated but it was soft-shared, release shared.
+            if lease_id and lease_id in self._isolated_browsers:
+                refs = self._isolated_refs.get(lease_id, 0) - 1
+                if refs <= 0:
+                    managed = self._isolated_browsers.pop(lease_id, None)
+                    self._isolated_refs.pop(lease_id, None)
+                    if managed:
+                        await self._kill_one(managed, reason="isolated_release")
                 else:
                     self._isolated_refs[lease_id] = refs
                 return
@@ -139,31 +268,101 @@ class BrowserSessionManager:
             if self._ref_count == 0:
                 self._schedule_idle_shutdown()
 
+    async def note_user_closed(self) -> None:
+        """Mark primary browser gone after detecting user close / disconnect."""
+        async with self._lock:
+            await self._clear_dead_primary(reason="user_closed")
+
     async def reset(self) -> None:
         """Explicit user/agent reset — kill browser immediately."""
         async with self._lock:
             self._cancel_idle_timer()
-            await self._kill_managed()
-            for lease_id in list(self._isolated_browsers):
-                managed = self._isolated_browsers.pop(lease_id, None)
-                self._isolated_refs.pop(lease_id, None)
-                if managed:
-                    await self._kill_one(managed)
+            await self._kill_managed(reason="reset")
+            await self._kill_all_isolated(reason="reset")
 
     async def end_all(self) -> None:
-        """Process shutdown — kill all browsers immediately."""
+        """Process shutdown / session_end_all — kill all browsers immediately."""
         async with self._lock:
             self._cancel_idle_timer()
-            await self._kill_managed()
-            for lease_id in list(self._isolated_browsers):
-                managed = self._isolated_browsers.pop(lease_id, None)
-                self._isolated_refs.pop(lease_id, None)
-                if managed:
-                    await self._kill_one(managed)
+            await self._kill_managed(reason="process_shutdown")
+            await self._kill_all_isolated(reason="process_shutdown")
+            self._logical_sessions.clear()
 
     def touch(self) -> None:
         if self._managed is not None:
-            self._managed.browser._perception_last_activity = time.monotonic()  # type: ignore[attr-defined]
+            self._touch_managed(self._managed)
+
+    async def ensure_alive(
+        self,
+        *,
+        base_url: str = "",
+        headless: bool | None = None,
+        viewport_width: int | None = None,
+        viewport_height: int | None = None,
+    ) -> ManagedBrowser | None:
+        """Recover primary browser if dead without bumping lease count (rebinding)."""
+        async with self._lock:
+            self._cancel_idle_timer()
+            await self._reconcile_dead_primary(reason_hint="ensure_alive")
+            if self._managed is not None and await self._is_alive(self._managed):
+                self._touch()
+                return self._managed
+            if self._ref_count <= 0 and not self._logical_sessions:
+                return None
+            # Logical sessions still expect a browser — recover transparently.
+            hl = headless if headless is not None else True
+            vw = viewport_width if viewport_width is not None else 1920
+            vh = viewport_height if viewport_height is not None else 1080
+            if self._managed is not None:
+                hl = self._managed.headless
+                vw = self._managed.viewport_width
+                vh = self._managed.viewport_height
+                base = base_url or self._managed.base_url
+            else:
+                base = base_url
+            self._restart_count += 1
+            managed = await self._launch(
+                base_url=(base or "").rstrip("/"),
+                headless=hl,
+                viewport_width=vw,
+                viewport_height=vh,
+            )
+            self._managed = managed
+            logger.info(
+                "browser recovered (restart_count=%s reason=%s)",
+                self._restart_count,
+                self._last_close_reason or "unknown",
+            )
+            return managed
+
+    async def _reconcile_dead_primary(self, *, reason_hint: str) -> None:
+        if self._managed is None:
+            return
+        if await self._is_alive(self._managed):
+            return
+        await self._clear_dead_primary(reason=reason_hint)
+
+    async def _clear_dead_primary(self, *, reason: str) -> None:
+        managed = self._managed
+        self._managed = None
+        self._last_close_reason = reason
+        self._last_disconnect_at = time.monotonic()
+        if managed is not None:
+            logger.info("primary browser gone (%s) — clearing handle without fighting close", reason)
+            try:
+                managed.console.detach()
+            except Exception:
+                pass
+            try:
+                managed.network.detach()
+            except Exception:
+                pass
+            # Do not call kill() if already dead — user ownership.
+            try:
+                if await self._is_alive(managed):
+                    await managed.browser.kill()
+            except Exception:
+                pass
 
     async def _acquire_isolated(
         self,
@@ -179,6 +378,7 @@ class BrowserSessionManager:
             viewport_width=viewport_width,
             viewport_height=viewport_height,
         )
+        managed.isolated = True
         self._isolated_browsers[managed.lease_id] = managed
         self._isolated_refs[managed.lease_id] = 1
         return managed
@@ -218,8 +418,9 @@ class BrowserSessionManager:
             network=network,
         )
         self._touch_managed(managed)
-        logger.debug(
-            "browser launched headless=%s viewport=%sx%s base_url=%s",
+        logger.info(
+            "browser launched id=%s headless=%s viewport=%sx%s base_url=%s",
+            managed.browser_id,
             headless,
             viewport_width,
             viewport_height,
@@ -236,35 +437,67 @@ class BrowserSessionManager:
         except Exception as exc:
             logger.warning("navigate to %s failed during reuse: %s", base_url, exc)
 
-    def _profile_incompatible(
-        self,
+    @staticmethod
+    def _profile_differs(
         managed: ManagedBrowser,
         headless: bool,
         viewport_width: int,
         viewport_height: int,
     ) -> bool:
-        if managed.headless != headless:
-            return True
-        if managed.viewport_width != viewport_width or managed.viewport_height != viewport_height:
-            return True
-        return False
+        return (
+            managed.headless != headless
+            or managed.viewport_width != viewport_width
+            or managed.viewport_height != viewport_height
+        )
 
-    async def _is_alive(self, browser: Any) -> bool:
+    async def _is_alive(self, managed_or_browser: Any) -> bool:
+        browser = (
+            managed_or_browser.browser
+            if isinstance(managed_or_browser, ManagedBrowser)
+            else managed_or_browser
+        )
+        if browser is None:
+            return False
         try:
+            if hasattr(browser, "is_cdp_connected"):
+                connected = browser.is_cdp_connected
+                ok = connected() if callable(connected) else connected
+                if ok is False:
+                    return False
             if hasattr(browser, "is_running"):
-                return bool(await browser.is_running())  # type: ignore[misc]
-            return browser is not None
+                running = browser.is_running
+                if callable(running):
+                    result = running()
+                    if asyncio.iscoroutine(result):
+                        return bool(await result)
+                    return bool(result)
+                return bool(running)
+            # Probe CDP session — fails if user closed the window.
+            if hasattr(browser, "get_or_create_cdp_session"):
+                await asyncio.wait_for(
+                    browser.get_or_create_cdp_session(target_id=None, focus=False),
+                    timeout=2.0,
+                )
+            return True
         except Exception:
             return False
 
-    async def _kill_managed(self) -> None:
+    async def _kill_managed(self, *, reason: str) -> None:
         if self._managed is None:
             return
-        await self._kill_one(self._managed)
+        await self._kill_one(self._managed, reason=reason)
         self._managed = None
         self._ref_count = 0
+        self._last_close_reason = reason
 
-    async def _kill_one(self, managed: ManagedBrowser) -> None:
+    async def _kill_all_isolated(self, *, reason: str) -> None:
+        for lease_id in list(self._isolated_browsers):
+            managed = self._isolated_browsers.pop(lease_id, None)
+            self._isolated_refs.pop(lease_id, None)
+            if managed:
+                await self._kill_one(managed, reason=reason)
+
+    async def _kill_one(self, managed: ManagedBrowser, *, reason: str = "kill") -> None:
         try:
             managed.console.detach()
         except Exception:
@@ -277,6 +510,8 @@ class BrowserSessionManager:
             await managed.browser.kill()
         except Exception:
             pass
+        self._last_close_reason = reason
+        logger.debug("browser killed id=%s reason=%s", managed.browser_id, reason)
 
     def _touch(self) -> None:
         if self._managed is not None:
@@ -284,7 +519,12 @@ class BrowserSessionManager:
 
     @staticmethod
     def _touch_managed(managed: ManagedBrowser) -> None:
-        managed.browser._perception_last_activity = time.monotonic()  # type: ignore[attr-defined]
+        now = time.monotonic()
+        managed.last_activity_at = now
+        try:
+            managed.browser._perception_last_activity = now  # type: ignore[attr-defined]
+        except Exception:
+            pass
 
     def _cancel_idle_timer(self) -> None:
         if self._idle_task and not self._idle_task.done():
@@ -303,7 +543,7 @@ class BrowserSessionManager:
                 async with self._lock:
                     if self._ref_count == 0 and self._managed is not None:
                         logger.info("browser idle timeout (%.0fs) — closing", timeout)
-                        await self._kill_managed()
+                        await self._kill_managed(reason="idle_timeout")
             except asyncio.CancelledError:
                 pass
 

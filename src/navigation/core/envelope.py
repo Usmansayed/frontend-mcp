@@ -44,7 +44,7 @@ def envelope_json(**kwargs: Any) -> str:
 
 
 def agent_summary_from_observation(obs_dict: dict[str, Any]) -> dict[str, Any]:
-	"""Compact summary for host agent reasoning (no planning hints)."""
+	"""Compact summary for host agent reasoning."""
 	di = obs_dict.get('dev_insights') or {}
 	summary = di.get('summary') or {}
 	page_meta = di.get('page_meta')

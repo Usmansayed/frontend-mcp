@@ -18,6 +18,10 @@ from navigation.coordination_intelligence.planning.effort_allocator import (
     debit_budget,
     evaluate_allocation,
 )
+from navigation.coordination_intelligence.planning.engineering_strategy import (
+    compile_engineering_strategy,
+    surface_engineering_strategy,
+)
 from navigation.coordination_intelligence.planning.loop_governor import LoopGovernor
 from navigation.coordination_intelligence.planning.playbook_selector import PlaybookSelector
 from navigation.coordination_intelligence.planning.step_compiler import StepCompiler
@@ -145,6 +149,16 @@ class CoordinationIntelligenceService:
     def get_psm(self, episode_id: str) -> dict[str, Any]:
         return self._runtime.require(episode_id).to_dict()
 
+    def push_intent(self, episode_id: str, intent: str) -> None:
+        """Append host intent and refresh cluster + engineering strategy."""
+        from navigation.coordination_intelligence.models import IntentFrame, _utc_now
+
+        psm = self._runtime.require(episode_id)
+        psm.episode.intent_stack.append(IntentFrame(intent=intent, pushed_at=_utc_now()))
+        self._cluster_resolver.resolve(psm)
+        self._refresh_briefing(psm)
+        self._runtime.save(psm)
+
     @staticmethod
     def _extract_step_context(arguments: dict[str, Any]) -> dict[str, Any]:
         ctx = arguments.get("step_context")
@@ -175,9 +189,27 @@ class CoordinationIntelligenceService:
             "skip_condition": briefing.skip_condition,
             "investment": briefing.investment,
         }
+        if briefing.engineering_strategy:
+            surface_engineering_strategy(envelope, briefing.engineering_strategy)
         return envelope
 
     def _refresh_briefing(
+        self,
+        psm: ProjectSituationModel,
+        *,
+        step_context: dict[str, Any] | None = None,
+    ) -> None:
+        self._apply_briefing_refresh(psm, step_context=step_context)
+        self._compile_engineering_strategy(psm)
+
+    def _compile_engineering_strategy(self, psm: ProjectSituationModel) -> None:
+        catalog = self._bundle.situation_policy_catalog or {}
+        if not catalog:
+            return
+        strategy = compile_engineering_strategy(psm, catalog)
+        psm.briefing.engineering_strategy = strategy.to_dict()
+
+    def _apply_briefing_refresh(
         self,
         psm: ProjectSituationModel,
         *,
@@ -337,4 +369,5 @@ class CoordinationIntelligenceService:
             benefit_claim=psm.briefing.benefit_claim,
             skip_condition=psm.briefing.skip_condition,
             investment=psm.briefing.investment,
+            engineering_strategy=psm.briefing.engineering_strategy,
         )
