@@ -459,35 +459,37 @@ Guideline:
 
 **Read first:** MCP resource `perception://inspiration-guide` — per-site URLs, selectors, preview rules, anti-bot.
 
+**Mode: image-first.** Prefer CDN/preview image URLs → ephemeral compressed blobs for host vision. Do **not** open gallery sites in the shared browser unless image retrieval fails or interaction/animation inspection is required.
+
 ```text
-1. perception_inspiration_discover({ query })     → ranked candidates (fast)
-2. perception_inspiration_collect({ query, session_id? })
-     → URLs + blobs + seed engineering_spec (bound as soft reference by default)
-3. Optionally measure a live reference page:
+1. Read engineering_strategy.recommended_evidence.suggested_queries (when present)
+2. perception_inspiration_collect({ query })   → 3–5 image refs + blobs + seed Spec
+     (stops early when enough high-quality previews exist; reuses progressive query ladder)
+3. Feed inspiration_blob / preview_url to vision — not browser screenshots
+4. Optionally measure a live reference page only if needed:
    perception_navigate_and_observe → perception_build_design_snapshot({ bind_as_reference: true })
-4. Implement from Spec decisions; then remeasure:
+5. Implement from Spec decisions; then remeasure:
    perception_build_design_snapshot → read spec_revision_gate
-5. perception_inspiration_session_end({ session_id })  → delete blobs when done
+6. perception_inspiration_session_end({ session_id })  → delete blobs when done
 ```
 
 | Field | Use |
 |-------|-----|
-| `agent_view_url` | Best URL to open (live page preferred) |
-| `preview_url` | CDN / og:image when available |
-| `inspiration_blob` | Ephemeral medium JPEG (~24h TTL) |
-| `blob_session_id` | Pass to session_end when finished |
+| `preview_url` / `agent_view_url` | Prefer CDN/og:image for host vision |
+| `inspiration_blob` | Ephemeral medium JPEG (~512–1024px, ~24h TTL) |
+| `blob_session_id` | Reuse within session; pass to session_end when finished |
 | `engineering_spec` | Seed Spec (soft priors) — bind as reference; harden via Snapshot |
 | `spec_revision_gate` | Post-draft SpecDiff vs bound reference |
 
 **Provider notes (summary):**
-- **Dribbble** — HTTP WAF 202; headed browser + optional `DRIBBBLE_SESSION_COOKIE`
-- **Behance / One Page Love** — HTTP works; OPL uses `/genre/` not `?s=`
-- **Awwwards / SiteInspire / Godly / Land-book** — browser extract; Godly → `recent.design` `/i/` links
-- **Land-book** — `land-book.com` (no www); browse fallback; skip generic og-image blobs
+- **Behance / One Page Love** — HTTP-first (preferred for collect)
+- **Dribbble** — HTTP WAF 202; browser only when needed for discovery (+ optional `DRIBBBLE_SESSION_COOKIE`)
+- **Awwwards / SiteInspire / Godly** — HTTP first; browser extract as fallback
+- **Land-book** — browser required for discovery; skip generic og-image blobs
 
-**Do not:** Scrape galleries ad-hoc — use MCP tools. Permanent image download is optional (`download_images`); blobs are ephemeral.
+**Do not:** Scrape galleries ad-hoc. Dump dozens of images. Leave the shared browser on external gallery URLs. Permanent download is optional (`download_images`); blobs are ephemeral.
 
-**Stop when:** You have enough references for the task, or user confirms stop. Always end blob session when design work completes.
+**Stop when:** 3–5 high-quality references exist, or user confirms stop. Do not re-search if blobs already cover the decision. Always end blob session when design work completes.
 
 ---
 

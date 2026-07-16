@@ -276,6 +276,86 @@ async def test_diagnostics_shape(manager: BrowserSessionManager) -> None:
 
 
 @pytest.mark.asyncio
+async def test_park_and_restore_verifies_live_url(manager: BrowserSessionManager) -> None:
+    """Guest tools must restore app URL; restored=true only when live origin matches."""
+    browser = _live_browser()
+    live_url = {"value": "http://localhost:5173/dashboard"}
+
+    async def fake_read(_b: object) -> str:
+        return live_url["value"]
+
+    async def fake_nav(url: str) -> None:
+        live_url["value"] = url
+
+    browser.navigate_to = AsyncMock(side_effect=fake_nav)
+    managed = _managed(browser, base_url="http://localhost:5173")
+    managed.app_base_url = "http://localhost:5173"
+    manager._managed = managed  # noqa: SLF001
+    manager._ref_count = 1
+
+    with patch(
+        "navigation.visual_browser_intelligence.verify.verification.read_current_url",
+        side_effect=fake_read,
+    ):
+        parked = await manager.park_current_url(app_base_url="http://localhost:5173")
+        assert parked == "http://localhost:5173/dashboard"
+        assert managed.parked_url == parked
+
+        # Guest navigates away
+        await browser.navigate_to("https://dribbble.com/search")
+        assert live_url["value"] == "https://dribbble.com/search"
+
+        result = await manager.restore_parked_url()
+        assert result["attempted"] is True
+        assert result["restored"] is True
+        assert live_url["value"] == "http://localhost:5173/dashboard"
+        assert managed.parked_url == ""
+
+
+@pytest.mark.asyncio
+async def test_ensure_on_app_origin_when_stuck_on_external(
+    manager: BrowserSessionManager,
+) -> None:
+    browser = _live_browser()
+    live_url = {"value": "https://www.awwwards.com/websites/"}
+
+    async def fake_read(_b: object) -> str:
+        return live_url["value"]
+
+    async def fake_nav(url: str) -> None:
+        live_url["value"] = url
+
+    browser.navigate_to = AsyncMock(side_effect=fake_nav)
+    managed = _managed(browser, base_url="http://localhost:5173")
+    managed.app_base_url = "http://localhost:5173"
+    manager._managed = managed  # noqa: SLF001
+    manager._ref_count = 1
+
+    with patch(
+        "navigation.visual_browser_intelligence.verify.verification.read_current_url",
+        side_effect=fake_read,
+    ):
+        out = await manager.ensure_on_app_origin(
+            app_base_url="http://localhost:5173",
+            preferred_url="http://localhost:5173/app",
+        )
+        assert out["checked"] is True
+        assert out["restored"] is True
+        assert live_url["value"] == "http://localhost:5173/app"
+
+
+@pytest.mark.asyncio
+async def test_same_origin_helper() -> None:
+    from navigation.visual_browser_intelligence.browser.browser_session_manager import (
+        same_origin,
+    )
+
+    assert same_origin("http://localhost:5173/a", "http://localhost:5173/b")
+    assert not same_origin("http://localhost:5173/", "https://dribbble.com/")
+    assert not same_origin("", "http://localhost:5173/")
+
+
+@pytest.mark.asyncio
 async def test_isolated_ignored_without_env(manager: BrowserSessionManager, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("PERCEPTION_ALLOW_ISOLATED_BROWSER", raising=False)
     manager._allow_isolated = False

@@ -66,16 +66,17 @@ def to_medium_inspiration_url(url: str, *, provider_id: str = '') -> str:
 
 
 def agent_view_url(*, page_url: str, preview_url: str = '', screenshot_path: str = '') -> str:
-	"""Best URL for an agent to open — prefer live page, then image, then local screenshot."""
+	"""Best URL for an agent — prefer CDN/preview image for vision, then page, then local file."""
 	page_url = page_url.strip()
 	preview_url = normalize_image_url(preview_url)
 	screenshot_path = screenshot_path.strip()
-	if page_url.startswith('http'):
-		return page_url
+	# Image-first: host vision models reason better from original gallery images.
 	if is_http_url(preview_url):
 		return preview_url
 	if screenshot_path and Path(screenshot_path).is_file():
 		return Path(screenshot_path).resolve().as_uri()
+	if page_url.startswith('http'):
+		return page_url
 	return page_url or preview_url
 
 

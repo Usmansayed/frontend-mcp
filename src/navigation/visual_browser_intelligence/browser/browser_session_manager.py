@@ -25,6 +25,18 @@ logger = logging.getLogger(__name__)
 _DEFAULT_IDLE_TIMEOUT_S = 600.0  # 10 minutes
 
 
+def same_origin(a: str, b: str) -> bool:
+    """True when both URLs share scheme+host(+port). Empty either side → False."""
+    from urllib.parse import urlparse
+
+    if not a or not b:
+        return False
+    pa, pb = urlparse(a), urlparse(b)
+    if not pa.scheme or not pa.netloc or not pb.scheme or not pb.netloc:
+        return False
+    return (pa.scheme, pa.netloc.lower()) == (pb.scheme, pb.netloc.lower())
+
+
 @dataclass
 class ManagedBrowser:
     """Physical browser episode shared across logical MCP sessions."""
@@ -41,6 +53,9 @@ class ManagedBrowser:
     launched_at: float = field(default_factory=time.monotonic)
     last_activity_at: float = field(default_factory=time.monotonic)
     isolated: bool = False
+    # App session URL parked before guest tools (inspiration/figma) navigate away.
+    parked_url: str = ""
+    app_base_url: str = ""
 
 
 class BrowserSessionManager:
@@ -292,6 +307,136 @@ class BrowserSessionManager:
         if self._managed is not None:
             self._touch_managed(self._managed)
 
+    async def park_current_url(self, *, app_base_url: str = "") -> str:
+        """Snapshot live URL before a guest tool navigates to an external site."""
+        managed = self._managed
+        if managed is None or not await self._is_alive(managed):
+            return ""
+        if managed.parked_url:
+            # Nested guest tools — keep outermost park.
+            if app_base_url and not managed.app_base_url:
+                managed.app_base_url = app_base_url.rstrip("/")
+            return managed.parked_url
+        try:
+            from navigation.visual_browser_intelligence.verify.verification import (
+                read_current_url,
+            )
+
+            live = (await read_current_url(managed.browser) or "").strip()
+        except Exception:
+            live = ""
+        if not live:
+            live = (managed.base_url or app_base_url or "").rstrip("/")
+        managed.parked_url = live
+        if app_base_url:
+            managed.app_base_url = app_base_url.rstrip("/")
+        elif not managed.app_base_url and managed.base_url:
+            managed.app_base_url = managed.base_url.rstrip("/")
+        logger.info("parked app url=%s before guest navigation", managed.parked_url)
+        return managed.parked_url
+
+    async def restore_parked_url(self) -> dict[str, Any]:
+        """Navigate back to parked app URL; clear park. Verifies live URL origin."""
+        managed = self._managed
+        result: dict[str, Any] = {
+            "attempted": False,
+            "restored": False,
+            "parked_url": "",
+            "live_url": "",
+        }
+        if managed is None or not await self._is_alive(managed):
+            return result
+        target = (managed.parked_url or managed.app_base_url or managed.base_url or "").rstrip(
+            "/"
+        )
+        if not target:
+            return result
+        result["attempted"] = True
+        result["parked_url"] = target
+        try:
+            await managed.browser.navigate_to(target)
+            from navigation.visual_browser_intelligence.verify.verification import (
+                read_current_url,
+            )
+
+            live = (await read_current_url(managed.browser) or "").strip()
+            result["live_url"] = live
+            origin_ok = same_origin(live, target) or (
+                bool(managed.app_base_url) and same_origin(live, managed.app_base_url)
+            )
+            # Also accept exact path match after normalize
+            restored = origin_ok or live.rstrip("/") == target
+            result["restored"] = restored
+            if restored:
+                managed.base_url = managed.app_base_url or target
+            else:
+                logger.warning(
+                    "restore_parked_url origin mismatch parked=%s live=%s",
+                    target,
+                    live,
+                )
+        except Exception as exc:
+            logger.warning("restore_parked_url failed: %s", exc)
+            result["error"] = str(exc)
+        finally:
+            managed.parked_url = ""
+        return result
+
+    async def ensure_on_app_origin(
+        self,
+        *,
+        app_base_url: str,
+        preferred_url: str = "",
+    ) -> dict[str, Any]:
+        """If live URL is off the app origin, navigate back. Used by SessionStore.ensure."""
+        managed = self._managed
+        out: dict[str, Any] = {
+            "checked": False,
+            "restored": False,
+            "live_url": "",
+            "target_url": "",
+        }
+        if managed is None or not app_base_url:
+            return out
+        if not await self._is_alive(managed):
+            return out
+        out["checked"] = True
+        try:
+            from navigation.visual_browser_intelligence.verify.verification import (
+                read_current_url,
+            )
+
+            live = (await read_current_url(managed.browser) or "").strip()
+        except Exception:
+            live = ""
+        out["live_url"] = live
+        if live and same_origin(live, app_base_url):
+            return out
+        target = (preferred_url or managed.parked_url or app_base_url).rstrip("/")
+        out["target_url"] = target
+        try:
+            await managed.browser.navigate_to(target)
+            live2 = ""
+            try:
+                from navigation.visual_browser_intelligence.verify.verification import (
+                    read_current_url,
+                )
+
+                live2 = (await read_current_url(managed.browser) or "").strip()
+            except Exception:
+                pass
+            out["live_url"] = live2 or live
+            out["restored"] = same_origin(out["live_url"], app_base_url) or (
+                out["live_url"].rstrip("/") == target
+            )
+            if out["restored"]:
+                managed.base_url = app_base_url.rstrip("/")
+                managed.parked_url = ""
+        except Exception as exc:
+            out["error"] = str(exc)
+            logger.warning("ensure_on_app_origin failed: %s", exc)
+        return out
+
     async def ensure_alive(
         self,
         *,
@@ -429,11 +574,31 @@ class BrowserSessionManager:
         return managed
 
     async def _ensure_base_url(self, managed: ManagedBrowser, base_url: str) -> None:
-        if not base_url or managed.base_url == base_url:
+        if not base_url:
+            return
+        # Same origin already — do not bounce SPA to root.
+        try:
+            from navigation.visual_browser_intelligence.verify.verification import (
+                read_current_url,
+            )
+
+            live = (await read_current_url(managed.browser) or "").strip()
+        except Exception:
+            live = ""
+        if live and same_origin(live, base_url):
+            if not managed.app_base_url:
+                managed.app_base_url = base_url.rstrip("/")
+            return
+        if managed.base_url == base_url and live and same_origin(live, base_url):
             return
         try:
             await managed.browser.navigate_to(base_url)
             managed.base_url = base_url
+            # Only update app_base_url for same-origin navigations (not gallery guests).
+            if not managed.parked_url and (
+                not managed.app_base_url or same_origin(base_url, managed.app_base_url)
+            ):
+                managed.app_base_url = base_url.rstrip("/")
         except Exception as exc:
             logger.warning("navigate to %s failed during reuse: %s", base_url, exc)
 

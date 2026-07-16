@@ -177,7 +177,7 @@ async def handle_health(arguments: dict[str, Any]) -> dict[str, Any]:
         data={
             "reachable": reachable,
             "status": status,
-            "server_version": "1.2.0.dev2",
+            "server_version": "1.2.0.dev3",
             "package_version": engine_ver,
             "frontend_mcp_version": frontend_mcp_ver,
             "browser_runtime_available": browser_available,
@@ -833,13 +833,27 @@ async def handle_probe_guards(store: SessionStore, arguments: dict[str, Any]) ->
         )
 
     url_after = await _current_url(rec.browser)
+    from navigation.visual_browser_intelligence.browser.browser_session_manager import (
+        same_origin,
+    )
+
+    restored = False
+    if restore_session and url_before:
+        # Prefer origin match — SPA query/hash noise must not mark restore false.
+        restored = same_origin(url_before, url_after) or (
+            url_before.rstrip("/") == (url_after or "").rstrip("/")
+        )
+        if not restored and rec.base_url:
+            restored = same_origin(url_after, rec.base_url)
     hygiene = {
         "url_before": url_before,
         "url_after": url_after,
-        "restored": bool(restore_session and url_before and url_before.rstrip("/") == url_after.rstrip("/")),
+        "restored": restored,
     }
     if restore_session and url_before and not hygiene["restored"]:
         hygiene["degraded"] = ["session_url_changed"]
+    if restored and url_after:
+        rec.last_app_url = url_after
 
     return make_envelope(
         "perception_probe_guards",
@@ -1848,6 +1862,9 @@ async def handle_inspiration_collect(arguments: dict[str, Any]) -> dict[str, Any
         materialize_blobs=bool(arguments.get("materialize_blobs", True)),
         blob_session_id=arguments.get("blob_session_id"),
         write_per_hit_files=output_dir is not None,
+        allow_browser_screenshot=bool(arguments.get("allow_browser_screenshot", False)),
+        target_refs=int(arguments.get("target_refs") or 5),
+        min_refs=int(arguments.get("min_refs") or 3),
     )
     hits = list(manifest.get("hits") or [])
     ok = bool(hits) or bool(manifest.get("provider_summary"))
@@ -1919,8 +1936,10 @@ async def handle_inspiration_collect(arguments: dict[str, Any]) -> dict[str, Any
                 ),
                 "blocking": [] if hits else ["no_inspiration_hits"],
                 "advisory": [
-                    "Open agent_view_url for live pages; use inspiration_blob for vision.",
-                    "engineering_spec is a seed Spec (soft priors). After draft, remeasure with perception_build_design_snapshot for SpecDiff gate.",
+                    "Prefer inspiration_blob / preview_url for host vision — original gallery images, not screenshots.",
+                    "Collect stops at 3–5 high-quality refs (image_first). Reuse blob_session_id; do not re-search.",
+                    "Browser fallback only if image retrieval fails or you must inspect interaction/animation.",
+                    "engineering_spec is a seed Spec (soft priors). After draft, remeasure with perception_build_design_snapshot.",
                     "Call perception_inspiration_session_end when design work is complete.",
                 ],
             },

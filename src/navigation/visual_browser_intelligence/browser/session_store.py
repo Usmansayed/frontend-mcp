@@ -32,6 +32,8 @@ class SessionRecord:
     headless: bool = True
     viewport_width: int = 1920
     viewport_height: int = 1080
+    # Last known in-app URL (SPA path) — used when restoring after guest tools.
+    last_app_url: str = ""
     _manager_lease_id: str = ""
     _manager_isolated: bool = False
     _manager_browser_id: str = ""
@@ -98,6 +100,29 @@ class SessionStore:
                 managed.browser_id,
             )
             rec.rebind(managed)
+        # Guest tools (inspiration) use gallery base_urls — only restore for app sessions.
+        if managed is not None and rec.base_url:
+            from navigation.visual_browser_intelligence.browser.browser_session_manager import (
+                same_origin,
+            )
+
+            is_app_session = bool(managed.app_base_url) and same_origin(
+                rec.base_url, managed.app_base_url
+            )
+            if is_app_session or not managed.app_base_url:
+                preferred = rec.last_app_url or rec.base_url
+                hygiene = await self._manager.ensure_on_app_origin(
+                    app_base_url=managed.app_base_url or rec.base_url,
+                    preferred_url=preferred,
+                )
+                if hygiene.get("restored"):
+                    logger.info(
+                        "session %s restored to app origin live=%s",
+                        session_id,
+                        hygiene.get("live_url"),
+                    )
+                    if hygiene.get("live_url"):
+                        rec.last_app_url = str(hygiene["live_url"])
         self._manager.touch()
         return rec
 
@@ -124,9 +149,13 @@ class SessionStore:
         )
         self._manager.touch()
 
+        app_base = base_url.rstrip("/")
+        # Never promote guest/gallery URLs to app_base_url when an app page is parked.
+        if not managed.app_base_url and not managed.parked_url:
+            managed.app_base_url = app_base
         rec = SessionRecord(
             session_id=session_id,
-            base_url=base_url.rstrip("/"),
+            base_url=app_base,
             browser=managed.browser,
             artifacts_dir=artifacts_dir,
             console=managed.console,
@@ -134,6 +163,7 @@ class SessionStore:
             headless=managed.headless,
             viewport_width=managed.viewport_width,
             viewport_height=managed.viewport_height,
+            last_app_url=app_base,
             _manager_lease_id=managed.lease_id,
             _manager_isolated=managed.isolated,
             _manager_browser_id=managed.browser_id,

@@ -112,8 +112,8 @@ def test_og_enrich_from_detail_html() -> None:
 
 
 def test_provider_priority_order() -> None:
-	assert DEFAULT_PROVIDER_PRIORITY[0] == 'dribbble'
-	assert DEFAULT_PROVIDER_PRIORITY[2] == 'onepagelove'
+	assert DEFAULT_PROVIDER_PRIORITY[0] == 'behance'
+	assert 'onepagelove' in DEFAULT_PROVIDER_PRIORITY[:3]
 	assert DEFAULT_PROVIDER_PRIORITY[-1] == 'land-book'
 
 
@@ -276,7 +276,11 @@ def test_discover_with_mock_dribbble_stops_early() -> None:
 
 	result = asyncio.run(
 		InspirationIntelligenceService(providers=registry).discover(
-			InspirationDiscoveryRequest(query='saas dashboard inspiration', max_candidates=5)
+			InspirationDiscoveryRequest(
+				query='saas dashboard inspiration',
+				max_candidates=5,
+				provider_preference='dribbble',
+			)
 		)
 	)
 	assert result.candidates

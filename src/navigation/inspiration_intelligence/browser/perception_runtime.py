@@ -39,9 +39,11 @@ class PerceptionBrowserRuntime:
 		manager: BrowserSessionManager | None = None,
 	) -> None:
 		root = artifacts_root or Path.cwd() / 'artifacts' / 'inspiration_browser'
-		self._store = SessionStore(artifacts_root=root, manager=manager or BrowserSessionManager.get())
+		self._manager = manager or BrowserSessionManager.get()
+		self._store = SessionStore(artifacts_root=root, manager=self._manager)
 		self._session_id: str | None = None
 		self._rec: Any = None
+		self._parked = False
 
 	@property
 	def session_id(self) -> str | None:
@@ -52,6 +54,9 @@ class PerceptionBrowserRuntime:
 		return self._rec.browser if self._rec else None
 
 	async def start(self, *, base_url: str, headless: bool = False) -> str:
+		# Park the app URL before guest navigation so we never leave Chromium on galleries.
+		await self._manager.park_current_url()
+		self._parked = True
 		# Match MCP default viewport so we reuse the primary browser (no second window).
 		self._rec = await self._store.start(
 			base_url=base_url,
@@ -63,6 +68,13 @@ class PerceptionBrowserRuntime:
 		return self._session_id
 
 	async def close(self) -> None:
+		# Restore app page BEFORE releasing the lease — session metadata must match live URL.
+		if self._parked:
+			restore = await self._manager.restore_parked_url()
+			if not restore.get('restored') and restore.get('attempted'):
+				# Best-effort: still clear guest site if park target failed
+				pass
+			self._parked = False
 		if self._session_id:
 			await self._store.end(self._session_id)
 		self._session_id = None

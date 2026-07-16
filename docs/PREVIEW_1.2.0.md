@@ -2,27 +2,36 @@
 
 **Status:** Experimental preview — not stable. Do not merge validation feedback into `main` until a week of real-project testing passes.
 
-**Branch:** `coordination-sandbox`
+**Branch:** `coordination-sandbox`  
+**Current preview:** `1.2.0.dev3`
 
 ## What changed (behavioral)
 
-Every frontend task now surfaces `agent_summary.engineering_strategy` on:
+### Engineering Strategy + Spec loop
+Every frontend task surfaces `agent_summary.engineering_strategy` on health / session_start / observe. Host should read unresolved decisions and influence before coding.
 
-- `perception_health` (optional `intent`)
-- `perception_session_start` (**pass `intent`** describing the task)
-- All coordinator-enriched tool responses (observe, verify, etc.)
+### Image-first Inspiration + browser restore (`dev3`)
+- Inspiration collect: progressive queries → CDN/preview images → ephemeral blobs; stop at 3–5 refs
+- Browser screenshot only as explicit fallback
+- Park/restore app URL so gallery tools do not leave Chromium on external sites
+- Coordinator recommends `suggested_queries` when inspiration has ROI
 
-The host should read **unresolved decisions and influence level** before planning implementation — not tool lists first.
+### Cursor rules (host methodology)
+Canonical rule file (copy into consumer projects):
+
+`docs/cursor-rules/frontend-mcp.mdc` → `.cursor/rules/frontend-mcp.mdc` (`alwaysApply: true`)
+
+Forces decision-before-code when the prompt is frontend-related; skips MCP for unrelated backend/infra work.
 
 ## Install preview (PyPI)
 
 **Published:**
 
-- https://pypi.org/project/frontend-perception-engine/1.2.0.dev2/
-- https://pypi.org/project/frontend-mcp/1.2.0.dev2/
+- https://pypi.org/project/frontend-perception-engine/1.2.0.dev3/
+- https://pypi.org/project/frontend-mcp/1.2.0.dev3/
 
 ```bash
-pip install --upgrade "frontend-mcp==1.2.0.dev2" "frontend-perception-engine==1.2.0.dev2"
+pip install --upgrade "frontend-mcp==1.2.0.dev3" "frontend-perception-engine==1.2.0.dev3"
 ```
 
 Or from repo:
@@ -39,19 +48,17 @@ Verify:
 python -c "import importlib.metadata as m; print(m.version('frontend-mcp'), m.version('frontend-perception-engine'))"
 ```
 
-Expected: `1.2.0.dev2` for both.
+Expected: `1.2.0.dev3` for both.
 
-## Install preview (local wheel)
-
-From repo root on `coordination-sandbox`:
+## Install Cursor rules (consumer apps)
 
 ```powershell
-python -m build
-pip install --force-reinstall dist/frontend_perception_engine-1.2.0.dev2-*.whl
-cd packages/frontend-mcp
-python -m build
-pip install --force-reinstall dist/frontend_mcp-1.2.0.dev2-*.whl
+# From this repo, or download the raw file from GitHub
+New-Item -ItemType Directory -Force -Path .cursor\rules | Out-Null
+Copy-Item path\to\frontend-perception-engine\docs\cursor-rules\frontend-mcp.mdc .cursor\rules\frontend-mcp.mdc
 ```
+
+Or paste the same content into root `AGENTS.md` (without YAML frontmatter) for Codex / Claude Code.
 
 ## Cursor MCP config
 
@@ -97,32 +104,26 @@ Compare against:
 
 1. Cursor without MCP
 2. Stable MCP (`1.1.7`)
-3. Preview MCP (`1.2.0.dev2`)
+3. Preview MCP (`1.2.0.dev3`)
 
 ### Questions (success = influence)
 
-- Did the agent stop and read strategy before coding?
-- Did it establish design direction on greenfield work?
-- Did it spend effort on layout/hierarchy vs pixel tweaks?
-- Did it use inspiration when appropriate (and skip it on hotfixes)?
-- Was the workflow still fast?
+- Did the agent classify the prompt as frontend and follow the rules?
+- Did it stop and read strategy before coding?
+- Did inspiration stay image-first (≤3–5 refs) without polluting the browser session?
 - Did the final UI actually improve?
 
 ## Sandbox (synthetic tuning)
 
-Before or alongside real-project testing:
-
 ```bash
 python -m coordination_sandbox.run --scenarios coordination_sandbox/scenarios/default.yaml
 ```
-
-Reports go to `coordination_sandbox/output/`.
 
 ## Promotion path
 
 1. Run preview on multiple real projects for ~1 week
 2. Tune policies in sandbox if needed (stay on `coordination-sandbox`)
 3. When influence consistently improves outcomes → merge to `main`
-4. Publish stable **`1.2.0`** (drop `.dev1`)
+4. Publish stable **`1.2.0`**
 
-Do **not** publish `1.2.0.dev2` as the default `pip install frontend-mcp` target — it requires an explicit version pin.
+Do **not** publish preview as the default unpinned `pip install frontend-mcp` target — pin the version.

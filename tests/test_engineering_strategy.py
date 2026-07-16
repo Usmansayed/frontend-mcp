@@ -94,7 +94,26 @@ def test_surface_engineering_strategy_on_agent_summary() -> None:
 
 
 @pytest.mark.unit
-def test_decision_first_summary_not_tool_first(bundle: RuntimeArtifactBundle) -> None:
+def test_inspiration_recommended_evidence_has_suggested_queries(
+    bundle: RuntimeArtifactBundle,
+) -> None:
+    svc = CoordinationIntelligenceService(bundle=bundle)
+    psm = svc.episode_start(
+        session_id="sess_insp_queries",
+        intent="build a SaaS analytics dashboard",
+        lifecycle_stage="S03_design",
+        project_maturity="M1",
+    )
+    strategy = psm.briefing.engineering_strategy
+    assert strategy is not None
+    rec = strategy.get("recommended_evidence") or {}
+    if rec.get("capability_id") == "inspiration_workflow":
+        assert isinstance(rec.get("suggested_queries"), list)
+        assert len(rec["suggested_queries"]) >= 1
+        assert rec.get("mode") == "image_first"
+        assert rec.get("target_image_refs", 0) >= 3
+        assert "browser_fallback" in rec
+
     svc = CoordinationIntelligenceService(bundle=bundle)
     psm = svc.episode_start(
         session_id="sess_dash",

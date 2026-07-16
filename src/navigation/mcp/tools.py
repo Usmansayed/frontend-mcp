@@ -851,10 +851,11 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_inspiration_collect",
             description=(
-                "Inspiration Intelligence. Full URL-first collection with optional ephemeral medium JPEG "
-                "blobs for agent vision. Returns manifest hits with agent_view_url and inspiration_blob. "
-                "Uses headed browser where required (Dribbble WAF, Awwwards, Godly, Land-book). "
-                "Read perception://inspiration-guide before calling."
+                "Inspiration Intelligence. Image-first collection: progressive queries → CDN/preview URLs → "
+                "ephemeral medium JPEG blobs for host vision. Stops at 3–5 high-quality refs. "
+                "Browser screenshot is opt-in fallback only (allow_browser_screenshot). "
+                "Does not leave the shared browser on gallery sites. "
+                "Read perception://inspiration-guide and engineering_strategy.suggested_queries before calling."
             ),
             inputSchema={
                 "type": "object",
@@ -870,6 +871,21 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                         "description": "Bind inspiration seed Spec as reference for SpecDiff gate",
                     },
                     "per_provider": {"type": "integer", "default": 4},
+                    "target_refs": {
+                        "type": "integer",
+                        "default": 5,
+                        "description": "Stop after this many high-quality image refs (default 5)",
+                    },
+                    "min_refs": {
+                        "type": "integer",
+                        "default": 3,
+                        "description": "Minimum image refs before early-stop is allowed",
+                    },
+                    "allow_browser_screenshot": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "Last-resort browser screenshot when no CDN/og:image exists",
+                    },
                     "provider_ids": {
                         "type": "array",
                         "items": {"type": "string"},

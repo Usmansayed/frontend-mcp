@@ -8,10 +8,11 @@ from navigation.inspiration_intelligence.models import (
 	InspirationSearchPlan,
 )
 
+# HTTP/CDN-friendly providers first — minimize Chromium for discovery.
 DEFAULT_PROVIDER_PRIORITY: list[str] = [
-	'dribbble',
 	'behance',
 	'onepagelove',
+	'dribbble',
 	'awwwards',
 	'siteinspire',
 	'godly',

@@ -511,12 +511,15 @@ def _pick_recommended_evidence(
     if not candidates and fallback_capability:
         decision_eval = evaluate_allocation(psm, catalog, capability_id=fallback_capability)
         if decision_eval.recommend:
-            return {
+            out: dict[str, Any] = {
                 "for_decision": None,
                 "capability_id": fallback_capability,
                 "rationale": decision_eval.benefit_claim,
                 "routing_detail": decision_eval.routing_rationale,
             }
+            if fallback_capability == "inspiration_workflow":
+                out.update(_inspiration_evidence_hints(psm))
+            return out
         return None
 
     if not candidates:
@@ -524,7 +527,7 @@ def _pick_recommended_evidence(
 
     candidates.sort(key=lambda item: item[0], reverse=True)
     _, cap_id, decision, decision_eval = candidates[0]
-    return {
+    out = {
         "for_decision": decision.decision_id,
         "for_decision_title": decision.title,
         "capability_id": cap_id,
@@ -532,6 +535,40 @@ def _pick_recommended_evidence(
             f"Resolves '{decision.title}': {decision_eval.benefit_claim}"
         ),
         "routing_detail": decision_eval.routing_rationale,
+    }
+    if cap_id == "inspiration_workflow":
+        out.update(_inspiration_evidence_hints(psm))
+    return out
+
+
+def _inspiration_evidence_hints(psm: ProjectSituationModel) -> dict[str, Any]:
+    """Minimum-evidence inspiration guidance — precise queries, stop early, image-first."""
+    from navigation.inspiration_intelligence.planning.progressive_search import (
+        TARGET_IMAGE_REFS,
+        progressive_queries,
+    )
+
+    seed = "ui design"
+    for frame in reversed(psm.episode.intent_stack):
+        text = (frame.intent or "").strip()
+        if text:
+            seed = text
+            break
+    queries = progressive_queries(seed, max_queries=4)
+    attempts_map = psm.episode.retry_counters.get("capability_attempts") or {}
+    attempts = int(attempts_map.get("inspiration_workflow", 0) or 0)
+    return {
+        "suggested_queries": queries,
+        "target_image_refs": TARGET_IMAGE_REFS,
+        "stop_when": f"{TARGET_IMAGE_REFS} high-quality image refs (prefer CDN/preview blobs)",
+        "mode": "image_first",
+        "browser_fallback": "only if image retrieval fails or interaction/animation inspection is required",
+        "reuse_session_blobs": True,
+        "skip_if_already_attempted": attempts >= 1,
+        "engineering_roi": (
+            "High when design_reference is unresolved and visual hierarchy is undecided; "
+            "low after references are bound or scope is hotfix/surgical."
+        ),
     }
 
 

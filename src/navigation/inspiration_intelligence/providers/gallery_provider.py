@@ -81,14 +81,22 @@ class GallerySiteProvider:
 		candidate: InspirationCandidate,
 		*,
 		intent: InspirationIntent,
+		allow_browser_screenshot: bool = False,
 	) -> InspirationCaptureResult:
 		_ = intent
 		import asyncio
+		import os
 
 		from navigation.inspiration_intelligence.browser.fetch import enrich_preview_from_detail
 
 		degraded: list[str] = []
 		screenshot_refs: list[str] = []
+		env_allow = os.environ.get('INSPIRATION_ALLOW_BROWSER_SCREENSHOT', '').strip().lower() in {
+			'1',
+			'true',
+			'yes',
+		}
+		use_browser_ss = allow_browser_screenshot or env_allow
 
 		if candidate.preview_ref:
 			screenshot_refs.append(candidate.preview_ref)
@@ -101,7 +109,8 @@ class GallerySiteProvider:
 				screenshot_refs.append(preview)
 				degraded.append('capture_tier:og_image')
 
-		if not screenshot_refs and candidate.url:
+		# Browser screenshot is last resort — pollutes shared Chromium and is slow.
+		if not screenshot_refs and candidate.url and use_browser_ss:
 			from navigation.inspiration_intelligence.browser.policy import RateLimitTracker
 			from navigation.inspiration_intelligence.browser.session import InspirationBrowserSession
 
@@ -119,6 +128,8 @@ class GallerySiteProvider:
 						degraded.append('capture_tier:perception_screenshot')
 			except Exception as exc:
 				degraded.append(f'capture_screenshot_failed:{exc}')
+		elif not screenshot_refs and candidate.url and not use_browser_ss:
+			degraded.append('capture_browser_screenshot_skipped:image_first')
 
 		return InspirationCaptureResult(
 			candidate_id=candidate.candidate_id,

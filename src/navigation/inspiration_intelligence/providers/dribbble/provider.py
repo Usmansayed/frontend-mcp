@@ -135,10 +135,19 @@ class DribbbleProvider:
 		candidate: InspirationCandidate,
 		*,
 		intent: InspirationIntent,
+		allow_browser_screenshot: bool = False,
 	) -> InspirationCaptureResult:
 		_ = intent
+		import os
+
 		degraded: list[str] = []
 		screenshot_refs: list[str] = []
+		env_allow = os.environ.get('INSPIRATION_ALLOW_BROWSER_SCREENSHOT', '').strip().lower() in {
+			'1',
+			'true',
+			'yes',
+		}
+		use_browser_ss = allow_browser_screenshot or env_allow
 
 		if candidate.preview_ref:
 			screenshot_refs.append(candidate.preview_ref)
@@ -151,12 +160,15 @@ class DribbbleProvider:
 				screenshot_refs.append(preview)
 				degraded.append('capture_tier:og_image')
 
-		if not screenshot_refs and candidate.url and not is_fast_mode():
+		# Image-first: skip browser screenshot unless explicitly allowed.
+		if not screenshot_refs and candidate.url and use_browser_ss and not is_fast_mode():
 			img, ss_deg = await self._browser_screenshot(candidate.url)
 			degraded.extend(ss_deg)
 			if img:
 				screenshot_refs.append(img)
 				degraded.append('capture_tier:browser_screenshot')
+		elif not screenshot_refs and candidate.url and not use_browser_ss:
+			degraded.append('capture_browser_screenshot_skipped:image_first')
 
 		return InspirationCaptureResult(
 			candidate_id=candidate.candidate_id,
