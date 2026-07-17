@@ -150,9 +150,15 @@ def episode_needs_section_checklist(
     psm: ProjectSituationModel,
     strategy: dict[str, Any],
 ) -> bool:
-    scope = str(strategy.get("task_scope") or "")
+    from navigation.coordination_intelligence.planning.situation_policy import sticky_design_scope
+
+    scope = str(strategy.get("task_scope") or sticky_design_scope(psm) or "")
     influence = str(strategy.get("influence_level") or "")
-    if scope in ("hotfix", "surgical", "debug"):
+    sticky = sticky_design_scope(psm)
+    # Temporary debug/minimal collapse must not skip checklist on a design episode.
+    if sticky in ("design_driven", "redesign", "system_setup"):
+        scope = sticky
+    elif scope in ("hotfix", "surgical", "debug"):
         return False
     if influence == "minimal" and scope not in ("design_driven", "redesign", "system_setup"):
         return False
@@ -176,20 +182,22 @@ def incomplete_sections(psm: ProjectSituationModel) -> list[str]:
 def build_section_verify_assertions(section: dict[str, Any]) -> list[str]:
     """JS assertions that prove a section node is present and laid out."""
     role = str(section.get("role") or "main").lower()
-    tag = {
-        "nav": "nav",
-        "navigation": "nav",
-        "aside": "aside",
-        "sidebar": "aside",
-        "header": "header",
-        "footer": "footer",
-        "main": "main",
-        "form": "form",
-        "section": "section",
-        "content": "main",
-    }.get(role, "main")
+    # Prefer semantic tags; sidebars are often <nav> or role=complementary, not <aside>.
+    selectors = {
+        "nav": ["nav", '[role="navigation"]'],
+        "navigation": ["nav", '[role="navigation"]'],
+        "aside": ["aside", "nav", '[role="complementary"]', '[role="navigation"]'],
+        "sidebar": ["aside", "nav", '[role="complementary"]', '[role="navigation"]'],
+        "header": ["header", '[role="banner"]'],
+        "footer": ["footer", '[role="contentinfo"]'],
+        "main": ["main", '[role="main"]'],
+        "form": ["form"],
+        "section": ["section", "main"],
+        "content": ["main", '[role="main"]'],
+    }.get(role, ["main", '[role="main"]'])
+    joined = ", ".join(selectors)
     return [
-        f"() => {{ const el = document.querySelector('{tag}'); "
+        f"() => {{ const el = document.querySelector('{joined}'); "
         f"if (!el) return false; const r = el.getBoundingClientRect(); "
         f"return r.width > 8 && r.height > 8; }}",
     ]

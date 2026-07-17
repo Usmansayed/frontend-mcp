@@ -143,9 +143,14 @@ def should_skip_ship_council(
 
 def episode_needs_ship_council(psm: ProjectSituationModel, strategy: dict[str, Any]) -> bool:
     """True when claim-done must wait for Ship Council clear on this episode."""
-    scope = str(strategy.get("task_scope") or "")
+    from navigation.coordination_intelligence.planning.situation_policy import sticky_design_scope
+
+    scope = str(strategy.get("task_scope") or sticky_design_scope(psm) or "")
     influence = str(strategy.get("influence_level") or "")
-    if scope in ("hotfix", "surgical", "debug"):
+    sticky = sticky_design_scope(psm)
+    if sticky in ("design_driven", "redesign", "system_setup"):
+        scope = sticky
+    elif scope in ("hotfix", "surgical", "debug"):
         return False
     if influence == "minimal" and scope not in ("design_driven", "redesign", "system_setup"):
         return False

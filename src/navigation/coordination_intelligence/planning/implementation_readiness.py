@@ -117,15 +117,19 @@ def compile_implementation_readiness(
         if "gather_evidence" not in allowed:
             allowed = list(dict.fromkeys([*allowed, "gather_evidence"]))
 
-    if state == "blocked":
+    if state == "blocked" and not section_required:
         completion = (
             "Resolve blocking decisions with usable evidence before broad visual implementation."
         )
     elif section_required:
         remaining = ", ".join(open_sections[:5]) or "seeded sections"
         completion = (
-            "SECTION CHECKLIST incomplete. For each section: observe (look at screenshot) → "
+            "SECTION CHECKLIST incomplete. For each section: observe (look at screenshot) -> "
             f"perception_verify with section_id. Remaining: {remaining}."
+        )
+    elif state == "blocked":
+        completion = (
+            "Resolve blocking decisions with usable evidence before broad visual implementation."
         )
     elif ship_required:
         completion = (

@@ -85,6 +85,12 @@ class ClusterResolver:
         attempts = psm.episode.retry_counters.get("capability_attempts") or {}
         for rule in self._rules.get("conditional_bumps") or []:
             if self._conditional_rule_matches(rule, psm, attempts, last_cap):
+                # Design episodes keep Done-ladder obligations; do not let verify-fail
+                # reclassify the episode into debug.* clusters.
+                if rule.get("id") == "DEBUG_ON_VERIFY_FAIL":
+                    sticky = psm.episode.retry_counters.get("episode_design_scope")
+                    if sticky in ("design_driven", "redesign", "system_setup"):
+                        continue
                 for cid, points in (rule.get("bumps") or {}).items():
                     bump(cid, int(points))
 

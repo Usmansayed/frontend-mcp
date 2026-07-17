@@ -1,4 +1,4 @@
-"""Validate installed frontend-mcp 1.2.0.dev8 Ship Council + section checklist surfaces."""
+"""Validate installed frontend-mcp 1.2.0.dev9 Ship Council + section checklist surfaces."""
 from __future__ import annotations
 
 import asyncio
@@ -18,9 +18,13 @@ def _ok(msg: str) -> None:
 def main() -> int:
     engine_ver = md.version("frontend-perception-engine")
     mcp_ver = md.version("frontend-mcp")
-    if engine_ver != "1.2.0.dev8" or mcp_ver != "1.2.0.dev8":
+    if engine_ver != "1.2.0.dev9" or mcp_ver != "1.2.0.dev9":
         _fail(f"versions engine={engine_ver} mcp={mcp_ver}")
     _ok(f"versions {engine_ver}")
+
+    from navigation.coordination_intelligence.planning.situation_policy import sticky_design_scope
+
+    _ok(f"sticky_design_scope available: {sticky_design_scope.__name__}")
 
     ship_mod = __import__(
         "navigation.coordination_intelligence.planning.ship_council",

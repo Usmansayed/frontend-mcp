@@ -746,20 +746,24 @@ def compile_engineering_strategy(
             unresolved_decisions=unresolved_dicts,
         )
     )
-    if implementation_gate["state"] == "blocked":
+    if implementation_gate.get("section_checklist_required") or implementation_gate.get(
+        "ship_council_required"
+    ):
+        stops = [s for s in stops if "verify_passed_sufficient" not in s]
+
+    if implementation_gate.get("section_checklist_required"):
+        remaining = ", ".join(implementation_gate.get("incomplete_sections") or []) or "open sections"
+        host_action = (
+            "SECTION CHECKLIST: page verify is not enough. For each layout block: "
+            "observe (look at the screenshot) -> perception_verify with section_id. "
+            f"Remaining: {remaining}. Read {recommended_resource}."
+        )
+    elif implementation_gate["state"] == "blocked":
         host_action = (
             f"BLOCKED: read {recommended_resource}, then run "
             f"{implementation_gate.get('next_required_capability') or 'the required evidence capability'}. "
             "Do not begin broad visual implementation."
         )
-    elif implementation_gate.get("section_checklist_required"):
-        remaining = ", ".join(implementation_gate.get("incomplete_sections") or []) or "open sections"
-        host_action = (
-            "SECTION CHECKLIST: page verify is not enough. For each layout block: "
-            "observe (look at the screenshot) → perception_verify with section_id. "
-            f"Remaining: {remaining}. Read {recommended_resource}."
-        )
-        stops = [s for s in stops if "verify_passed_sufficient" not in s]
     elif implementation_gate.get("ship_council_required"):
         host_action = (
             "SHIP GATE: verify passed but Ship Council has not cleared. "
@@ -767,7 +771,6 @@ def compile_engineering_strategy(
             "then claim-done only when ship_gate.council_clear is true. "
             f"Read {recommended_resource}."
         )
-        stops = [s for s in stops if "verify_passed_sufficient" not in s]
 
     from navigation.coordination_intelligence.planning.ship_council import ship_council_hint
 

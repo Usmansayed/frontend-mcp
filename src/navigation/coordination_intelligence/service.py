@@ -61,10 +61,41 @@ class CoordinationIntelligenceService:
 
     def episode_start(self, **kwargs: Any) -> ProjectSituationModel:
         psm = self._runtime.create_episode(**kwargs)
+        self._seed_sticky_design_scope(psm)
         self._cluster_resolver.resolve(psm)
         self._refresh_briefing(psm)
         self._runtime.save(psm)
         return psm
+
+    @staticmethod
+    def _seed_sticky_design_scope(psm: ProjectSituationModel) -> None:
+        """Pin Done-ladder obligations before cluster resolve can bump debug.*"""
+        from navigation.coordination_intelligence.planning.situation_policy import sticky_design_scope
+
+        if sticky_design_scope(psm):
+            return
+        intent = " ".join(f.intent for f in psm.episode.intent_stack).lower()
+        if any(
+            k in intent
+            for k in (
+                "dashboard",
+                "landing",
+                "redesign",
+                "rebrand",
+                "from scratch",
+                "new saas",
+                "new product",
+                "marketing site",
+                "homepage",
+                "design system",
+            )
+        ):
+            if "redesign" in intent or "rebrand" in intent:
+                psm.episode.retry_counters["episode_design_scope"] = "redesign"
+            elif any(k in intent for k in ("design system", "token", "foundation")):
+                psm.episode.retry_counters["episode_design_scope"] = "system_setup"
+            else:
+                psm.episode.retry_counters["episode_design_scope"] = "design_driven"
 
     def apply_envelope(
         self,
@@ -159,6 +190,7 @@ class CoordinationIntelligenceService:
 
         psm = self._runtime.require(episode_id)
         psm.episode.intent_stack.append(IntentFrame(intent=intent, pushed_at=_utc_now()))
+        self._seed_sticky_design_scope(psm)
         self._cluster_resolver.resolve(psm)
         self._refresh_briefing(psm)
         self._runtime.save(psm)
