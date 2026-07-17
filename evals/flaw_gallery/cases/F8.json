@@ -1,0 +1,16 @@
+{
+  "id": "F8",
+  "path": "/eval/flaws/F8",
+  "intent": "redesign SaaS analytics dashboard with sidebar KPIs",
+  "soft_text": ["Welcome, ops", "FlawCase F8"],
+  "must_layers": ["verify"],
+  "expect": {
+    "soft_verified": false,
+    "verify_reason_substrings": ["assertion"],
+    "chrome_permanence_fail": false,
+    "overflow_fail": true,
+    "ship_must_include": [],
+    "ship_must_exclude": ["nav_not_sticky", "responsive_breakage"],
+    "claim_complete_prohibited": true
+  }
+}

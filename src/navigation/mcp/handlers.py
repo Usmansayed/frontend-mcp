@@ -340,6 +340,9 @@ async def handle_verify(
     section = None
     try:
         from navigation.engineering_knowledge.reference_binding import resolve_psm_for_session
+        from navigation.coordination_intelligence.planning.chrome_conventions import (
+            build_chrome_convention_assertions,
+        )
         from navigation.coordination_intelligence.planning.section_checklist import (
             build_section_verify_assertions,
             get_section_checklist,
@@ -367,6 +370,13 @@ async def handle_verify(
                         extra = build_section_verify_assertions(section)
                         existing = list(criteria_raw.get("js_assertions") or [])
                         criteria_raw["js_assertions"] = list(dict.fromkeys([*existing, *extra]))
+            # Objective chrome/layout conventions (sticky nav, overflow) — not Ship Council.
+            convention_extra = build_chrome_convention_assertions(psm, section=section)
+            if convention_extra:
+                existing = list(criteria_raw.get("js_assertions") or [])
+                criteria_raw["js_assertions"] = list(
+                    dict.fromkeys([*existing, *convention_extra])
+                )
     except Exception:
         psm = None
 

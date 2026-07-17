@@ -6,6 +6,10 @@
 default. Read `perception://getting-started`, then the focused resource returned by
 `engineering_strategy.recommended_resource`.
 
+**Production failure mode:** Skipping bootstrap and calling verify once at the end
+produces false-green UIs. Hosts must run health → session_start → strategy → evidence
+before large UI code. The MCP server preamble (`instructions.py`) restates this.
+
 Focused methodology:
 
 - `perception://frontend-methodology`

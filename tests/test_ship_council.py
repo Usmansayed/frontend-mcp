@@ -267,7 +267,8 @@ def test_majors_emit_even_without_verify_passed_on_psm() -> None:
         force=True,
     )
     signals = {c["signal"] for c in ship["challenges"]}
-    assert "nav_not_sticky" in signals
+    assert "nav_not_sticky" not in signals  # verify convention, not Ship Council
+    assert "responsive_breakage" not in signals
     assert "narrow_centered_main" in signals
     assert ship["ship_gate"]["council_clear"] is False
 
@@ -286,7 +287,7 @@ def test_live_shaped_snapshot_emits_layout_and_hierarchy_challenges() -> None:
         findings=[],
     )
     signals = {c["signal"] for c in ship["challenges"]}
-    assert "nav_not_sticky" in signals
+    assert "nav_not_sticky" not in signals
     assert "narrow_centered_main" in signals
     assert "equal_weight_kpi_cluster" in signals
     assert ship["ship_gate"]["council_clear"] is False

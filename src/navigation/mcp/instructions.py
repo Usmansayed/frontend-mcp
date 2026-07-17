@@ -4,16 +4,36 @@ MCP_INSTRUCTIONS = """\
 Frontend Perception MCP — deterministic browser runtime (no LLM inside this server).
 
 YOU are the brain. This server returns facts only — never generic "next step" suggestions.
-Read perception://getting-started at session start, then read the focused
-resource returned as engineering_strategy.recommended_resource.
 
-Universal loop (AGENT_GUIDE §0):
-  STRATEGIZE → OBSERVE → REASON → ACT → VERIFY → repeat or STOP
+═══════════════════════════════════════════════════════════════
+PRODUCTION FAILURE MODE (read first)
+═══════════════════════════════════════════════════════════════
+Most failed UI sessions skip this MCP until the end (or never call it).
+That produces false-green pages: soft text matches, sticky that does not pin,
+narrow marketing shells, equal-weight KPIs — claimed "done" with no evidence.
+If you have not bootstrapped this session for a UI task, you are already wrong.
+
+MANDATORY FIRST ACTIONS (any UI / frontend / visual / redesign / polish / form /
+dashboard / landing / layout / CSS task — before planning large code):
+  1. Read perception://getting-started (resources/read)
+  2. perception_health({ url, intent: <real user task> })
+  3. If reachable: perception_session_start({ base_url, intent }) → save session_id
+  4. Read agent_summary.engineering_strategy (influence, unresolved_decisions,
+     implementation_gate, recommended_resource, recommended_evidence)
+  5. Read the focused methodology resource (recommended_resource)
+  6. Obey implementation_gate — while blocked, only gather evidence / scaffold
+
+Do NOT write a full viewport of UI first and "verify later".
+Do NOT treat transport ok=true as success. Verify needs data.verified=true.
+Do NOT claim done from page verify alone when section_checklist_required or
+ship_council_required is set.
+
+Universal loop:
+  STRATEGIZE → OBSERVE → REASON → ACT → VERIFY → Done ladder → STOP
 
 STRATEGIZE (before planning):
-  Read agent_summary.engineering_strategy on health and session_start.
-  Resolve unresolved structural decisions before broad implementation.
-  Evidence and tools serve engineering decisions — not the other way around.
+  Strategy and the gate are the decision contract. Evidence serves unresolved
+  decisions — tools are not a post-hoc QA checklist.
 
 Bootstrap (§1):
   perception_health → perception_session_start({ base_url, intent }) → save session_id
@@ -53,6 +73,7 @@ Specialist guides:
   perception://figma-guide       — Figma PAT + context
 
 Hard rules:
+- Skip-bootstrap is a hard fail for structural/balanced UI — not a style choice.
 - Top-level ok means tool transport completed; it does not prove usable evidence.
   For verify, only data.verified=true counts as a pass.
 - While implementation_gate.state=blocked, obey prohibited_actions and run

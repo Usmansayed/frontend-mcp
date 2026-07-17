@@ -55,7 +55,10 @@ async def read_current_url(browser_session: Any) -> str:
 
 async def evaluate_js(browser_session: Any, expression: str) -> Any:
     expr = expression.strip()
-    if not expr.startswith("(") and not expr.startswith("function"):
+    # Arrow / function expressions must be invoked — bare `() => ...` is truthy as a function object.
+    if expr.startswith("() =>") or expr.startswith("()=>") or expr.startswith("function"):
+        expr = f"({expr})()"
+    elif not expr.startswith("(") and not expr.startswith("function"):
         expr = f"(() => {{ return ({expr}); }})()"
 
     try:

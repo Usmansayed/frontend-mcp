@@ -180,7 +180,11 @@ def incomplete_sections(psm: ProjectSituationModel) -> list[str]:
 
 
 def build_section_verify_assertions(section: dict[str, Any]) -> list[str]:
-    """JS assertions that prove a section node is present and laid out."""
+    """JS assertions that prove a section node is present and laid out.
+
+    Nav/aside/sidebar also get chrome permanence (sticky|fixed) via
+    chrome_conventions — objective engineering, not Ship Council taste.
+    """
     role = str(section.get("role") or "main").lower()
     # Prefer semantic tags; sidebars are often <nav> or role=complementary, not <aside>.
     selectors = {
@@ -196,8 +200,16 @@ def build_section_verify_assertions(section: dict[str, Any]) -> list[str]:
         "content": ["main", '[role="main"]'],
     }.get(role, ["main", '[role="main"]'])
     joined = ", ".join(selectors)
-    return [
+    asserts = [
         f"() => {{ const el = document.querySelector('{joined}'); "
         f"if (!el) return false; const r = el.getBoundingClientRect(); "
         f"return r.width > 8 && r.height > 8; }}",
     ]
+    from navigation.coordination_intelligence.planning.chrome_conventions import (
+        build_chrome_permanence_assertion,
+        section_needs_chrome_permanence,
+    )
+
+    if section_needs_chrome_permanence(section):
+        asserts.append(build_chrome_permanence_assertion())
+    return asserts

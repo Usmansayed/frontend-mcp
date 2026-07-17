@@ -133,6 +133,16 @@ async def handle_build_design_snapshot(
 			note='Bound from perception_build_design_snapshot(bind_as_reference/role=reference)',
 		)
 		if psm is not None:
+			psm.artifacts.snapshot_id = snap_rec.snapshot_id if snap_rec else psm.artifacts.snapshot_id
+			try:
+				from navigation.coordination_intelligence.planning.section_checklist import (
+					seed_section_checklist_from_regions,
+				)
+
+				regions = list((snapshot.layout.regions if snapshot.layout else None) or [])
+				seed_section_checklist_from_regions(psm, regions)
+			except Exception:
+				pass
 			try:
 				from navigation.coordination_intelligence.integration.bridge import get_coordinator_bridge
 

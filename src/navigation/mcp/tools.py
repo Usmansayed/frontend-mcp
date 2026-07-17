@@ -15,9 +15,9 @@ def perception_tools(mcp_types: Any) -> list[Any]:
             name="perception_health",
             description=(
                 "Does: checks runtime reachability and bootstraps Engineering Strategy from intent. "
-                "Use when: beginning any frontend task, before planning structural work. "
+                "Use when: FIRST call of any UI/frontend/visual task — before planning or coding a full viewport. "
                 "Returns: reachability plus recommended_resource and implementation_gate. "
-                "Next: read the recommended resource; if unreachable, only scaffold/start the runtime."
+                "Next: read recommended_resource; session_start if reachable; never skip to end-of-task verify."
             ),
             inputSchema={
                 "type": "object",
@@ -37,9 +37,9 @@ def perception_tools(mcp_types: Any) -> list[Any]:
             name="perception_session_start",
             description=(
                 "Does: starts the owned browser session and creates the task's coordinator episode. "
-                "Use when: health is reachable and browser evidence is needed. "
+                "Use when: immediately after health when reachable — required before observe/verify evidence. "
                 "Returns: reusable session_id, Engineering Strategy, required resource, and readiness gate. "
-                "Next: follow next_required_capability; do not implement broadly while blocked."
+                "Next: obey implementation_gate; gather minimum evidence; do not draft full UI while blocked."
             ),
             inputSchema={
                 "type": "object",
@@ -247,11 +247,9 @@ def perception_tools(mcp_types: Any) -> list[Any]:
             name="perception_verify",
             description=(
                 "Does: asserts URL, text, and JavaScript success criteria and captures failure evidence. "
-                "Use when: after every UI action or implementation checkpoint; for section checklist "
-                "pass section_id so each layout block is verified. "
-                "Returns: pass/fail (data.verified — not just ok), optional section_id/checklist, "
-                "blocking findings, and an annotated failure scan when needed. "
-                "Next: fix and re-run on failure; claim-done only after Done ladder (verify + sections + ship)."
+                "Use when: after every UI action; never as a substitute for skipped bootstrap. "
+                "Returns: data.verified (transport ok is not a pass), checklist, blocking findings. "
+                "Next: fix on fail; claim-done only after Done ladder (verify + sections + ship when required)."
             ),
             inputSchema={
                 "type": "object",

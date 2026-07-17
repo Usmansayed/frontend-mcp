@@ -147,6 +147,8 @@ def _print_success(*, package: str, with_browser: bool) -> None:
 	sys.stdout.write('    # or: frontend-perception-mcp\n\n')
 	sys.stdout.write('  Or with uvx (always latest from PyPI):\n')
 	sys.stdout.write('    uvx --from frontend-mcp frontend-mcp\n\n')
+	sys.stdout.write('  Install agent rules (in your app folder):\n')
+	sys.stdout.write('    frontend-mcp install rules\n\n')
 	sys.stdout.write('  Cursor MCP config:\n')
 	sys.stdout.write('    {\n')
 	sys.stdout.write('      "mcpServers": {\n')

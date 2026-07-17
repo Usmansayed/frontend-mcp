@@ -1,15 +1,15 @@
 [project]
 name = "frontend-mcp"
-version = "1.2.0.dev9"
+version = "1.2.0.dev10"
 description = "Frontend Perception MCP — deterministic browser runtime for coding agents (alias package)."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-  "frontend-perception-engine==1.2.0.dev9",
+  "frontend-perception-engine==1.2.0.dev10",
 ]
 
 [project.scripts]
-frontend-mcp = "navigation.mcp.server:main"
+frontend-mcp = "navigation.cli.main:main"
 frontend-mcp-install = "navigation.cli.install:main"
 
 [build-system]

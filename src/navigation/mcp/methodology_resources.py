@@ -30,14 +30,47 @@ and `implementation_gate`; if evidence is failed or provisional, follow the retu
 METHODOLOGY_RESOURCES: dict[str, tuple[str, str]] = {
     "perception://getting-started": (
         "Getting Started",
-        _guide(
-            "Getting Started",
-            "At the beginning of a frontend task.",
-            "Task scope, influence level, and the first unresolved engineering decision.",
-            "Call health with the real intent, then session_start when the runtime is available. Read the returned recommended resource and implementation gate.",
-            "When blocked, only inspect, gather evidence, or scaffold/start the runtime. Claim-done follows the Done ladder in perception://verification-guide.",
-            "The coordinator identifies the correct workflow resource and required capability.",
-        ),
+        """# Getting Started
+
+## Production rule
+If this is a UI / frontend / visual / redesign / polish / form / dashboard / landing /
+layout / CSS task and you have not called `perception_health` (and
+`perception_session_start` when reachable) with the **real user intent**, stop coding
+and bootstrap now. End-of-task MCP is how false-green UIs ship.
+
+## Use when
+At the beginning of every applicable frontend task — before planning large UI code.
+
+## Decisions to resolve
+Task scope, influence level, implementation_gate, and the first unresolved
+engineering decision.
+
+## Minimum evidence (mandatory order)
+1. `resources/read` → `perception://getting-started` (this page)
+2. `perception_health({ url, intent })` with the real task wording
+3. If reachable: `perception_session_start({ base_url, intent })` → save `session_id`
+4. Read `agent_summary.engineering_strategy` (influence, unresolved_decisions,
+   recommended_resource, recommended_evidence, implementation_gate)
+5. `resources/read` the `recommended_resource`
+6. Gather only evidence that changes an unresolved decision; then implement
+7. After ACT: Done ladder in `perception://verification-guide`
+   (`data.verified=true` → section checklist if required → Ship Council if required)
+
+## Failure and fallback
+A completed tool call is not automatically usable evidence. Read `coordination_evidence`
+and `implementation_gate`; if evidence is failed or provisional, follow the returned
+`next_required_capability` instead of inventing the unresolved decision.
+Transport `ok=true` with `data.verified=false` is a verify **fail**.
+
+## Implementation boundary
+When blocked, only inspect, gather evidence, or scaffold/start the runtime.
+Do not draft a full viewport while the structural gate is blocked.
+Claim-done follows the Done ladder — never from a single soft page verify.
+
+## Done condition
+The coordinator identifies the correct workflow resource and required capability;
+you have obeyed the gate; claim-done only after the Done ladder clears.
+""",
     ),
     "perception://frontend-methodology": (
         "Frontend Methodology",
@@ -111,9 +144,9 @@ METHODOLOGY_RESOURCES: dict[str, tuple[str, str]] = {
         _guide(
             "Ship Council",
             "After section checklist is complete on structural/balanced UI — before claiming done.",
-            "Top 3–5 ROI-ranked ship decisions to challenge; dispositions revised, accepted, or ask_user.",
+            "Top 3–5 ROI-ranked ship decisions (hierarchy, composition, theme coupling, Spec drift) — not sticky/overflow conventions (those fail in verify).",
             "perception_design_review(mode=\"ship\") with snapshot; optional dispositions array.",
-            "Agent revises convention gaps; accept requires concrete engineering rationale; ask_user only for brand/subjective conflicts.",
+            "Agent revises high-ROI design challenges; accept requires concrete engineering rationale; ask_user only for brand/subjective conflicts.",
             "Section checklist complete, ship_gate.council_clear is true, and ship_summary reflects dispositions.",
         ),
     ),
@@ -124,8 +157,8 @@ METHODOLOGY_RESOURCES: dict[str, tuple[str, str]] = {
             "After an implementation action or when the strategy enters verification.",
             "User-visible success criteria, each layout section, responsive behavior, blocking runtime issues, and Spec drift.",
             "Require data.verified=true (transport ok is not a pass). When section_checklist_required: observe→look→perception_verify(section_id) for each block. Then remeasure Spec and honor spec_revision_gate.",
-            "Page verify alone is not claim-done for design_driven/redesign/structural drafts. Complete section checklist, then perception_design_review(mode=\"ship\") when ship_council_required.",
-            "data.verified=true, blocking empty, section_checklist complete when required, ship_gate.council_clear when required, Spec revisions cleared.",
+            "On design_driven/redesign with a snapshot, verify also enforces objective chrome conventions (sticky/fixed primary nav/sidebar, no horizontal overflow). Page verify alone is not claim-done — complete section checklist, then perception_design_review(mode=\"ship\") when ship_council_required.",
+            "data.verified=true (including chrome conventions), blocking empty, section_checklist complete when required, ship_gate.council_clear when required, Spec revisions cleared.",
         ),
     ),
     "perception://browser-lifecycle": (

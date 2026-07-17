@@ -32,6 +32,7 @@ INFLUENCE_WEIGHT = {
 }
 
 SIGNAL_TEMPLATES: dict[str, dict[str, Any]] = {
+    # Legacy ledger keys — sticky/overflow are Verify chrome_conventions now.
     "nav_not_sticky": {
         "decision": "Navigation",
         "question": "Sidebar scrolls with content. Is this intentional for a productivity dashboard?",
@@ -392,18 +393,7 @@ def _collect_snapshot_signals(snapshot: Any) -> list[dict[str, Any]]:
     signals: list[dict[str, Any]] = []
     viewport_w = _viewport_width(layout)
 
-    overflow = list(layout.get("overflow_issues") or [])
-    visual = layout.get("visual_insights") or {}
-    blocking = list(visual.get("blocking") or [])
-    if overflow or blocking or any(
-        i.get("kind") == "horizontal_overflow" for i in (visual.get("issues") or [])
-    ):
-        signals.append({
-            "signal": "responsive_breakage",
-            "severity": "blocking",
-            "specdiff_magnitude": 0.95,
-            "evidence_refs": ["snapshot:layout.overflow"],
-        })
+    # Overflow + sticky chrome are Verify conventions (chrome_conventions), not Ship Council.
 
     token_ratio = colors.get("token_backed_ratio")
     if token_ratio is None:
@@ -427,6 +417,7 @@ def _collect_snapshot_signals(snapshot: Any) -> list[dict[str, Any]]:
         })
 
     boxes = list(layout.get("interactive_boxes") or [])
+    visual = layout.get("visual_insights") or {}
     if not boxes:
         boxes = list(visual.get("element_boxes") or [])
     if "equal_weight_kpi_cluster" not in {s["signal"] for s in signals} and _equal_weight_from_boxes(boxes):
@@ -438,29 +429,51 @@ def _collect_snapshot_signals(snapshot: Any) -> list[dict[str, Any]]:
         })
 
     regions = list(layout.get("regions") or [])
-    nav_roles = {"nav", "sidebar", "aside", "navigation"}
-    nav_regions = [
+    # Equal-weight KPI/card rows from section regions when hierarchy/boxes are thin.
+    section_regions = [
         r for r in regions
-        if str(r.get("role") or r.get("label") or "").lower() in nav_roles
-        or "sidebar" in " ".join(r.get("classes") or []).lower()
+        if str(r.get("role") or "").lower() == "section"
     ]
-    if nav_regions and not any(
-        _region_position(r) in {"fixed", "sticky"} for r in nav_regions
-    ):
-        signals.append({
-            "signal": "nav_not_sticky",
-            "severity": "major",
-            "specdiff_magnitude": 0.7,
-            "evidence_refs": ["snapshot:layout.regions"],
-        })
+    if "equal_weight_kpi_cluster" not in {s["signal"] for s in signals} and len(section_regions) >= 3:
+        widths = []
+        for r in section_regions:
+            rect = r.get("rect") if isinstance(r.get("rect"), dict) else {}
+            w = float(rect.get("w") or rect.get("width") or 0)
+            if w >= 80:
+                widths.append(w)
+        if len(widths) >= 3:
+            mean = sum(widths) / len(widths)
+            if mean > 0 and all(abs(w - mean) / mean <= 0.12 for w in widths):
+                signals.append({
+                    "signal": "equal_weight_kpi_cluster",
+                    "severity": "major",
+                    "specdiff_magnitude": 0.76,
+                    "evidence_refs": ["snapshot:layout.regions.section"],
+                })
 
     for region in regions:
         role = str(region.get("role") or region.get("label") or "").lower()
         if role not in {"main", "content", "settings"}:
             continue
         width = _rect_width_ratio(region, viewport_w)
+        if width is None:
+            rect = region.get("rect") if isinstance(region.get("rect"), dict) else {}
+            rw = float(rect.get("w") or rect.get("width") or 0)
+            if viewport_w > 0 and rw > 0:
+                width = rw / float(viewport_w)
         centered = _region_is_centered(region, viewport_w)
-        if centered and width is not None and width <= 0.72:
+        if region.get("centered") is True:
+            centered = True
+        if region.get("layout_pattern") == "marketing_centered":
+            centered = True
+            if width is None:
+                width = float(region.get("width_ratio") or 0)
+        # Marketing-width main beside a sidebar often fails viewport-centering
+        # (aside offsets margins) — still a high-ROI layout challenge.
+        # Left-aligned compressed columns (~62vw) are the same failure mode.
+        narrow = width is not None and width <= 0.72
+        clearly_narrow = width is not None and width <= 0.65
+        if (centered and narrow) or clearly_narrow:
             signals.append({
                 "signal": "narrow_centered_main",
                 "severity": "major",
@@ -506,7 +519,8 @@ def _collect_specdiff_signals(engineering_delta: dict[str, Any] | None) -> list[
         elif "layout" in kind or "width" in detail.lower() or "center" in detail.lower():
             signal = "narrow_centered_main"
         elif "nav" in kind or "sidebar" in detail.lower():
-            signal = "nav_not_sticky"
+            # Sticky chrome is verify's job — SpecDiff nav/sidebar maps to layout shell.
+            signal = "narrow_centered_main"
         elif "color" in kind or "theme" in kind or "token" in detail.lower():
             signal = "theme_not_coupled"
         signals.append({
@@ -532,13 +546,14 @@ def _collect_finding_signals(findings: list[Any]) -> list[dict[str, Any]]:
             continue
         category = str(f.get("category") or "").lower()
         fid = str(f.get("id") or "")
+        # Skip overflow / sticky — those are Verify conventions.
+        if category == "layout" or "overflow" in fid:
+            continue
+        if category == "navigation":
+            continue
         signal = "dashboard_composition"
         if category == "hierarchy" or "hierarchy" in fid:
             signal = "equal_weight_kpi_cluster" if "dense" not in fid else "hierarchy_dense_ui"
-        elif category == "layout" or "overflow" in fid:
-            signal = "responsive_breakage"
-        elif category == "navigation":
-            signal = "nav_not_sticky"
         elif category == "color":
             signal = "theme_not_coupled"
         elif category == "typography" and severity == "major":

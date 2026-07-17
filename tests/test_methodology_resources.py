@@ -51,6 +51,15 @@ def test_focused_methodology_resources_list_and_read() -> None:
 
 
 @pytest.mark.unit
+def test_getting_started_leads_with_production_bootstrap() -> None:
+    _, text, _ = read_resource("perception://getting-started")
+    assert "Production rule" in text
+    assert "perception_health" in text
+    assert "Mandatory" in text or "mandatory" in text.lower()
+    assert "false-green" in text.lower() or "End-of-task MCP" in text
+
+
+@pytest.mark.unit
 def test_high_impact_tools_have_compact_methodology_contracts() -> None:
     tools = {tool.name: tool for tool in perception_tools(_Types)}
     high_impact = {
