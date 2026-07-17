@@ -1,4 +1,4 @@
-"""Validate installed frontend-mcp 1.2.0.dev6 Ship Council surfaces."""
+"""Validate installed frontend-mcp 1.2.0.dev7 Ship Council surfaces."""
 from __future__ import annotations
 
 import asyncio
@@ -18,7 +18,7 @@ def _ok(msg: str) -> None:
 def main() -> int:
     engine_ver = md.version("frontend-perception-engine")
     mcp_ver = md.version("frontend-mcp")
-    if engine_ver != "1.2.0.dev6" or mcp_ver != "1.2.0.dev6":
+    if engine_ver != "1.2.0.dev7" or mcp_ver != "1.2.0.dev7":
         _fail(f"versions engine={engine_ver} mcp={mcp_ver}")
     _ok(f"versions {engine_ver}")
 
