@@ -72,6 +72,11 @@ class EngineeringStrategy:
     playbook_id: str | None = None
     active_step_id: str | None = None
     engineering_spec: dict[str, Any] | None = None
+    implementation_gate: dict[str, Any] | None = None
+    evidence_plan: list[dict[str, Any]] = field(default_factory=list)
+    recommended_resource: str | None = None
+    required_resources: list[str] = field(default_factory=list)
+    ship_council_hint: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -97,6 +102,15 @@ class EngineeringStrategy:
             "playbook_id": self.playbook_id,
             "active_step_id": self.active_step_id,
             "engineering_spec": dict(self.engineering_spec) if self.engineering_spec else None,
+            "implementation_gate": (
+                dict(self.implementation_gate) if self.implementation_gate else None
+            ),
+            "evidence_plan": list(self.evidence_plan),
+            "recommended_resource": self.recommended_resource,
+            "required_resources": list(self.required_resources),
+            "ship_council_hint": (
+                dict(self.ship_council_hint) if self.ship_council_hint else None
+            ),
         }
 
 
@@ -693,6 +707,37 @@ def compile_engineering_strategy(
             for d in top
         ] + [p for p in priorities if not p.startswith("Resolve:")]
 
+    from navigation.coordination_intelligence.planning.implementation_readiness import (
+        compile_implementation_readiness,
+    )
+
+    unresolved_dicts = [d.to_dict() for d in unresolved]
+    implementation_gate, evidence_plan, recommended_resource = (
+        compile_implementation_readiness(
+            psm,
+            influence_level=influence_level,
+            task_scope=disc.get("task_scope", "feature_incremental"),
+            unresolved_decisions=unresolved_dicts,
+        )
+    )
+    if implementation_gate["state"] == "blocked":
+        host_action = (
+            f"BLOCKED: read {recommended_resource}, then run "
+            f"{implementation_gate.get('next_required_capability') or 'the required evidence capability'}. "
+            "Do not begin broad visual implementation."
+        )
+
+    from navigation.coordination_intelligence.planning.ship_council import ship_council_hint
+
+    ship_hint = ship_council_hint(
+        {
+            "influence_level": influence_level,
+            "task_scope": disc.get("task_scope", "feature_incremental"),
+            "implementation_gate": implementation_gate,
+        },
+        psm,
+    )
+
     return EngineeringStrategy(
         influence_level=influence_level,
         influence_score=influence_score,
@@ -704,7 +749,7 @@ def compile_engineering_strategy(
         summary=summary,
         host_action=host_action,
         what_matters_now=priorities,
-        unresolved_decisions=[d.to_dict() for d in unresolved],
+        unresolved_decisions=unresolved_dicts,
         risks_if_proceeding=risks,
         defer_until_later=defer,
         effort_guidance=_effort_guidance(influence_level, disc, investment),
@@ -719,6 +764,15 @@ def compile_engineering_strategy(
             "unresolved_by_impact": spec_dict.get("unresolved_by_impact"),
             "source_kind": spec_dict.get("source_kind"),
         },
+        implementation_gate=implementation_gate,
+        evidence_plan=evidence_plan,
+        recommended_resource=recommended_resource,
+        required_resources=(
+            [recommended_resource]
+            if implementation_gate["state"] in ("blocked", "provisional")
+            else []
+        ),
+        ship_council_hint=ship_hint,
     )
 
 
@@ -766,6 +820,9 @@ def compile_bootstrap_strategy(
         psm.situation.situation_class = "functional_bug"
     elif any(k in intent.lower() for k in ("landing", "dashboard", "redesign", "marketing")):
         psm.situation.situation_class = "inspiration_needed"
+        if any(k in intent.lower() for k in ("build", "new", "from scratch", "greenfield")):
+            psm.situation.project_maturity = "M1"
+            psm.situation.lifecycle_stage = "S03_design"
 
     strategy = compile_engineering_strategy(psm, catalog)
     out = strategy.to_dict()
@@ -785,4 +842,16 @@ def surface_engineering_strategy(envelope: dict[str, Any], strategy: dict[str, A
     headline = strategy.get("summary")
     if headline:
         agent_summary["coordinator_headline"] = headline
+    gate = strategy.get("implementation_gate")
+    if gate:
+        agent_summary["implementation_gate"] = gate
+        agent_summary["required_resource"] = gate.get("required_resource")
+        if gate.get("state") == "blocked":
+            blocking = agent_summary.setdefault("blocking", [])
+            directive = (
+                "implementation_blocked: resolve "
+                + ", ".join(gate.get("blocking_decisions") or ["structural decisions"])
+            )
+            if directive not in blocking:
+                blocking.append(directive)
     return envelope

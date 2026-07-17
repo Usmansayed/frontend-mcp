@@ -71,6 +71,88 @@ def _posture_for_capability(
     return out
 
 
+def _capability_outcome(
+    capability_id: str,
+    envelope: dict[str, Any],
+) -> dict[str, Any]:
+    """Separate evidence quality from envelope transport success."""
+    data = envelope.get("data") or {}
+    explicit = data.get("coordination_evidence")
+    if isinstance(explicit, dict):
+        outcome = dict(explicit)
+        status = str(outcome.get("outcome") or "noop")
+        outcome["status"] = {
+            "success": "succeeded",
+            "degraded": "provisional",
+            "failure": "failed",
+            "noop": "noop",
+        }.get(status, status)
+    else:
+        summary = data.get("agent_summary") or {}
+        degraded = list(envelope.get("degraded") or []) + list(summary.get("degraded") or [])
+        blocking = list(summary.get("blocking") or [])
+        tool = str(envelope.get("tool") or "")
+        quality: dict[str, Any] = {}
+        noop_tools = {
+            "perception_inspiration_session_end",
+            "perception_resource_session_end",
+            "perception_figma_status",
+            "perception_figma_connect",
+        }
+        if tool in noop_tools and envelope.get("ok"):
+            status = "noop"
+        elif not envelope.get("ok"):
+            status = "failed"
+        elif tool == "perception_inspiration_collect":
+            collection = data.get("inspiration_collection") or {}
+            hits = list(collection.get("hits") or [])
+            usable_refs = sum(
+                1 for hit in hits
+                if isinstance(hit, dict) and bool(hit.get("inspiration_blob"))
+            )
+            quality = {
+                "usable_image_refs": usable_refs,
+                "total_hits": len(hits),
+                "minimum_required": 3,
+            }
+            status = "succeeded" if usable_refs >= 3 and not blocking else "provisional"
+        elif tool == "perception_design_review" and (data.get("mode") or "") == "ship":
+            ship_gate = data.get("ship_gate") or {}
+            council_clear = bool(ship_gate.get("council_clear"))
+            quality = {
+                "mode": "ship",
+                "challenges_emitted": len(data.get("challenges") or []),
+                "open_high_roi": int(ship_gate.get("open_high_roi") or 0),
+                "council_clear": council_clear,
+            }
+            status = "succeeded" if council_clear else "provisional"
+        elif tool == "perception_design_review" and data.get("passed") is False:
+            status = "provisional"
+        elif tool == "perception_select_component_foundation":
+            chosen = (data.get("foundation_selection") or {}).get("chosen")
+            quality = {"chosen": bool(chosen)}
+            status = "succeeded" if chosen and not blocking else "provisional"
+        elif degraded or blocking:
+            status = "provisional"
+        else:
+            status = "succeeded"
+        outcome = {
+            "status": status,
+            "advancement_eligible": status == "succeeded",
+            "quality": quality,
+            "artifact_refs": {},
+        }
+
+    outcome.setdefault("capability_id", capability_id)
+    outcome.setdefault("advancement_eligible", outcome.get("status") == "succeeded")
+    outcome.setdefault("quality", {})
+    outcome.setdefault("artifact_refs", {})
+    outcome.setdefault("degraded_reasons", list(envelope.get("degraded") or []))
+    outcome.setdefault("failure_reason", str(envelope.get("error") or "") or None)
+    outcome["updated_at"] = _utc_now()
+    return outcome
+
+
 def apply_envelope(
     psm: ProjectSituationModel,
     envelope: dict[str, Any],
@@ -85,6 +167,8 @@ def apply_envelope(
 
     attempts = psm.episode.retry_counters.setdefault("capability_attempts", {})
     attempts[cap] = int(attempts.get(cap, 0)) + 1
+    capability_outcome = _capability_outcome(cap, envelope)
+    psm.evidence.capability_ledger[cap] = capability_outcome
 
     if envelope.get("session_id"):
         psm.artifacts.session_id = envelope["session_id"]
@@ -127,12 +211,20 @@ def apply_envelope(
             g for g in psm.evidence.unknown_gaps if g != "form_rules"
         ]
 
-    postures = _posture_for_capability(bundle, cap, envelope)
+    postures = (
+        {}
+        if capability_outcome.get("status") in ("failed", "noop")
+        else _posture_for_capability(bundle, cap, envelope)
+    )
+    if cap == "component_select" and capability_outcome.get("status") == "succeeded":
+        postures["design_system"] = "known"
     now = _utc_now()
     for domain, posture in postures.items():
         if domain not in psm.evidence.domains:
             continue
         state = psm.evidence.domains[domain]
+        if capability_outcome.get("status") == "provisional" and posture in ("known", "verified"):
+            posture = "partial"
         if psm.evidence.degraded and cap in VERIFY_CAPABILITIES and posture == "verified":
             posture = "partial"
         state.posture = posture

@@ -14,8 +14,10 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_health",
             description=(
-                "Playbook: session bootstrap (AGENT_GUIDE §1). Check dev server reachable before any work. "
-                "Returns reachable + HTTP status. If false, ask user to start the app."
+                "Does: checks runtime reachability and bootstraps Engineering Strategy from intent. "
+                "Use when: beginning any frontend task, before planning structural work. "
+                "Returns: reachability plus recommended_resource and implementation_gate. "
+                "Next: read the recommended resource; if unreachable, only scaffold/start the runtime."
             ),
             inputSchema={
                 "type": "object",
@@ -34,9 +36,10 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_session_start",
             description=(
-                "Playbook: session bootstrap (AGENT_GUIDE §1). Start browser session. "
-                "Call once per task; reuse session_id for all following tools. "
-                "Pass intent describing the engineering task for Engineering Strategy."
+                "Does: starts the owned browser session and creates the task's coordinator episode. "
+                "Use when: health is reachable and browser evidence is needed. "
+                "Returns: reusable session_id, Engineering Strategy, required resource, and readiness gate. "
+                "Next: follow next_required_capability; do not implement broadly while blocked."
             ),
             inputSchema={
                 "type": "object",
@@ -243,8 +246,10 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_verify",
             description=(
-                "Playbook: VERIFY phase (AGENT_GUIDE §0, §7). Assert URL/text/JS criteria. "
-                "On failure automatically captures annotated screenshot inline with failure_scan_id."
+                "Does: asserts URL, text, and JavaScript success criteria and captures failure evidence. "
+                "Use when: after every UI action or implementation checkpoint. "
+                "Returns: pass/fail, blocking findings, and an annotated failure scan when needed. "
+                "Next: fix and re-run on failure; stop only when blocking is empty."
             ),
             inputSchema={
                 "type": "object",
@@ -735,10 +740,10 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_plan_component_search",
             description=(
-                "Component Intelligence. Build a deterministic search plan from a natural-language "
-                "query (primary intent, expanded terminology, style/theme hints, suggested registries, "
-                "multi-pass queries). The host agent may refine this plan before searching. No provider "
-                "calls — plan only."
+                "Does: builds a deterministic Component Intelligence search plan without provider calls. "
+                "Use when: the component or foundation request is broad or ambiguous. "
+                "Returns: intent, expanded terms, style hints, registries, and multi-pass queries. "
+                "Next: refine if needed, then search/select; planning alone does not resolve foundation."
             ),
             inputSchema={
                 "type": "object",
@@ -776,9 +781,10 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_select_component_foundation",
             description=(
-                "Component Intelligence. Search, consult Framework/Codebase/Design Sense/Consistency "
-                "guidance in parallel, and choose the best foundation component for the project — "
-                "not the 'perfect' match, but the strongest starting point to adapt."
+                "Does: searches and selects a foundation using framework, codebase, design, and consistency evidence. "
+                "Use when: component foundation is an unresolved structural decision. "
+                "Returns: chosen candidate, runners-up, compatibility findings, and rationale. "
+                "Next: resolve blockers, then adapt/integrate the selected foundation."
             ),
             inputSchema={
                 "type": "object",
@@ -851,11 +857,10 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_inspiration_collect",
             description=(
-                "Inspiration Intelligence. Image-first collection: progressive queries → CDN/preview URLs → "
-                "ephemeral medium JPEG blobs for host vision. Stops at 3–5 high-quality refs. "
-                "Browser screenshot is opt-in fallback only (allow_browser_screenshot). "
-                "Does not leave the shared browser on gallery sites. "
-                "Read perception://inspiration-guide and engineering_strategy.suggested_queries before calling."
+                "Does: collects 3–5 deduplicated image-first references as ephemeral host-viewable blobs. "
+                "Use when: design direction is unresolved and strategy assigns inspiration high ROI. "
+                "Returns: references, blob quality, provisional Engineering Spec priors, and evidence outcome. "
+                "Next: inspect images and harden priors with measured design evidence; use browser fallback only when directed."
             ),
             inputSchema={
                 "type": "object",
@@ -1355,8 +1360,10 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_figma_context",
             description=(
-                "Figma Intelligence. Normalized design context — file, pages, frames, components, "
-                "variables, styles, tokens, selection. Optionally set file_url/file_key and refresh."
+                "Does: loads normalized Figma frames, components, variables, styles, tokens, and selection. "
+                "Use when: a Figma reference should govern structural design decisions. "
+                "Returns: file-scoped design context and evidence quality; connection alone is not context evidence. "
+                "Next: compile/bind the reference Spec, then implement and remeasure."
             ),
             inputSchema={
                 "type": "object",
@@ -1383,9 +1390,10 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_build_design_snapshot",
             description=(
-                "Design pipeline: build DesignSnapshot + FrontendEngineeringSpec from scan_id/session. "
-                "bind_as_reference=true captures Spec as episode reference; default remeasures current Spec "
-                "and returns spec_revision_gate (SpecDiff vs bound reference). Never critiques — facts + Spec only."
+                "Does: measures a Design Snapshot and Frontend Engineering Spec from live scan evidence. "
+                "Use when: before structural redesign decisions, when binding a measured reference, and after a draft. "
+                "Returns: geometry/tokens/components, Spec coverage, reference binding quality, and SpecDiff gate. "
+                "Next: resolve low coverage or revise required drifts before verification."
             ),
             inputSchema={
                 "type": "object",
@@ -1418,8 +1426,10 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_design_review",
             description=(
-                "Design Sense + SpecDiff: review from snapshot. Prefers bound reference Spec over registry. "
-                "Returns engineering_spec, engineering_delta, spec_revision_gate."
+                "Does: reviews a measured snapshot (review mode) or runs Ship Council challenges (mode=ship). "
+                "Use when: a draft exists; use ship after verify on structural/balanced work before claim-done. "
+                "Returns: review findings and SpecDiff, or top ROI-ranked ship challenges, ship_gate, and ship_summary. "
+                "Next: revise challenges, accept with engineering rationale, or remeasure after revisions."
             ),
             inputSchema={
                 "type": "object",
@@ -1428,6 +1438,29 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                     "scan_id": {"type": "string"},
                     "snapshot_id": {"type": "string"},
                     "user_task": {"type": "string", "description": "What the user is trying to accomplish"},
+                    "mode": {
+                        "type": "string",
+                        "enum": ["review", "ship"],
+                        "default": "review",
+                        "description": "review=Design Review; ship=Ship Council post-draft gate",
+                    },
+                    "dispositions": {
+                        "type": "array",
+                        "description": "Ship mode only: challenge dispositions (revised, accepted, ask_user)",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "signal": {"type": "string"},
+                                "decision_id": {"type": "string"},
+                                "disposition": {
+                                    "type": "string",
+                                    "enum": ["revised", "accepted", "ask_user"],
+                                },
+                                "reason": {"type": "string"},
+                                "accept_reason": {"type": "string"},
+                            },
+                        },
+                    },
                     "scope": {
                         "type": "string",
                         "enum": ["page", "flow", "feature", "component", "region"],

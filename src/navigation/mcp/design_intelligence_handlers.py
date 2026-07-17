@@ -246,6 +246,9 @@ async def handle_design_review(
 		arguments.get('session_id') or (snap_rec.session_id if snap_rec else '') or ''
 	)
 	psm = resolve_psm_for_session(session_id or None)
+	if psm is None:
+		from navigation.coordination_intelligence.models import ProjectSituationModel
+		psm = ProjectSituationModel()
 	current_spec = compile_live_spec(snapshot)
 	engineering_delta = None
 	reference_spec_summary = None
@@ -348,6 +351,105 @@ async def handle_design_review(
 			or report.summary
 		)
 	)
+
+	mode = str(arguments.get('mode') or 'review').strip().lower()
+	if mode not in ('review', 'ship'):
+		mode = 'review'
+	if mode == 'review' and not arguments.get('mode'):
+		from navigation.coordination_intelligence.planning.engineering_strategy import (
+			compile_engineering_strategy,
+		)
+		from navigation.coordination_intelligence.planning.ship_council import (
+			should_recommend_ship_mode,
+		)
+		from navigation.coordination_intelligence.artifacts.loader import load_runtime_artifacts
+
+		bundle = load_runtime_artifacts()
+		strategy_dict = compile_engineering_strategy(psm, bundle.situation_policy_catalog).to_dict()
+		if should_recommend_ship_mode(psm, strategy_dict):
+			mode = 'ship'
+
+	if mode == 'ship':
+		from navigation.coordination_intelligence.planning.engineering_strategy import (
+			compile_engineering_strategy,
+		)
+		from navigation.coordination_intelligence.planning.ship_council import build_ship_council
+		from navigation.coordination_intelligence.artifacts.loader import load_runtime_artifacts
+
+		bundle = load_runtime_artifacts()
+		strategy_dict = compile_engineering_strategy(psm, bundle.situation_policy_catalog).to_dict()
+		raw_dispositions = arguments.get('dispositions')
+		dispositions = list(raw_dispositions) if isinstance(raw_dispositions, list) else []
+		ship = build_ship_council(
+			psm=psm,
+			strategy=strategy_dict,
+			snapshot=snapshot,
+			engineering_delta=engineering_delta,
+			revision_gate=revision_gate,
+			findings=report.findings,
+			dispositions=dispositions,
+		)
+		ship_gate = ship.get('ship_gate') or {}
+		council_clear = bool(ship_gate.get('council_clear'))
+		challenges = list(ship.get('challenges') or [])
+		coordination_evidence = {
+			'capability_id': 'design_review',
+			'outcome': 'success' if council_clear else 'degraded',
+			'status': 'succeeded' if council_clear else 'provisional',
+			'advancement_eligible': council_clear,
+			'quality': {
+				'mode': 'ship',
+				'challenges_emitted': len(challenges),
+				'open_high_roi': ship_gate.get('open_high_roi', 0),
+				'council_clear': council_clear,
+			},
+			'artifact_refs': {'snapshot_id': snap_rec.snapshot_id if snap_rec else ''},
+		}
+		ship_headline = (
+			f"Ship Council: {len(challenges)} challenge(s); "
+			f"gate={ship_gate.get('state')}; council_clear={council_clear}"
+		)
+		return make_envelope(
+			'perception_design_review',
+			ok=True,
+			session_id=session_id or None,
+			scan_id=snap_rec.scan_id if snap_rec else snapshot.scan_id,
+			url=snapshot.url,
+			data={
+				'mode': 'ship',
+				'snapshot_id': snap_rec.snapshot_id if snap_rec else '',
+				'engineering_spec': spec_dict,
+				'engineering_delta': engineering_delta,
+				'spec_revision_gate': revision_gate,
+				'framing': ship.get('framing'),
+				'challenges': challenges,
+				'ranked_roi': ship.get('ranked_roi'),
+				'ship_gate': ship_gate,
+				'ship_summary': ship.get('ship_summary'),
+				'decision_ledger': ship.get('decision_ledger'),
+				'rejected_dispositions': ship.get('rejected_dispositions'),
+				'skipped_reason': ship.get('skipped_reason'),
+				'passed': council_clear,
+				'summary': ship_headline,
+				'finding_count': len(challenges),
+				'coordination_evidence': coordination_evidence,
+				'agent_summary': {
+					'mode': 'ship',
+					'ship_gate': ship_gate,
+					'ship_summary': ship.get('ship_summary'),
+					'ship_council_hint': {
+						'resource': 'perception://ship-council',
+						'next': 'Revise high-ROI challenges, accept with engineering rationale, or ask_user for brand decisions.',
+					},
+					'coordinator_headline': ship_headline,
+					'spec_revision_gate': revision_gate,
+					'advisory': [
+						'Ship Council challenges are decision-centric; do not claim done while ship_gate.council_clear is false.',
+					],
+				},
+			},
+			degraded=list(report.degraded),
+		)
 
 	return make_envelope(
 		'perception_design_review',

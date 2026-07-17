@@ -226,14 +226,19 @@ def _infer_workflow(name: str) -> dict[str, str]:
 def format_description(name: str, original: str) -> str:
     group = infer_group(name)
     wf = _infer_workflow(name)
-    # Deprecated marker
     dep = " [DEPRECATED]" if name == "perception_code_context" else ""
-    header = f"[{group}]{dep} {wf['what']}"
-    flow = f"When: {wf['when']} | Before: {wf['before']} | Next: {wf['next']}"
     body = original.strip()
-    if len(body) > 200:
-        body = body[:197] + "..."
-    return f"{header} | {flow} | {body}"
+    labels = ("Does:", "Use when:", "Returns:", "Next:")
+    if all(label in body for label in labels):
+        return f"[{group}]{dep} {body}"
+    if len(body) > 180:
+        body = body[:177] + "..."
+    return (
+        f"[{group}]{dep} Does: {wf['what']} "
+        f"Use when: {wf['when']} "
+        "Returns: a structured MCP envelope with evidence quality and artifacts when available. "
+        f"Next: {wf['next']}. Details: {body}"
+    )
 
 
 def _enhance_schema(name: str, schema: dict[str, Any]) -> dict[str, Any]:

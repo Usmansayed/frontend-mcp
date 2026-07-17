@@ -118,6 +118,7 @@ class EvidenceState:
     blocking: list[str] = field(default_factory=list)
     degraded: list[str] = field(default_factory=list)
     unknown_gaps: list[str] = field(default_factory=list)
+    capability_ledger: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         for domain in EVIDENCE_DOMAINS:
@@ -129,6 +130,10 @@ class EvidenceState:
             "blocking": list(self.blocking),
             "degraded": list(self.degraded),
             "unknown_gaps": list(self.unknown_gaps),
+            "capability_ledger": {
+                capability_id: dict(outcome)
+                for capability_id, outcome in self.capability_ledger.items()
+            },
         }
 
 

@@ -42,12 +42,19 @@ def bind_reference_spec(
         spec_dict = spec.to_dict()
     else:
         spec_dict = dict(spec)
+    coverage = dict(spec_dict.get("coverage") or {})
+    coverage_ratio = float(coverage.get("coverage_ratio") or 0.0)
+    seed_source = "seed" in source or source == "inspiration"
+    implementation_ready = not seed_source and coverage_ratio >= 0.5
+    quality = "implementation_ready" if implementation_ready else "provisional"
     meta = {
         "source": source,
         "note": note,
         "catalog_version": spec_dict.get("catalog_version"),
         "source_kind": spec_dict.get("source_kind"),
-        "coverage": spec_dict.get("coverage"),
+        "coverage": coverage,
+        "quality": quality,
+        "implementation_ready": implementation_ready,
     }
     if psm is not None:
         psm.artifacts.persistent = dict(psm.artifacts.persistent or {})
@@ -55,7 +62,12 @@ def bind_reference_spec(
         psm.artifacts.persistent[REF_META_KEY] = meta
     if session_id:
         _SESSION_REF[str(session_id)] = {"spec": spec_dict, "meta": meta}
-    return {"bound": True, "meta": meta}
+    return {
+        "bound": True,
+        "quality": quality,
+        "implementation_ready": implementation_ready,
+        "meta": meta,
+    }
 
 
 def clear_reference_spec(*, session_id: str | None = None, psm: Any | None = None) -> None:
@@ -115,9 +127,10 @@ def evaluate_revision_gate(
     if reference is None:
         return {
             "reference_bound": False,
+            "evaluated": False,
             "phase": phase,
             "revision_required": False,
-            "passed": True,
+            "passed": False,
             "engineering_delta": None,
             "host_action": (
                 "No reference Spec bound. Capture one first: "
@@ -140,6 +153,7 @@ def evaluate_revision_gate(
     if phase == "reference_captured":
         return {
             "reference_bound": True,
+            "evaluated": True,
             "phase": phase,
             "revision_required": False,
             "passed": True,
@@ -191,6 +205,7 @@ def evaluate_revision_gate(
 
     return {
         "reference_bound": True,
+        "evaluated": True,
         "phase": phase,
         "revision_required": revision_required,
         "passed": not revision_required,

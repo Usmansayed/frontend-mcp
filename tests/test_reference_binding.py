@@ -86,9 +86,22 @@ def test_revision_gate_no_reference() -> None:
     current = compile_live_spec(snap)
     gate = evaluate_revision_gate(current, None, phase="current")
     assert gate["reference_bound"] is False
-    assert gate["passed"] is True
+    assert gate["evaluated"] is False
+    assert gate["passed"] is False
     assert gate["revision_required"] is False
     assert "No reference Spec" in gate["host_action"]
+
+
+@pytest.mark.unit
+def test_inspiration_seed_binding_is_provisional() -> None:
+    sid = "sess-inspiration-provisional"
+    clear_reference_spec(session_id=sid)
+    spec = compile_live_spec(DesignSnapshotEngine().capture_from_fixture(_dashboard_payload()))
+    meta = bind_reference_spec(spec, session_id=sid, source="inspiration_seed")
+    assert meta["bound"] is True
+    assert meta["quality"] == "provisional"
+    assert meta["implementation_ready"] is False
+    clear_reference_spec(session_id=sid)
 
 
 @pytest.mark.unit

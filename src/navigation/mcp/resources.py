@@ -12,6 +12,7 @@ from navigation.core.paths import (
 	validation_form_eval_path,
 )
 from navigation.core.scan_registry import ScanRegistry
+from navigation.mcp.methodology_resources import METHODOLOGY_RESOURCES
 
 _SCAN_ARTIFACTS: dict[str, str] = {
 	'report.json': 'application/json',
@@ -69,6 +70,14 @@ def _scan_artifact_path(rec: object, artifact: str) -> Path | None:
 
 def list_resources(scans: ScanRegistry | None = None) -> list[dict[str, str]]:
 	resources = [
+		{
+			'uri': uri,
+			'name': name,
+			'description': f'{name} — focused Frontend MCP methodology',
+			'mimeType': 'text/markdown',
+		}
+		for uri, (name, _text) in METHODOLOGY_RESOURCES.items()
+	] + [
 		{
 			'uri': 'perception://agent-guide',
 			'name': 'AGENT_GUIDE',
@@ -162,6 +171,9 @@ def _cached_guide(uri: str, path: Path, label: str) -> tuple[str, str, bool]:
 
 def read_resource(uri: str, scans: ScanRegistry | None = None) -> tuple[str, str, bool]:
 	"""Return (mime_type, payload, is_blob). Raises KeyError if unknown."""
+	if uri in METHODOLOGY_RESOURCES:
+		return 'text/markdown', METHODOLOGY_RESOURCES[uri][1], False
+
 	if uri == 'perception://agent-guide':
 		return _cached_guide(uri, agent_guide_path(), 'AGENT_GUIDE.md')
 

@@ -57,6 +57,16 @@ class LoopGovernor:
         """Return True when the governor authorizes advancing the active playbook step."""
         if not capability_id or not envelope.get("ok"):
             return False
+        coordination_evidence = (envelope.get("data") or {}).get("coordination_evidence")
+        if (
+            isinstance(coordination_evidence, dict)
+            and coordination_evidence.get("advancement_eligible") is not True
+        ):
+            return False
+        if not isinstance(coordination_evidence, dict):
+            latest = psm.evidence.capability_ledger.get(capability_id) or {}
+            if latest and latest.get("advancement_eligible") is not True:
+                return False
 
         step = self._selector.current_step(psm)
         if not step:

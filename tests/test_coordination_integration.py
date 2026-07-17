@@ -88,6 +88,31 @@ def test_tool_envelope_adds_coordinator_without_breaking_contract(bridge: Coordi
 
 
 @pytest.mark.unit
+def test_structural_strategy_promotes_required_resource_and_readiness_gate(
+    bridge: CoordinatorBridge,
+) -> None:
+    out = bridge.process(
+        "perception_session_start",
+        {
+            "base_url": "http://localhost:5173",
+            "intent": "build a new SaaS analytics dashboard",
+        },
+        make_envelope(
+            "perception_session_start",
+            ok=True,
+            session_id="sess_structural_contract",
+            url="http://localhost:5173",
+        ),
+    )
+    coordinator = out["data"]["coordinator"]
+    summary = out["agent_summary"]
+    assert coordinator["implementation_gate"]["state"] == "blocked"
+    assert coordinator["recommended_resource"] == "perception://inspiration-guide"
+    assert summary["implementation_gate"] == coordinator["implementation_gate"]
+    assert summary["required_resource"] == "perception://inspiration-guide"
+
+
+@pytest.mark.unit
 def test_cluster_resolver_infers_form_pipeline_from_probe(bridge: CoordinatorBridge) -> None:
     bridge.process(
         "perception_session_start",

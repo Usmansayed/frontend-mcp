@@ -123,8 +123,8 @@ def _derive_design_reference_posture(psm: ProjectSituationModel, intent_text: st
         return "figma"
     design = psm.evidence.domains.get("design_source")
     assets = psm.evidence.domains.get("assets")
-    attempts = psm.episode.retry_counters.get("capability_attempts") or {}
-    if int(attempts.get("inspiration_workflow", 0)) >= 1 or (
+    inspiration = psm.evidence.capability_ledger.get("inspiration_workflow") or {}
+    if inspiration.get("status") in ("succeeded", "provisional") or (
         design and design.posture not in ("unknown",)
     ):
         return "inspiration"
@@ -145,10 +145,11 @@ def _derive_system_posture(psm: ProjectSituationModel) -> str:
 
 
 def _derive_foundation_posture(psm: ProjectSituationModel) -> str:
-    attempts = psm.episode.retry_counters.get("capability_attempts") or {}
-    if int(attempts.get("component_integrate", 0)) >= 1:
+    integrated = psm.evidence.capability_ledger.get("component_integrate") or {}
+    selected = psm.evidence.capability_ledger.get("component_select") or {}
+    if integrated.get("status") == "succeeded":
         return "integrated"
-    if int(attempts.get("component_select", 0)) >= 1:
+    if selected.get("status") == "succeeded":
         return "selected"
     return "unknown"
 

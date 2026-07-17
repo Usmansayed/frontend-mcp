@@ -84,6 +84,19 @@ def test_bootstrap_without_intent(bundle: RuntimeArtifactBundle) -> None:
 
 
 @pytest.mark.unit
+def test_bootstrap_greenfield_dashboard_is_structurally_blocked(
+    bundle: RuntimeArtifactBundle,
+) -> None:
+    strategy = compile_bootstrap_strategy(
+        bundle.situation_policy_catalog,
+        intent="build a new SaaS analytics dashboard",
+    )
+    assert strategy["influence_level"] == "structural"
+    assert strategy["implementation_gate"]["state"] == "blocked"
+    assert strategy["recommended_resource"] == "perception://inspiration-guide"
+
+
+@pytest.mark.unit
 def test_surface_engineering_strategy_on_agent_summary() -> None:
     envelope: dict = {"data": {}, "agent_summary": {"blocking": []}}
     strategy = {"summary": "Test headline", "influence_level": "balanced"}

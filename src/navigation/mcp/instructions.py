@@ -4,7 +4,8 @@ MCP_INSTRUCTIONS = """\
 Frontend Perception MCP — deterministic browser runtime (no LLM inside this server).
 
 YOU are the brain. This server returns facts only — never generic "next step" suggestions.
-Read perception://agent-guide at session start.
+Read perception://getting-started at session start, then read the focused
+resource returned as engineering_strategy.recommended_resource.
 
 Universal loop (AGENT_GUIDE §0):
   STRATEGIZE → OBSERVE → REASON → ACT → VERIFY → repeat or STOP
@@ -31,8 +32,20 @@ Playbooks by task:
   §15 Creative assets          → resource-guide
   §16 SEO                      → seo-guide; dev audit_start inline, pro start + poll
 
-Guides (read before tool families):
-  perception://agent-guide       — main playbooks (required)
+Methodology resources (progressive disclosure):
+  perception://getting-started       — bootstrap and resource routing
+  perception://frontend-methodology  — universal decision-led loop
+  perception://design-workflow       — greenfield structural UI
+  perception://redesign-workflow     — measured redesign + SpecDiff
+  perception://bugfix-workflow       — surgical observe/fix/verify
+  perception://engineering-strategy  — strategy and implementation gate
+  perception://decision-ledger       — evidence and ship challenge lifecycle
+  perception://ship-council          — post-verify ship gate (design_review mode=ship)
+  perception://verification-guide    — post-action verification and Spec gate
+  perception://browser-lifecycle     — single-owner browser restoration
+  perception://agent-guide           — compatibility index
+
+Specialist guides:
   perception://resolver-guide    — resolve_route, resolve_component, validate_*
   perception://seo-guide         — Development (inline) vs Professional (poll) SEO
   perception://inspiration-guide — gallery tools
@@ -40,6 +53,10 @@ Guides (read before tool families):
   perception://figma-guide       — Figma PAT + context
 
 Hard rules:
+- Top-level ok means tool transport completed; it does not prove usable evidence.
+- While implementation_gate.state=blocked, obey prohibited_actions and run
+  next_required_capability. Never invent a blocked structural decision.
+- Only coordination_evidence.advancement_eligible=true may resolve/advance evidence.
 - Never claim UI work is done without perception_verify.
 - Never skip verify after execute_script or execute_actions.
 - LOOK at inline images from observe/verify/diff.

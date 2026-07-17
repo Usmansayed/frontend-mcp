@@ -2,7 +2,20 @@
 
 **Audience:** Cursor, Claude Code, Codex, or any MCP-connected coding agent.
 
-**Purpose:** This is not API documentation. It is a **behavior program** for how you work with the Frontend Perception MCP. Read it once at session start; follow it for every frontend task.
+**Purpose:** Compatibility reference for older hosts. Do not load this entire guide by
+default. Read `perception://getting-started`, then the focused resource returned by
+`engineering_strategy.recommended_resource`.
+
+Focused methodology:
+
+- `perception://frontend-methodology`
+- `perception://design-workflow`
+- `perception://redesign-workflow`
+- `perception://bugfix-workflow`
+- `perception://engineering-strategy`
+- `perception://decision-ledger`
+- `perception://verification-guide`
+- `perception://browser-lifecycle`
 
 The MCP has **no LLM**. **You are the brain.** The MCP only navigates, observes, executes your scripts, and verifies outcomes. These playbooks tell you **what to do, in what order, and when to stop**.
 

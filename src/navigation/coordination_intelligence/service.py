@@ -132,6 +132,10 @@ class CoordinationIntelligenceService:
         self._runtime.save(psm)
 
         briefing = self._to_briefing(psm)
+        if capability_id:
+            outcome = psm.evidence.capability_ledger.get(capability_id)
+            if outcome:
+                envelope.setdefault("data", {})["coordination_evidence"] = dict(outcome)
         return self._enrich_envelope(envelope, briefing)
 
     def briefing(
@@ -191,6 +195,12 @@ class CoordinationIntelligenceService:
         }
         if briefing.engineering_strategy:
             surface_engineering_strategy(envelope, briefing.engineering_strategy)
+            strategy = briefing.engineering_strategy
+            coordinator = data["coordinator"]
+            coordinator["implementation_gate"] = strategy.get("implementation_gate")
+            coordinator["evidence_plan"] = strategy.get("evidence_plan") or []
+            coordinator["recommended_resource"] = strategy.get("recommended_resource")
+            coordinator["required_resources"] = strategy.get("required_resources") or []
         return envelope
 
     def _refresh_briefing(
