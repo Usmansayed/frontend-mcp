@@ -1,4 +1,4 @@
-"""Validate installed frontend-mcp 1.2.0.dev7 Ship Council surfaces."""
+"""Validate installed frontend-mcp 1.2.0.dev8 Ship Council + section checklist surfaces."""
 from __future__ import annotations
 
 import asyncio
@@ -18,7 +18,7 @@ def _ok(msg: str) -> None:
 def main() -> int:
     engine_ver = md.version("frontend-perception-engine")
     mcp_ver = md.version("frontend-mcp")
-    if engine_ver != "1.2.0.dev7" or mcp_ver != "1.2.0.dev7":
+    if engine_ver != "1.2.0.dev8" or mcp_ver != "1.2.0.dev8":
         _fail(f"versions engine={engine_ver} mcp={mcp_ver}")
     _ok(f"versions {engine_ver}")
 
@@ -29,6 +29,14 @@ def main() -> int:
     if "site-packages" not in (ship_mod.__file__ or ""):
         _fail(f"ship_council not from site-packages: {ship_mod.__file__}")
     _ok(f"ship_council from {ship_mod.__file__}")
+
+    section_mod = __import__(
+        "navigation.coordination_intelligence.planning.section_checklist",
+        fromlist=["seed_section_checklist_from_regions"],
+    )
+    if "site-packages" not in (section_mod.__file__ or ""):
+        _fail(f"section_checklist not from site-packages: {section_mod.__file__}")
+    _ok(f"section_checklist from {section_mod.__file__}")
 
     from navigation.mcp.methodology_resources import METHODOLOGY_RESOURCES
     from navigation.mcp.resources import list_resources, read_resource

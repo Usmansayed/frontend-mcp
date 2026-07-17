@@ -30,7 +30,7 @@ AI coding agents are good at generating React, Tailwind, and shadcn code. They a
 - Component libraries scattered across 200+ registries with different naming (`navbar` vs `navigation-menu` vs `app-bar`)
 - Framework docs that are outdated or hallucinated
 
-**Frontend Perception MCP** closes the loop: the agent edits code → the MCP observes the live app → structured facts come back → the agent verifies criteria → only then is the task done.
+**Frontend Perception MCP** closes the loop: the agent edits code → the MCP observes the live app → structured facts come back → the agent verifies criteria → for visual drafts it also clears section checklist + Ship Council → only then is the task done.
 
 ---
 
@@ -55,11 +55,11 @@ Every frontend task follows the same loop. The landing page should show this as 
 OBSERVE   perception_navigate_and_observe / perception_observe
 REASON    agent reads blocking issues, DOM, dev insights; edits repo
 ACT       code changes + optional perception_execute_script
-VERIFY    perception_verify — never skip after UI changes
-STOP      verify passes + blocking empty, or ask human (auth/MFA)
+VERIFY    perception_verify — require data.verified=true (ok alone is not a pass)
+STOP      Done ladder: verified + section checklist (when required) + Ship Council (when required), or ask human (auth/MFA)
 ```
 
-**Hard rule to highlight:** *Never claim UI work is done without `perception_verify`.*
+**Hard rule to highlight:** *Never claim UI work is done on transport `ok` alone — require `data.verified=true`, then finish the Done ladder for visual drafts.*
 
 ---
 

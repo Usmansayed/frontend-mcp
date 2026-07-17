@@ -127,29 +127,41 @@ def should_skip_ship_council(
     task_scope: str,
     polish_saturation: str = "none",
 ) -> bool:
-    if influence_level in ("minimal", "maintenance"):
-        return True
+    # Hotfix / surgical always skip — verify is enough.
     if task_scope in ("hotfix", "surgical", "debug"):
+        return True
+    if influence_level == "minimal" and task_scope not in ("design_driven", "redesign", "system_setup"):
+        return True
+    # Maintenance alone must NOT skip design-driven / redesign drafts — that was how
+    # agents claimed done after Spec+verify while leftover UI issues stayed unchallenged.
+    if influence_level == "maintenance" and task_scope not in ("design_driven", "redesign", "system_setup"):
         return True
     if polish_saturation == "hard":
         return False
     return False
 
 
-def should_recommend_ship_mode(psm: ProjectSituationModel, strategy: dict[str, Any]) -> bool:
+def episode_needs_ship_council(psm: ProjectSituationModel, strategy: dict[str, Any]) -> bool:
+    """True when claim-done must wait for Ship Council clear on this episode."""
+    scope = str(strategy.get("task_scope") or "")
     influence = str(strategy.get("influence_level") or "")
-    if influence not in ("structural", "balanced"):
+    if scope in ("hotfix", "surgical", "debug"):
+        return False
+    if influence == "minimal" and scope not in ("design_driven", "redesign", "system_setup"):
         return False
     if not psm.artifacts.snapshot_id:
         return False
     if psm.episode.verification_status != "passed":
         return False
-    # Pre-code implementation_gate=blocked must not suppress ship once a measured
-    # draft already exists (snapshot + verify). That gate is for coding start, not ship.
-    disc_scope = str(strategy.get("task_scope") or "")
-    if disc_scope in ("hotfix", "surgical", "debug"):
+    if bool(psm.episode.retry_counters.get("ship_council_clear")):
         return False
-    return True
+    if scope in ("design_driven", "redesign", "system_setup"):
+        return True
+    return influence in ("structural", "balanced")
+
+
+def should_recommend_ship_mode(psm: ProjectSituationModel, strategy: dict[str, Any]) -> bool:
+    return episode_needs_ship_council(psm, strategy)
 
 
 def _roi_band(score: float) -> str:
@@ -733,6 +745,11 @@ def build_ship_council(
         if c.get("expected_roi") == "high"
     ]
 
+    # Persist ship gate on the episode so later maintenance polish cannot claim-done
+    # without a council clear from this (or a later) ship pass.
+    psm.episode.retry_counters["ship_council_run"] = True
+    psm.episode.retry_counters["ship_council_clear"] = bool(council_clear)
+
     ship_summary = None
     if council_clear or polish_saturation == "hard":
         ship_summary = _build_ship_summary(
@@ -809,5 +826,8 @@ def ship_council_hint(strategy: dict[str, Any], psm: ProjectSituationModel) -> d
         "capability": "design_review",
         "mode": "ship",
         "resource": "perception://ship-council",
-        "reason": "Post-verify draft exists; run Ship Council before claiming done.",
+        "reason": (
+            "Post-verify draft exists; run Ship Council before claiming done. "
+            "Spec/token alignment and verify pass are not enough — dispose ship challenges first."
+        ),
     }

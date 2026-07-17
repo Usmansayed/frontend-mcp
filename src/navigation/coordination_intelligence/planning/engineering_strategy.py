@@ -486,7 +486,27 @@ def _build_deferrals(disc: dict[str, str], psm: ProjectSituationModel, phase: st
     if disc.get("polish_saturation") in ("soft", "hard"):
         defer.append("Further design review loops — diminishing returns reached")
     if psm.episode.verification_status != "passed" and scope not in ("hotfix",):
-        defer.append("Declaring task complete before perception_verify passes")
+        defer.append("Declaring task complete before perception_verify passes (data.verified=true)")
+    from navigation.coordination_intelligence.planning.section_checklist import (
+        get_section_checklist,
+        section_checklist_complete,
+    )
+
+    checklist = get_section_checklist(psm)
+    if (
+        checklist
+        and checklist.get("required")
+        and not section_checklist_complete(checklist)
+        and scope not in ("hotfix", "surgical", "debug")
+    ):
+        defer.append("Declaring task complete before section checklist is complete")
+    if (
+        psm.artifacts.snapshot_id
+        and psm.episode.verification_status == "passed"
+        and not bool(psm.episode.retry_counters.get("ship_council_clear"))
+        and scope in ("design_driven", "redesign", "system_setup")
+    ):
+        defer.append("Declaring task complete before Ship Council clears")
     return defer
 
 
@@ -732,6 +752,22 @@ def compile_engineering_strategy(
             f"{implementation_gate.get('next_required_capability') or 'the required evidence capability'}. "
             "Do not begin broad visual implementation."
         )
+    elif implementation_gate.get("section_checklist_required"):
+        remaining = ", ".join(implementation_gate.get("incomplete_sections") or []) or "open sections"
+        host_action = (
+            "SECTION CHECKLIST: page verify is not enough. For each layout block: "
+            "observe (look at the screenshot) → perception_verify with section_id. "
+            f"Remaining: {remaining}. Read {recommended_resource}."
+        )
+        stops = [s for s in stops if "verify_passed_sufficient" not in s]
+    elif implementation_gate.get("ship_council_required"):
+        host_action = (
+            "SHIP GATE: verify passed but Ship Council has not cleared. "
+            "Run perception_design_review(mode=ship), dispose challenges with engineering rationale, "
+            "then claim-done only when ship_gate.council_clear is true. "
+            f"Read {recommended_resource}."
+        )
+        stops = [s for s in stops if "verify_passed_sufficient" not in s]
 
     from navigation.coordination_intelligence.planning.ship_council import ship_council_hint
 

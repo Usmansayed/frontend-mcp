@@ -1,4 +1,4 @@
-# Install experimental preview MCP (1.2.0.dev7) from PyPI or local wheels.
+# Install experimental preview MCP (1.2.0.dev8) from PyPI or local wheels.
 # Usage:
 #   .\scripts\install_preview_dev.ps1              # PyPI (after publish)
 #   .\scripts\install_preview_dev.ps1 -Local       # build + install from repo
@@ -8,7 +8,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
-$Version = "1.2.0.dev7"
+$Version = "1.2.0.dev8"
 
 if ($Local) {
     Set-Location $Root

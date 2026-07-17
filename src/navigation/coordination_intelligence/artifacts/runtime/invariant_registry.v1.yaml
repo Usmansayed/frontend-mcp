@@ -2,10 +2,20 @@ schema_version: '1.0'
 description: Hard rules from AGENT_GUIDE.md. Loop Governor enforces these deterministically.
 invariants:
 - invariant_id: INV_NEVER_CLAIM_WITHOUT_VERIFY
-  source: AGENT_GUIDE §0
-  rule: never_claim_ui_work_done_without_browser_verify_success
+  source: AGENT_GUIDE §0 / §19
+  rule: never_claim_ui_work_done_without_data_verified_true
   severity: hard_stop
   governor_check: after_any_act_before_episode_complete
+- invariant_id: INV_SECTION_CHECKLIST_BEFORE_CLAIM
+  source: AGENT_GUIDE §19
+  rule: never_claim_complete_while_section_checklist_required
+  severity: hard_stop
+  governor_check: before_episode_complete_on_visual_draft
+- invariant_id: INV_SHIP_COUNCIL_BEFORE_CLAIM
+  source: AGENT_GUIDE §19 / perception://ship-council
+  rule: never_claim_complete_while_ship_council_required
+  severity: hard_stop
+  governor_check: before_episode_complete_on_visual_draft
 - invariant_id: INV_NEVER_LOOP_LOGIN
   source: AGENT_GUIDE §0
   rule: auth_gate_requires_human_must_stop_and_ask_user

@@ -21,6 +21,7 @@ from navigation.coordination_intelligence.planning.ship_council import (
     MAX_CHALLENGES,
     build_ship_council,
     compute_roi_score,
+    episode_needs_ship_council,
     ship_council_hint,
     should_recommend_ship_mode,
     should_skip_ship_council,
@@ -427,6 +428,55 @@ def test_should_recommend_ship_even_when_precode_gate_still_blocked() -> None:
     }
     assert should_recommend_ship_mode(psm, blocked) is True
     assert ship_council_hint(blocked, psm) is not None
+
+
+@pytest.mark.unit
+def test_design_driven_maintenance_still_requires_ship_before_claim_done() -> None:
+    """After redesign verify, influence may collapse to maintenance — Ship Council must still run."""
+    from navigation.coordination_intelligence.planning.implementation_readiness import (
+        compile_implementation_readiness,
+    )
+    from navigation.coordination_intelligence.planning.ship_council import (
+        episode_needs_ship_council,
+        should_skip_ship_council,
+    )
+
+    psm = _structural_psm(verify_passed=True)
+    maintenance = {
+        "influence_level": "maintenance",
+        "task_scope": "design_driven",
+        "unresolved_decisions": [],
+        "implementation_gate": {"state": "maintenance"},
+    }
+    assert episode_needs_ship_council(psm, maintenance) is True
+    assert should_recommend_ship_mode(psm, maintenance) is True
+    assert should_skip_ship_council(
+        influence_level="maintenance",
+        task_scope="design_driven",
+    ) is False
+
+    gate, _, resource = compile_implementation_readiness(
+        psm,
+        influence_level="maintenance",
+        task_scope="design_driven",
+        unresolved_decisions=[],
+    )
+    assert "claim_complete" in gate["prohibited_actions"]
+    assert gate.get("ship_council_required") is True
+    assert resource == "perception://ship-council"
+    assert should_recommend_ship_mode(psm, maintenance) is True
+
+    # After council clears, claim-done may proceed.
+    psm.episode.retry_counters["ship_council_clear"] = True
+    assert episode_needs_ship_council(psm, maintenance) is False
+    gate2, _, _ = compile_implementation_readiness(
+        psm,
+        influence_level="maintenance",
+        task_scope="design_driven",
+        unresolved_decisions=[],
+    )
+    assert "claim_complete" not in gate2["prohibited_actions"]
+    assert gate2.get("ship_council_required") is not True
 
 
 @pytest.mark.unit

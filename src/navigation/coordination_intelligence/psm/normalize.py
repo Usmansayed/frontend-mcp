@@ -60,7 +60,12 @@ def _posture_for_capability(
                 posture = left if envelope.get("ok") else right
             out[domain] = posture
         elif capability_id in VERIFY_CAPABILITIES:
-            out[domain] = "verified" if envelope.get("ok") else POSTURE_REGRESSED
+            data = envelope.get("data") or {}
+            if "verified" in data:
+                passed = bool(data.get("verified"))
+            else:
+                passed = bool(envelope.get("ok"))
+            out[domain] = "verified" if passed else POSTURE_REGRESSED
         else:
             out[domain] = "known" if envelope.get("ok") else "partial"
     if not out and envelope.get("ok"):
@@ -170,6 +175,15 @@ def apply_envelope(
     capability_outcome = _capability_outcome(cap, envelope)
     psm.evidence.capability_ledger[cap] = capability_outcome
 
+    data = envelope.get("data") or {}
+    ship_gate = data.get("ship_gate") if isinstance(data.get("ship_gate"), dict) else {}
+    if (data.get("mode") == "ship") or ("council_clear" in ship_gate):
+        clear = bool(ship_gate.get("council_clear"))
+        if not ship_gate and isinstance(capability_outcome.get("quality"), dict):
+            clear = bool((capability_outcome.get("quality") or {}).get("council_clear"))
+        psm.episode.retry_counters["ship_council_run"] = True
+        psm.episode.retry_counters["ship_council_clear"] = clear
+
     if envelope.get("session_id"):
         psm.artifacts.session_id = envelope["session_id"]
     if envelope.get("scan_id"):
@@ -177,7 +191,6 @@ def apply_envelope(
     if envelope.get("url"):
         psm.artifacts.website_url = envelope["url"]
 
-    data = envelope.get("data") or {}
     if data.get("snapshot_id"):
         psm.artifacts.snapshot_id = data["snapshot_id"]
     if data.get("audit_id"):
@@ -199,12 +212,41 @@ def apply_envelope(
         else:
             psm.episode.auth_status = "clear"
 
+    if cap == "browser_observe" and envelope.get("ok"):
+        from navigation.coordination_intelligence.planning.section_checklist import (
+            mark_section_observed,
+        )
+
+        section_id = data.get("section_id")
+        mark_section_observed(
+            psm,
+            section_id=str(section_id) if section_id else None,
+        )
+
     if cap in VERIFY_CAPABILITIES:
-        psm.episode.verification_status = "passed" if envelope.get("ok") else "failed"
-        if not envelope.get("ok"):
+        data = envelope.get("data") or {}
+        # Strict: transport ok does not mean criteria passed.
+        if "verified" in data:
+            passed = bool(data.get("verified"))
+        else:
+            passed = bool(envelope.get("ok"))
+        psm.episode.verification_status = "passed" if passed else "failed"
+        if not passed:
             psm.episode.retry_counters["verify_loop"] = int(
                 psm.episode.retry_counters.get("verify_loop", 0)
             ) + 1
+        # Section progress only when section_id is explicit (page-level verify does not close blocks).
+        section_id = data.get("section_id") or (data.get("criteria") or {}).get("section_id")
+        if passed and section_id:
+            from navigation.coordination_intelligence.planning.section_checklist import (
+                mark_section_verified,
+            )
+
+            mark_section_verified(
+                psm,
+                section_id=str(section_id),
+                verified=True,
+            )
 
     if cap == "form_probe" and envelope.get("ok"):
         psm.evidence.unknown_gaps = [

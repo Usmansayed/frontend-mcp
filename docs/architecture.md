@@ -70,7 +70,7 @@ SEO Intelligence **orchestrates** free providers and normalizes into the SEO Kno
 2. **Modular intelligence** — extend one module without touching unrelated code.
 3. **Provider abstraction** — external services (Grounded Docs, Lighthouse, CRG) behind provider interfaces.
 4. **CDP-first** — console, network, screenshots, audits via Chrome DevTools Protocol.
-5. **Verify before done** — `perception_verify` + `perception_diff` are first-class.
+5. **Verify before done** — `data.verified=true` is required; visual drafts also need section checklist + Ship Council when the implementation gate requires them.
 
 ## Session lifecycle
 

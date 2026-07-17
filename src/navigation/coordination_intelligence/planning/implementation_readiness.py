@@ -33,6 +33,15 @@ def compile_implementation_readiness(
     unresolved_decisions: list[dict[str, Any]],
 ) -> tuple[dict[str, Any], list[dict[str, Any]], str]:
     """Compile an additive, machine-readable implementation boundary."""
+    from navigation.coordination_intelligence.planning.section_checklist import (
+        episode_needs_section_checklist,
+        get_section_checklist,
+        incomplete_sections,
+    )
+    from navigation.coordination_intelligence.planning.ship_council import (
+        episode_needs_ship_council,
+    )
+
     blocking = [
         str(decision.get("decision_id"))
         for decision in unresolved_decisions
@@ -86,6 +95,46 @@ def compile_implementation_readiness(
         allowed = ["implement", "verify"]
         prohibited = []
 
+    strategy = {
+        "influence_level": influence_level,
+        "task_scope": task_scope,
+    }
+    section_required = episode_needs_section_checklist(psm, strategy)
+    ship_required = episode_needs_ship_council(psm, strategy)
+    open_sections = incomplete_sections(psm) if section_required else []
+    checklist = get_section_checklist(psm)
+
+    # Priority: structural block → section checklist → ship council → ready.
+    if section_required:
+        prohibited = list(dict.fromkeys([*prohibited, "claim_complete"]))
+        next_capability = "browser_verify"
+        required_resource = "perception://verification-guide"
+        allowed = list(dict.fromkeys([*allowed, "gather_evidence", "verify"]))
+    elif ship_required:
+        prohibited = list(dict.fromkeys([*prohibited, "claim_complete"]))
+        next_capability = "design_review"
+        required_resource = "perception://ship-council"
+        if "gather_evidence" not in allowed:
+            allowed = list(dict.fromkeys([*allowed, "gather_evidence"]))
+
+    if state == "blocked":
+        completion = (
+            "Resolve blocking decisions with usable evidence before broad visual implementation."
+        )
+    elif section_required:
+        remaining = ", ".join(open_sections[:5]) or "seeded sections"
+        completion = (
+            "SECTION CHECKLIST incomplete. For each section: observe (look at screenshot) → "
+            f"perception_verify with section_id. Remaining: {remaining}."
+        )
+    elif ship_required:
+        completion = (
+            "Run perception_design_review(mode=ship); dispose challenges; "
+            "claim-done only when ship_gate.council_clear and verify passed."
+        )
+    else:
+        completion = "Follow the evidence plan, then verify the implemented surface."
+
     gate = {
         "state": state,
         "blocking_decisions": blocking,
@@ -94,10 +143,10 @@ def compile_implementation_readiness(
         "prohibited_actions": prohibited,
         "next_required_capability": next_capability,
         "required_resource": required_resource,
-        "completion_criteria": (
-            "Resolve blocking decisions with usable evidence before broad visual implementation."
-            if state == "blocked"
-            else "Follow the evidence plan, then verify the implemented surface."
-        ),
+        "section_checklist_required": section_required,
+        "section_checklist": checklist,
+        "incomplete_sections": open_sections,
+        "ship_council_required": ship_required and not section_required,
+        "completion_criteria": completion,
     }
     return gate, evidence_plan, required_resource

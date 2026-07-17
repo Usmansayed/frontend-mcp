@@ -170,6 +170,26 @@ async def handle_build_design_snapshot(
 			degraded=list(snapshot.degraded),
 		)
 
+	if psm is not None:
+		psm.artifacts.snapshot_id = snap_rec.snapshot_id if snap_rec else psm.artifacts.snapshot_id
+		try:
+			from navigation.coordination_intelligence.planning.section_checklist import (
+				seed_section_checklist_from_regions,
+			)
+
+			regions = list((snapshot.layout.regions if snapshot.layout else None) or [])
+			checklist = seed_section_checklist_from_regions(psm, regions)
+		except Exception:
+			checklist = None
+		try:
+			from navigation.coordination_intelligence.integration.bridge import get_coordinator_bridge
+
+			get_coordinator_bridge().service.runtime.save(psm)
+		except Exception:
+			pass
+	else:
+		checklist = None
+
 	# Current (post-draft) Spec + SpecDiff vs bound reference
 	eng_spec = compile_live_spec(snapshot)
 	spec_dict = eng_spec.to_dict()
@@ -203,14 +223,17 @@ async def handle_build_design_snapshot(
 			'spec_role': 'current',
 			'spec_revision_gate': gate,
 			'engineering_delta': gate.get('engineering_delta'),
+			'section_checklist': checklist,
 			'agent_summary': {
 				'engineering_spec_coverage': spec_dict.get('coverage'),
 				'unresolved_engineering_decisions': unresolved[:8],
 				'spec_revision_gate': gate,
 				'revision_required': gate.get('revision_required'),
 				'coordinator_headline': headline,
+				'section_checklist': checklist,
 				'advisory': [
 					'Closed loop: if revision_required, fix drifts listed in spec_revision_gate then remeasure.',
+					'After draft: observe+verify each section_checklist item before Ship Council / claim-done.',
 				],
 			},
 		},
@@ -440,8 +463,14 @@ async def handle_design_review(
 				'do not treat empty challenges as strong design approval.',
 			]
 		elif council_clear:
-			next_hint = 'Ship Council clear with adequate coverage; claim-done only if verify also passed.'
-			advisory = ['Ship Council clear. Still require perception_verify before claiming done.']
+			next_hint = (
+				'Ship Council clear with adequate coverage; claim-done only if '
+				'data.verified=true and section_checklist is complete when required.'
+			)
+			advisory = [
+				'Ship Council clear. Confirm data.verified=true and section checklist '
+				'before claiming done.',
+			]
 		else:
 			next_hint = (
 				'Revise high-ROI challenges, accept with engineering rationale, '

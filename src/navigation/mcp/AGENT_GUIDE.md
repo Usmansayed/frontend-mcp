@@ -15,6 +15,7 @@ Focused methodology:
 - `perception://engineering-strategy`
 - `perception://decision-ledger`
 - `perception://verification-guide`
+- `perception://ship-council`
 - `perception://browser-lifecycle`
 
 The MCP has **no LLM**. **You are the brain.** The MCP only navigates, observes, executes your scripts, and verifies outcomes. These playbooks tell you **what to do, in what order, and when to stop**.
@@ -33,12 +34,12 @@ STRATEGIZE  →  OBSERVE  →  REASON  →  ACT  →  VERIFY  →  (repeat or ST
 | **OBSERVE** | You call MCP | `perception_navigate_and_observe` or `perception_observe` — save `scan_id` |
 | **REASON** | You (in IDE) | Read `agent_summary.blocking`, DOM, dev insights; edit code or plan script |
 | **ACT** | You call MCP | `perception_execute_script` / `perception_execute_actions` — save `scan_id_before` |
-| **VERIFY** | You call MCP | `perception_verify(criteria)` — never skip |
-| **STOP** | You | Task done when verify passes; or stop and ask user (auth gate, ambiguous requirements) |
+| **VERIFY** | You call MCP | `perception_verify(criteria)` — require `data.verified=true` (not just `ok`) |
+| **STOP** | You | Done ladder complete (below); or stop and ask user (auth gate, ambiguous requirements) |
 
 **Hard rules:**
-1. Read `engineering_strategy` before planning implementation — especially `unresolved_decisions` and `influence_level`.
-2. Never claim a UI change works without `perception_verify`.
+1. Read `engineering_strategy` before planning implementation — especially `unresolved_decisions`, `influence_level`, and `implementation_gate`.
+2. Never claim done on transport `ok` alone. Require **`data.verified=true`**, then complete the Done ladder (§19) when `section_checklist_required` / `ship_council_required`.
 3. Never loop login/MFA — if `perception_auth_gate` → `requires_human: true`, ask the user.
 4. Always read `blocking` before `advisory` in dev insights.
 5. On verify failure: re-observe with screenshot, then `perception_diff`.
@@ -56,15 +57,18 @@ Remeasure: perception_build_design_snapshot (default / current)
        ↓
 spec_revision_gate → revision_required?
        ↓ yes → revise drifts → remeasure
-       ↓ no  → perception_verify → STOP
+       ↓ no  → perception_verify (data.verified)
+             → section checklist (when required)
+             → Ship Council (when required)
+             → STOP / claim-done
 ```
 
 | Step | Tool | What to read |
 |------|------|----------------|
 | Bind reference | `perception_inspiration_collect` / `perception_build_design_snapshot({ bind_as_reference: true })` / Figma `bind_as_reference` | `engineering_spec`, `reference_bind` |
 | Draft | Your code edits | Spec decisions by impact — not gallery tags |
-| Gate | `perception_build_design_snapshot` (default) or `perception_design_review` | `agent_summary.spec_revision_gate` |
-| Pass | `passed: true` | Then `perception_verify` |
+| Gate | `perception_build_design_snapshot` (default) or `perception_design_review` | `agent_summary.spec_revision_gate`, `section_checklist` |
+| Pass | `data.verified=true` + checklist/ship clear when required | Then claim-done (§19) |
 
 Do not treat gallery URLs or English design-review prose as the engineering source of truth — the Spec and SpecDiff are.
 
@@ -649,12 +653,18 @@ Use tools **only as steps inside playbooks above**.
 
 ## 19. Success checklist (before telling user "done")
 
-- [ ] `perception_verify` passed for stated criteria
-- [ ] `agent_summary.blocking` is empty (or user accepted warnings)
-- [ ] `scan_id` / screenshot saved if user may need evidence
+Done ladder (design_driven / redesign / structural / balanced visual drafts):
+
+1. [ ] Implementation gate allows claim (not blocked / not prohibiting `claim_complete`)
+2. [ ] `perception_verify` with **`data.verified=true`** (transport `ok` alone does not count)
+3. [ ] **Section checklist** complete when `section_checklist_required`: for each block, observe → look at screenshot → `perception_verify` with `section_id`
+4. [ ] **Ship Council** clear when `ship_council_required` (`perception_design_review(mode=ship)` → `ship_gate.council_clear`)
+5. [ ] `agent_summary.blocking` empty (or user accepted warnings)
+6. [ ] SpecDiff / `spec_revision_gate` honored when a reference Spec is bound
+
+Hotfix / surgical / debug: steps 3–4 skip; still require `data.verified=true` and empty blocking.
+
 - [ ] Auth gates respected (no credential looping)
 - [ ] You edited repo code when fix was structural (not only runtime script hacks)
 
----
-
-**Remember:** The MCP does not tell you what to do next. **These playbooks do.** Follow observe → reason → act → verify until the checklist passes.
+**Remember:** Page-level verify alone is not claim-done for visual drafts. Follow the Done ladder.

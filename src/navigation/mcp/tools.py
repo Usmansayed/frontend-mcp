@@ -247,14 +247,23 @@ def perception_tools(mcp_types: Any) -> list[Any]:
             name="perception_verify",
             description=(
                 "Does: asserts URL, text, and JavaScript success criteria and captures failure evidence. "
-                "Use when: after every UI action or implementation checkpoint. "
-                "Returns: pass/fail, blocking findings, and an annotated failure scan when needed. "
-                "Next: fix and re-run on failure; stop only when blocking is empty."
+                "Use when: after every UI action or implementation checkpoint; for section checklist "
+                "pass section_id so each layout block is verified. "
+                "Returns: pass/fail (data.verified — not just ok), optional section_id/checklist, "
+                "blocking findings, and an annotated failure scan when needed. "
+                "Next: fix and re-run on failure; claim-done only after Done ladder (verify + sections + ship)."
             ),
             inputSchema={
                 "type": "object",
                 "properties": {
                     "session_id": {"type": "string"},
+                    "section_id": {
+                        "type": "string",
+                        "description": (
+                            "Optional layout section id from section_checklist "
+                            "(e.g. main:0). Injects scoped JS assertions and marks that section verified."
+                        ),
+                    },
                     "criteria": {
                         "type": "object",
                         "properties": {
@@ -265,6 +274,7 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                             "text_absent": {"type": "array", "items": {"type": "string"}},
                             "js_assertions": {"type": "array", "items": {"type": "string"}},
                             "accept_urls": {"type": "array", "items": {"type": "string"}},
+                            "section_id": {"type": "string"},
                         },
                     },
                 },

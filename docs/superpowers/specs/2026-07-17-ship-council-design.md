@@ -147,18 +147,20 @@ Re-runs suppress ledger entries that are `closed` with `accepted` **unless** the
 
 ## When Ship Mode Runs
 
-After **ACT** has produced measurable UI, **after VERIFY** passes, and before claim-done.
+After **ACT** has produced measurable UI, after **VERIFY** (`data.verified=true`), after
+**section checklist** is complete when required, and before claim-done.
 
 | Influence / mode | Behavior |
 |------------------|----------|
-| `structural` / `balanced` | Required before claiming done while any open high-ROI major+ challenge remains undisposed |
-| `minimal` / `maintenance` / hotfix / surgical | Skip ship mode (`ship_gate.state=skipped`) |
+| `structural` / `balanced` / `design_driven` / `redesign` | Required before claiming done while any open high-ROI major+ challenge remains undisposed |
+| `minimal` / hotfix / surgical / debug | Skip ship mode (`ship_gate.state=skipped`) |
 | Polish saturation `hard` | Cap challenges; prefer stop + ship summary over endless critique |
 
-Claim-done for structural/balanced work requires **both**:
+Claim-done for visual drafts requires **all** that apply:
 
-1. Verify passes (blocking empty)
-2. `ship_gate.council_clear === true`
+1. `data.verified=true` (blocking empty)
+2. Section checklist complete when `section_checklist_required`
+3. `ship_gate.council_clear === true` when `ship_council_required`
 
 ---
 
@@ -309,9 +311,9 @@ Hollow accepts fail closed (`"Looks fine."` → undisposed).
 1. **`perception_design_review`** — add `mode: "review" | "ship"` and optional `dispositions[]`; ship mode returns challenges, ship_gate, ship_summary, ledger updates
 2. **`perception://ship-council`** — methodology resource (when to run, dispositions, claim-done); points at design_review ship mode
 3. **`perception://decision-ledger`** — extend to document ship lifecycle phases (Challenge → Disposition → Closed)
-4. **Coordinator / `agent_summary`** — `ship_gate`, `recommended_capability: design_review`, hint `mode: ship` when post-verify structural/balanced
-5. **Cursor rule** — never claim done on structural/balanced while verify fails or `ship_gate.council_clear` is false
-6. **`perception://verification-guide`** — verify ≠ ship approval; run design_review ship mode before claim-done
+4. **Coordinator / `agent_summary`** — `ship_gate`, `section_checklist`, `recommended_capability`, hint `mode: ship` when post-verify structural/balanced
+5. **Cursor rule** — Done ladder: `data.verified` → section checklist → Ship Council; never claim done while gates prohibit `claim_complete`
+6. **`perception://verification-guide`** — verify ≠ claim-done; section checklist + ship mode when required
 
 ---
 
@@ -319,15 +321,16 @@ Hollow accepts fail closed (`"Looks fine."` → undisposed).
 
 ```text
 ACT (draft UI)
-  → OBSERVE / Design Snapshot
-  → VERIFY (blocking empty)
+  → OBSERVE / Design Snapshot (seeds section_checklist)
+  → VERIFY (data.verified=true)
+  → Section checklist: observe → look → verify(section_id) per block
   → perception_design_review(mode="ship")
   → for each ledger challenge:
         revise → remeasure → verify → ship mode again
         OR accept + engineering rationale → ledger closed
         OR ask_user (subjective only)
   → ship_gate.council_clear + ship_summary
-  → (with verify passed) claim done
+  → claim done
   OR polish saturation / stop_conditions → ship_summary + stop
 ```
 

@@ -324,7 +324,10 @@ async def handle_verify(
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
     session_id = str(arguments.get("session_id") or "")
-    criteria_raw = arguments.get("criteria") or {}
+    criteria_raw = dict(arguments.get("criteria") or {})
+    section_id = arguments.get("section_id") or criteria_raw.get("section_id")
+    if section_id is not None:
+        section_id = str(section_id)
     if not session_id:
         return make_envelope("perception_verify", ok=False, error="session_id required")
 
@@ -332,6 +335,40 @@ async def handle_verify(
         rec = await store.ensure(session_id)
     except KeyError as exc:
         return make_envelope("perception_verify", ok=False, error=str(exc))
+
+    checklist = None
+    section = None
+    try:
+        from navigation.engineering_knowledge.reference_binding import resolve_psm_for_session
+        from navigation.coordination_intelligence.planning.section_checklist import (
+            build_section_verify_assertions,
+            get_section_checklist,
+            incomplete_sections,
+        )
+
+        psm = resolve_psm_for_session(session_id)
+        if psm is not None:
+            checklist = get_section_checklist(psm)
+            if checklist and checklist.get("sections"):
+                if not section_id:
+                    open_ids = incomplete_sections(psm)
+                    if open_ids:
+                        section_id = open_ids[0]
+                if section_id:
+                    section = next(
+                        (
+                            s
+                            for s in checklist.get("sections") or []
+                            if s.get("section_id") == section_id
+                        ),
+                        None,
+                    )
+                    if section:
+                        extra = build_section_verify_assertions(section)
+                        existing = list(criteria_raw.get("js_assertions") or [])
+                        criteria_raw["js_assertions"] = list(dict.fromkeys([*existing, *extra]))
+    except Exception:
+        psm = None
 
     criteria = _criteria_from_dict(criteria_raw)
     vr = await verify(rec.browser, criteria)
@@ -343,6 +380,14 @@ async def handle_verify(
         "auto_merged": vr.auto_merged,
         "feedback": vr.feedback(),
     }
+    if section_id:
+        data["section_id"] = section_id
+        criteria_raw["section_id"] = section_id
+        data["criteria"] = {"section_id": section_id}
+    if checklist is not None:
+        # Refresh after verify will land via normalize; expose current seed for agents.
+        data["section_checklist"] = checklist
+
     scan_id: str | None = None
     envelope = make_envelope(
         "perception_verify",

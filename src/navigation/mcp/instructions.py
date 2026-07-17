@@ -54,10 +54,14 @@ Specialist guides:
 
 Hard rules:
 - Top-level ok means tool transport completed; it does not prove usable evidence.
+  For verify, only data.verified=true counts as a pass.
 - While implementation_gate.state=blocked, obey prohibited_actions and run
   next_required_capability. Never invent a blocked structural decision.
 - Only coordination_evidence.advancement_eligible=true may resolve/advance evidence.
-- Never claim UI work is done without perception_verify.
+- Never claim UI work is done without the Done ladder: data.verified=true, then
+  section checklist (observe→verify each block when section_checklist_required),
+  then Ship Council clear when ship_council_required. Verify alone is not claim-done
+  for design_driven / redesign / structural drafts.
 - Never skip verify after execute_script or execute_actions.
 - LOOK at inline images from observe/verify/diff.
 - Read agent_summary.blocking before advisory.

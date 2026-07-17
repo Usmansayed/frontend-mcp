@@ -66,9 +66,14 @@ Actions: `click_button`, `click_link`, `set_input` (with `text` / `label` / `val
 
 ### `perception_verify`
 
-Criteria: `url_contains`, `text_contains`, `js_assertions`, etc.
+Criteria: `url_contains`, `text_contains`, `js_assertions`, optional `section_id`.
 
-On failure: `failure_scan_id`, inline annotated screenshot.
+Pass condition: **`data.verified=true`** (top-level `ok` is transport only).
+
+On failure: `failure_scan_id`, inline annotated screenshot, `verified=false`.
+
+For visual drafts, claim-done also requires section checklist + Ship Council when
+`implementation_gate` sets those flags — see AGENT_GUIDE §19.
 
 ### `perception_diff`
 

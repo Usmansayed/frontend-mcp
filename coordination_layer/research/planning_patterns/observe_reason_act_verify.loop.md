@@ -19,7 +19,7 @@ The universal loop for any state that reaches into browser-grounded UI work.
 
 - If verify fails, return to observe with a fresh scan and run `diff` against the pre-act snapshot.
 - Retry budget: 3–5 iterations depending on state confidence. Exceeding budget → `global.Sxx.verify_loop_exhausted`.
-- Never claim done without a passing verify (AGENT_GUIDE hard rule).
+- Never claim done without `data.verified=true`, then section checklist + Ship Council when the implementation gate requires them (AGENT_GUIDE §19 Done ladder).
 
 ## States that embed this pattern
 

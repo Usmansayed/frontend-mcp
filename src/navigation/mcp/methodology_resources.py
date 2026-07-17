@@ -35,7 +35,7 @@ METHODOLOGY_RESOURCES: dict[str, tuple[str, str]] = {
             "At the beginning of a frontend task.",
             "Task scope, influence level, and the first unresolved engineering decision.",
             "Call health with the real intent, then session_start when the runtime is available. Read the returned recommended resource and implementation gate.",
-            "When blocked, only inspect, gather evidence, or scaffold/start the runtime.",
+            "When blocked, only inspect, gather evidence, or scaffold/start the runtime. Claim-done follows the Done ladder in perception://verification-guide.",
             "The coordinator identifies the correct workflow resource and required capability.",
         ),
     ),
@@ -47,7 +47,7 @@ METHODOLOGY_RESOURCES: dict[str, tuple[str, str]] = {
             "What evidence materially changes the next implementation decision.",
             "Engineering Strategy first; targeted intelligence second; browser verification after action.",
             "Do not maximize calls. Do not lock structural decisions from degraded evidence.",
-            "Required decisions are resolved and verification has no blocking findings.",
+            "Required decisions are resolved; data.verified=true; section checklist complete when required; Ship Council clear when required.",
         ),
     ),
     "perception://design-workflow": (
@@ -58,7 +58,8 @@ METHODOLOGY_RESOURCES: dict[str, tuple[str, str]] = {
             "Design direction, information hierarchy, component foundation, tokens, and responsive composition.",
             "Usable reference evidence plus Component Intelligence selection. A measured Engineering Spec must harden soft inspiration priors.",
             "Broad visual implementation is prohibited while the structural gate is blocked. Runtime scaffolding is allowed.",
-            "Reference and foundation decisions are usable, the draft is remeasured, SpecDiff is honored, and verify passes.",
+            "Reference and foundation decisions are usable, the draft is remeasured, SpecDiff is honored, "
+            "each section_checklist block is observed+verified, Ship Council is clear, and data.verified=true.",
         ),
     ),
     "perception://redesign-workflow": (
@@ -69,7 +70,7 @@ METHODOLOGY_RESOURCES: dict[str, tuple[str, str]] = {
             "Current baseline, target reference, intentional changes, and preserved behavior.",
             "Observe and build a Design Snapshot; bind/measure the target; use SpecDiff and Design Review.",
             "Do not rewrite the full UI before the current and target evidence are measurable.",
-            "Required revisions are applied, remeasured, and verified.",
+            "Required revisions are applied, remeasured, section checklist complete, Ship Council clear, and verified.",
         ),
     ),
     "perception://bugfix-workflow": (
@@ -109,11 +110,11 @@ METHODOLOGY_RESOURCES: dict[str, tuple[str, str]] = {
         "Ship Council",
         _guide(
             "Ship Council",
-            "After verify passes on structural/balanced UI — before claiming done.",
+            "After section checklist is complete on structural/balanced UI — before claiming done.",
             "Top 3–5 ROI-ranked ship decisions to challenge; dispositions revised, accepted, or ask_user.",
             "perception_design_review(mode=\"ship\") with snapshot; optional dispositions array.",
             "Agent revises convention gaps; accept requires concrete engineering rationale; ask_user only for brand/subjective conflicts.",
-            "Verify passes, ship_gate.council_clear is true, and ship_summary reflects dispositions.",
+            "Section checklist complete, ship_gate.council_clear is true, and ship_summary reflects dispositions.",
         ),
     ),
     "perception://verification-guide": (
@@ -121,10 +122,10 @@ METHODOLOGY_RESOURCES: dict[str, tuple[str, str]] = {
         _guide(
             "Verification Guide",
             "After an implementation action or when the strategy enters verification.",
-            "User-visible success criteria, responsive behavior, blocking runtime issues, and Spec drift.",
-            "Verify exact criteria; for visual work remeasure Design Snapshot and honor spec_revision_gate.",
-            "Verify proves runtime truth; run perception_design_review(mode=\"ship\") before claim-done on structural/balanced work.",
-            "Verify passes, blocking is empty, ship_gate.council_clear, and required Spec revisions are cleared.",
+            "User-visible success criteria, each layout section, responsive behavior, blocking runtime issues, and Spec drift.",
+            "Require data.verified=true (transport ok is not a pass). When section_checklist_required: observe→look→perception_verify(section_id) for each block. Then remeasure Spec and honor spec_revision_gate.",
+            "Page verify alone is not claim-done for design_driven/redesign/structural drafts. Complete section checklist, then perception_design_review(mode=\"ship\") when ship_council_required.",
+            "data.verified=true, blocking empty, section_checklist complete when required, ship_gate.council_clear when required, Spec revisions cleared.",
         ),
     ),
     "perception://browser-lifecycle": (

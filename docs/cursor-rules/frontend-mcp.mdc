@@ -46,7 +46,8 @@ Goal: maximize Frontend MCP’s influence on **engineering decisions** — not m
 Default question: *“What decisions should I resolve with evidence before I lock them into code?”*  
 Not: *“I’ll build everything, then observe/verify.”*
 
-Read `perception://agent-guide` once per applicable session for tool playbooks.  
+Read `perception://getting-started` once per applicable session, then read the focused
+resource returned by `engineering_strategy.recommended_resource`.
 Call browser MCP tools **one at a time** per `session_id`.
 
 ---
@@ -57,9 +58,10 @@ Before substantial frontend UI (new screens, redesigns, visual systems, **full-v
 
 1. Bootstrap with real **task intent**: `perception_health` / `perception_session_start`
 2. Read `agent_summary.engineering_strategy` (unresolved decisions, influence, risks, stops)
-3. Resolve open decisions in proportion to `influence_level`
-4. Gather **minimum evidence** only for those decisions (§3)
-5. Then implement
+3. Read and obey `implementation_gate`; top-level tool `ok` is not evidence success
+4. Resolve open decisions in proportion to `influence_level`
+5. Gather **minimum evidence** only for those decisions (§3)
+6. Then implement
 
 **Reason:** Code locks hierarchy, spacing, and foundation; late QA cannot cheaply undo that.
 
@@ -67,7 +69,7 @@ Before substantial frontend UI (new screens, redesigns, visual systems, **full-v
 |-------------------|-------------------|
 | `structural` | Direction / foundation / hierarchy evidence **before** large code volume |
 | `balanced` | Evidence for affected areas → implement → verify |
-| `minimal` / `maintenance` | Observe → fix → verify; skip inspiration and redesign loops |
+| `minimal` / `maintenance` | Observe → fix → verify; skip inspiration and redesign loops. **Exception:** if this episode already has a measured draft from design_driven/redesign work, still complete section checklist + Ship Council before claim-done. |
 
 Obey `stop_conditions`, `defer_until_later`, and `recommended_evidence`.  
 Prefer `recommended_evidence.suggested_queries` when present.
@@ -80,26 +82,26 @@ Classify from intent + repo state (not keyword bingo). Gather only evidence that
 
 **New product / greenfield UI**  
 Resolve: design direction, information hierarchy, component foundation.  
-Evidence: strategy → image-first inspiration **or** Figma/reference → seed Spec (≤3–5 refs) → draft from Spec → remeasure / SpecDiff gate → verify.  
+Evidence: strategy → image-first inspiration **or** Figma/reference → seed Spec (≤3–5 refs) → draft from Spec → remeasure / SpecDiff gate → verify (`data.verified`) → section checklist → Ship Council.  
 Skip: deep SEO, consistency tours, polish before a coherent first draft.
 
 **Redesign / visual overhaul**  
 Resolve: what must change vs current or target reference.  
-Evidence: Design Snapshot (± bind reference) → SpecDiff / Design Review → code → remeasure → verify.  
+Evidence: Design Snapshot (± bind reference) → SpecDiff / Design Review → code → remeasure → verify → section checklist → Ship Council.  
 Inspiration only if direction is still undecided.
 
 **Feature on existing UI**  
 Resolve: only decisions on the affected surface.  
 Evidence: reuse bound Spec if any → observe affected routes → resolve route/component owners if mapping unclear → implement → verify.  
-Do not restart greenfield inspiration.
+Do not restart greenfield inspiration. If `section_checklist_required` / `ship_council_required` fire, obey them.
 
 **Bug / hotfix / surgical**  
 Evidence: observe (read **blocking** first) → fix code → verify → `perception_diff` on failure.  
-No inspiration or Spec expansion unless the user asked to revisit structure.
+No inspiration, section checklist, or Ship Council unless the user asked to revisit structure.
 
 **Polish / visual refinement**  
 Invest while strategy ROI allows; stop when stop_conditions or diminishing returns fire.  
-Prefer SpecDiff on disputed properties over more screenshots.
+Prefer SpecDiff on disputed properties over more screenshots. If a design draft already exists this episode, still honor section checklist + Ship Council before claim-done.
 
 **Forms / guards / multi-step flows**  
 Use agent-guide playbooks (probe_form, probe_guards, flow checkpoints). Still read strategy; keep influence minimal unless the flow is new product UI.
@@ -124,7 +126,14 @@ Gallery URLs and English design prose are not the source of truth.
 
 ## 5. Hard constraints
 
-- Never claim UI work is done without `perception_verify` after ACT  
+- Never claim UI work is done without `data.verified=true` after ACT  
+- When `section_checklist_required`: observe → look → `perception_verify(section_id)` for each block before claim-done  
+- On structural/balanced **or design_driven/redesign** work after section checklist: run `perception_design_review(mode="ship")` and do not claim done while `ship_gate.council_clear` is false (revise, or accept with engineering rationale). Spec/token alignment + page verify is not enough.
+- While `implementation_gate.section_checklist_required` or `ship_council_required`, `claim_complete` is prohibited  
+- If `implementation_gate.state=blocked`, do not perform any `prohibited_actions`;
+  read `required_resource` and run `next_required_capability`
+- Only `coordination_evidence.advancement_eligible=true` can lock or advance a
+  structural decision; degraded, failed, noop, cleanup, and connection-only calls cannot
 - After draft vs a bound reference Spec: remeasure with `perception_build_design_snapshot`; honor `spec_revision_gate` (`revision_required` → revise)  
 - Read **blocking** before advisory  
 - Auth/MFA/CAPTCHA: `perception_auth_gate` → `requires_human` → stop and ask the user  
@@ -135,6 +144,8 @@ Gallery URLs and English design prose are not the source of truth.
 ## 6. Anti-patterns
 
 - Implement almost all UI, then call MCP only for observe/verify  
+- Treat transport `ok=true` as verify pass when `data.verified=false`  
+- Claim done after one page-level verify without section checklist / Ship Council when required  
 - Maximize MCP calls “to be thorough”  
 - Re-search inspiration after enough refs exist or a Spec is already bound  
 - Design exploration on hotfix / surgical / debug scopes  
@@ -144,9 +155,16 @@ Gallery URLs and English design prose are not the source of truth.
 
 ## 7. Done means
 
-Decisions resolved enough for this scope **and** verify passes (blocking empty),  
-**or** strategy says stop / a human is required.
+Done ladder for design_driven / redesign / structural / balanced visual work:
 
-Structural or balanced visual work with a bound reference Spec is not done until SpecDiff gate is honored and verify passes.
+1. Implementation readiness clear (or maintenance for hotfix)
+2. Page verify with **`data.verified=true`** (not just `ok`)
+3. Section checklist complete when `section_checklist_required`
+4. Ship Council clear when `ship_council_required`
+5. Then claim-done
+
+Hotfix / surgical: skip 3–4; still require `data.verified=true` and empty blocking.
+
+Structural or balanced visual work with a bound reference Spec is not done until SpecDiff gate is honored and the Done ladder above is complete.
 
 MCP returns facts only — you decide; follow this methodology, not generic “next step” filler.

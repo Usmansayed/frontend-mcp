@@ -69,10 +69,10 @@ _WORKFLOW: dict[str, dict[str, str]] = {
         "next": "perception_verify",
     },
     "perception_verify": {
-        "what": "Assert UI criteria (url, text, elements).",
-        "when": "After every code change or browser act.",
+        "what": "Assert UI criteria (url, text, js). Pass = data.verified, not transport ok.",
+        "when": "After every code change or browser act; pass section_id for checklist blocks.",
         "before": "observe or act",
-        "next": "STOP if pass; else diff + fix",
+        "next": "section checklist / Ship Council when required; else STOP if Done ladder clear",
     },
     "perception_diff": {
         "what": "Compare two scan screenshots/DOM.",
