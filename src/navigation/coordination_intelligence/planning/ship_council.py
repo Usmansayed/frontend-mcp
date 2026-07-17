@@ -144,9 +144,8 @@ def should_recommend_ship_mode(psm: ProjectSituationModel, strategy: dict[str, A
         return False
     if psm.episode.verification_status != "passed":
         return False
-    gate = strategy.get("implementation_gate") or {}
-    if gate.get("state") == "blocked":
-        return False
+    # Pre-code implementation_gate=blocked must not suppress ship once a measured
+    # draft already exists (snapshot + verify). That gate is for coding start, not ship.
     disc_scope = str(strategy.get("task_scope") or "")
     if disc_scope in ("hotfix", "surgical", "debug"):
         return False
@@ -165,6 +164,10 @@ def _lifecycle_weight(psm: ProjectSituationModel) -> float:
     weight = 0.65
     if psm.episode.verification_status == "passed":
         weight = 1.0
+    # Ship mode often runs with a fresh/ephemeral PSM; do not collapse ROI so far
+    # that majors evaporate before ranking.
+    elif psm.artifacts.snapshot_id:
+        weight = 0.85
     saturation = str(psm.episode.retry_counters.get("polish_saturation") or "none")
     if saturation == "hard":
         weight *= 0.55
@@ -211,6 +214,158 @@ def _snapshot_dict(snapshot: Any) -> dict[str, Any]:
     return dict(snapshot or {})
 
 
+def _viewport_width(layout: dict[str, Any]) -> float:
+    vp = layout.get("viewport") or {}
+    return float(vp.get("width") or 0)
+
+
+def _rect_width_ratio(region: dict[str, Any], viewport_w: float) -> float | None:
+    if region.get("width_ratio") is not None:
+        try:
+            return float(region["width_ratio"])
+        except (TypeError, ValueError):
+            pass
+    if region.get("width_pct") is not None:
+        try:
+            return float(region["width_pct"])
+        except (TypeError, ValueError):
+            pass
+    rect = region.get("rect") if isinstance(region.get("rect"), dict) else {}
+    if not rect or viewport_w <= 0:
+        return None
+    w = float(rect.get("w") or rect.get("width") or 0)
+    if w <= 0:
+        return None
+    return min(1.0, w / viewport_w)
+
+
+def _region_is_centered(region: dict[str, Any], viewport_w: float) -> bool:
+    if bool(region.get("centered")):
+        return True
+    if str(region.get("layout_pattern") or "") == "marketing_centered":
+        return True
+    rect = region.get("rect") if isinstance(region.get("rect"), dict) else {}
+    if not rect or viewport_w <= 0:
+        return False
+    x = float(rect.get("x") or rect.get("left") or 0)
+    w = float(rect.get("w") or rect.get("width") or 0)
+    if w <= 0 or w / viewport_w > 0.88:
+        return False
+    left_margin = x
+    right_margin = viewport_w - (x + w)
+    return abs(left_margin - right_margin) <= max(48.0, viewport_w * 0.08)
+
+
+def _region_position(region: dict[str, Any]) -> str:
+    pos = str(region.get("position") or "").lower()
+    if pos:
+        return pos
+    style = region.get("style") if isinstance(region.get("style"), dict) else {}
+    return str(style.get("position") or "").lower()
+
+
+def _normalize_prominence_values(prominence: list[dict[str, Any]]) -> list[float]:
+    values: list[float] = []
+    for p in prominence:
+        if p.get("normalized") is not None:
+            values.append(float(p["normalized"]))
+            continue
+        if p.get("prominence") is not None:
+            values.append(float(p["prominence"]))
+            continue
+        values.append(float(p.get("score") or 0))
+    if not values:
+        return []
+    # Live hierarchy uses font-size scores (often >> 1). Normalize to 0-1.
+    if max(values) > 1.5:
+        peak = max(values) or 1.0
+        return [v / peak for v in values]
+    return values
+
+
+def _equal_weight_from_boxes(boxes: list[dict[str, Any]]) -> bool:
+    """Detect equal-weight KPI/card rows from geometry when hierarchy is sparse."""
+    usable: list[tuple[float, float, float, float]] = []
+    for box in boxes:
+        if not isinstance(box, dict):
+            continue
+        x = float(box.get("x") or 0)
+        y = float(box.get("y") or 0)
+        w = float(box.get("w") or box.get("width") or 0)
+        h = float(box.get("h") or box.get("height") or 0)
+        if w < 80 or h < 40:
+            continue
+        usable.append((x, y, w, h))
+    if len(usable) < 3:
+        return False
+    # Group by approximate row (y band).
+    usable.sort(key=lambda b: b[1])
+    rows: list[list[tuple[float, float, float, float]]] = []
+    for box in usable:
+        placed = False
+        for row in rows:
+            if abs(row[0][1] - box[1]) <= 40:
+                row.append(box)
+                placed = True
+                break
+        if not placed:
+            rows.append([box])
+    for row in rows:
+        if len(row) < 3:
+            continue
+        widths = [b[2] for b in row]
+        heights = [b[3] for b in row]
+        avg_w = sum(widths) / len(widths)
+        avg_h = sum(heights) / len(heights)
+        if avg_w <= 0 or avg_h <= 0:
+            continue
+        width_span = (max(widths) - min(widths)) / avg_w
+        height_span = (max(heights) - min(heights)) / avg_h
+        if width_span <= 0.18 and height_span <= 0.25:
+            return True
+    return False
+
+
+def assess_snapshot_coverage(snapshot: Any) -> dict[str, Any]:
+    """How much of the ship detector surface can actually run on this snapshot."""
+    snap = _snapshot_dict(snapshot)
+    layout = snap.get("layout") or {}
+    hierarchy = snap.get("hierarchy") or {}
+    colors = snap.get("colors") or {}
+    regions = list(layout.get("regions") or [])
+    prominence = list(hierarchy.get("prominence_scores") or [])
+    boxes = list(layout.get("interactive_boxes") or [])
+    visual = layout.get("visual_insights") or {}
+    if not boxes:
+        boxes = list(visual.get("element_boxes") or [])
+    checks = {
+        "regions": len(regions) >= 1,
+        "nav_geometry": any(
+            str(r.get("role") or r.get("label") or "").lower()
+            in {"nav", "sidebar", "aside", "navigation"}
+            or "sidebar" in " ".join(r.get("classes") or []).lower()
+            for r in regions
+        ),
+        "main_geometry": any(
+            str(r.get("role") or "").lower() in {"main", "content", "settings"}
+            and (_rect_width_ratio(r, _viewport_width(layout)) is not None or r.get("rect"))
+            for r in regions
+        ),
+        "prominence": len(prominence) >= 2,
+        "boxes": len(boxes) >= 2,
+        "token_ratio": colors.get("token_backed_ratio") is not None
+        or (snap.get("design_tokens") or {}).get("token_backed_ratio") is not None,
+    }
+    score = sum(1 for ok in checks.values() if ok)
+    if score >= 5:
+        band = "full"
+    elif score >= 3:
+        band = "partial"
+    else:
+        band = "thin"
+    return {"coverage": band, "checks": checks, "score": score}
+
+
 def _collect_snapshot_signals(snapshot: Any) -> list[dict[str, Any]]:
     snap = _snapshot_dict(snapshot)
     layout = snap.get("layout") or {}
@@ -218,6 +373,7 @@ def _collect_snapshot_signals(snapshot: Any) -> list[dict[str, Any]]:
     colors = snap.get("colors") or {}
     tokens = snap.get("design_tokens") or {}
     signals: list[dict[str, Any]] = []
+    viewport_w = _viewport_width(layout)
 
     overflow = list(layout.get("overflow_issues") or [])
     visual = layout.get("visual_insights") or {}
@@ -232,34 +388,47 @@ def _collect_snapshot_signals(snapshot: Any) -> list[dict[str, Any]]:
             "evidence_refs": ["snapshot:layout.overflow"],
         })
 
-    token_ratio = float(colors.get("token_backed_ratio") or tokens.get("token_backed_ratio") or 1.0)
-    if token_ratio < 0.45:
+    token_ratio = colors.get("token_backed_ratio")
+    if token_ratio is None:
+        token_ratio = tokens.get("token_backed_ratio")
+    if token_ratio is not None and float(token_ratio) < 0.45:
         signals.append({
             "signal": "theme_not_coupled",
             "severity": "major",
-            "specdiff_magnitude": max(0.5, 1.0 - token_ratio),
+            "specdiff_magnitude": max(0.5, 1.0 - float(token_ratio)),
             "evidence_refs": ["snapshot:colors.token_backed_ratio"],
         })
 
     prominence = list(hierarchy.get("prominence_scores") or [])
-    if len(prominence) >= 3:
-        values = [float(p.get("score") or p.get("prominence") or 0) for p in prominence]
-        if values and (max(values) - min(values)) < 0.12:
-            signals.append({
-                "signal": "equal_weight_kpi_cluster",
-                "severity": "major",
-                "specdiff_magnitude": 0.75,
-                "evidence_refs": ["snapshot:hierarchy.prominence_scores"],
-            })
+    norms = _normalize_prominence_values(prominence)
+    if len(norms) >= 3 and (max(norms) - min(norms)) < 0.12:
+        signals.append({
+            "signal": "equal_weight_kpi_cluster",
+            "severity": "major",
+            "specdiff_magnitude": 0.75,
+            "evidence_refs": ["snapshot:hierarchy.prominence_scores"],
+        })
+
+    boxes = list(layout.get("interactive_boxes") or [])
+    if not boxes:
+        boxes = list(visual.get("element_boxes") or [])
+    if "equal_weight_kpi_cluster" not in {s["signal"] for s in signals} and _equal_weight_from_boxes(boxes):
+        signals.append({
+            "signal": "equal_weight_kpi_cluster",
+            "severity": "major",
+            "specdiff_magnitude": 0.78,
+            "evidence_refs": ["snapshot:layout.interactive_boxes"],
+        })
 
     regions = list(layout.get("regions") or [])
+    nav_roles = {"nav", "sidebar", "aside", "navigation"}
     nav_regions = [
         r for r in regions
-        if str(r.get("role") or r.get("label") or "").lower() in {"nav", "sidebar", "aside", "navigation"}
+        if str(r.get("role") or r.get("label") or "").lower() in nav_roles
+        or "sidebar" in " ".join(r.get("classes") or []).lower()
     ]
     if nav_regions and not any(
-        str(r.get("position") or r.get("style", {}).get("position") or "").lower() in {"fixed", "sticky"}
-        for r in nav_regions
+        _region_position(r) in {"fixed", "sticky"} for r in nav_regions
     ):
         signals.append({
             "signal": "nav_not_sticky",
@@ -269,10 +438,12 @@ def _collect_snapshot_signals(snapshot: Any) -> list[dict[str, Any]]:
         })
 
     for region in regions:
-        width = region.get("width_ratio") or region.get("width_pct")
-        centered = bool(region.get("centered")) or str(region.get("layout_pattern") or "") == "marketing_centered"
         role = str(region.get("role") or region.get("label") or "").lower()
-        if centered and (width is None or float(width) <= 0.72) and role in {"main", "content", "settings"}:
+        if role not in {"main", "content", "settings"}:
+            continue
+        width = _rect_width_ratio(region, viewport_w)
+        centered = _region_is_centered(region, viewport_w)
+        if centered and width is not None and width <= 0.72:
             signals.append({
                 "signal": "narrow_centered_main",
                 "severity": "major",
@@ -287,6 +458,13 @@ def _collect_snapshot_signals(snapshot: Any) -> list[dict[str, Any]]:
             "severity": "major",
             "specdiff_magnitude": min(1.0, len(regions) / 10.0),
             "evidence_refs": ["snapshot:layout.regions"],
+        })
+    elif len(boxes) >= 30:
+        signals.append({
+            "signal": "hierarchy_dense_ui",
+            "severity": "minor",
+            "specdiff_magnitude": 0.55,
+            "evidence_refs": ["snapshot:layout.interactive_boxes"],
         })
 
     return signals
@@ -441,17 +619,27 @@ def build_ship_council(
     revision_gate: dict[str, Any] | None,
     findings: list[Any],
     dispositions: list[dict[str, Any]] | None = None,
+    force: bool = False,
 ) -> dict[str, Any]:
     influence = str(strategy.get("influence_level") or "balanced")
     task_scope = str(strategy.get("task_scope") or "")
     polish_saturation = str(psm.episode.retry_counters.get("polish_saturation") or "none")
+
+    # Keep lifecycle ROI grounded when handler PSM has snapshot but unset artifact id.
+    if not psm.artifacts.snapshot_id:
+        snap = _snapshot_dict(snapshot)
+        sid = str(snap.get("snapshot_id") or "")
+        if sid:
+            psm.artifacts.snapshot_id = sid
+        elif snap:
+            psm.artifacts.snapshot_id = "snap_ephemeral"
 
     ledger = load_ledger(psm)
     rejected_dispositions: list[dict[str, Any]] = []
     if dispositions:
         _, rejected_dispositions = apply_dispositions(ledger, dispositions)
 
-    if should_skip_ship_council(
+    if not force and should_skip_ship_council(
         influence_level=influence,
         task_scope=task_scope,
         polish_saturation=polish_saturation,
@@ -466,8 +654,14 @@ def build_ship_council(
                 "state": "skipped",
                 "open_high_roi": 0,
                 "council_clear": True,
+                "coverage": "skipped",
             },
-            "ship_summary": _build_ship_summary(ledger, challenges_raised=0, open_high_roi=0),
+            "ship_summary": _build_ship_summary(
+                ledger,
+                challenges_raised=0,
+                open_high_roi=0,
+                coverage="skipped",
+            ),
             "decision_ledger": ledger,
             "rejected_dispositions": rejected_dispositions,
             "skipped_reason": f"influence={influence}, task_scope={task_scope}",
@@ -480,6 +674,9 @@ def build_ship_council(
         + _collect_revision_gate_signals(revision_gate)
     )
 
+    coverage_info = assess_snapshot_coverage(snapshot)
+    coverage = str(coverage_info.get("coverage") or "thin")
+
     challenges: list[dict[str, Any]] = []
     for cand in candidates:
         signal = str(cand.get("signal") or "")
@@ -488,7 +685,9 @@ def build_ship_council(
         challenge = _materialize_challenge(cand, strategy=strategy, psm=psm)
         if not challenge:
             continue
-        if challenge["roi_score"] < ROI_HIGH_CUT and challenge["severity"] not in ("blocking",):
+        # Majors/blocking always surface; ROI cut only trims low-value minor/advisory noise.
+        severity = str(challenge.get("severity") or "")
+        if severity not in ("blocking", "major") and challenge["roi_score"] < ROI_HIGH_CUT:
             continue
         challenges.append(challenge)
 
@@ -540,6 +739,7 @@ def build_ship_council(
             ledger,
             challenges_raised=len(challenges),
             open_high_roi=len(open_high),
+            coverage=coverage,
         )
 
     save_ledger(psm, ledger)
@@ -553,6 +753,8 @@ def build_ship_council(
             "state": gate_state,
             "open_high_roi": len(open_high),
             "council_clear": council_clear,
+            "coverage": coverage,
+            "coverage_checks": coverage_info.get("checks"),
         },
         "ship_summary": ship_summary,
         "decision_ledger": ledger,
@@ -565,6 +767,7 @@ def _build_ship_summary(
     *,
     challenges_raised: int,
     open_high_roi: int,
+    coverage: str = "partial",
 ) -> dict[str, Any]:
     stats = ledger.get("session_stats") or {}
     revised = int(stats.get("revised") or 0)
@@ -577,7 +780,13 @@ def _build_ship_summary(
         confidence = round(min(0.98, 0.72 + (revised * 0.06) + (accepted * 0.04)), 2)
     elif total == 0:
         improvement = "low"
-        confidence = 0.85
+        # Empty clear is not high certainty — especially on thin detector coverage.
+        if coverage == "thin":
+            confidence = 0.48
+        elif coverage == "partial":
+            confidence = 0.58
+        else:
+            confidence = 0.62
     else:
         improvement = "medium"
         confidence = round(max(0.35, 0.75 - open_high_roi * 0.08), 2)
@@ -589,6 +798,7 @@ def _build_ship_summary(
         "asked_user": asked_user,
         "estimated_ui_improvement": improvement,
         "ship_confidence": confidence,
+        "coverage": coverage,
     }
 
 

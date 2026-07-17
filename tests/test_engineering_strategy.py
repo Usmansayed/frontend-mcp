@@ -139,3 +139,25 @@ def test_inspiration_recommended_evidence_has_suggested_queries(
     assert "inspiration" not in strategy["summary"].lower()
     assert strategy["what_matters_now"]
     assert strategy["what_matters_now"][0].startswith("Resolve:")
+
+
+@pytest.mark.unit
+def test_design_driven_verify_keeps_ship_eligible_influence(bundle: RuntimeArtifactBundle) -> None:
+    """First green verify must not collapse design-driven work to maintenance."""
+    svc = CoordinationIntelligenceService(bundle=bundle)
+    psm = svc.episode_start(
+        session_id="sess_ship_influence",
+        intent="build a new SaaS analytics dashboard",
+        lifecycle_stage="S05_implementation",
+        project_maturity="M1",
+    )
+    psm.artifacts.snapshot_id = "snap_dash"
+    psm.episode.verification_status = "passed"
+    strategy = compile_engineering_strategy(psm, bundle.situation_policy_catalog).to_dict()
+    assert strategy["task_scope"] == "design_driven"
+    assert strategy["influence_level"] in ("structural", "balanced")
+    from navigation.coordination_intelligence.planning.ship_council import ship_council_hint
+
+    hint = ship_council_hint(strategy, psm)
+    assert hint is not None
+    assert hint["mode"] == "ship"

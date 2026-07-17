@@ -355,6 +355,7 @@ async def handle_design_review(
 	mode = str(arguments.get('mode') or 'review').strip().lower()
 	if mode not in ('review', 'ship'):
 		mode = 'review'
+	explicit_ship = str(arguments.get('mode') or '').strip().lower() == 'ship'
 	if mode == 'review' and not arguments.get('mode'):
 		from navigation.coordination_intelligence.planning.engineering_strategy import (
 			compile_engineering_strategy,
@@ -378,6 +379,21 @@ async def handle_design_review(
 
 		bundle = load_runtime_artifacts()
 		strategy_dict = compile_engineering_strategy(psm, bundle.situation_policy_catalog).to_dict()
+		# Explicit mode=ship must run detectors even when strategy is still minimal/hotfix.
+		if explicit_ship:
+			strategy_dict = {
+				**strategy_dict,
+				'influence_level': (
+					strategy_dict.get('influence_level')
+					if strategy_dict.get('influence_level') in ('structural', 'balanced')
+					else 'balanced'
+				),
+				'task_scope': (
+					strategy_dict.get('task_scope')
+					if strategy_dict.get('task_scope') not in ('hotfix', 'surgical', 'debug')
+					else 'design_driven'
+				),
+			}
 		raw_dispositions = arguments.get('dispositions')
 		dispositions = list(raw_dispositions) if isinstance(raw_dispositions, list) else []
 		ship = build_ship_council(
@@ -388,10 +404,12 @@ async def handle_design_review(
 			revision_gate=revision_gate,
 			findings=report.findings,
 			dispositions=dispositions,
+			force=explicit_ship,
 		)
 		ship_gate = ship.get('ship_gate') or {}
 		council_clear = bool(ship_gate.get('council_clear'))
 		challenges = list(ship.get('challenges') or [])
+		coverage = str(ship_gate.get('coverage') or 'partial')
 		coordination_evidence = {
 			'capability_id': 'design_review',
 			'outcome': 'success' if council_clear else 'degraded',
@@ -402,13 +420,36 @@ async def handle_design_review(
 				'challenges_emitted': len(challenges),
 				'open_high_roi': ship_gate.get('open_high_roi', 0),
 				'council_clear': council_clear,
+				'coverage': coverage,
 			},
 			'artifact_refs': {'snapshot_id': snap_rec.snapshot_id if snap_rec else ''},
 		}
 		ship_headline = (
 			f"Ship Council: {len(challenges)} challenge(s); "
-			f"gate={ship_gate.get('state')}; council_clear={council_clear}"
+			f"gate={ship_gate.get('state')}; council_clear={council_clear}; "
+			f"coverage={coverage}"
 		)
+		if council_clear and coverage in ('thin', 'partial'):
+			next_hint = (
+				'Council cleared with limited detector coverage. '
+				'Before claim-done on structural work, snapshot a denser product surface '
+				'(dashboard/settings shell) or accept low-confidence clear.'
+			)
+			advisory = [
+				'ship_gate.council_clear is true but coverage is not full — '
+				'do not treat empty challenges as strong design approval.',
+			]
+		elif council_clear:
+			next_hint = 'Ship Council clear with adequate coverage; claim-done only if verify also passed.'
+			advisory = ['Ship Council clear. Still require perception_verify before claiming done.']
+		else:
+			next_hint = (
+				'Revise high-ROI challenges, accept with engineering rationale, '
+				'or ask_user for brand decisions.'
+			)
+			advisory = [
+				'Ship Council challenges are decision-centric; do not claim done while ship_gate.council_clear is false.',
+			]
 		return make_envelope(
 			'perception_design_review',
 			ok=True,
@@ -439,13 +480,12 @@ async def handle_design_review(
 					'ship_summary': ship.get('ship_summary'),
 					'ship_council_hint': {
 						'resource': 'perception://ship-council',
-						'next': 'Revise high-ROI challenges, accept with engineering rationale, or ask_user for brand decisions.',
+						'next': next_hint,
+						'coverage': coverage,
 					},
 					'coordinator_headline': ship_headline,
 					'spec_revision_gate': revision_gate,
-					'advisory': [
-						'Ship Council challenges are decision-centric; do not claim done while ship_gate.council_clear is false.',
-					],
+					'advisory': advisory,
 				},
 			},
 			degraded=list(report.degraded),

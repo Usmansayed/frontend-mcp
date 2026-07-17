@@ -130,6 +130,75 @@ def test_reference_registry_compare() -> None:
 	assert 0.0 <= matches[0].similarity_score <= 1.0
 
 
+def test_layout_extractor_enriches_region_geometry_and_position() -> None:
+	from navigation.design_snapshot_engine.extractors.layout import LayoutExtractor
+
+	ctx = RawBrowserContext(
+		url='http://localhost:5173/dashboard',
+		viewport={'width': 1280, 'height': 720},
+		document={'scrollWidth': 1280, 'scrollHeight': 1400},
+		elements=[
+			{
+				'tag': 'nav',
+				'classes': ['sidebar'],
+				'text': 'Nav',
+				'rect': {'x': 0, 'y': 0, 'w': 240, 'h': 1400},
+				'style': {'position': 'static', 'display': 'block'},
+			},
+			{
+				'tag': 'main',
+				'classes': [],
+				'text': 'Main',
+				'rect': {'x': 360, 'y': 40, 'w': 560, 'h': 800},
+				'style': {'position': 'static', 'display': 'block'},
+			},
+			{
+				'tag': 'aside',
+				'classes': ['app-sidebar'],
+				'role': 'navigation',
+				'text': 'Aside',
+				'rect': {'x': 0, 'y': 0, 'w': 200, 'h': 700},
+				'style': {'position': 'sticky', 'display': 'block'},
+			},
+		],
+		visual_insights={'element_boxes': [], 'issues': [], 'blocking': []},
+	)
+	out = LayoutExtractor().extract(ctx)
+	layout = out['layout']
+	regions = layout['regions']
+	assert regions
+	nav = next(r for r in regions if r['role'] in ('nav', 'aside', 'sidebar'))
+	assert 'position' in nav
+	assert 'width_ratio' in nav
+	main = next(r for r in regions if r['role'] == 'main')
+	assert main['width_ratio'] < 0.72
+	assert main.get('centered') is True
+	aside = next(r for r in regions if r['role'] == 'aside')
+	assert aside['position'] == 'sticky'
+
+
+def test_hierarchy_extractor_normalizes_prominence() -> None:
+	from navigation.design_snapshot_engine.extractors.hierarchy import HierarchyExtractor
+
+	ctx = RawBrowserContext(
+		url='http://localhost:5173/dashboard',
+		viewport={'width': 1280, 'height': 720},
+		document={'scrollWidth': 1280, 'scrollHeight': 720},
+		elements=[
+			{'tag': 'h2', 'text': 'Revenue', 'style': {'fontSize': '24px'}},
+			{'tag': 'h2', 'text': 'Users', 'style': {'fontSize': '24px'}},
+			{'tag': 'h2', 'text': 'Churn', 'style': {'fontSize': '23px'}},
+		],
+	)
+	out = HierarchyExtractor().extract(ctx)
+	scores = out['hierarchy']['prominence_scores']
+	assert scores
+	assert all('normalized' in s for s in scores)
+	assert all(0.0 <= float(s['normalized']) <= 1.0 for s in scores)
+	norms = [float(s['normalized']) for s in scores]
+	assert max(norms) - min(norms) < 0.15
+
+
 def main() -> int:
 	test_snapshot_engine_produces_all_sections()
 	test_typography_extractor_flags_off_scale()

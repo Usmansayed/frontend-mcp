@@ -22,6 +22,7 @@ class HierarchyExtractor:
 				level = int(tag[1])
 				style = element_style(el)
 				fs = parse_px(style.get('fontSize')) or 0
+				raw_score = fs + level * 4
 				headings.append({
 					'level': level,
 					'text': el.get('text', '')[:60],
@@ -29,7 +30,7 @@ class HierarchyExtractor:
 				})
 				prominence.append({
 					'label': el.get('text', '')[:40] or tag,
-					'score': fs + level * 4,
+					'score': raw_score,
 					'level': level,
 				})
 
@@ -46,6 +47,11 @@ class HierarchyExtractor:
 			prev = lvl
 
 		prominence.sort(key=lambda p: -p['score'])
+		max_score = max((float(p['score']) for p in prominence), default=0.0)
+		for p in prominence:
+			raw = float(p['score'])
+			p['normalized'] = round(raw / max_score, 4) if max_score > 0 else 0.0
+			p['prominence'] = p['normalized']
 
 		return {
 			'hierarchy': {

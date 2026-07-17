@@ -409,7 +409,13 @@ def _derive_influence_level(
         and scope in ("feature_incremental",)
     ):
         return "balanced", 0.45
-    if psm.episode.verification_status == "passed" and not psm.evidence.blocking:
+    # Do not collapse design-driven / redesign work to maintenance on first verify —
+    # that erases Ship Council recommendation right when the draft becomes shippable.
+    if (
+        psm.episode.verification_status == "passed"
+        and not psm.evidence.blocking
+        and scope not in ("design_driven", "redesign", "system_setup")
+    ):
         return "maintenance", 0.3
 
     if len(structural) >= 2 and band == "early":

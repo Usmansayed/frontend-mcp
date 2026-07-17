@@ -172,6 +172,159 @@ def test_roi_score_varies_with_evidence_not_fixed_template() -> None:
     assert low != 0.89
 
 
+# Live Design Snapshot Engine shape — role/rect only, font-size prominence, boxes.
+LIVE_SHAPED_DASHBOARD = {
+    "url": "http://localhost:5173/dashboard",
+    "layout": {
+        "viewport": {"width": 1280, "height": 720},
+        "document_size": {"width": 1280, "height": 1400},
+        "visual_insights": {
+            "issues": [],
+            "blocking": [],
+            "element_boxes": [
+                {"x": 220, "y": 80, "w": 240, "h": 110, "tag": "div", "classes": ["card"]},
+                {"x": 480, "y": 80, "w": 240, "h": 110, "tag": "div", "classes": ["card"]},
+                {"x": 740, "y": 80, "w": 240, "h": 110, "tag": "div", "classes": ["card"]},
+                {"x": 1000, "y": 80, "w": 240, "h": 110, "tag": "div", "classes": ["card"]},
+            ],
+        },
+        "interactive_boxes": [
+            {"x": 220, "y": 80, "w": 240, "h": 110},
+            {"x": 480, "y": 80, "w": 240, "h": 110},
+            {"x": 740, "y": 80, "w": 240, "h": 110},
+            {"x": 1000, "y": 80, "w": 240, "h": 110},
+        ],
+        "overflow_issues": [],
+        "regions": [
+            {
+                "role": "nav",
+                "rect": {"x": 0, "y": 0, "w": 220, "h": 1400},
+                "text": "Dashboard Analytics",
+                "children_count": 0,
+            },
+            {
+                "role": "main",
+                "rect": {"x": 320, "y": 40, "w": 640, "h": 900},
+                "text": "Overview",
+                "children_count": 0,
+            },
+            {
+                "role": "section",
+                "rect": {"x": 220, "y": 80, "w": 1020, "h": 140},
+                "text": "KPIs",
+            },
+            {
+                "role": "section",
+                "rect": {"x": 220, "y": 240, "w": 1020, "h": 320},
+                "text": "Chart",
+            },
+            {
+                "role": "section",
+                "rect": {"x": 220, "y": 580, "w": 1020, "h": 400},
+                "text": "Table",
+            },
+            {
+                "role": "header",
+                "rect": {"x": 220, "y": 0, "w": 1060, "h": 56},
+                "text": "App",
+            },
+            {
+                "role": "footer",
+                "rect": {"x": 220, "y": 1300, "w": 1060, "h": 80},
+                "text": "Footer",
+            },
+        ],
+    },
+    "hierarchy": {
+        "prominence_scores": [
+            {"label": "Revenue", "score": 28.0, "level": 2},
+            {"label": "Users", "score": 28.0, "level": 2},
+            {"label": "Churn", "score": 27.0, "level": 2},
+            {"label": "MRR", "score": 27.5, "level": 2},
+        ],
+    },
+    "colors": {
+        "token_backed_ratio": 0.18,
+        "raw_color_count": 22,
+    },
+    "design_tokens": {},
+}
+
+
+@pytest.mark.unit
+def test_majors_emit_even_without_verify_passed_on_psm() -> None:
+    """Handler PSM may lack verification_status; majors must still challenge."""
+    psm = ProjectSituationModel()
+    psm.artifacts.snapshot_id = "snap_live"
+    ship = build_ship_council(
+        psm=psm,
+        strategy=STRUCTURAL_STRATEGY,
+        snapshot=DesignSnapshot.from_dict(LIVE_SHAPED_DASHBOARD),
+        engineering_delta=None,
+        revision_gate={},
+        findings=[],
+        force=True,
+    )
+    signals = {c["signal"] for c in ship["challenges"]}
+    assert "nav_not_sticky" in signals
+    assert "narrow_centered_main" in signals
+    assert ship["ship_gate"]["council_clear"] is False
+
+
+@pytest.mark.unit
+def test_live_shaped_snapshot_emits_layout_and_hierarchy_challenges() -> None:
+    """Council must fire on live extractor shapes, not only hand-crafted fixtures."""
+    psm = _structural_psm()
+    snapshot = DesignSnapshot.from_dict(LIVE_SHAPED_DASHBOARD)
+    ship = build_ship_council(
+        psm=psm,
+        strategy=STRUCTURAL_STRATEGY,
+        snapshot=snapshot,
+        engineering_delta=None,
+        revision_gate={},
+        findings=[],
+    )
+    signals = {c["signal"] for c in ship["challenges"]}
+    assert "nav_not_sticky" in signals
+    assert "narrow_centered_main" in signals
+    assert "equal_weight_kpi_cluster" in signals
+    assert ship["ship_gate"]["council_clear"] is False
+    assert ship["ship_gate"]["state"] == "challenge"
+
+
+@pytest.mark.unit
+def test_sparse_login_clear_has_low_confidence_not_false_certainty() -> None:
+    psm = _structural_psm()
+    sparse = {
+        "url": "http://localhost:5173/login",
+        "layout": {
+            "viewport": {"width": 1280, "height": 720},
+            "document_size": {"width": 1280, "height": 720},
+            "visual_insights": {"issues": [], "blocking": [], "element_boxes": []},
+            "regions": [
+                {"role": "form", "rect": {"x": 440, "y": 200, "w": 400, "h": 320}, "text": "Login"},
+                {"role": "main", "rect": {"x": 0, "y": 0, "w": 1280, "h": 720}, "text": ""},
+            ],
+            "overflow_issues": [],
+        },
+        "hierarchy": {"prominence_scores": [{"label": "Sign in", "score": 32.0, "level": 1}]},
+        "colors": {"token_backed_ratio": 0.7, "raw_color_count": 4},
+        "design_tokens": {},
+    }
+    ship = build_ship_council(
+        psm=psm,
+        strategy=STRUCTURAL_STRATEGY,
+        snapshot=DesignSnapshot.from_dict(sparse),
+        engineering_delta=None,
+        revision_gate={},
+        findings=[],
+    )
+    assert ship["ship_gate"]["council_clear"] is True
+    summary = ship["ship_summary"] or {}
+    assert summary.get("ship_confidence", 1.0) <= 0.65
+    assert ship["ship_gate"].get("coverage") in ("thin", "partial")
+
+
 @pytest.mark.unit
 def test_build_ship_council_emits_ranked_challenges() -> None:
     psm = _structural_psm()
@@ -265,6 +418,18 @@ def test_should_recommend_ship_mode_after_verify() -> None:
 
 
 @pytest.mark.unit
+def test_should_recommend_ship_even_when_precode_gate_still_blocked() -> None:
+    """Once draft+verify exist, pre-code blocked gate must not hide ship hint."""
+    psm = _structural_psm(verify_passed=True)
+    blocked = {
+        **STRUCTURAL_STRATEGY,
+        "implementation_gate": {"state": "blocked", "reason": "inspiration_needed"},
+    }
+    assert should_recommend_ship_mode(psm, blocked) is True
+    assert ship_council_hint(blocked, psm) is not None
+
+
+@pytest.mark.unit
 def test_should_skip_ship_council_for_hotfix() -> None:
     assert should_skip_ship_council(
         influence_level="minimal",
@@ -333,6 +498,29 @@ def test_ship_council_methodology_resource() -> None:
     assert is_blob is False
     assert "Ship Council" in text
     assert 'mode="ship"' in text
+
+
+@pytest.mark.unit
+def test_handle_design_review_ship_mode_surfaces_coverage() -> None:
+    snapshot = DesignSnapshot.from_dict(LIVE_SHAPED_DASHBOARD)
+    snapshots = SnapshotRegistry()
+    rec = snapshots.register(snapshot=snapshot.to_dict(), url=snapshot.url)
+
+    result = asyncio.run(
+        handle_design_review(
+            SessionStore(),
+            ScanRegistry(),
+            snapshots,
+            {"snapshot_id": rec.snapshot_id, "user_task": "Ship dashboard", "mode": "ship"},
+        )
+    )
+    assert result["ok"] is True
+    data = result["data"]
+    assert data["mode"] == "ship"
+    assert data["ship_gate"]["council_clear"] is False
+    assert data["ship_gate"].get("coverage") in ("full", "partial")
+    assert "coverage" in (data["agent_summary"].get("ship_council_hint") or {})
+    assert len(data["challenges"]) >= 3
 
 
 @pytest.mark.unit

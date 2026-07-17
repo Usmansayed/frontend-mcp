@@ -33,6 +33,19 @@ os.environ.setdefault("BROWSER_USE_SETUP_LOGGING", "false")
 logger = logging.getLogger(__name__)
 
 
+def _package_version() -> str:
+    try:
+        from importlib.metadata import version
+
+        return version("frontend-perception-engine")
+    except Exception:
+        try:
+            from importlib.metadata import version
+
+            return version("frontend-mcp")
+        except Exception:
+            return "unknown"
+
 
 try:
 
@@ -189,7 +202,7 @@ class PerceptionMCPServer:
 
                     server_name="frontend-perception",
 
-                    server_version="1.2.0.dev5",
+                    server_version=_package_version(),
 
                     capabilities=self._server.get_capabilities(
 

@@ -1,4 +1,4 @@
-# Install experimental preview MCP (1.2.0.dev6) from PyPI or local wheels.
+# Install experimental preview MCP (1.2.0.dev7) from PyPI or local wheels.
 # Usage:
 #   .\scripts\install_preview_dev.ps1              # PyPI (after publish)
 #   .\scripts\install_preview_dev.ps1 -Local       # build + install from repo
@@ -8,7 +8,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
-$Version = "1.2.0.dev6"
+$Version = "1.2.0.dev7"
 
 if ($Local) {
     Set-Location $Root
@@ -18,26 +18,20 @@ if ($Local) {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     $engineWheel = Get-ChildItem dist -Filter "frontend_perception_engine-$Version-*.whl" | Select-Object -First 1
     if (-not $engineWheel) { Write-Error "Engine wheel not found in dist/" }
-    pip install --force-reinstall $engineWheel.FullName
 
-    $aliasDir = Join-Path $Root "packages\frontend-mcp"
-    Set-Location $aliasDir
-    if (Test-Path dist) { Remove-Item -Recurse -Force dist }
     Write-Host "Building frontend-mcp $Version..."
+    Push-Location packages/frontend-mcp
+    if (Test-Path dist) { Remove-Item -Recurse -Force dist }
     python -m build
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    if ($LASTEXITCODE -ne 0) { Pop-Location; exit $LASTEXITCODE }
     $mcpWheel = Get-ChildItem dist -Filter "frontend_mcp-$Version-*.whl" | Select-Object -First 1
-    if (-not $mcpWheel) { Write-Error "frontend-mcp wheel not found in packages/frontend-mcp/dist/" }
-    pip install --force-reinstall $mcpWheel.FullName
+    Pop-Location
+    if (-not $mcpWheel) { Write-Error "MCP wheel not found in packages/frontend-mcp/dist/" }
+
+    python -m pip install --force-reinstall --no-deps $engineWheel.FullName
+    python -m pip install --force-reinstall $mcpWheel.FullName
 } else {
-    Write-Host "Installing preview from PyPI: frontend-mcp==$Version"
-    pip install --upgrade "frontend-mcp==$Version" "frontend-perception-engine==$Version"
+    python -m pip install --pre --upgrade "frontend-perception-engine==$Version" "frontend-mcp==$Version"
 }
 
-Write-Host ""
-Write-Host "Installed versions:"
-python -c "import importlib.metadata as m; print('  frontend-mcp:', m.version('frontend-mcp')); print('  frontend-perception-engine:', m.version('frontend-perception-engine'))"
-
-Write-Host ""
-Write-Host "Next: restart Cursor, ensure mcp.json uses frontend-mcp.exe with PYTHONPATH cleared."
-Write-Host "See docs/PREVIEW_1.2.0.md for validation checklist."
+Write-Host "Installed preview $Version. Restart Cursor MCP to pick up changes."

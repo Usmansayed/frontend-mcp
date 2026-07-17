@@ -177,7 +177,7 @@ async def handle_health(arguments: dict[str, Any]) -> dict[str, Any]:
         data={
             "reachable": reachable,
             "status": status,
-            "server_version": "1.2.0.dev5",
+            "server_version": engine_ver or frontend_mcp_ver or "unknown",
             "package_version": engine_ver,
             "frontend_mcp_version": frontend_mcp_ver,
             "browser_runtime_available": browser_available,
