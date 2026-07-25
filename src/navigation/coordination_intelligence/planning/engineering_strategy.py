@@ -126,6 +126,7 @@ class EngineeringStrategy:
     active_route: str | None = None
     routes: list[dict[str, str]] = field(default_factory=list)
     ux_knowledge_hint: dict[str, Any] | None = None
+    right_sizing: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -175,6 +176,7 @@ class EngineeringStrategy:
             "ux_knowledge_hint": (
                 dict(self.ux_knowledge_hint) if self.ux_knowledge_hint else None
             ),
+            "right_sizing": dict(self.right_sizing) if self.right_sizing else None,
         }
 
 
@@ -1085,6 +1087,22 @@ def compile_engineering_strategy(
             unresolved_decisions=unresolved_dicts,
         )
     )
+    from navigation.coordination_intelligence.planning.right_sizing import (
+        RIGHT_SIZING_RESOURCE,
+        build_right_sizing_card,
+    )
+
+    right_sizing = build_right_sizing_card(
+        psm,
+        {
+            "task_scope": disc.get("task_scope", "feature_incremental"),
+            "influence_level": influence_level,
+        },
+    )
+    # Prefer gate-embedded card (same source of truth).
+    if isinstance(implementation_gate.get("right_sizing"), dict):
+        right_sizing = dict(implementation_gate["right_sizing"])
+
     if implementation_gate.get("section_checklist_required") or implementation_gate.get(
         "ship_council_required"
     ):
@@ -1123,6 +1141,18 @@ def compile_engineering_strategy(
             f"Next: {implementation_gate.get('next_required_capability')}. "
             f"Read {recommended_resource}."
         )
+    elif str(right_sizing.get("tier") or "") in ("touch_up", "polish"):
+        pay = ", ".join(right_sizing.get("pay") or [])
+        host_action = (
+            f"RIGHT-SIZE {str(right_sizing.get('tier')).upper()}: pay {pay}. "
+            "Ship/residue/full-page checklist are advisory — do not run the greenfield ladder "
+            f"unless you upgrade effort_tier. Read {RIGHT_SIZING_RESOURCE}."
+        )
+        recommended_resource = RIGHT_SIZING_RESOURCE
+        if implementation_gate.get("ship_council_advisory"):
+            host_action = (
+                f"{host_action} (Ship challenges remain advisory if you want a second opinion.)"
+            )
 
     from navigation.coordination_intelligence.planning.ship_council import ship_council_hint
 
@@ -1302,6 +1332,7 @@ def compile_engineering_strategy(
         active_route=active_route_path(psm),
         routes=routes_summary(psm),
         ux_knowledge_hint=ux_hint,
+        right_sizing=right_sizing,
     )
 
 
@@ -1401,6 +1432,7 @@ def surface_engineering_strategy(
             "unpaid": list((strategy.get("episode_portfolio") or {}).get("unpaid") or []),
         },
         "ux_knowledge_hint": strategy.get("ux_knowledge_hint"),
+        "right_sizing": strategy.get("right_sizing"),
         "_full_strategy_path": "data.engineering_strategy",
     }
     headline = strategy.get("summary")
@@ -1425,6 +1457,16 @@ def surface_engineering_strategy(
             )
             if directive not in blocking:
                 blocking.append(directive)
+
+    right_sizing = strategy.get("right_sizing")
+    if isinstance(right_sizing, dict) and right_sizing.get("tier"):
+        agent_summary["right_sizing"] = right_sizing
+        advisory = agent_summary.setdefault("advisory", [])
+        note = (
+            f"right_sizing={right_sizing.get('tier')}: {right_sizing.get('summary')}"
+        )
+        if note not in advisory:
+            advisory.append(note)
 
     # Host-visible coordinator channel (not buried only under data.coordinator).
     existing = data.get("coordinator") if isinstance(data.get("coordinator"), dict) else None

@@ -58,5 +58,6 @@ Hotfix: verify (+ empty blocking) unless sticky design draft this episode (then 
 | Hotfix / polish | `perception://guide/hotfix` |
 | Forms / guards / flows | `perception://guide/forms` |
 | Hard fails (full) | `perception://guide/hard-fails` |
+| Right-sizing | `perception://guide/right-sizing` |
 
-Also obey `recommended_resource` when the gate points at a deep workflow (`design-workflow`, `redesign-workflow`, `bugfix-workflow`, …).
+Honor `agent_summary.right_sizing` / `effort_tier` (default: lightest-that-fits). Obey `recommended_resource` for deep workflows.

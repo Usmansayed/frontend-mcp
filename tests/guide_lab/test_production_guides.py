@@ -19,6 +19,7 @@ GUIDE_URIS = [
     "perception://guide/hotfix",
     "perception://guide/forms",
     "perception://guide/hard-fails",
+    "perception://guide/right-sizing",
 ]
 
 ALWAYS_ON = [

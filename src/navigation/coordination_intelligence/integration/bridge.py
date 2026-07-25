@@ -86,6 +86,17 @@ class CoordinatorBridge:
                 cluster_id=args.get("cluster_id"),
                 intent=args.get("intent"),
             )
+            if episode_id and args.get("effort_tier"):
+                try:
+                    from navigation.coordination_intelligence.planning.right_sizing import (
+                        set_effort_tier,
+                    )
+
+                    psm = self._service.runtime.require(episode_id)
+                    set_effort_tier(psm, str(args["effort_tier"]), source="agent")
+                    self._service.runtime.save(psm)
+                except Exception:
+                    pass
             if not str(args.get("intent") or "").strip():
                 summary = envelope.setdefault("agent_summary", {})
                 advisory = summary.setdefault("advisory", [])

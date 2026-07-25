@@ -19,9 +19,13 @@ def _workflow_resource(
     *,
     next_capability: str | None = None,
     psm: ProjectSituationModel | None = None,
+    effort_tier: str | None = None,
 ) -> str:
     from navigation.coordination_intelligence.planning.reference_routing import (
         design_reference_workflow_resource,
+    )
+    from navigation.coordination_intelligence.planning.right_sizing import (
+        RIGHT_SIZING_RESOURCE,
     )
 
     if "design_reference" in blocking:
@@ -33,12 +37,16 @@ def _workflow_resource(
         if routed:
             return routed
         return "perception://inspiration-guide"
+    if effort_tier in ("touch_up", "polish") and not blocking:
+        return RIGHT_SIZING_RESOURCE
     if task_scope == "redesign":
         return "perception://redesign-workflow"
     if task_scope in ("hotfix", "surgical", "debug"):
         return "perception://bugfix-workflow"
     if task_scope in ("design_driven", "system_setup"):
         return "perception://design-workflow"
+    if effort_tier in ("touch_up", "polish", "feature"):
+        return RIGHT_SIZING_RESOURCE
     return "perception://frontend-methodology"
 
 
@@ -54,6 +62,10 @@ def compile_implementation_readiness(
         open_evidence_plan_items,
     )
     from navigation.coordination_intelligence.planning.residue_scan import residue_required
+    from navigation.coordination_intelligence.planning.right_sizing import (
+        build_right_sizing_card,
+        effort_requires_full_sections,
+    )
     from navigation.coordination_intelligence.planning.section_checklist import (
         episode_needs_section_checklist,
         get_section_checklist,
@@ -63,6 +75,13 @@ def compile_implementation_readiness(
         episode_needs_ship_council,
     )
     from navigation.coordination_intelligence.planning.surface_type import design_scope_applies
+
+    strategy = {
+        "influence_level": influence_level,
+        "task_scope": task_scope,
+    }
+    right_sizing = build_right_sizing_card(psm, strategy)
+    effort_tier = str(right_sizing.get("tier") or "polish")
 
     blocking = [
         str(decision.get("decision_id"))
@@ -78,7 +97,11 @@ def compile_implementation_readiness(
         if outcome.get("status") == "failed"
     ]
 
-    if influence_level == "minimal" or task_scope in ("hotfix", "surgical", "debug"):
+    if (
+        influence_level == "minimal"
+        or task_scope in ("hotfix", "surgical", "debug")
+        or effort_tier in ("touch_up", "polish")
+    ):
         state = "maintenance"
     elif blocking and influence_level == "structural":
         state = "blocked"
@@ -147,6 +170,7 @@ def compile_implementation_readiness(
         blocking,
         next_capability=str(next_capability) if next_capability else None,
         psm=psm,
+        effort_tier=effort_tier,
     )
 
     if state == "blocked":
@@ -163,10 +187,6 @@ def compile_implementation_readiness(
         allowed = ["implement", "verify"]
         prohibited = []
 
-    strategy = {
-        "influence_level": influence_level,
-        "task_scope": task_scope,
-    }
     section_required = episode_needs_section_checklist(psm, strategy)
     ship_required = episode_needs_ship_council(psm, strategy)
     open_sections = incomplete_sections(psm) if section_required else []
@@ -175,6 +195,22 @@ def compile_implementation_readiness(
     residue_needed = initiative_scope and residue_required(psm)
     open_plan = open_evidence_plan_items(psm, evidence_plan) if initiative_scope else []
     evidence_incomplete = bool(open_plan)
+
+    # Advisory-only when light tier demotes what would have been blocking ceremony.
+    ship_advisory = False
+    sections_advisory = False
+    if effort_tier not in ("initiative",) and not ship_required:
+        if (
+            psm.artifacts.snapshot_id
+            and psm.episode.verification_status == "passed"
+            and influence_level in ("structural", "balanced")
+            and task_scope not in ("hotfix", "surgical", "debug")
+        ):
+            ship_advisory = True
+    if effort_tier not in ("initiative",) and not section_required:
+        seeded = get_section_checklist(psm)
+        if seeded and seeded.get("required") and not effort_requires_full_sections(effort_tier):
+            sections_advisory = True
 
     # Priority: structural block → section checklist → residue → ship → evidence plan → ready.
     if section_required:
@@ -216,6 +252,7 @@ def compile_implementation_readiness(
             blocking,
             next_capability=str(next_capability) if next_capability else None,
             psm=psm,
+            effort_tier=effort_tier,
         )
         allowed = list(dict.fromkeys([*allowed, "gather_evidence"]))
 
@@ -250,6 +287,17 @@ def compile_implementation_readiness(
             f"{open_ids}. Complete usable evidence, skip with a valid reason, or supersede — "
             "do not call tools only to satisfy the gate."
         )
+    elif effort_tier in ("touch_up", "polish") and psm.episode.verification_status == "passed":
+        completion = (
+            f"effort_tier={effort_tier}: hard verify passed — claim-done allowed. "
+            "Ship/sections are advisory only; pass effort_tier=initiative if this was structural."
+        )
+    elif effort_tier in ("touch_up", "polish"):
+        completion = (
+            f"effort_tier={effort_tier}: pay {', '.join(right_sizing.get('pay') or [])}; "
+            f"skip {', '.join((right_sizing.get('skip') or [])[:4])}. "
+            f"Read {right_sizing.get('resource')}."
+        )
     else:
         completion = "Follow the evidence plan, then verify the implemented surface."
 
@@ -267,6 +315,9 @@ def compile_implementation_readiness(
         "ship_council_required": ship_required and not section_required and not residue_needed,
         "residue_scan_required": residue_needed,
         "evidence_plan_incomplete": evidence_incomplete,
+        "ship_council_advisory": ship_advisory,
+        "section_checklist_advisory": sections_advisory,
+        "right_sizing": right_sizing,
         "completion_criteria": completion,
     }
     return gate, evidence_plan, required_resource

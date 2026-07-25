@@ -8,4 +8,4 @@ CODE_REVISION stays on the old loaded module → version_skew=true.
 from __future__ import annotations
 
 # Bump in lockstep with pyproject.toml [project].version on every publish.
-CODE_REVISION = "1.2.0.dev46"
+CODE_REVISION = "1.2.0.dev47"

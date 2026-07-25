@@ -55,6 +55,15 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                             "Omit only for pure connectivity smoke."
                         ),
                     },
+                    "effort_tier": {
+                        "type": "string",
+                        "enum": ["touch_up", "polish", "feature", "initiative"],
+                        "description": (
+                            "Optional agent right-sizing lock (see perception://guide/right-sizing). "
+                            "polish = observe+visual_feedback+verify; initiative = full ladder. "
+                            "Default when omitted: lightest-that-fits."
+                        ),
+                    },
                     "repo_root": {
                         "type": "string",
                         "description": "Optional absolute repo root for codebase evidence routing",
@@ -262,6 +271,13 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                         "description": (
                             "Optional layout section id from section_checklist "
                             "(e.g. main:0). Injects scoped JS assertions and marks that section verified."
+                        ),
+                    },
+                    "effort_tier": {
+                        "type": "string",
+                        "enum": ["touch_up", "polish", "feature", "initiative"],
+                        "description": (
+                            "Optional right-sizing override. polish/touch_up keeps ship/residue advisory."
                         ),
                     },
                     "criteria": {
@@ -1207,6 +1223,13 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                         "default": "general",
                         "description": "Why you are looking — picks pack default, guide, and feedback schema",
                     },
+                    "effort_tier": {
+                        "type": "string",
+                        "enum": ["touch_up", "polish", "feature", "initiative"],
+                        "description": (
+                            "Optional right-sizing lock after you LOOK (see perception://guide/right-sizing)."
+                        ),
+                    },
                     "screenshot_pack": {
                         "type": "string",
                         "enum": ["auto", "design", "viewport", "full", "section", "element", "none"],
@@ -1380,6 +1403,13 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                         "enum": ["review", "ship"],
                         "default": "review",
                         "description": "review=Design Review; ship=Ship Council post-draft gate",
+                    },
+                    "effort_tier": {
+                        "type": "string",
+                        "enum": ["touch_up", "polish", "feature", "initiative"],
+                        "description": (
+                            "Optional. Pass initiative to require ship; polish keeps ship advisory."
+                        ),
                     },
                     "dispositions": {
                         "type": "array",

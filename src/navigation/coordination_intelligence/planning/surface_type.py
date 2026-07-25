@@ -136,10 +136,21 @@ def apply_surface_type(
 
 
 def design_scope_applies(psm: ProjectSituationModel, strategy: dict[str, Any] | None = None) -> bool:
-    """v1 initiative layer only on design-driven / redesign / structural paths."""
+    """v1 initiative layer only on design-driven / redesign / structural paths.
+
+    Right-sizing: polish / touch_up / feature tiers do not arm the initiative
+    machine (ship / residue / full-page checklist) even when influence is balanced.
+    """
+    from navigation.coordination_intelligence.planning.right_sizing import (
+        effort_arms_initiative,
+        resolve_effort_tier,
+    )
     from navigation.coordination_intelligence.planning.situation_policy import sticky_design_scope
 
     strategy = strategy or {}
+    resolved = resolve_effort_tier(psm, strategy)
+    if not effort_arms_initiative(str(resolved.get("tier"))):
+        return False
     scope = str(strategy.get("task_scope") or sticky_design_scope(psm) or "")
     sticky = sticky_design_scope(psm)
     if sticky in ("design_driven", "redesign", "system_setup"):

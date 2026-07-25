@@ -58,7 +58,10 @@ engineering decision.
    (`data.verified=true` → section checklist if required → Ship Council if required)
 
 Situation cards (short): `perception://guide/scoreboard`, `greenfield`, `redesign`,
-`feature`, `hotfix`, `forms`, `hard-fails` — also see always-on agent rule.
+`feature`, `hotfix`, `forms`, `hard-fails`, `right-sizing` — also see always-on agent rule.
+After bootstrap, read `agent_summary.right_sizing` (or `episode_card.right_sizing`): pick a
+tier (touch_up / polish / feature / initiative) by blast radius, not by ROI alone. Pass
+`effort_tier` to lock your judgment. Default is lightest-that-fits.
 
 ## Failure and fallback
 A completed tool call is not automatically usable evidence. Read `coordination_evidence`
@@ -171,10 +174,11 @@ Gate allows claim; structural unpaid cleared (paid / skip / supersede); Done lad
         _guide(
             "Guide: Scoreboard",
             "Every structural/balanced turn — before locking UI direction.",
-            "Which unpaid families bind, whether gate blocks claim, and which single tool is next inside the owed plan.",
-            "Read episode_card unpaid + gate + backlog.top. Build owed ≤3 from unpaid ∩ task class. "
+            "Which unpaid families bind, whether gate blocks claim, which effort tier fits, and which single tool is next inside the owed plan.",
+            "Read episode_card unpaid + gate + backlog.top + right_sizing. Build owed ≤3 from unpaid ∩ task class. "
             "Prefer backlog.top only if it is already in owed. Re-read unpaid after each evidence call. "
-            "If unpaid empty, still run class min path (feature/hotfix often have empty portfolio).",
+            "If unpaid empty, still run class min path (feature/hotfix often have empty portfolio). "
+            "Honor right_sizing (or pass effort_tier) — do not run the greenfield ladder on polish.",
             "Do not treat gate.next or recommended_evidence as the whole plan. Confidence is a readout, not a gate.",
             "Owed plan clear; next call is from owed; structural locks only after advancement_eligible evidence.",
         ),
@@ -222,13 +226,17 @@ Gate allows claim; structural unpaid cleared (paid / skip / supersede); Done lad
         "Guide: Hotfix / Polish",
         _guide(
             "Guide: Hotfix / Polish",
-            "Bug, surgical CSS, blur/opacity nudge, or micro polish (maps to hotfix/surgical/debug).",
-            "Symptom reproduction, smallest fix, hard verification.",
+            "Bug, surgical CSS, blur/opacity nudge, or micro polish (maps to hotfix/surgical/debug; "
+            "chrome polish also see perception://guide/right-sizing).",
+            "Symptom reproduction, smallest fix, hard verification. Read agent_summary.right_sizing — "
+            "default polish/touch_up; upgrade effort_tier only if blast radius grew.",
             "Observe live page on the correct port (blocking first). Smallest fix. "
-            "Verify with hard criteria (computed style / JS). For opacity/blur “looks the same,” measure competing overlays/washes.",
-            "Skip inspiration, foundation, and ship — **unless** this episode already drafted design_driven/redesign UI (sticky design): then finish section checklist + Ship Council. "
-            "If unpaid includes sections or residue, pay those ladder families before claim (sections/residue outrank class tables).",
-            "data.verified=true for the symptom; ladder complete only when sticky design / gate requires it.",
+            "Verify with hard criteria (computed style / JS). For opacity/blur “looks the same,” measure competing overlays/washes. "
+            "Prefer perception_visual_feedback for chrome polish LOOK/judge.",
+            "Skip inspiration, foundation, and ship — **unless** this episode already drafted design_driven/redesign UI (sticky design): then finish section checklist + Ship Council, "
+            "or you explicitly pass effort_tier=initiative. "
+            "If unpaid includes sections or residue under initiative tier, pay those before claim.",
+            "data.verified=true for the symptom; ladder complete only when sticky design / initiative tier / gate requires it.",
         ),
     ),
     "perception://guide/forms": (
@@ -255,10 +263,50 @@ Gate allows claim; structural unpaid cleared (paid / skip / supersede); Done lad
             "(5) claim while claim_complete prohibited or sections/ship unpaid; "
             "(6) SEO/thoroughness spam; (7) wrong port/product; "
             "(8) foundation reopen on 2-line polish; (9) parallel browser tools on one session_id; "
-            "(10) end-of-task MCP only after coding the full UI.",
+            "(10) end-of-task MCP only after coding the full UI; "
+            "(11) full greenfield ladder on chrome-only polish (ignore right_sizing).",
             "These are host process fails — MCP may still return ok. Do not rationalize past them.",
             "No hard-fail pattern present before claim-done.",
         ),
+    ),
+    "perception://guide/right-sizing": (
+        "Guide: Right-Sizing Effort",
+        """# Guide: Right-Sizing Effort
+
+## Use when
+Every UI turn after bootstrap — before running inspiration / foundation / ship / residue.
+You are the brain. MCP recommends; you decide.
+
+## Decisions to resolve
+How much evidence this change deserves. Ask three LOOK questions:
+1. **Blast radius** — one chrome element (navbar/button) or page structure/layout?
+2. **Reversibility** — cheap CSS tweak, or hard-to-undo foundation/direction?
+3. **Confidence** — do you already know the fix, or are you exploring direction?
+
+## Minimum evidence (tiers)
+| Tier | When | Pay | Skip |
+|------|------|-----|------|
+| `touch_up` | one element, reversible, high confidence | hard verify | everything else |
+| `polish` | chrome / micro visual (navbar, spacing, type) | observe + visual_feedback + hard verify | inspiration, foundation, ship, residue, full-page checklist |
+| `feature` | new block in an existing shell | + foundation if unpaid; section for that block | inspiration unless new visual language |
+| `initiative` | new page / redesign / rebrand | full ladder | nothing |
+
+Default when you do not declare: **lightest-that-fits** (usually `polish` for incremental work).
+Lock your judgment: pass `effort_tier` on `session_start` / `visual_feedback` / `verify`.
+
+## Failure and fallback
+Do not confuse **ROI** (navbar is always visible) with **blast radius** (chrome-only CSS).
+High ROI does not require the greenfield ladder. Read `agent_summary.right_sizing`.
+Ship / residue / full-page sections are **advisory** below `initiative` — they may still report, but they do not block claim-done.
+
+## Implementation boundary
+Obey unpaid structural families only when your tier is `initiative` (or you upgraded).
+For `polish`/`touch_up`: do not run inspiration → foundation → ship → residue → every section.
+
+## Done condition
+Tier paid; `data.verified=true` for the change; claim-done allowed when gate does not prohibit it.
+Upgrade `effort_tier=initiative` if you discover the change was structural after all.
+""",
     ),
     "perception://decision-ledger": (
         "Decision and Evidence Ledger",

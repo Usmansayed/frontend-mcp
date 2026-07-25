@@ -124,6 +124,16 @@ class CoordinationIntelligenceService:
         if capability_id:
             psm.episode.retry_counters["last_capability"] = capability_id
 
+        # Agent effort override — apply before evidence normalize / strategy refresh.
+        try:
+            from navigation.coordination_intelligence.planning.right_sizing import (
+                maybe_apply_effort_tier_arg,
+            )
+
+            maybe_apply_effort_tier_arg(psm, arguments)
+        except Exception:
+            pass
+
         self._runtime.apply_envelope(episode_id, envelope, capability_id=capability_id)
         psm = self._runtime.require(episode_id)
 

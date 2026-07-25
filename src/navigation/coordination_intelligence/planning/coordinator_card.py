@@ -119,6 +119,7 @@ def build_coordinator_card(
         "recommended_resource": strategy.get("recommended_resource"),
         "active_route": strategy.get("active_route"),
         "routes": list(strategy.get("routes") or []),
+        "right_sizing": strategy.get("right_sizing"),
     }
 
 
@@ -149,4 +150,5 @@ def build_episode_card(
         "influence_level": strategy.get("influence_level"),
         "active_route": strategy.get("active_route"),
         "routes": list(strategy.get("routes") or []),
+        "right_sizing": strategy.get("right_sizing"),
     }

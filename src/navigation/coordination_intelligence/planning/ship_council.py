@@ -212,8 +212,15 @@ def should_skip_ship_council(
 
 def episode_needs_ship_council(psm: ProjectSituationModel, strategy: dict[str, Any]) -> bool:
     """True when claim-done must wait for Ship Council clear on this episode."""
+    from navigation.coordination_intelligence.planning.right_sizing import (
+        effort_requires_ship,
+        resolve_effort_tier,
+    )
     from navigation.coordination_intelligence.planning.situation_policy import sticky_design_scope
 
+    resolved = resolve_effort_tier(psm, strategy)
+    if not effort_requires_ship(str(resolved.get("tier"))):
+        return False
     scope = str(strategy.get("task_scope") or sticky_design_scope(psm) or "")
     influence = str(strategy.get("influence_level") or "")
     sticky = sticky_design_scope(psm)

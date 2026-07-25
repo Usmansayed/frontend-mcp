@@ -41,6 +41,16 @@ async def handle_coordinator_episode_start(args: dict[str, Any]) -> dict[str, An
                 svc.push_intent(existing, str(args["intent"]))
             else:
                 svc.runtime.save(psm)
+            if args.get("effort_tier"):
+                try:
+                    from navigation.coordination_intelligence.planning.right_sizing import (
+                        set_effort_tier,
+                    )
+
+                    set_effort_tier(psm, str(args["effort_tier"]), source="agent")
+                    svc.runtime.save(psm)
+                except Exception:
+                    pass
             reused = True
             briefing = svc.briefing(psm.episode_id, step_context=args.get("step_context"))
             return make_envelope(
@@ -77,6 +87,16 @@ async def handle_coordinator_episode_start(args: dict[str, Any]) -> dict[str, An
         intent=args.get("intent"),
         leaf_hint=args.get("leaf_hint"),
     )
+    if args.get("effort_tier"):
+        try:
+            from navigation.coordination_intelligence.planning.right_sizing import (
+                set_effort_tier,
+            )
+
+            set_effort_tier(psm, str(args["effort_tier"]), source="agent")
+            svc.runtime.save(psm)
+        except Exception:
+            pass
     briefing = svc.briefing(psm.episode_id, step_context=args.get("step_context"))
     bridge._bindings.bind_project(project_id, psm.episode_id)
     if psm.artifacts.session_id:
