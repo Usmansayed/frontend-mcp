@@ -18,7 +18,6 @@ _DEGRADED_EXACT: dict[str, str] = {
     "graph_empty_run_refresh": "Run perception_design_graph_refresh with a recent scan_id.",
     "evaluation_without_repo_root": "Add repo_root pointing to your app root (package.json).",
     "deep_review_without_repo_root": "Add repo_root for codebase-aware review.",
-    "figma_not_connected": "Figma Intelligence is MVP-excluded — use inspiration or design_snapshot.",
     "docs_provider_unavailable": "Framework docs provider offline. Use host IDE docs or retry.",
     "grounded_docs_cli_unavailable": "Install Node 18+ for grounded docs CLI.",
     "selection_empty_ranked_pool": "Broaden inspiration query or try perception_inspiration_discover.",
@@ -60,13 +59,9 @@ _DEGRADED_PREFIX: list[tuple[str, str]] = [
     ("scan_id", "Run perception_navigate_and_observe first; reuse scan_id from that response."),
     ("session_id", "Call perception_session_start; pass session_id to all browser tools."),
     ("lighthouse_", "Lighthouse audit issue. Ensure Node 18+ and page is fully loaded."),
-    ("librecrawl_", "LibreCrawl companion not used in MVP (SEO Intelligence parked)."),
     ("perception_scan_failed", "Browser observe failed. Check session_id and URL; re-observe."),
     ("discovery_missing_provider", "Inspiration provider unavailable. Try another query or provider."),
     ("inspiration_", "Inspiration rate limit or provider issue. Wait and retry."),
-    ("gsc_discovery", "SEO Intelligence parked for MVP — ignore GSC prompts."),
-    ("bing_discovery", "SEO Intelligence parked for MVP — ignore Bing prompts."),
-    ("ga4_discovery", "SEO Intelligence parked for MVP — ignore GA4 prompts."),
 ]
 
 _ERROR_EXACT: dict[str, str] = {

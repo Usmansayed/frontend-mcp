@@ -1,0 +1,61 @@
+id: exp005_meridian_multiroute
+intent: redesign Meridian SaaS analytics dashboard and workspace settings
+lifecycle_stage: S03_design
+project_maturity: M1
+expect_after_start:
+  surface_type: mixed
+  task_scope: redesign
+  suggested_capability: design_snapshot
+  next_capability: design_snapshot
+feeds:
+  - tool: perception_navigate_and_observe
+    ok: true
+    data:
+      url: http://localhost:5173/dashboard
+      scan_id: scan_dash
+      agent_summary: {blocking: []}
+  - tool: perception_build_design_snapshot
+    ok: true
+    data:
+      snapshot_id: snap_dash
+      layout:
+        regions:
+          - {role: aside, label: sidebar}
+          - {role: main}
+          - {role: section, label: kpi}
+          - {role: section, label: kpi}
+    expect:
+      surface_type: mixed
+      backlog_top_decision_not: design_reference
+      suggested_capability: component_search_plan
+      next_capability: component_search_plan
+      portfolio_paid_contains: [observe, snapshot]
+  - tool: perception_select_component_foundation
+    ok: true
+    data:
+      selected: {id: shadcn}
+      coordination_evidence:
+        status: succeeded
+        advancement_eligible: true
+  - tool: perception_navigate_and_observe
+    ok: true
+    data:
+      url: http://localhost:5173/settings
+      scan_id: scan_set
+      agent_summary: {blocking: []}
+  - op: set_surface_type
+    surface_type: mixed
+  - tool: perception_build_design_snapshot
+    ok: true
+    data:
+      snapshot_id: snap_set
+      layout:
+        viewport: {width: 1280, height: 720}
+        regions:
+          - {role: sidebar, width_ratio: 0.18}
+          - {role: main, label: settings, width_ratio: 0.95, rect: {x: 220, y: 0, w: 1060, h: 720}}
+expect:
+  surface_type: mixed
+  backlog_top_decision_not: design_reference
+  portfolio_paid_contains: [observe, snapshot, component]
+  prohibited_contains: [claim_complete]

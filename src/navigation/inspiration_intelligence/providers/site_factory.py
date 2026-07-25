@@ -14,19 +14,25 @@ from navigation.inspiration_intelligence.providers.gallery_parse import (
 	awwwards_search_urls,
 	behance_search_urls,
 	godly_search_urls,
+	httpster_search_urls,
 	landbook_search_urls,
+	lapa_search_urls,
 	onepagelove_search_urls,
 	parse_awwwards_html,
 	parse_behance_html,
 	parse_godly_html,
+	parse_httpster_html,
 	parse_landbook_html,
+	parse_lapa_html,
 	parse_onepagelove_html,
 	parse_siteinspire_html,
 	siteinspire_search_urls,
 )
 from navigation.inspiration_intelligence.providers.gallery_provider import GallerySiteProvider
 from navigation.inspiration_intelligence.providers.godly.navigation import GODLY_NAVIGATION
+from navigation.inspiration_intelligence.providers.httpster.navigation import HTTPSTER_NAVIGATION
 from navigation.inspiration_intelligence.providers.land_book.navigation import LANDBOOK_NAVIGATION
+from navigation.inspiration_intelligence.providers.lapa.navigation import LAPA_NAVIGATION
 from navigation.inspiration_intelligence.providers.one_page_love.navigation import ONEPAGELOVE_NAVIGATION
 from navigation.inspiration_intelligence.providers.siteinspire.navigation import SITEINSPIRE_NAVIGATION
 
@@ -52,8 +58,8 @@ def build_awwwards_provider() -> GallerySiteProvider:
 			parse_html=parse_awwwards_html,
 			build_urls=awwwards_search_urls,
 			extract_script=AWWWARDS_EXTRACT,
-			# HTTP-first: browser only when HTML parse fails (image-first collect).
-			prefer_browser=False,
+			# Prefer browser: HTTP cards use relative /sites/ + data-URI src placeholders.
+			prefer_browser=True,
 			ready_timeout=25.0,
 			hydration_s=6.0,
 		),
@@ -83,7 +89,8 @@ def build_godly_provider() -> GallerySiteProvider:
 			parse_html=parse_godly_html,
 			build_urls=godly_search_urls,
 			extract_script=GODLY_EXTRACT,
-			prefer_browser=False,
+			# recent.design is SPA-ish; browser extract is the reliable path.
+			prefer_browser=True,
 			ready_timeout=25.0,
 			hydration_s=7.0,
 		),
@@ -115,5 +122,33 @@ def build_onepagelove_provider() -> GallerySiteProvider:
 			build_urls=onepagelove_search_urls,
 			link_selector='a[href^="https://onepagelove.com/"]',
 			id_regex=r'onepagelove\.com/([a-z0-9-]+)',
+		),
+	)
+
+
+def build_lapa_provider() -> GallerySiteProvider:
+	return GallerySiteProvider(
+		LAPA_NAVIGATION,
+		ResilientFetchConfig(
+			provider_id='lapa',
+			parse_html=parse_lapa_html,
+			build_urls=lapa_search_urls,
+			prefer_browser=False,
+			ready_timeout=18.0,
+			hydration_s=3.0,
+		),
+	)
+
+
+def build_httpster_provider() -> GallerySiteProvider:
+	return GallerySiteProvider(
+		HTTPSTER_NAVIGATION,
+		ResilientFetchConfig(
+			provider_id='httpster',
+			parse_html=parse_httpster_html,
+			build_urls=httpster_search_urls,
+			prefer_browser=False,
+			ready_timeout=15.0,
+			hydration_s=2.0,
 		),
 	)

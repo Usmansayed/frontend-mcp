@@ -1,0 +1,15 @@
+id: exp022_fingerprint_skip_preserves_host
+intent: redesign Meridian analytics dashboard
+lifecycle_stage: S03_design
+project_maturity: M1
+feeds:
+  - tool: perception_build_design_snapshot
+    ok: true
+    data: {snapshot_id: thin_022}
+  - tool: perception_build_design_snapshot
+    ok: true
+    data: {snapshot_id: thin_022}
+expect:
+  host_contains:
+    - "EVIDENCE THIN"
+  path:capability_ledger.design_snapshot.quality.thin: true

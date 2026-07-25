@@ -32,7 +32,7 @@ _COLLECT_JS = r"""(() => {
   const interactiveSel = [
     'button', 'a[href]', 'input', 'select', 'textarea',
     '[role="button"]', '[role="link"]', '[role="tab"]', '[onclick]',
-    '[data-testid]', 'label[for]',
+    'label[for]',
   ].join(',');
 
   const nodes = Array.from(document.querySelectorAll(interactiveSel));
@@ -42,8 +42,20 @@ _COLLECT_JS = r"""(() => {
     if (!(el instanceof HTMLElement)) continue;
     const style = window.getComputedStyle(el);
     if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') continue;
+    // display:contents wrappers have empty rects but visible children paint — skip.
+    if (style.display === 'contents') continue;
+    if (style.pointerEvents === 'none') continue;
     const r = el.getBoundingClientRect();
     if (r.width < 1 && r.height < 1) {
+      // Any painted descendant (text/icon) means the control is not actually zero-size.
+      let childSized = false;
+      for (const k of el.querySelectorAll('*')) {
+        if (!(k instanceof HTMLElement)) continue;
+        const kr = k.getBoundingClientRect();
+        if (kr.width >= 1 && kr.height >= 1) { childSized = true; break; }
+      }
+      if (childSized) continue;
+      // Glass/nav overlays: sibling or nearby interactive with same label already sized.
       const label = (el.getAttribute('aria-label') || el.innerText || el.id || el.tagName).trim().slice(0, 60);
       issues.push({ kind: 'zero_size_clickable', severity: 'blocking', detail: label || el.tagName });
       continue;
@@ -156,8 +168,26 @@ async def collect_visual_insights(session: Any) -> VisualInsights:
 
 	issues = raw.get('issues') if isinstance(raw.get('issues'), list) else []
 	boxes = raw.get('element_boxes') if isinstance(raw.get('element_boxes'), list) else []
+	clean_issues = [i for i in issues if isinstance(i, dict)]
+	clean_boxes = [b for b in boxes if isinstance(b, dict)]
+	# Reconcile: never block on zero_size when a measured box shares the same label.
+	sized_labels = {
+		str(b.get('label') or '').strip().lower()
+		for b in clean_boxes
+		if float(b.get('width') or 0) >= 1 and float(b.get('height') or 0) >= 1
+	}
+	reconciled: list[dict[str, Any]] = []
+	for issue in clean_issues:
+		if issue.get('kind') == 'zero_size_clickable':
+			detail = str(issue.get('detail') or '').strip().lower()
+			if detail and detail in sized_labels:
+				continue
+			# Soften leftover zero-size when the page already has many sized controls.
+			if len(sized_labels) >= 3:
+				issue = {**issue, 'severity': 'advisory'}
+		reconciled.append(issue)
 	return VisualInsights(
-		issues=[i for i in issues if isinstance(i, dict)],
-		element_boxes=[b for b in boxes if isinstance(b, dict)],
+		issues=reconciled,
+		element_boxes=clean_boxes,
 		degraded=degraded,
 	)

@@ -25,13 +25,11 @@ Forces decision-before-code when the prompt is frontend-related; skips MCP for u
 
 ## Install preview (PyPI)
 
-**Published:**
-
-- https://pypi.org/project/frontend-perception-engine/1.2.0.dev3/
-- https://pypi.org/project/frontend-mcp/1.2.0.dev3/
+**Published:** https://pypi.org/project/frontend-perception-engine/
 
 ```bash
-pip install --upgrade "frontend-mcp==1.2.0.dev3" "frontend-perception-engine==1.2.0.dev3"
+pip install --upgrade --pre frontend-perception-engine
+# uninstall old alias if present: pip uninstall frontend-mcp
 ```
 
 Or from repo:
@@ -45,7 +43,7 @@ Or from repo:
 Verify:
 
 ```bash
-python -c "import importlib.metadata as m; print(m.version('frontend-mcp'), m.version('frontend-perception-engine'))"
+python -c "import importlib.metadata as m; print(m.version('frontend-perception-engine'))"
 ```
 
 Expected: `1.2.0.dev3` for both.

@@ -185,6 +185,8 @@ def build_section_verify_assertions(section: dict[str, Any]) -> list[str]:
     Nav/aside/sidebar also get chrome permanence (sticky|fixed) via
     chrome_conventions — objective engineering, not Ship Council taste.
     """
+    import json
+
     role = str(section.get("role") or "main").lower()
     # Prefer semantic tags; sidebars are often <nav> or role=complementary, not <aside>.
     selectors = {
@@ -200,8 +202,10 @@ def build_section_verify_assertions(section: dict[str, Any]) -> list[str]:
         "content": ["main", '[role="main"]'],
     }.get(role, ["main", '[role="main"]'])
     joined = ", ".join(selectors)
+    # json.dumps avoids quote-breakage if selectors ever include apostrophes.
+    sel_js = json.dumps(joined)
     asserts = [
-        f"() => {{ const el = document.querySelector('{joined}'); "
+        f"() => {{ const el = document.querySelector({sel_js}); "
         f"if (!el) return false; const r = el.getBoundingClientRect(); "
         f"return r.width > 8 && r.height > 8; }}",
     ]

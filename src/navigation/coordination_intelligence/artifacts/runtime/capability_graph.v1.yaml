@@ -118,6 +118,34 @@ capabilities:
     mutates_repo: false
     mcp_ready: true
     blast_radius: low
+- capability_id: visual_feedback
+  display_name: LOOK at rendered UI and return purpose-shaped visual judgment
+  tier: T1_global
+  kind: observe
+  requires:
+    evidence: {}
+    artifacts:
+    - session_id
+    environment:
+    - dev_server_reachable
+  produces:
+    evidence:
+      ui_runtime:
+        posture: partial
+    artifacts:
+    - scan_id
+  implements:
+  - module_id: visual_browser_intelligence
+    priority: 1
+    tools_ref: visual_feedback
+  parallel:
+    parallelizable: false
+    mutex_with:
+    - browser_verify
+  risk:
+    mutates_repo: false
+    mcp_ready: true
+    blast_radius: low
 - capability_id: browser_act
   display_name: Execute in-browser actions or scripts
   tier: T1_global
@@ -554,7 +582,8 @@ capabilities:
     priority: 1
     tools_ref: seo_readiness
   risk:
-    mcp_ready: true
+    mcp_ready: false
+    mcp_ready_note: MVP excluded — parked/MVP_EXCLUDE_SEO.md
     blast_radius: low
 - capability_id: seo_evidence_collect
   display_name: Collect SEO evidence via module orchestrator
@@ -583,7 +612,7 @@ capabilities:
       orchestrator_entry: true
       t2_namespace: seo
   risk:
-    mcp_ready: true
+    mcp_ready: false
     blast_radius: medium
   replan_triggers:
     on_degraded:
@@ -608,7 +637,7 @@ capabilities:
     priority: 1
     tools_ref: seo_graph_query
   risk:
-    mcp_ready: true
+    mcp_ready: false
     blast_radius: low
 - capability_id: seo_recommendation_verify
   display_name: Verify a specific SEO recommendation is resolved
@@ -631,7 +660,7 @@ capabilities:
     priority: 1
     tools_ref: seo_recommendation_verify
   risk:
-    mcp_ready: true
+    mcp_ready: false
     blast_radius: low
 - capability_id: inspiration_workflow
   display_name: Discover, collect, and cleanup inspiration assets
@@ -696,7 +725,7 @@ capabilities:
     priority: 1
     tools_ref: figma_integration
   risk:
-    mcp_ready: true
+    mcp_ready: false
     blast_radius: medium
 - capability_id: component_search_plan
   display_name: Plan component search when query is vague
@@ -864,6 +893,7 @@ capability_module_index:
     - environment_probe
     - browser_session_manage
     - browser_observe
+    - visual_feedback
     - browser_act
     - browser_verify
     - browser_diff

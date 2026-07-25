@@ -46,7 +46,7 @@ class FlowRunResult:
 
 
 class FlowRunner:
-    def __init__(self, base_url: str = "http://localhost:5173", *, headless: bool = True) -> None:
+    def __init__(self, base_url: str = "http://127.0.0.1:18765", *, headless: bool = True) -> None:
         self.base_url = base_url.rstrip("/")
         self.headless = headless
 

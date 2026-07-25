@@ -6,6 +6,7 @@ import asyncio
 import json
 import sys
 import time
+from pathlib import Path
 
 import _bootstrap  # noqa: F401
 from _bootstrap import ROOT, SANDBOX_ROOT
@@ -17,8 +18,6 @@ from navigation.mcp.handlers import (
     handle_audit_seo,
     handle_debug_mode,
     handle_detect_framework,
-    handle_figma_context,
-    handle_figma_status,
     handle_full_diagnosis,
     handle_framework_docs,
     handle_inspiration_collect,
@@ -30,9 +29,6 @@ from navigation.mcp.handlers import (
     handle_resource_preview,
     handle_resource_session_end,
     handle_search_components,
-    handle_seo_connect,
-    handle_seo_query,
-    handle_seo_verify,
     handle_select_component_foundation,
     handle_code_context,
     handle_console_clear,
@@ -532,49 +528,6 @@ async def main() -> int:
         else:
             report["tests"]["resource_license_check"] = {"ok": True}
 
-        from navigation.mcp.handlers import handle_seo_audit, handle_seo_status
-
-        _mime3, seo_guide, _blob3 = read_resource("perception://seo-guide")
-        report["tests"]["seo_guide_resource"] = {"ok": bool(str(seo_guide).strip())}
-
-        seo_status = await handle_seo_status({})
-        report["tests"]["seo_status"] = {"ok": seo_status["ok"]}
-
-        seo_audit = await handle_seo_audit(scans, {"website_url": "https://example.com"})
-        report["tests"]["seo_audit"] = {"ok": seo_audit["ok"]}
-
-        seo_audit_no_ai = await handle_seo_audit(
-            scans,
-            {"website_url": "https://example.com", "include_ai_visibility": False},
-        )
-        audit_no_ai_ctx = (seo_audit_no_ai.get("data") or {}).get("reasoning_context_v2") or {}
-        report["tests"]["seo_audit_include_ai_visibility_false"] = {
-            "ok": seo_audit_no_ai["ok"] and "ai_readiness" not in audit_no_ai_ctx,
-        }
-
-        seo_connect = await handle_seo_connect(
-            {"website_url": "https://example.com", "action": "setup"}
-        )
-        report["tests"]["seo_connect_setup"] = {"ok": seo_connect["ok"]}
-
-        seo_query_summary = await handle_seo_query({"query_id": "graph.summary"})
-        report["tests"]["seo_query_graph_summary"] = {
-            "ok": seo_query_summary["ok"] and bool(seo_query_summary.get("data")),
-        }
-
-        seo_query_ai = await handle_seo_query({"query_id": "ai.readiness.summary"})
-        report["tests"]["seo_query_ai_readiness_summary"] = {
-            "ok": seo_query_ai["ok"],
-        }
-
-        seo_verify = await handle_seo_verify(
-            scans,
-            {"website_url": "https://example.com", "recommendation_ids": []},
-        )
-        report["tests"]["seo_verify"] = {
-            "ok": seo_verify["ok"] or bool(seo_verify.get("error")),
-        }
-
         res_preview = await handle_resource_preview(
             {"query": "chart icon", "max_results": 2, "materialize_blobs": False}
         )
@@ -639,22 +592,6 @@ async def main() -> int:
         else:
             report["tests"]["audit_mode"] = {"ok": True, "skipped": True}
 
-        figma_status = await handle_figma_status({})
-        report["tests"]["figma_status"] = {"ok": figma_status["ok"]}
-
-        figma_ctx = await handle_figma_context({})
-        figma_error = str(figma_ctx.get("error") or "")
-        report["tests"]["figma_context_not_connected"] = {
-            "ok": (not figma_ctx["ok"]) and (
-                "figma_not_connected" in figma_error
-                or "not_connected" in figma_error
-                or "not connected" in figma_error.lower()
-            ),
-        }
-
-        _mime_fg, figma_guide, _blob_fg = read_resource("perception://figma-guide")
-        report["tests"]["figma_guide_resource"] = {"ok": bool(str(figma_guide).strip())}
-
         snapshot_result = await handle_build_design_snapshot(
             store, scans, snapshots, {"session_id": sid, "scan_id": scan_after}
         )
@@ -708,6 +645,27 @@ async def main() -> int:
         )
         report["tests"]["design_knowledge_query"] = {
             "ok": knowledge_q["ok"] or bool(knowledge_q.get("error")),
+        }
+
+        ux_retrieve = await handle_design_knowledge_query(
+            {
+                "query_id": "ux.retrieve",
+                "params": {
+                    "intent": "Build dashboard",
+                    "surface_type": "dashboard",
+                    "phase": "greenfield",
+                },
+                "repo_root": str(Path(__file__).resolve().parent.parent),
+            }
+        )
+        ux_data = (ux_retrieve.get("data") or {}).get("knowledge") or {}
+        ux_answer = ux_data.get("answer") or {}
+        ux_ret = ux_answer.get("retrieval") or {}
+        report["tests"]["ux_knowledge_retrieve"] = {
+            "ok": ux_retrieve.get("ok")
+            and bool((ux_ret.get("matched_playbook") or {}).get("id")),
+            "playbook": (ux_ret.get("matched_playbook") or {}).get("id"),
+            "principles": len(ux_ret.get("principles") or []),
         }
 
         assess = await handle_consistency_assess(

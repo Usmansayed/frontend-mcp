@@ -60,6 +60,9 @@ def agent_summary_from_observation(obs_dict: dict[str, Any]) -> dict[str, Any]:
 			blocking.append(item)
 	for item in network_block.get('slow_requests') or []:
 		url = item.get('url') or ''
+		# Cold-start Next.js assets are noisy; keep page-level blockers only.
+		if '/_next/static/' in url or '/_next/image' in url:
+			continue
 		duration = item.get('duration_ms')
 		msg = f'Slow request ({duration:.0f}ms): {url}' if duration is not None else f'Slow request: {url}'
 		if msg not in advisory:

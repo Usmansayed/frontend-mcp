@@ -148,23 +148,52 @@ class GallerySiteProvider:
 		}
 
 
+_JUNK_TITLE_MARKERS = frozenset({
+	'newsletter',
+	'lo-fi feed',
+	'lofi feed',
+	'og gallery',
+	'category',
+	'genre',
+	'archive',
+	'submit',
+	'advertise',
+})
+
+
+def _is_http_preview(url: str) -> bool:
+	u = (url or '').strip().lower()
+	return u.startswith('http://') or u.startswith('https://')
+
+
 def _filter_hits(provider_id: str, hits: list[dict[str, str]]) -> list[dict[str, str]]:
-	if provider_id != 'onepagelove':
-		return hits
-	from navigation.inspiration_intelligence.providers.gallery_parse import OPL_RESERVED_SLUGS
+	reserved: frozenset[str] = frozenset()
+	if provider_id == 'onepagelove':
+		from navigation.inspiration_intelligence.providers.gallery_parse import OPL_RESERVED_SLUGS
+
+		reserved = OPL_RESERVED_SLUGS
 
 	filtered: list[dict[str, str]] = []
 	for hit in hits:
-		slug = hit.get('external_id', '')
-		if slug and slug not in OPL_RESERVED_SLUGS:
-			filtered.append(hit)
+		slug = (hit.get('external_id') or '').strip().lower()
+		if not slug:
+			continue
+		if slug in reserved:
+			continue
+		title = (hit.get('title') or '').strip().lower()
+		if any(marker in title for marker in _JUNK_TITLE_MARKERS):
+			continue
+		# Discover must surface image-bearing refs; collect can enrich later.
+		if not _is_http_preview(hit.get('preview_url') or ''):
+			continue
+		filtered.append(hit)
 	return filtered
 
 
 def _query_match_score(query: str, title: str) -> float:
 	q_tokens = {t for t in query.lower().split() if len(t) > 2}
 	if not q_tokens:
-		return 0.5
+		return 0.55
 	title_l = title.lower()
 	hits = sum(1 for t in q_tokens if t in title_l)
-	return min(0.92, 0.4 + 0.14 * hits)
+	return min(0.92, 0.45 + 0.14 * hits)

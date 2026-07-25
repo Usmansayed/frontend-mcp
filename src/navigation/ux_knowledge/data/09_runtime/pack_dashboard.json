@@ -1,0 +1,388 @@
+{
+  "pack_id": "pack_dashboard",
+  "title": "SaaS Dashboard Playbook",
+  "target_surfaces": [
+    "perception://guide/feature",
+    "feature",
+    "greenfield"
+  ],
+  "retrieval_keys": {
+    "surface_type": [
+      "dashboard",
+      "admin",
+      "analytics"
+    ],
+    "product_type": [
+      "saas",
+      "enterprise"
+    ],
+    "problem": [
+      "feedback",
+      "information hierarchy",
+      "density",
+      "KPI",
+      "data table"
+    ],
+    "ui_component": [
+      "sidebar",
+      "data_table",
+      "chart"
+    ]
+  },
+  "playbook_id": "pb_dashboard",
+  "pattern_refs": [
+    "pat_12_step_color_scale",
+    "pat_accessible_color_tokens",
+    "pat_adaptive_faceted_navigation",
+    "pat_advanced_settings_accordion",
+    "pat_ai_legible_context_layer",
+    "pat_ai_legible_design_system_context",
+    "pat_aria_describedby_hints",
+    "pat_aria_describedby_instructions",
+    "pat_aria_live_status_announcer",
+    "pat_auto_save_draft",
+    "pat_bmap_cta_block",
+    "pat_bmap_cta_design"
+  ],
+  "related_principle_ids": [
+    "UX_VIS_PROXWHITES_001",
+    "UX_DS_TOKEN_001",
+    "UX_INX_CTRL_001",
+    "UX_VIS_LAWOFSIMILAR_001",
+    "UX_VIS_LAYOUTPRIMIT_001",
+    "UX_INX_CONSTRUCTIVE_001",
+    "UX_INX_NOTIFICATION_001",
+    "UX_DS_PROPERTYSPEC_001",
+    "UX_INX_ARIALIVEREGI_001",
+    "UX_INX_ERR_009",
+    "UX_INX_SELF_001",
+    "UX_VIS_GEST_006",
+    "UX_DS_DENS_002"
+  ],
+  "claim_stubs": [
+    {
+      "claim_id": "UX_INX_CONSTRUCTIVE_001",
+      "name": "Constructive Error Feedback",
+      "engineering_meaning": "Express error messages in plain, non-blaming language, precisely indicate the problem, constructively suggest a solution, and display the message adjacent to the affected interface element.",
+      "how_to_detect_violations": "Trigger an error state (e.g., invalid form input). Verify that the error message appears in close proximity to the source, avoids technical jargon or user blame, clearly states the issue, and offers an actionable recovery path.",
+      "when_to_apply": "Whenever the system encounters an error, invalid input, or failure state that prevents the user from completing their task, particularly when related to specific interface elements.",
+      "when_not_to_apply": "When the error is purely internal and automatically recoverable (fail silently), or when it is a global system failure unrelated to a specific field (use a global banner instead).",
+      "confidence": 1.0,
+      "source_ids": [
+        "url_nng_heuristics",
+        "url_forms_nng_errors",
+        "url_shneiderman_story"
+      ],
+      "full_card_path": "kb://cards/UX_INX_CONSTRUCTIVE_001"
+    },
+    {
+      "claim_id": "UX_INX_ERR_009",
+      "name": "Error Prevention and Fault Tolerance",
+      "engineering_meaning": "Errors should be prevented or easily corrected without serious consequences; preserve user input.",
+      "how_to_detect_violations": "Submit-only validation with page reload; cleared fields; color-only errors.",
+      "when_to_apply": "Account, checkout, payment, and high-stakes forms.",
+      "when_not_to_apply": "Validate-on-each-keystroke before the user finishes typing.",
+      "confidence": 1.0,
+      "source_ids": [
+        "src_iso_9241_110",
+        "src_baymard_form_design",
+        "url_nng_heuristics",
+        "url_iso_9241_110_explainer",
+        "url_err_perpetual",
+        "url_nng_destructive"
+      ],
+      "full_card_path": "kb://cards/UX_INX_ERR_009"
+    },
+    {
+      "claim_id": "UX_INX_CTRL_001",
+      "name": "ISO 9241-110 Controllability",
+      "engineering_meaning": "Users can initiate, pace, and reverse dialog actions; they retain control.",
+      "how_to_detect_violations": "Find irreversible deletes without confirm; modals without dismiss; auto-advancing steps.",
+      "when_to_apply": "Destructive actions, multi-step flows, settings changes.",
+      "when_not_to_apply": "Security operations where undo would break integrity (document the exception).",
+      "confidence": 1.0,
+      "source_ids": [
+        "src_iso_9241_110",
+        "url_feedback_nng_control"
+      ],
+      "full_card_path": "kb://cards/UX_INX_CTRL_001"
+    },
+    {
+      "claim_id": "UX_INX_SELF_001",
+      "name": "ISO 9241-110 Self-Descriptiveness",
+      "engineering_meaning": "The dialog is self-explanatory: status and options are clearly described without external docs.",
+      "how_to_detect_violations": "Audit controls for missing accessible names; placeholder-only fields; opaque errors.",
+      "when_to_apply": "Forms, navigation, status chrome, errors.",
+      "when_not_to_apply": "Universally conventional icons may use short names if the accessibility tree is complete.",
+      "confidence": 1.0,
+      "source_ids": [
+        "src_iso_9241_110",
+        "url_iso_9241_110_explainer",
+        "url_nng_icons",
+        "url_nng_tooltip_use"
+      ],
+      "full_card_path": "kb://cards/UX_INX_SELF_001"
+    },
+    {
+      "claim_id": "UX_INX_RESPONSETIME_001",
+      "name": "Response Time Limits and Feedback Thresholds",
+      "engineering_meaning": "Provide UI feedback based on interaction latency: aim for <100-200ms for an instantaneous feel, <400ms to maintain productivity, >1s requires a busy indicator, and >10s requires a determinate progress bar and a cancel option.",
+      "how_to_detect_violations": "Measure interaction latency (e.g., INP). Flag interactions taking >200-400ms without initial visual feedback, >1s without a busy indicator, and >10s without a determinate progress indicator and cancel button.",
+      "when_to_apply": "Apply to all interactive elements where users trigger operations requiring processing, data fetching, or network requests.",
+      "when_not_to_apply": "Do not apply to continuous gestures (scrolling, zooming) which require stricter latency (<16ms), background tasks, or when artificial delays are purposefully used for security or perceived value (e.g., fraud checks).",
+      "confidence": 1.0,
+      "source_ids": [
+        "url_lawsofux_doherty",
+        "url_feedback_nng_response",
+        "url_extra_web_vitals_inp"
+      ],
+      "full_card_path": "kb://cards/UX_INX_RESPONSETIME_001"
+    },
+    {
+      "claim_id": "UX_DS_TOKEN_001",
+      "name": "Semantic Color Coding",
+      "engineering_meaning": "Color must be purposefully tied to specific meanings (e.g., red for critical errors, green for success, blue for tips/offers) rather than used for decoration.",
+      "how_to_detect_violations": "Implement linter rules restricting raw hex codes in UI components. Use visual regression or DOM inspection to check for non-standard colors or decorative colors applied to non-illustration elements.",
+      "when_to_apply": "Designing alerts, badges, banners, buttons, and status indicators within an application interface.",
+      "when_not_to_apply": "Illustrations, marketing assets, or brand-heavy landing pages outside the core functional UI.",
+      "confidence": 1.0,
+      "source_ids": [
+        "src_shopify_polaris",
+        "url_ds_polaris_colors",
+        "url_ds_polaris_design",
+        "url_atlassian_color"
+      ],
+      "full_card_path": "kb://cards/UX_DS_TOKEN_001"
+    },
+    {
+      "claim_id": "UX_DS_DENS_002",
+      "name": "Standard Touch Target Size (44px)",
+      "engineering_meaning": "The default tap target size for elements relying on width and height dimensions on touch-enabled devices is 44px (2.75rem).",
+      "how_to_detect_violations": "Inspect the computed height and width of interactive elements (buttons, links, toggles) on touch devices. Flag elements where the clickable area is < 44px in either dimension.",
+      "when_to_apply": "Designing buttons, list items, and interactive icons for touch-enabled interfaces (mobile, tablet, touch-screen laptops).",
+      "when_not_to_apply": "Dense desktop-only interfaces operated exclusively by a precise pointer (mouse), where smaller targets (e.g., 32px or 24px) are acceptable.",
+      "confidence": 1.0,
+      "source_ids": [
+        "src_salesforce_slds"
+      ],
+      "full_card_path": "kb://cards/UX_DS_DENS_002"
+    },
+    {
+      "claim_id": "UX_DS_PROPERTYSPEC_001",
+      "name": "Strictly Scope Color Tokens by CSS Property",
+      "engineering_meaning": "Never mix semantic color token categories. Use background color tokens exclusively for backgrounds, text color tokens exclusively for text, and border color tokens exclusively for borders.",
+      "how_to_detect_violations": "Analyze CSS/SCSS declarations to ensure 'color:' properties only use '$color-text-*' tokens, 'background-color:' uses '$color-background-*' tokens, and 'border-color:' uses '$color-border-*' tokens.",
+      "when_to_apply": "When applying semantic design tokens to UI components to ensure proper theming and accessibility.",
+      "when_not_to_apply": "When using primitive/global palette tokens (e.g., '$palette-blue-50') which are property-agnostic, though semantic tokens are generally preferred.",
+      "confidence": 1.0,
+      "source_ids": [
+        "url_ds_slds_tokens"
+      ],
+      "full_card_path": "kb://cards/UX_DS_PROPERTYSPEC_001"
+    },
+    {
+      "claim_id": "UX_INX_ARIALIVEREGI_001",
+      "name": "Use ARIA Live Regions for Status Updates Without Moving Focus",
+      "engineering_meaning": "Use `aria-live=\"polite\"` or `role=\"status\"` to announce dynamic, non-interactive status updates to assistive technologies without forcing a page reload or moving the user's focus.",
+      "how_to_detect_violations": "Identify dynamic DOM updates (e.g., search results, toast notifications, status messages) that do not receive focus. Verify they are wrapped in an element with `aria-live=\"polite\"` or `role=\"status\"` present in the DOM before the update occurs.",
+      "when_to_apply": "Apply when a part of the page updates dynamically with information useful to the user (e.g., search results loaded, form saved) but doesn't require immediate interaction or focus management.",
+      "when_not_to_apply": "Do not apply when the update requires immediate user interaction (move focus instead), or when the update is a critical error that must interrupt the user immediately (use `aria-live=\"assertive\"` or `role=\"alert\"`).",
+      "confidence": 1.0,
+      "source_ids": [
+        "url_mdn_aria_live",
+        "url_extra_wcag_status"
+      ],
+      "full_card_path": "kb://cards/UX_INX_ARIALIVEREGI_001"
+    },
+    {
+      "claim_id": "UX_INX_MODALUSAGE_001",
+      "name": "Modal Usage and Constraints",
+      "engineering_meaning": "Reserve modal dialogs for critical warnings, irreversible actions, or short, essential tasks. Avoid modals for highly repeatable tasks, complex multi-step flows, non-essential interruptions, or when users must reference obscured background information; use full pages or nonmodal dialogs instead.",
+      "how_to_detect_violations": "Identify dialogs that disable the main interface. Flag modals containing multi-step flows, excessive vertical scrolling, non-essential promotions, or tasks requiring users to reference the obscured background context.",
+      "when_to_apply": "When designing critical system feedback, alerts, simple confirmations, or short data entry prompts where capturing undivided user attention is strictly required.",
+      "when_not_to_apply": "For frequent repetitive tasks, complex decision-making, dense data input, non-essential promotions, or when the user must reference the obscured background content to complete their task.",
+      "confidence": 0.98,
+      "source_ids": [
+        "url_carbon_modal",
+        "url_nng_modal"
+      ],
+      "full_card_path": "kb://cards/UX_INX_MODALUSAGE_001"
+    },
+    {
+      "claim_id": "UX_DS_12STEPCOLORS_001",
+      "name": "12-Step Semantic Color Token Scale",
+      "engineering_meaning": "Structure tokenized color scales into 12 steps with specific semantic purposes: steps 1-2 for backgrounds, 3-5 for interactive component states, 6-8 for borders and separators, 9-10 for solid backgrounds/brand colors, and 11-12 for accessible text.",
+      "how_to_detect_violations": "Check color token definitions and usage. Verify if scales are divided into 12 steps and if components map their backgrounds, borders, and text to the corresponding semantic steps (e.g., text uses step 11 or 12).",
+      "when_to_apply": "When designing a comprehensive, accessible design token system for a component library or complex application requiring consistent interactive states and contrast.",
+      "when_not_to_apply": "When building a simple, single-theme site with minimal interactive states, or when constrained by a legacy 100-900 lightness-based color system.",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_ds_radix_themes"
+      ],
+      "full_card_path": "kb://cards/UX_DS_12STEPCOLORS_001"
+    },
+    {
+      "claim_id": "UX_VIS_GEST_006",
+      "name": "Gestalt Principle of Proximity",
+      "engineering_meaning": "Items close together are perceived as part of the same group, sharing functionality or traits. Proximity overpowers competing visual cues like color or shape.",
+      "how_to_detect_violations": "Measure pixel distances between elements. If distance(A, B) < distance(B, C), users will assume A and B are more related than B and C. Check if this matches the logical data model.",
+      "when_to_apply": "Layout design, navigation menus, typography hierarchy, and grouping UI controls or form fields.",
+      "when_not_to_apply": "When elements are strictly independent, or when using other strong grouping methods like Common Region (borders/backgrounds) in highly space-constrained environments.",
+      "confidence": 0.95,
+      "source_ids": [
+        "src_gestalt_proximity",
+        "url_vis_nng_common_region"
+      ],
+      "full_card_path": "kb://cards/UX_VIS_GEST_006"
+    },
+    {
+      "claim_id": "UX_VIS_LAWOFSIMILAR_001",
+      "name": "Gestalt Similarity for Control Grouping",
+      "engineering_meaning": "Group related UI controls and signify common functionality by applying shared visual characteristics—such as color, shape, or size—while intentionally varying these traits for unrelated or differing actions.",
+      "how_to_detect_violations": "Identify sets of controls or interactive elements. Verify that elements with similar functions share a distinct visual trait (e.g., color or shape) and that decorative or unrelated elements do not mimic these interactive traits.",
+      "when_to_apply": "When designing navigation, forms, or toolbars where users need to quickly scan and identify elements that perform similar functions or belong to the same category.",
+      "when_not_to_apply": "When elements are fundamentally different in function, importance, or interactivity (e.g., primary vs. secondary buttons, interactive buttons vs. decorative icons).",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_vis_nng_similarity"
+      ],
+      "full_card_path": "kb://cards/UX_VIS_LAWOFSIMILAR_001"
+    },
+    {
+      "claim_id": "UX_INX_NOTIFICATION_001",
+      "name": "Inline vs. Toast Notifications",
+      "engineering_meaning": "Use inline notifications for persistent, contextual feedback within a task flow. Use toast notifications for short, time-based, non-modal messages that automatically dismiss.",
+      "how_to_detect_violations": "Identify the notification behavior and placement: if it auto-dismisses and floats over the UI (usually top right), it should be a toast. If it persists within the page layout near related content, it should be inline.",
+      "when_to_apply": "Use inline notifications for form errors, task statuses, or when the message must persist until resolved. Use toast notifications for quick, non-critical confirmations (e.g., 'Saved successfully') that do not require user interaction.",
+      "when_not_to_apply": "Do not use toast notifications for critical errors or messages requiring user action, as they may disappear before the user reads them. Do not use inline notifications for global, transient system updates.",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_carbon_notification"
+      ],
+      "full_card_path": "kb://cards/UX_INX_NOTIFICATION_001"
+    },
+    {
+      "claim_id": "UX_VIS_VONRESTORFFE_001",
+      "name": "Isolation Effect for Primary CTA Emphasis",
+      "engineering_meaning": "Make primary key actions visually distinctive from surrounding elements to ensure they are easily identified and remembered, while exercising restraint to prevent visual competition.",
+      "how_to_detect_violations": "Check if the primary CTA has a unique visual treatment (e.g., contrasting background color, size, or shape) compared to secondary buttons or surrounding elements, without relying solely on color.",
+      "when_to_apply": "When there is a clear primary action or critical information that users need to find and remember among a group of similar items.",
+      "when_not_to_apply": "When all actions have equal priority, or when overusing emphasis would cause visual competition and make elements look like advertisements.",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_lawsofux_vonrestorff"
+      ],
+      "full_card_path": "kb://cards/UX_VIS_VONRESTORFFE_001"
+    },
+    {
+      "claim_id": "UX_VIS_PROXWHITES_001",
+      "name": "Proximity Grouping via Whitespace",
+      "engineering_meaning": "Ensure the whitespace between distinct UI groups is noticeably larger than the whitespace within a group to clearly communicate relationships and visual hierarchy.",
+      "how_to_detect_violations": "Measure spacing tokens or CSS margins/padding. The gap between related elements (e.g., a label and its input, or a heading and its paragraph) must be strictly smaller than the gap separating that group from the next adjacent group.",
+      "when_to_apply": "When designing forms, navigation menus, text layouts, and responsive grids to help task-focused users quickly scan and identify related elements.",
+      "when_not_to_apply": "When elements are already strongly grouped using explicit visual boundaries (like borders or distinct background colors - Gestalt Common Region), though proximity still reinforces these boundaries.",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_pilot_nng_proximity"
+      ],
+      "full_card_path": "kb://cards/UX_VIS_PROXWHITES_001"
+    },
+    {
+      "claim_id": "UX_VIS_LAYOUTPRIMIT_001",
+      "name": "Use Layout Primitives for Spacing and Alignment",
+      "engineering_meaning": "Handle all layouts and spacing using dedicated layout primitives (e.g., Box, Block stack, Inline stack, Grid) rather than embedding custom CSS margins, padding, or flex/grid properties within feature components.",
+      "how_to_detect_violations": "Scan for custom CSS classes, inline styles, or styled-components applying 'margin', 'padding', 'display: flex', or 'display: grid' in feature components instead of using imported layout primitive components.",
+      "when_to_apply": "When arranging elements on a page, managing spacing between components, or building responsive layouts within a design system that provides layout primitives.",
+      "when_not_to_apply": "When building the foundational layout primitives themselves, or when working in a legacy codebase without a standardized set of layout components.",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_polaris_layout"
+      ],
+      "full_card_path": "kb://cards/UX_VIS_LAYOUTPRIMIT_001"
+    },
+    {
+      "claim_id": "UX_VIS_PAGINATIONVS_001",
+      "name": "Pagination over Infinite Scroll for Goal-Oriented Tasks",
+      "engineering_meaning": "Use pagination rather than infinite scrolling for goal-oriented finding tasks, such as locating specific content, comparing options, or backtracking. Reserve infinite scrolling for serendipitous exploration of flat-hierarchy content.",
+      "how_to_detect_violations": "Identify lists, search results, or feeds. Check if the loading mechanism is infinite scroll or pagination. Assess if the user's primary task is finding specific items (e.g., ecommerce) vs. open-ended browsing (e.g., social media).",
+      "when_to_apply": "Apply pagination when users need to locate specific items, compare products, remember item locations (e.g., 'page 3'), or when accurate scrollbar representation of page length is needed.",
+      "when_not_to_apply": "Do not use pagination when the content streams constantly, has a flat structure, and the user's goal is time-killing or serendipitous discovery.",
+      "confidence": 0.9,
+      "source_ids": [
+        "url_nng_pagination"
+      ],
+      "full_card_path": "kb://cards/UX_VIS_PAGINATIONVS_001"
+    },
+    {
+      "claim_id": "UX_DS_MINIMUMTOUCH_001",
+      "name": "Standardize Medium Tap Targets at 32px",
+      "engineering_meaning": "Set medium tap targets (such as standalone interactive icons) to 2rem (32px) using the designated sizing token to ensure reliable touch interaction.",
+      "how_to_detect_violations": "Check if medium interactive icon elements utilize the '$square-icon-medium' token or explicitly set width/height to '2rem' or '32px'.",
+      "when_to_apply": "When sizing standard interactive icons and medium touch targets in a touch-friendly UI.",
+      "when_not_to_apply": "When designing high-density data interfaces that explicitly require the alternate medium tap target size (14px / 0.875rem) or smaller utility icons.",
+      "confidence": 0.9,
+      "source_ids": [
+        "url_ds_slds_tokens"
+      ],
+      "full_card_path": "kb://cards/UX_DS_MINIMUMTOUCH_001"
+    }
+  ],
+  "conflict_pairs": [
+    {
+      "a": "ap_hardcoding_hex_values_in",
+      "b": "UX_DS_TOKEN_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_clearing_all_form_fields",
+      "b": "UX_INX_ERR_009",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_using_blocking_confirmat",
+      "b": "UX_INX_CTRL_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_relying_solely_on_color_",
+      "b": "UX_INX_SELF_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_spacing_all_toolbar_butt",
+      "b": "UX_VIS_GEST_006",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_using_uniform_margins_e_",
+      "b": "UX_VIS_PROXWHITES_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_creating_small_24x24px_i",
+      "b": "UX_DS_DENS_002",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_using_a_generic_5_step_o",
+      "b": "UX_DS_12STEPCOLORS_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_hardcoding_color_red_for",
+      "b": "UX_DS_TOKEN_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_setting_icon_buttons_to_",
+      "b": "UX_DS_MINIMUMTOUCH_001",
+      "decision_hint": "anti-pattern"
+    }
+  ],
+  "budgets": {
+    "max_claim_stubs": 20,
+    "max_rationale_tokens": 2500
+  },
+  "created_at": "2026-07-21",
+  "notes": "Graph-slice pack — deterministic retrieval, no embeddings."
+}

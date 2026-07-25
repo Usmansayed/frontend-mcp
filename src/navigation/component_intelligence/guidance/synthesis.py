@@ -85,15 +85,26 @@ def synthesize_guidance(
 def rank_key(
 	candidate: ComponentCandidate,
 	guidance: CandidateGuidance,
+	*,
+	parsed_query: ParsedQuery | None = None,
+	page_context: list[str] | None = None,
 ) -> tuple:
 	"""Deterministic sort key — priority rules, not percentage weights."""
+	from ..selection.filter import foundation_suitability
+
 	if not guidance.synthesis.eligible:
-		return (1, 0, 0, 0, 0, 0, 0)
+		return (1, 0, 0, 0, 0, 0, 0, 0)
 	f = guidance.synthesis.rank_factors
+	suit = foundation_suitability(
+		candidate,
+		parsed_query=parsed_query,
+		page_context=page_context or (parsed_query.page_context if parsed_query else None),
+	)
 	return (
 		0,
 		int(f.get('framework_issue_count', 0)),
 		int(f.get('warning_count', 0)),
+		-int(suit),
 		-int(f.get('design_alignment', 0)),
 		int(f.get('consistency_adjustment_count', 0)),
 		int(f.get('duplicate_risk_count', 0)),

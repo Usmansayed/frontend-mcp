@@ -260,7 +260,16 @@ def _layout_archetype(ctx: _CompileContext, ddef: DecisionDef) -> EngineeringDec
 def _layout_sidebar_width(ctx: _CompileContext, ddef: DecisionDef) -> EngineeringDecision:
     w = _rect_width(_region(ctx.snapshot, "nav"))
     if w is None or w < 120:
-        return _unresolved(ddef, why_code="no_nav_width")
+        # No sidebar-scale nav → N/A (do not scream "critical" on marketing/portfolio).
+        return _base(
+            ddef,
+            status="not_applicable",
+            value=None,
+            confidence=0.9,
+            evidence=["dom_geometry"],
+            why="No sidebar-scale nav region (≥120px) — sidebar width not applicable.",
+            why_code="na.no_sidebar_nav",
+        )
     return _resolved(
         ddef,
         value=int(round(w)),

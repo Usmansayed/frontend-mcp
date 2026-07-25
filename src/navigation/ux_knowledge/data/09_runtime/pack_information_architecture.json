@@ -1,0 +1,250 @@
+{
+  "pack_id": "pack_information_architecture",
+  "title": "Information Architecture Playbook",
+  "target_surfaces": [
+    "perception://guide/greenfield",
+    "greenfield",
+    "feature"
+  ],
+  "retrieval_keys": {
+    "surface_type": [
+      "settings",
+      "enterprise"
+    ],
+    "user_flow": [
+      "configuration",
+      "browse"
+    ],
+    "product_type": [
+      "enterprise",
+      "saas"
+    ],
+    "problem": [
+      "information architecture",
+      "settings",
+      "configuration",
+      "IA"
+    ]
+  },
+  "playbook_id": "pb_information_architecture",
+  "pattern_refs": [
+    "pat_12_step_color_scale",
+    "pat_accessible_color_tokens",
+    "pat_adaptive_faceted_navigation",
+    "pat_advanced_settings_accordion",
+    "pat_ai_legible_context_layer",
+    "pat_ai_legible_design_system_context",
+    "pat_aria_describedby_hints",
+    "pat_aria_describedby_instructions",
+    "pat_aria_live_status_announcer",
+    "pat_auto_save_draft",
+    "pat_bmap_cta_block",
+    "pat_bmap_cta_design"
+  ],
+  "related_principle_ids": [
+    "UX_GEN_TESLERSLAW_001",
+    "UX_COG_HICK_002",
+    "UX_COG_PROGRESSIVED_001",
+    "UX_GEN_MILLERSLAW_001",
+    "UX_GEN_JAKOBSLAW_001",
+    "UX_COG_OFFLOADCOGNI_001"
+  ],
+  "claim_stubs": [
+    {
+      "claim_id": "UX_COG_HICK_002",
+      "name": "Hick-Hyman Law",
+      "engineering_meaning": "Decision/reaction time increases roughly with the information entropy of the choice set (classically RT ≈ a + b·log2(n) for n equiprobable options).",
+      "how_to_detect_violations": "Count peer primary actions in a decision region; many equally weighted CTAs/menu items without grouping (often ≫7 visible peers) → overload risk.",
+      "when_to_apply": "Nav menus, pricing tiers, settings panels, checkout decisions, onboarding choices.",
+      "when_not_to_apply": "Expert analytic dashboards needing simultaneous density; highly learned expert UIs.",
+      "confidence": 1.0,
+      "source_ids": [
+        "src_hick_law_pmc",
+        "src_iso_9241_110",
+        "url_cog_hick_research_collective",
+        "url_agg_lawsofux_hick",
+        "url_cog_hick_decisionlab",
+        "url_cog_hick_pmc"
+      ],
+      "full_card_path": "kb://cards/UX_COG_HICK_002"
+    },
+    {
+      "claim_id": "UX_GEN_RESPONSIVEWE_001",
+      "name": "Responsive Web Design Foundations",
+      "engineering_meaning": "Use fluid grids, flexible images, and media queries to create a single, adaptive layout that responds to the user's viewport, rather than building separate device-specific experiences.",
+      "how_to_detect_violations": "Identify fixed-width containers that overflow on small screens, or the presence of device-specific redirects (e.g., m.domain.com) instead of CSS media queries.",
+      "when_to_apply": "When building web interfaces that will be accessed across a gradient of different devices, screen sizes, and resolutions.",
+      "when_not_to_apply": "When the user goals for a specific device (like mobile) are drastically limited or different in scope, making a separate, highly tailored application more appropriate.",
+      "confidence": 1.0,
+      "source_ids": [
+        "url_alistapart_responsive"
+      ],
+      "full_card_path": "kb://cards/UX_GEN_RESPONSIVEWE_001"
+    },
+    {
+      "claim_id": "UX_GEN_JAKOBSLAW_001",
+      "name": "Jakob's Law",
+      "engineering_meaning": "Design interfaces that conform to users' pre-existing mental models by leveraging established industry conventions, allowing users to focus on tasks rather than learning new interaction styles.",
+      "how_to_detect_violations": "Identify non-standard UI patterns for common tasks (e.g., custom form controls, unconventional navigation placement, unexpected e-commerce flows) that deviate from standard web conventions and force users to learn a new mental model.",
+      "when_to_apply": "When designing core navigation, standard UI components, common workflows (like shopping carts), search functionalities, and basic controls where industry conventions are well-established.",
+      "when_not_to_apply": "When a new interaction paradigm is demonstrably superior, thoroughly tested, provides massive efficiency gains, or when existing mental models do not apply (accompanied by sufficient onboarding).",
+      "confidence": 0.98,
+      "source_ids": [
+        "url_nng_mental_models",
+        "url_agg_lawsofux_jakob"
+      ],
+      "full_card_path": "kb://cards/UX_GEN_JAKOBSLAW_001"
+    },
+    {
+      "claim_id": "UX_COG_PROGRESSIVED_001",
+      "name": "Progressive Disclosure",
+      "engineering_meaning": "Initially show users only the most important options or content, deferring advanced features or detailed information to secondary screens or expandable sections (like accordions) accessible upon request. Expose all content at once if users need to consume most of it to complete their task.",
+      "how_to_detect_violations": "Identify complex forms, menus, or content-heavy pages. Check if all options or content are presented at once, or if advanced settings and secondary details are hidden behind 'Advanced', 'More options', or accordions. Evaluate if the user task requires accessing most of the hidden information.",
+      "when_to_apply": "Apply when an interface has a large number of features or dense content, but most users only need a small core subset or a few key pieces of information to complete their primary tasks. Also useful on mobile devices where screen space is limited.",
+      "when_not_to_apply": "Do not apply to frequently used core features, when users need to consume most or all of the content to answer their questions, when printing the full content is common, or when users must frequently alternate between interdependent options.",
+      "confidence": 0.98,
+      "source_ids": [
+        "url_nng_accordions",
+        "url_cog_progressive_nng"
+      ],
+      "full_card_path": "kb://cards/UX_COG_PROGRESSIVED_001"
+    },
+    {
+      "claim_id": "UX_GEN_MILLERSLAW_001",
+      "name": "Chunk Information to Respect Working Memory (Miller's Law)",
+      "engineering_meaning": "Group information into 5 to 9 meaningful chunks and break long forms into progressive steps of 5-7 fields to prevent cognitive overload.",
+      "how_to_detect_violations": "Identify long, unbroken lists, navigation menus with more than 9 primary items, or forms with more than 7 fields on a single page.",
+      "when_to_apply": "When designing navigation menus, formatting data (like phone numbers), or building complex data-entry forms.",
+      "when_not_to_apply": "When users need to scan a massive, sortable data table where pagination or chunking would hide necessary comparative context.",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_freecodecamp_academic_ux"
+      ],
+      "full_card_path": "kb://cards/UX_GEN_MILLERSLAW_001"
+    },
+    {
+      "claim_id": "UX_GEN_DOHERTYTHRES_001",
+      "name": "Doherty Threshold",
+      "engineering_meaning": "Keep system response times under 400ms to ensure users do not have to wait on the computer, maintaining their productivity and flow.",
+      "how_to_detect_violations": "Measure the time between user input (e.g., click, tap) and the corresponding UI feedback. Flag any interactions that exceed 400 milliseconds.",
+      "when_to_apply": "Apply to all standard UI interactions, page navigations, and state changes to maintain a seamless user experience.",
+      "when_not_to_apply": "Do not apply when a deliberate delay is required for security (e.g., login throttling) or to build trust by showing the system is 'working hard' on a complex task.",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_agg_lawsofux"
+      ],
+      "full_card_path": "kb://cards/UX_GEN_DOHERTYTHRES_001"
+    },
+    {
+      "claim_id": "UX_COG_OFFLOADCOGNI_001",
+      "name": "Offload Cognitive Tasks to the System",
+      "engineering_meaning": "Minimize extraneous cognitive load by offloading tasks from the user to the system. Re-display previously entered information, set smart defaults, and use familiar layouts to reduce the need for users to remember information or make unnecessary decisions.",
+      "how_to_detect_violations": "Identify interfaces where users must recall information from previous steps, manually enter standard data, or parse dense text instead of visual cues.",
+      "when_to_apply": "When designing multi-step processes, forms, or complex transactional interfaces where users have specific constraints or goals.",
+      "when_not_to_apply": "When cognitive friction is intentional (e.g., confirming a destructive action) or in educational contexts where intrinsic cognitive load is necessary for learning.",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_nng_minimalist",
+        "url_cog_tesler_medium"
+      ],
+      "full_card_path": "kb://cards/UX_COG_OFFLOADCOGNI_001"
+    },
+    {
+      "claim_id": "UX_GEN_TESLERSLAW_001",
+      "name": "Push Inherent Complexity to the System (Tesler's Law)",
+      "engineering_meaning": "Shift unavoidable process complexity away from the user and onto the system by using smart defaults, auto-complete, and structured inputs.",
+      "how_to_detect_violations": "Look for manual data entry fields (e.g., full address, university name) that could be replaced by APIs, auto-complete, or structured pickers.",
+      "when_to_apply": "When collecting standardized data (addresses, dates, institutions) or when a task requires heavy cognitive load that the backend or system can automate.",
+      "when_not_to_apply": "When the user needs absolute custom control over the input, or when system automation introduces high error rates.",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_freecodecamp_academic_ux"
+      ],
+      "full_card_path": "kb://cards/UX_GEN_TESLERSLAW_001"
+    },
+    {
+      "claim_id": "UX_COG_SERIALPOSITI_001",
+      "name": "Serial Position Effect",
+      "engineering_meaning": "Place the most important items or key actions at the beginning and end of a list or navigation sequence, relegating the least important items to the middle.",
+      "how_to_detect_violations": "Analyze navigation bars, menus, and lists. Verify that primary actions are positioned at the far left or far right, rather than in the middle.",
+      "when_to_apply": "Apply to navigation menus, feature lists, and action bars where specific items require higher user recall and engagement.",
+      "when_not_to_apply": "Do not apply when the list requires a strict chronological, alphabetical, or sequential logical order that supersedes priority.",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_lawsofux_serial"
+      ],
+      "full_card_path": "kb://cards/UX_COG_SERIALPOSITI_001"
+    },
+    {
+      "claim_id": "UX_COG_MEGAMENUS_001",
+      "name": "Use Mega Menus for Large Navigation Sets",
+      "engineering_meaning": "Use mega menus instead of standard scrolling dropdowns for large navigation sets. Group options logically to allow users to see all choices at a glance, reducing reliance on short-term memory.",
+      "how_to_detect_violations": "Identify standard single-column dropdowns that require scrolling to view all navigation options, or mega menus that lack clear visual grouping.",
+      "when_to_apply": "When a site has a large number of navigation options or multiple levels of information architecture that would otherwise require scrolling in a standard dropdown.",
+      "when_not_to_apply": "When the site has a shallow information architecture with few options, or when the menu would require embedding complex GUI widgets like search boxes.",
+      "confidence": 0.9,
+      "source_ids": [
+        "url_set_nng_mega_menus"
+      ],
+      "full_card_path": "kb://cards/UX_COG_MEGAMENUS_001"
+    }
+  ],
+  "conflict_pairs": [
+    {
+      "a": "UX_GEN_TESLERSLAW_001",
+      "b": "UX_GEN_DOHERTYTHRES_001",
+      "decision_hint": "Shifting heavy complexity and processing to the system can increase backend load times, potentially making it difficult to maintain the sub-400ms response time required by the Doherty Threshold."
+    },
+    {
+      "a": "ap_presenting_a_massive_uno",
+      "b": "UX_COG_HICK_002",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_presenting_a_single_cont",
+      "b": "UX_GEN_MILLERSLAW_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_blocking_the_ui_with_a_f",
+      "b": "UX_GEN_DOHERTYTHRES_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_placing_the_main_navigat",
+      "b": "UX_GEN_JAKOBSLAW_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_forcing_users_to_manuall",
+      "b": "UX_GEN_TESLERSLAW_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_using_fixed_pixel_widths",
+      "b": "UX_GEN_RESPONSIVEWE_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "UX_COG_MEGAMENUS_001",
+      "b": "UX_COG_PROGRESSIVED_001",
+      "decision_hint": "Mega menus expose all navigation choices at once to reduce memory load, which trades off against progressive disclosure's approach of hiding secondary options to reduce initial visual and decision load."
+    },
+    {
+      "a": "ap_displaying_every_possibl",
+      "b": "UX_COG_PROGRESSIVED_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_placing_the_most_critica",
+      "b": "UX_COG_SERIALPOSITI_001",
+      "decision_hint": "anti-pattern"
+    }
+  ],
+  "budgets": {
+    "max_claim_stubs": 20,
+    "max_rationale_tokens": 2500
+  },
+  "created_at": "2026-07-21",
+  "notes": "Graph-slice pack — deterministic retrieval, no embeddings."
+}

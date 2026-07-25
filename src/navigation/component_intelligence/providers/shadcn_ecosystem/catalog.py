@@ -11,8 +11,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from navigation.seo_intelligence.config.defaults import default_seo_cache_dir
-
 REGISTRIES_INDEX_URL = 'https://ui.shadcn.com/r/registries.json'
 DEFAULT_STYLE = 'new-york'
 _INDEX_TTL_S = 3600
@@ -22,7 +20,11 @@ _index_cache: tuple[float, list[dict[str, Any]]] | None = None
 
 
 def _catalog_cache_dir() -> Path:
-	return default_seo_cache_dir() / 'shadcn_catalogs'
+	# Local cache only — do not depend on parked SEO Intelligence.
+	import os
+
+	raw = (os.environ.get('FRONTEND_PERCEPTION_CACHE_DIR') or os.environ.get('SEO_CACHE_DIR') or '.cache').strip()
+	return Path(raw or '.cache') / 'shadcn_catalogs'
 
 
 def _catalog_cache_path(catalog_url: str) -> Path:

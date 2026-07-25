@@ -245,12 +245,7 @@ async def async_main() -> None:
     finally:
 
         await server._store.end_all()
-
-        from navigation.seo_intelligence.setup.companion_processes import shutdown_companions
-
-
-
-        shutdown_companions()
+        # SEO companion shutdown removed — SEO Intelligence parked (parked/MVP_EXCLUDE_SEO.md)
 
 
 

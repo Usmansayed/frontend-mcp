@@ -1,0 +1,56 @@
+id: exp017_snapshot_quality_payload
+intent: redesign Meridian analytics dashboard
+lifecycle_stage: S03_design
+project_maturity: M1
+feeds:
+  - tool: perception_build_design_snapshot
+    ok: true
+    data:
+      snapshot_id: snap_thin_017
+    expect:
+      path:capability_ledger.design_snapshot.status: succeeded
+      path:capability_ledger.design_snapshot.advancement_eligible: true
+      path:capability_ledger.design_snapshot.quality.thin: true
+      path:capability_ledger.design_snapshot.quality.evidence_useful: false
+      ledger_quality_keys:
+        capability: design_snapshot
+        keys:
+          - region_count
+          - interactive_count
+          - layout_issues
+          - degraded_count
+          - thin
+          - evidence_useful
+          - revision_required
+  - tool: perception_build_design_snapshot
+    ok: true
+    data:
+      snapshot_id: snap_dense_017
+      snapshot_summary:
+        layout_issues: 2
+        interactive_count: 14
+        wcag_failures: 1
+        spacing_off_scale: 3
+        degraded: []
+      snapshot:
+        layout:
+          regions:
+            - {role: nav}
+            - {role: main}
+            - {role: footer}
+      engineering_spec:
+        coverage: {resolved: 8, total: 10}
+        unresolved_by_impact: [hierarchy]
+      spec_revision_gate: {revision_required: false}
+    expect:
+      path:capability_ledger.design_snapshot.status: succeeded
+      path:capability_ledger.design_snapshot.quality.thin: false
+      path:capability_ledger.design_snapshot.quality.evidence_useful: true
+      path:capability_ledger.design_snapshot.quality.region_count: 3
+      path:capability_ledger.design_snapshot.quality.layout_issues: 2
+      path:capability_ledger.design_snapshot.quality.interactive_count: 14
+      path:capability_ledger.design_snapshot.quality.coverage_ratio: 0.8
+expect:
+  portfolio_paid_contains: [snapshot]
+  path:capability_ledger.design_snapshot.quality.thin: false
+  path:capability_ledger.design_snapshot.quality.evidence_useful: true

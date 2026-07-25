@@ -25,6 +25,14 @@ def rank_candidates(
 		score = max(candidate.discovery_score, profile.confidence * 0.5)
 		rationale_parts: list[str] = []
 
+		preview = (candidate.preview_ref or '').strip().lower()
+		if preview.startswith('http://') or preview.startswith('https://'):
+			score += 0.15
+			rationale_parts.append('has_preview')
+		else:
+			score *= 0.55
+			rationale_parts.append('no_preview')
+
 		likes = candidate.metadata.get('likes')
 		if isinstance(likes, int) and likes > 0:
 			score += min(0.1, likes / 50_000)

@@ -124,7 +124,7 @@ class ToolExecutor:
                 "data": {},
             }, None
 
-        timeout_s = self._policies.timeout.timeout_for(tool)
+        timeout_s = self._policies.timeout.timeout_for(tool, args)
         try:
             envelope = await asyncio.wait_for(
                 invoke_handler(
@@ -341,6 +341,14 @@ class ToolExecutor:
                             execution_id=execution_id,
                         ),
                     )
+                elif tool in safe_registry.mutating_tools:
+                    # SPA nav / scripts change the live page — drop stale observe caches.
+                    for stale in (
+                        "perception_observe",
+                        "perception_console_get",
+                        "perception_network_get",
+                    ):
+                        idempotency_store.invalidate_tool(stale)
                 return result
 
             decision = evaluate_retry(

@@ -178,19 +178,30 @@ class CandidateGuidance:
 
 @dataclass(slots=True)
 class FoundationSelection:
-	chosen: ComponentCandidate
-	guidance: CandidateGuidance
+	chosen: ComponentCandidate | None
+	guidance: CandidateGuidance | None = None
 	runner_ups: list[ComponentCandidate] = field(default_factory=list)
 	rationale: str = ''
 	degraded: list[str] = field(default_factory=list)
+	usable: bool = False
+	reject_reason: str | None = None
+	# Library-first lock (Tests 10–12 durable contract).
+	library_id: str | None = None
+	starter: ComponentCandidate | None = None
+	lock_evidence: list[str] = field(default_factory=list)
 
 	def to_dict(self) -> dict[str, Any]:
 		return {
-			'chosen': self.chosen.to_dict(),
-			'guidance': self.guidance.to_dict(),
+			'chosen': self.chosen.to_dict() if self.chosen else None,
+			'guidance': self.guidance.to_dict() if self.guidance else None,
 			'runner_ups': [c.to_dict() for c in self.runner_ups],
 			'rationale': self.rationale,
 			'degraded': list(self.degraded),
+			'usable': self.usable,
+			'reject_reason': self.reject_reason,
+			'library_id': self.library_id,
+			'starter': self.starter.to_dict() if self.starter else None,
+			'lock_evidence': list(self.lock_evidence),
 		}
 
 

@@ -29,7 +29,9 @@ function devInsights404Plugin() {
 export default defineConfig({
   plugins: [react(), devInsights404Plugin()],
   server: {
-    port: 5173,
+    // Non-standard: avoid clashing with typical local apps on 3000/5173/8080.
+    port: 18765,
+    strictPort: true,
     host: true,
   },
 })

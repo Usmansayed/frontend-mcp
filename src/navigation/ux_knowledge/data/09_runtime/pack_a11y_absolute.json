@@ -1,0 +1,74 @@
+{
+  "pack_id": "pack_a11y_absolute",
+  "title": "Absolute Accessibility Constraints",
+  "target_surfaces": [
+    "perception://verification-guide",
+    "perception://ship-council",
+    "hotfix",
+    "polish"
+  ],
+  "claim_stubs": [
+    {
+      "claim_id": "UX_A11Y_TARG_004",
+      "name": "WCAG 2.2 Target Size (Minimum)",
+      "engineering_meaning": "Interactive hit areas must meet ≥24×24 CSS px, or ensure undersized targets have enough clearance that 24px-diameter circles centered on their boxes do not intersect other targets.",
+      "how_to_detect_violations": "Measure CSS bounding boxes. If width or height < 24px, test whether a 24px-diameter circle centered on the box intersects any other target.",
+      "when_to_apply": "All pointer-activated controls (mouse, touch, pen), including icon-only buttons.",
+      "when_not_to_apply": "Inline text links constrained by line-height; unmodified user-agent controls; equivalent larger control available; essential/legal presentation exceptions per WCAG.",
+      "confidence": 1.0,
+      "source_ids": [
+        "src_w3c_wcag22_target_size"
+      ],
+      "full_card_path": "06_corpus/normalized/UX_A11Y_TARG_004.json"
+    },
+    {
+      "claim_id": "UX_A11Y_CONT_005",
+      "name": "WCAG Contrast (Minimum)",
+      "engineering_meaning": "Compute relative luminance of foreground/background pairs. Fail if normal text < 4.5:1 or large text (≈18pt+/14pt bold) < 3:1. Prefer semantic tokens that encode compliant pairs.",
+      "how_to_detect_violations": "Automated contrast checkers (axe, WAVE, WebAIM) plus sampling computed styles on text over images/gradients.",
+      "when_to_apply": "All meaningful text and images of text, including form labels and error copy.",
+      "when_not_to_apply": "Decorative text, inactive/disabled components, incidental logotypes as allowed by WCAG.",
+      "confidence": 1.0,
+      "source_ids": [
+        "src_webaim_wcag_checklist",
+        "src_ibm_carbon"
+      ],
+      "full_card_path": "06_corpus/normalized/UX_A11Y_CONT_005.json"
+    },
+    {
+      "claim_id": "UX_A11Y_FOCUS_011",
+      "name": "Focus Not Obscured (Minimum)",
+      "engineering_meaning": "Sticky headers/footers, cookie bars, and overlays must not fully cover the focused control. Use scroll-margin / focus management so focused nodes stay at least partially visible.",
+      "how_to_detect_violations": "Tab through the page with sticky chrome present; fail if focused element is completely covered.",
+      "when_to_apply": "All interactive components, especially with sticky UI chrome.",
+      "when_not_to_apply": "User-opened content (e.g., modal) dismissible without advancing focus, per WCAG nuance.",
+      "confidence": 1.0,
+      "source_ids": [
+        "src_w3c_wcag22_overview"
+      ],
+      "full_card_path": "06_corpus/normalized/UX_A11Y_FOCUS_011.json"
+    },
+    {
+      "claim_id": "UX_DS_TOKEN_001",
+      "name": "Semantic Color Tokens Bound to Roles",
+      "engineering_meaning": "Components consume tokens (e.g., color-critical) mapped to theme values that already satisfy contrast. Avoid hard-coded hex in feature CSS.",
+      "how_to_detect_violations": "Search UI code for raw hex/rgb in components that should use tokens.",
+      "when_to_apply": "Product UI, design systems, theming, status/feedback colors.",
+      "when_not_to_apply": "One-off marketing illustrations outside the system (still check contrast if text).",
+      "confidence": 0.85,
+      "source_ids": [
+        "src_shopify_polaris",
+        "src_ibm_carbon",
+        "src_webaim_wcag_checklist"
+      ],
+      "full_card_path": "06_corpus/normalized/UX_DS_TOKEN_001.json"
+    }
+  ],
+  "conflict_pairs": [],
+  "budgets": {
+    "max_claim_stubs": 12,
+    "max_rationale_tokens": 1500
+  },
+  "created_at": "2026-07-19",
+  "notes": "Hard constraints — never dilute for brand."
+}

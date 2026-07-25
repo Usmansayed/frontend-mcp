@@ -17,9 +17,6 @@ _SAFE_TOOLS = frozenset({
     "perception_framework_docs",
     "perception_console_get",
     "perception_network_get",
-    "perception_seo_query",
-    "perception_seo_status",
-    "perception_figma_status",
     "perception_design_knowledge_query",
     "perception_design_graph_summary",
     "perception_diff",
@@ -29,6 +26,16 @@ _SAFE_TOOLS = frozenset({
     "perception_probe_guards",
     "perception_plan_component_search",
     "perception_search_components",
+    "perception_visual_feedback",
+})
+
+# Safe to retry, but NOT auto-dedupe: browser page state can change without args
+# changing (SPA nav via execute_actions). Replaying a cached observe freezes routes.
+_NO_AUTO_DEDUPE_TOOLS = frozenset({
+    "perception_observe",
+    "perception_console_get",
+    "perception_network_get",
+    "perception_visual_feedback",
 })
 
 # Mutating tools — never auto-dedupe; retry only with explicit allow_repeat.
@@ -52,6 +59,7 @@ _MUTATING_TOOLS = frozenset({
 class SafeToolRegistry:
     safe_tools: frozenset[str] = field(default_factory=lambda: _SAFE_TOOLS)
     mutating_tools: frozenset[str] = field(default_factory=lambda: _MUTATING_TOOLS)
+    no_auto_dedupe_tools: frozenset[str] = field(default_factory=lambda: _NO_AUTO_DEDUPE_TOOLS)
 
     def is_safe(self, tool: str) -> bool:
         if tool in self.mutating_tools:
@@ -61,6 +69,8 @@ class SafeToolRegistry:
         return tool.startswith("perception_coordinator_")
 
     def allows_auto_dedupe(self, tool: str) -> bool:
+        if tool in self.no_auto_dedupe_tools:
+            return False
         return self.is_safe(tool)
 
     def allows_retry(self, tool: str, *, allow_repeat: bool = False) -> bool:

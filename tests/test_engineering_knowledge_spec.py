@@ -201,7 +201,8 @@ def test_compiler_resolves_dashboard_layout(dashboard_fixture: dict) -> None:
     assert spec.decision("layout.sidebar_width_px").status == "resolved"
     assert int(spec.decision("layout.sidebar_width_px").value) == 280
     assert spec.decision("nav.pattern").value == "left_sidebar"
-    assert spec.decision("layout.sidebar_width_px").impact_weight >= 0.9
+    # Sidebar width is high (0.72), not critical — only matters when a sidebar-scale nav exists.
+    assert spec.decision("layout.sidebar_width_px").impact_weight >= 0.7
     # Decisions not adjectives
     assert "modern" not in str(spec.to_dict()).lower()
     assert "clean" not in str(spec.to_dict()).lower()
@@ -224,4 +225,4 @@ def test_spec_diff_flags_sidebar_drift(dashboard_fixture: dict) -> None:
     assert "layout.sidebar_width_px" in ids
     sidebar = next(i for i in delta.items if i.decision_id == "layout.sidebar_width_px")
     assert sidebar.kind in ("value_drift", "enum_mismatch")
-    assert sidebar.impact_weight >= 0.9
+    assert sidebar.impact_weight >= 0.7

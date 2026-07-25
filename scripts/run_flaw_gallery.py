@@ -4,7 +4,7 @@ Usage:
   $env:PYTHONPATH="src"
   python scripts/run_flaw_gallery.py
   python scripts/run_flaw_gallery.py --case F1
-  python scripts/run_flaw_gallery.py --base-url http://localhost:5173
+  python scripts/run_flaw_gallery.py --base-url http://127.0.0.1:18765
 """
 from __future__ import annotations
 
@@ -270,7 +270,7 @@ async def main_async(args: argparse.Namespace) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run hidden-flaw gallery scorecard")
-    parser.add_argument("--base-url", default="http://localhost:5173")
+    parser.add_argument("--base-url", default="http://127.0.0.1:18765")
     parser.add_argument("--case", default=None, help="Single case id e.g. F1")
     args = parser.parse_args()
     return asyncio.run(main_async(args))

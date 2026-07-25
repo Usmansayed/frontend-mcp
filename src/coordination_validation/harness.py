@@ -90,13 +90,13 @@ class ValidationHarness:
 
             args: dict[str, Any] = {"session_id": session_id}
             if tool == "perception_session_start":
-                args = {"base_url": "http://localhost:5173"}
+                args = {"base_url": "http://127.0.0.1:18765"}
             if tool in ("perception_detect_framework", "perception_framework_docs", "perception_code_context"):
                 args = {"repo_root": "/tmp/val-repo", "session_id": session_id}
 
             envelope = make_envelope(tool, ok=ok, session_id=session_id, data=data)
             if tool == "perception_session_start" and ok:
-                envelope["url"] = "http://localhost:5173"
+                envelope["url"] = "http://127.0.0.1:18765"
 
             psm_before = {}
             episode_id = bindings.resolve(session_id=session_id)

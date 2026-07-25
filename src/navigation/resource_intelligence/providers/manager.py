@@ -4,6 +4,7 @@ from __future__ import annotations
 from navigation.resource_intelligence.graph.icon_families import ICON_FAMILIES
 from navigation.resource_intelligence.providers.dicebear.provider import DiceBearProvider
 from navigation.resource_intelligence.providers.fontsource.provider import FontsourceProvider
+from navigation.resource_intelligence.providers.hero_patterns.provider import HeroPatternsProvider
 from navigation.resource_intelligence.providers.icon_family.provider import IconFamilyProvider
 from navigation.resource_intelligence.providers.iconify.provider import IconifyProvider
 from navigation.resource_intelligence.providers.ira_design.provider import IraDesignProvider
@@ -35,6 +36,7 @@ class ResourceProviderManager:
 			'svg-repo': SvgRepoProvider(),
 			'poly-pizza': PolyPizzaProvider(),
 			'uigradients': UiGradientsProvider(),
+			'hero-patterns': HeroPatternsProvider(),
 			'3dicons': ThreeDiconsProvider(),
 			'rive': RiveProvider(),
 		}

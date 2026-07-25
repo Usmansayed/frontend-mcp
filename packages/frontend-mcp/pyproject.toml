@@ -1,21 +1,12 @@
+# This alias package is retired. See DEPRECATED.md.
+# Publishing is disabled — use the root frontend-perception-engine package only.
 [project]
-name = "frontend-mcp"
-version = "1.2.0.dev10"
-description = "Frontend Perception MCP — deterministic browser runtime for coding agents (alias package)."
-readme = "README.md"
+name = "frontend-mcp-DEPRECATED-DO-NOT-PUBLISH"
+version = "0.0.0"
+description = "RETIRED. Install frontend-perception-engine instead."
 requires-python = ">=3.10"
-dependencies = [
-  "frontend-perception-engine==1.2.0.dev10",
-]
-
-[project.scripts]
-frontend-mcp = "navigation.cli.main:main"
-frontend-mcp-install = "navigation.cli.install:main"
+dependencies = []
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["frontend_mcp*"]

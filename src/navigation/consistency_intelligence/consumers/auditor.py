@@ -73,12 +73,48 @@ class ConsistencyAuditor:
 			degraded.extend(report.degraded)
 
 		grouped = group_findings(findings)
-		passed = len(findings) == 0
-		summary = (
-			f'Audit passed — {len(observations)} element(s) match project standards.'
-			if passed
-			else f'Audit found {len(findings)} deviation(s) across {len(grouped)} grouped issue(s).'
+		# Fail closed: stubs produce zero findings but must not pass.
+		usable_assessments = [
+			r for r in responses if getattr(r, 'answer', None) is not None
+		]
+		stub_or_unusable = any(
+			(
+				(getattr(r, 'answer', {}) or {}).get('status') == 'stub'
+				or float(getattr(r, 'confidence', 0) or 0) <= 0
+				or any(
+					d in (getattr(r, 'degraded', None) or [])
+					for d in ('knowledge_query_stub_phase1', 'discovery_pipeline_phase2')
+				)
+			)
+			and not (getattr(r, 'answer', {}) or {}).get('skipped')
+			and 'observation_no_matching_standard' not in (getattr(r, 'degraded', None) or [])
+			for r in usable_assessments
 		)
+		# Skipped observations (no overlapping standards) are not findings and not stubs.
+		assessed = [
+			r for r in usable_assessments
+			if not (getattr(r, 'answer', {}) or {}).get('skipped')
+			and 'observation_no_matching_standard' not in (getattr(r, 'degraded', None) or [])
+		]
+		passed = bool(assessed) and len(findings) == 0 and not stub_or_unusable
+		if stub_or_unusable and len(findings) == 0:
+			summary = (
+				f'Audit incomplete — {len(observations)} element(s) hit stub/empty standards '
+				'(run Discovery; do not treat as pass).'
+			)
+		elif not assessed and observations:
+			summary = (
+				f'Audit skipped overlap — {len(observations)} element(s) had no matching '
+				'foundation standards (graph populated but contexts did not overlap).'
+			)
+			# Not a false-green pass, not a Phase-1 stub.
+			passed = False
+			if 'audit_no_overlapping_standards' not in degraded:
+				degraded.append('audit_no_overlapping_standards')
+		elif passed:
+			summary = f'Audit passed — {len(assessed)} element(s) match project standards.'
+		else:
+			summary = f'Audit found {len(findings)} deviation(s) across {len(grouped)} grouped issue(s).'
 		report = ConsistencyReport(
 			passed=passed,
 			summary=summary,

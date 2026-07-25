@@ -1,0 +1,21 @@
+{
+  "pack_id": "pack_checkout",
+  "title": "E-Commerce Checkout Intelligence",
+  "target_surfaces": ["perception://checkout-flow"],
+  "claim_stubs": [
+    {
+      "claim_id": "UX_PRD_FORM_001",
+      "name": "E-Commerce Form Optimization",
+      "engineering_meaning": "Use single-column layouts for form fields. Minimize the number of visible fields (10-15 target). Provide specific, actionable error messages and preserve user input on validation failure.",
+      "confidence": 0.95,
+      "source_ids": ["src_baymard_checkout", "src_baymard_form_design"]
+    }
+  ],
+  "conflict_pairs": [],
+  "budgets": {
+    "max_claim_stubs": 12,
+    "max_rationale_tokens": 1500
+  },
+  "created_at": "2026-07-19",
+  "notes": "Runtime pack for E-Commerce Checkout."
+}

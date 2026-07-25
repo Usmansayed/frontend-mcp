@@ -1,0 +1,66 @@
+id: exp009_codebase_does_not_block_claim
+intent: redesign Meridian analytics dashboard
+lifecycle_stage: S03_design
+project_maturity: M1
+feeds:
+  - tool: perception_navigate_and_observe
+    ok: true
+    data: {url: http://x/d, scan_id: s9, agent_summary: {blocking: []}}
+  - tool: perception_build_design_snapshot
+    ok: true
+    data:
+      snapshot_id: s9
+      layout:
+        viewport: {width: 1280, height: 720}
+        regions:
+          - {role: main, rect: {w: 1000, h: 700}}
+          - {role: aside, rect: {w: 200, h: 700}}
+          - {role: nav}
+          - {role: section}
+          - {role: section}
+          - {role: section}
+        interactive_boxes:
+          - {x: 0, y: 0, w: 40, h: 40}
+          - {x: 50, y: 0, w: 40, h: 40}
+          - {x: 100, y: 0, w: 40, h: 40}
+      hierarchy: {prominence_scores: [{score: 0.9}, {score: 0.2}, {score: 0.1}]}
+      colors: {token_backed_ratio: 0.7}
+  - tool: perception_select_component_foundation
+    ok: true
+    data:
+      selected: {id: shadcn}
+      coordination_evidence: {status: succeeded, advancement_eligible: true}
+  - tool: perception_verify
+    ok: true
+    data: {verified: true, reasons: []}
+  - op: seed_sections
+    regions:
+      - {role: aside, rect: {w: 1, h: 1}}
+      - {role: main, rect: {w: 1, h: 1}}
+  - op: complete_sections
+  - op: set_retry
+    key: residue_scan
+    value: {required: false, completed: true, at: lab}
+  - op: run_ship
+    auto_dispose: revised
+    snapshot:
+      url: http://x/d
+      layout:
+        viewport: {width: 1280, height: 720}
+        regions:
+          - {role: main, rect: {w: 1000, h: 700}}
+          - {role: aside, rect: {w: 200, h: 700}}
+          - {role: nav}
+          - {role: section}
+          - {role: section}
+          - {role: section}
+        interactive_boxes:
+          - {x: 0, y: 0, w: 40, h: 40}
+          - {x: 50, y: 0, w: 40, h: 40}
+          - {x: 100, y: 0, w: 40, h: 40}
+      hierarchy: {prominence_scores: [{score: 0.9}, {score: 0.2}, {score: 0.1}]}
+      colors: {token_backed_ratio: 0.7}
+expect:
+  ship_council_clear: true
+  prohibited_absent: [claim_complete]
+  backlog_top_decision_not: codebase_context

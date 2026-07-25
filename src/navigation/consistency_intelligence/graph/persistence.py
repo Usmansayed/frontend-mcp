@@ -11,6 +11,9 @@ DEFAULT_RELATIVE_PATH = Path('.perception') / 'design_graph.json'
 HISTORY_DIR = Path('.perception') / 'history'
 MAX_HISTORY_VERSIONS = 20
 
+# Process-wide stores so refresh → summary across separate service instances still see data.
+_PROCESS_STORES: dict[str, "GraphStore"] = {}
+
 
 def graph_summary_stats(graph: ProjectDesignGraph) -> dict[str, Any]:
 	return {
@@ -28,11 +31,38 @@ def graph_summary_stats(graph: ProjectDesignGraph) -> dict[str, Any]:
 	}
 
 
+def _store_key(storage_root: Path | None) -> str:
+	if storage_root is None:
+		return '__memory__'
+	try:
+		return str(Path(storage_root).resolve())
+	except OSError:
+		return str(storage_root)
+
+
+def get_graph_store(storage_root: Path | None = None) -> "GraphStore":
+	"""Return the process-scoped GraphStore for this storage root."""
+	key = _store_key(Path(storage_root) if storage_root is not None else None)
+	store = _PROCESS_STORES.get(key)
+	if store is None:
+		root = Path(storage_root) if storage_root is not None else None
+		store = GraphStore(storage_root=root)
+		_PROCESS_STORES[key] = store
+	return store
+
+
+def clear_process_graph_stores() -> None:
+	"""Test helper — drop process-wide graph caches."""
+	for store in list(_PROCESS_STORES.values()):
+		store.clear_cache()
+	_PROCESS_STORES.clear()
+
+
 class GraphStore:
 	"""Load/save Project Design Graph per project."""
 
 	def __init__(self, *, storage_root: Path | None = None) -> None:
-		self._storage_root = storage_root
+		self._storage_root = Path(storage_root) if storage_root is not None else None
 		self._cache: dict[str, ProjectDesignGraph] = {}
 
 	def _graph_path(self, project_id: str) -> Path | None:

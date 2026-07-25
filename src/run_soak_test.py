@@ -30,7 +30,7 @@ from navigation.visual_browser_intelligence.browser.session_store import Session
 
 async def main() -> int:
     parser = argparse.ArgumentParser(description="MCP soak test — observe/verify loop")
-    parser.add_argument("--url", default="http://localhost:5173")
+    parser.add_argument("--url", default="http://127.0.0.1:18765")
     parser.add_argument("--route", default="/")
     parser.add_argument("--iterations", type=int, default=50)
     parser.add_argument("--headless", action="store_true")

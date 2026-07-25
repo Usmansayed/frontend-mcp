@@ -18,7 +18,7 @@ load_dotenv()
 
 async def main() -> int:
     parser = argparse.ArgumentParser(description="Phase 3: flow graph runner")
-    parser.add_argument("--url", default="http://localhost:5173")
+    parser.add_argument("--url", default="http://127.0.0.1:18765")
     parser.add_argument("--headless", action="store_true", default=True)
     parser.add_argument("--flow", default="validation-form", choices=list(FLOWS))
     args = parser.parse_args()

@@ -29,9 +29,10 @@ def test_top_six_agent_tools() -> None:
 @pytest.mark.unit
 def test_packaged_rule_template_loads() -> None:
     body = load_rule_body()
-    assert "Session order" in body
+    assert "Scoreboard loop" in body
     assert "perception_health" in body
     assert "Done ladder" in body
+    assert "agent_summary.coordinator" in body
 
 
 @pytest.mark.unit
@@ -40,7 +41,8 @@ def test_write_cursor_rules(tmp_path: Path) -> None:
     text = path.read_text(encoding="utf-8")
     assert path.name.endswith(".mdc")
     assert "alwaysApply: true" in text
-    assert "Session order" in text
+    assert "Scoreboard loop" in text
+    assert "agent_summary.coordinator" in text
 
 
 @pytest.mark.unit

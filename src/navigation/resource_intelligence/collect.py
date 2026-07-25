@@ -37,18 +37,13 @@ class ResourceHit:
 
 
 def _asset_to_hit(asset_dict: dict[str, Any], *, license_warnings: list[str]) -> ResourceHit:
-	license_data = asset_dict.get('license') or {}
-	warnings = list(license_warnings)
-	if license_data:
-		from navigation.resource_intelligence.models import LicenseProfile
+	from navigation.resource_intelligence.license.resolver import normalize_license_input
 
-		profile = LicenseProfile(
-			spdx_id=str(license_data.get('spdx_id') or 'UNKNOWN'),
-			commercial_use=bool(license_data.get('commercial_use')),
-			attribution_required=bool(license_data.get('attribution_required')),
-			mcp_download_allowed=bool(license_data.get('mcp_download_allowed', True)),
-			api_automation_allowed=bool(license_data.get('api_automation_allowed', True)),
-		)
+	raw_license = asset_dict.get('license')
+	warnings = list(license_warnings)
+	profile = None
+	if raw_license not in (None, '', {}):
+		profile = normalize_license_input(raw_license)
 		warnings.extend(automation_advisory(profile))
 	preview = str(asset_dict.get('preview_url') or '')
 	access = str(asset_dict.get('access_url') or '')
@@ -61,10 +56,10 @@ def _asset_to_hit(asset_dict: dict[str, Any], *, license_warnings: list[str]) ->
 	elif str(asset_dict.get('category') or '') == 'icon' and metadata.get('family_match'):
 		skip_blob = True
 		skip_reason = 'icon_family_match'
-	if license_data and not license_data.get('mcp_download_allowed', True):
+	if profile is not None and not profile.mcp_download_allowed:
 		skip_blob = True
 		skip_reason = 'mcp_download_restricted'
-	if license_data and not license_data.get('api_automation_allowed', True):
+	if profile is not None and not profile.api_automation_allowed:
 		skip_blob = True
 		skip_reason = 'automation_restricted'
 	category = str(asset_dict.get('category') or '')

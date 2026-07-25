@@ -1,0 +1,15 @@
+id: settings_surface
+intent: redesign workspace settings preferences page
+lifecycle_stage: S03_design
+project_maturity: M1
+expect_after_start:
+  surface_type: settings_form
+  task_scope: redesign
+  influence_level: structural
+  gate.state: blocked
+  prohibited_contains:
+    - claim_complete
+expect:
+  surface_type: settings_form
+  task_scope: redesign
+  gate.state: blocked

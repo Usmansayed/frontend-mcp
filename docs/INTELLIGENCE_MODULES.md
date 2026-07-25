@@ -18,12 +18,13 @@ src/navigation/
 ├── design_sense_intelligence/         # 9. UX reasoning over DesignSnapshot
 ├── consistency_intelligence/          # 10. Design-system consistency over DesignSnapshot
 ├── inspiration_intelligence/          # 11. Public inspiration (Dribbble, Behance, …)
-├── figma_intelligence/              # 12. PARKED (MVP) — see parked/MVP_EXCLUDE_FIGMA.md
-├── resource_intelligence/             # 13. Creative assets (icons, fonts, photos, …)
-├── seo_intelligence/                  # 14. SEO orchestration (GSC, GA4, LibreCrawl, …)
+├── resource_intelligence/             # 12. Creative assets (icons, fonts, photos, …)
+├── coordination_intelligence/         # 13. Scoreboard / portfolio / gate
 ├── mcp/                               # MCP protocol (tools, handlers, server)
 └── cli/                               # Install wrapper
 ```
+
+Parked modules (not shipped in the live MCP surface) live under `parked/` only.
 
 Legacy import paths (`navigation.perception`, `navigation.console`, `navigation.codeGraph`, etc.) remain as **shims** for backward compatibility.
 
@@ -287,21 +288,7 @@ See `inspiration_intelligence/docs/ARCHITECTURE.md`, `inspiration_intelligence/d
 
 ---
 
-## 12. Figma Intelligence — MVP EXCLUDED
-
-**Path:** `parked/figma_intelligence/` (moved from `src/navigation/figma_intelligence/`)
-
-**Status:** Parked for MVP. Do **not** call `perception_figma_*` or read `perception://figma-guide`.
-
-See [parked/MVP_EXCLUDE_FIGMA.md](../parked/MVP_EXCLUDE_FIGMA.md).
-
-**Still available for design reference:** Inspiration Intelligence + Design Snapshot.
-
-**Boundary (when restored):** Inspiration Intelligence → public galleries. Design Sense → critique. Component Intelligence → components. Figma Intelligence → user's Figma connection + normalized context only.
-
----
-
-## 13. Resource Intelligence
+## 12. Resource Intelligence
 
 **Path:** `resource_intelligence/`
 
@@ -325,15 +312,11 @@ See `resource_intelligence/docs/ARCHITECTURE.md` and [features/resource_intellig
 
 ---
 
-## 14. SEO Intelligence — MVP EXCLUDED
+## 13. Coordination Intelligence
 
-**Path:** `parked/seo_intelligence/` (moved out of the published MCP package surface)
+**Path:** `coordination_intelligence/`
 
-**Status:** Parked for MVP. Do not register or call `perception_seo_*`. See [parked/MVP_EXCLUDE_SEO.md](../parked/MVP_EXCLUDE_SEO.md).
-
-**Still in MCP:** `perception_audit_seo` — page-level Lighthouse SEO category under Frontend Quality.
-
-Restore checklist and prior architecture notes live under `parked/`.
+Episode scoreboard: portfolio unpaid/paid, backlog, implementation gate, Ship Council, residue, surface type. Distilled artifacts live under `coordination_layer/` and are bundled into `artifacts/runtime/`.
 
 ---
 

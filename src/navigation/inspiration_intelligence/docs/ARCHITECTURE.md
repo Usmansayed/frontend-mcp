@@ -10,7 +10,7 @@ Agent
   → Search Planner
   → Community Intelligence (query expansion)
   → Provider Manager (priority cascade + early stop)
-  → Dribbble | Behance | Awwwards | SiteInspire | Godly | Land-book
+  → One Page Love | Behance | (optional) Dribbble | Awwwards | SiteInspire | Godly | Land-book
   → Candidate Intelligence
   → Ranking
   → Selection Planner
@@ -21,14 +21,19 @@ Agent
 
 ## Provider priority
 
-Search stops as soon as enough high-confidence candidates are found (default: 3 at score ≥ 0.55).
+**Fast mode (default, `INSPIRATION_FAST=1`):** One Page Love → Behance only (HTTP/CDN; no Chromium).
 
-1. Dribbble — live discovery adapter
-2. Behance — navigation knowledge only
-3. Awwwards — navigation knowledge only
-4. SiteInspire — navigation knowledge only
-5. Godly — navigation knowledge only
-6. Land-book — navigation knowledge only
+**Deep mode (`INSPIRATION_FAST=0` or explicit provider preference):**
+
+Search stops as soon as enough high-confidence candidates are found (default: 2–3 at score ≥ 0.55).
+
+1. One Page Love — HTTP reliable CDN previews
+2. Behance — HTTP/CDN
+3. Dribbble — WAF; headed browser when needed
+4. Awwwards — browser/cookie often required
+5. SiteInspire — HTTP then browser
+6. Godly — SPA hydration
+7. Land-book — browser-required; last resort
 
 ## Separation from Figma Intelligence
 

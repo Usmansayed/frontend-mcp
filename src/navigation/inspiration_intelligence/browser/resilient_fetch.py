@@ -55,14 +55,26 @@ def _needs_browser(html: str, status: int | None, hits: list[dict[str, str]], *,
 	if browser_required:
 		return True
 	if hits:
-		return False
+		# Still need browser if every hit lacks a usable preview (data: / empty).
+		usable = any(
+			str(h.get('preview_url') or '').startswith('http')
+			for h in hits
+		)
+		if usable:
+			return False
 	block = detect_block_signal(html, status_code=status)
 	if block:
 		return True
 	if not html.strip():
 		return True
-	# SPA shells — short HTML without result anchors
+	# SPA / Next shells — short HTML without result anchors
 	if len(html) < 12000 and not hits:
+		return True
+	# Large HTML but zero parse hits → outdated regex; try browser extract
+	if not hits and len(html) >= 12000:
+		return True
+	# Hits without HTTP previews — browser currentSrc often fixes placeholders
+	if hits and not any(str(h.get('preview_url') or '').startswith('http') for h in hits):
 		return True
 	return False
 

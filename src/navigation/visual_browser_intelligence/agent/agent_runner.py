@@ -57,7 +57,7 @@ class PerceptionAgentRunner:
         use_vision: bool = True,
     ) -> None:
         self.code_graph = code_graph
-        self.start_url = start_url or os.getenv("SANDBOX_URL", "http://localhost:5173")
+        self.start_url = start_url or os.getenv("SANDBOX_URL", "http://127.0.0.1:18765")
         self.model = model
         self.region = region
         self.max_steps = max_steps

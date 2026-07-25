@@ -108,8 +108,8 @@ def _p1_tool_coverage() -> tuple[bool, str]:
             if name in text:
                 covered.add(name)
 
-    # Handler function names implicitly cover their tool: e.g. ``handle_seo_audit``
-    # is the only handler for ``perception_seo_audit``. The contract runner
+    # Handler function names implicitly cover their tool: e.g. ``handle_audit_seo``
+    # is the only handler for ``perception_audit_seo``. The contract runner
     # imports handlers by function name, so we mine that too.
     handler_map: dict[str, str] = {}
     for name in tools:
@@ -120,7 +120,6 @@ def _p1_tool_coverage() -> tuple[bool, str]:
         ROOT / "src" / "run_mcp_eval_validation_form.py",
         ROOT / "src" / "run_mcp_eval_page_inspection.py",
         ROOT / "src" / "run_mcp_eval_code_ui.py",
-        ROOT / "src" / "run_mcp_eval_ai_visibility.py",
     ):
         if not extra.exists():
             continue
@@ -136,12 +135,11 @@ def _p1_tool_coverage() -> tuple[bool, str]:
 def _e2e_evals_present() -> tuple[bool, str]:
     required = (
         ROOT / "src" / "run_mcp_eval_validation_form.py",   # E2E-4
-        ROOT / "src" / "run_mcp_eval_ai_visibility.py",     # E2E-17
     )
     missing = [str(p.relative_to(ROOT)) for p in required if not p.exists()]
     if missing:
         return False, f"missing eval runners: {missing}"
-    return True, "E2E-4, E2E-17 present (E2E-13 covered via contract seo_audit)"
+    return True, "E2E-4 present (E2E-17 SEO AI visibility parked; not in active MCP surface)"
 
 
 def _t0_t1_status() -> tuple[bool, str]:
@@ -166,8 +164,8 @@ GATES = [
     ("G5", "P0 scenarios pass", _p0_failure_coverage),
     ("G6", "P1 tool coverage >=95%", _p1_tool_coverage),
     ("G7", "No orphan handlers; tool_reference parity", _tool_reference_coverage),
-    ("G8", "E2E-4, E2E-13, E2E-17 automated", _e2e_evals_present),
-    ("G9", "F1, F4, F8, F13 documented + tested", _p0_failure_coverage),
+    ("G8", "E2E-4 automated", _e2e_evals_present),
+    ("G9", "F1, F4, F8 documented + tested", _p0_failure_coverage),
     ("G10", "Performance baselines recorded", _perf_baseline),
 ]
 

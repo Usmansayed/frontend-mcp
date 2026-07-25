@@ -62,6 +62,9 @@ class SearchExecutor:
 				break
 
 		session.total_latency_ms = round((time.perf_counter() - started) * 1000, 2)
+		from ..candidate_resolve import remember_candidates
+
+		remember_candidates(candidates)
 		return ComponentSearchResponse(
 			query=plan.parsed,
 			candidates=candidates,

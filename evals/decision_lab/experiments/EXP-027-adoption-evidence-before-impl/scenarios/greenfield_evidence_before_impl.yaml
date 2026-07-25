@@ -1,0 +1,55 @@
+id: exp027_greenfield_evidence_before_impl
+intent: build a new SaaS analytics dashboard from scratch
+lifecycle_stage: S03_design
+project_maturity: M1
+expect_after_start:
+  surface_type: dashboard
+  task_scope: design_driven
+  influence_level: structural
+  gate.state: blocked
+  next_capability: inspiration_workflow
+  prohibited_contains:
+    - claim_complete
+    - broad_visual_implementation
+  path:episode_card.schema: episode_card.v1
+  # Host-visible adoption channel (promoted, not only data.coordinator)
+  path:agent_summary.coordinator.schema: coordinator_card.v1
+  path:agent_summary.coordinator.gate.state: blocked
+feeds:
+  # Observe alone must NOT clear design orientation — still blocked for broad UI
+  - tool: perception_navigate_and_observe
+    ok: true
+    data:
+      url: http://localhost:18765/dashboard
+      scan_id: scan_027
+      agent_summary: {blocking: []}
+    expect:
+      gate.state: blocked
+      prohibited_contains:
+        - claim_complete
+        - broad_visual_implementation
+      path:agent_summary.coordinator.schema: coordinator_card.v1
+  # Design evidence paid — reference cleared; remaining unpaid may still block claim
+  - tool: perception_inspiration_collect
+    ok: true
+    data:
+      inspiration_collection:
+        references:
+          - {inspiration_blob: b1, preview_url: https://cdn.example/a.jpg}
+          - {inspiration_blob: b2, preview_url: https://cdn.example/b.jpg}
+          - {inspiration_blob: b3, preview_url: https://cdn.example/c.jpg}
+      coordination_evidence:
+        status: succeeded
+        advancement_eligible: true
+    expect:
+      path:agent_summary.coordinator.schema: coordinator_card.v1
+      prohibited_contains:
+        - claim_complete
+expect:
+  gate.state: blocked
+  prohibited_contains:
+    - claim_complete
+  path:agent_summary.coordinator.schema: coordinator_card.v1
+  path:agent_summary.coordinator.gate.state: blocked
+  portfolio_unpaid_contains:
+    - component

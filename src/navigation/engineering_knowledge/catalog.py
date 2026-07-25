@@ -30,11 +30,11 @@ V1_DECISION_DEFS: tuple[DecisionDef, ...] = (
     DecisionDef(
         "layout.sidebar_width_px",
         "layout",
-        "critical",
-        0.94,
+        "high",
+        0.72,
         unit="px",
         value_type="number",
-        why_unresolved="Sidebar width unset — nav vs content balance undefined.",
+        why_unresolved="Sidebar width unset — only relevant when a sidebar-scale nav exists.",
     ),
     DecisionDef(
         "layout.content_max_width_px",

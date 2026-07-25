@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from navigation.coordination_intelligence.artifacts.loader import load_runtime_artifacts
-from navigation.coordination_intelligence.models import ProjectSituationModel
+from navigation.coordination_intelligence.models import IntentFrame, ProjectSituationModel
 from navigation.coordination_intelligence.planning.decision_ledger import (
     apply_dispositions,
     load_ledger,
@@ -292,6 +292,41 @@ def test_live_shaped_snapshot_emits_layout_and_hierarchy_challenges() -> None:
     assert "equal_weight_kpi_cluster" in signals
     assert ship["ship_gate"]["council_clear"] is False
     assert ship["ship_gate"]["state"] == "challenge"
+
+
+@pytest.mark.unit
+def test_maze_style_equal_kpi_h2s_not_poisoned_by_sidebar_h4() -> None:
+    """Same-level KPI headings must fire even when sidebar chrome has smaller headings."""
+    from navigation.coordination_intelligence.planning.ship_council import (
+        _collect_snapshot_signals,
+    )
+
+    snap = {
+        "layout": {
+            "viewport": {"width": 1440, "height": 900},
+            "interactive_boxes": [],  # static cards — not interactive
+            "visual_insights": {"element_boxes": []},
+            "regions": [
+                {"role": "aside", "rect": {"x": 0, "y": 0, "w": 230, "h": 900}},
+                {"role": "main", "rect": {"x": 230, "y": 0, "w": 1210, "h": 900}},
+            ],
+        },
+        "hierarchy": {
+            "prominence_scores": [
+                {"label": "Welcome, admin", "score": 40.0, "level": 1},
+                {"label": "Revenue", "score": 28.0, "level": 2},
+                {"label": "Users", "score": 28.0, "level": 2},
+                {"label": "Churn", "score": 28.0, "level": 2},
+                {"label": "NPS", "score": 28.0, "level": 2},
+                {"label": "OVERVIEW", "score": 12.0, "level": 4},
+                {"label": "REPORTS", "score": 12.0, "level": 4},
+                {"label": "TEAM", "score": 12.0, "level": 4},
+            ],
+        },
+        "colors": {"token_backed_ratio": 0.2},
+    }
+    signals = {s["signal"] for s in _collect_snapshot_signals(snap, surface_type="dashboard")}
+    assert "equal_weight_kpi_cluster" in signals
 
 
 @pytest.mark.unit
@@ -617,6 +652,131 @@ def test_handle_design_review_review_mode_unchanged() -> None:
     assert data.get("mode", "review") != "ship" or "report" in data
     assert "report" in data
     assert "top_findings" in data
+
+
+@pytest.mark.unit
+def test_uneven_kpi_columns_challenge_and_equal_weight_guidance() -> None:
+    """Broken col-span hierarchy fixes must be challenged; equal-weight must forbid them."""
+    from navigation.coordination_intelligence.planning.ship_council import (
+        SIGNAL_TEMPLATES,
+        _collect_snapshot_signals,
+        _materialize_challenge,
+    )
+
+    tpl = SIGNAL_TEMPLATES["equal_weight_kpi_cluster"]
+    assert "col-span" in str(tpl.get("revise_guidance") or "").lower() or "equal-width" in str(
+        tpl.get("revise_guidance") or ""
+    ).lower()
+
+    uneven = {
+        "url": "http://localhost:5173/",
+        "layout": {
+            "viewport": {"width": 1280, "height": 720},
+            "interactive_boxes": [
+                {"x": 40, "y": 120, "w": 420, "h": 140},
+                {"x": 480, "y": 120, "w": 200, "h": 140},
+                {"x": 700, "y": 120, "w": 200, "h": 140},
+                {"x": 920, "y": 120, "w": 200, "h": 140},
+            ],
+            "regions": [{"role": "main", "rect": {"x": 0, "y": 0, "w": 1280, "h": 720}}],
+            "overflow_issues": [],
+        },
+        "hierarchy": {"prominence_scores": []},
+        "colors": {"token_backed_ratio": 0.8},
+        "design_tokens": {},
+    }
+    signals = {s["signal"] for s in _collect_snapshot_signals(uneven, surface_type="dashboard")}
+    assert "uneven_kpi_columns" in signals
+
+    psm = _structural_psm()
+    challenge = _materialize_challenge(
+        {"signal": "equal_weight_kpi_cluster", "severity": "major", "specdiff_magnitude": 0.8},
+        strategy=STRUCTURAL_STRATEGY,
+        psm=psm,
+    )
+    assert challenge is not None
+    assert "revise_guidance" in challenge
+    assert "anti_patterns" in challenge
+    assert any("col-span" in a.lower() for a in challenge["anti_patterns"])
+
+
+@pytest.mark.unit
+def test_marketing_about_skips_kpi_and_dashboard_composition() -> None:
+    """About/marketing pages must not get dashboard KPI heuristics (Test 7 false-fire)."""
+    from navigation.coordination_intelligence.planning.ship_council import (
+        _collect_snapshot_signals,
+    )
+    from navigation.coordination_intelligence.planning.surface_type import derive_surface_type
+
+    about = {
+        "url": "http://127.0.0.1:3000/about",
+        "layout": {
+            "viewport": {"width": 1280, "height": 900},
+            "regions": [
+                {"role": "banner", "rect": {"x": 0, "y": 0, "w": 1280, "h": 72}},
+                {"role": "main", "rect": {"x": 80, "y": 100, "w": 1120, "h": 700}},
+                {"role": "section", "rect": {"x": 80, "y": 120, "w": 1120, "h": 180}, "text": "Journey"},
+                {"role": "section", "rect": {"x": 80, "y": 320, "w": 1120, "h": 180}, "text": "Work"},
+                {"role": "section", "rect": {"x": 80, "y": 520, "w": 1120, "h": 180}, "text": "Essays"},
+                {"role": "section", "rect": {"x": 80, "y": 720, "w": 1120, "h": 120}, "text": "Contact"},
+                {"role": "contentinfo", "rect": {"x": 0, "y": 860, "w": 1280, "h": 40}},
+            ],
+            "interactive_boxes": [],
+            "overflow_issues": [],
+        },
+        "hierarchy": {
+            "prominence_scores": [
+                {"label": "My journey", "score": 40.0, "level": 1},
+                {"label": "Selected work", "score": 28.0, "level": 2},
+                {"label": "Essays", "score": 28.0, "level": 2},
+                {"label": "Get in touch", "score": 27.0, "level": 2},
+            ],
+        },
+        "colors": {"token_backed_ratio": 0.2},
+        "design_tokens": {},
+    }
+    surface = derive_surface_type("redesign artful portfolio about page", snapshot=about)
+    assert surface == "marketing"
+    signals = {s["signal"] for s in _collect_snapshot_signals(about, surface_type=surface)}
+    assert "equal_weight_kpi_cluster" not in signals
+    assert "dashboard_composition" not in signals
+    assert "theme_not_coupled" in signals  # still allowed on marketing
+
+    psm = _structural_psm()
+    psm.episode.intent_stack.append(
+        IntentFrame(intent="redesign artful portfolio about page", pushed_at="t")
+    )
+    ship = build_ship_council(
+        psm=psm,
+        strategy={**STRUCTURAL_STRATEGY, "surface_type": "marketing"},
+        snapshot=DesignSnapshot.from_dict(about),
+        engineering_delta=None,
+        revision_gate={},
+        findings=[],
+        force=True,
+    )
+    signals2 = {c["signal"] for c in ship["challenges"]}
+    assert "equal_weight_kpi_cluster" not in signals2
+    assert "dashboard_composition" not in signals2
+    assert ship["ship_gate"]["surface_type"] == "marketing"
+
+    # Findings path used to default majors to dashboard_composition — must still filter.
+    noisy_findings = [
+        {"severity": "major", "category": "composition", "id": "dense_regions"},
+        {"severity": "major", "category": "hierarchy", "id": "kpi_row"},
+    ]
+    ship2 = build_ship_council(
+        psm=_structural_psm(),
+        strategy={**STRUCTURAL_STRATEGY, "surface_type": "marketing"},
+        snapshot=DesignSnapshot.from_dict(about),
+        engineering_delta=None,
+        revision_gate={},
+        findings=noisy_findings,
+        force=True,
+    )
+    signals3 = {c["signal"] for c in ship2["challenges"]}
+    assert "equal_weight_kpi_cluster" not in signals3
+    assert "dashboard_composition" not in signals3
 
 
 def main() -> int:

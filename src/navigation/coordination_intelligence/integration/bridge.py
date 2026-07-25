@@ -86,14 +86,21 @@ class CoordinatorBridge:
                 cluster_id=args.get("cluster_id"),
                 intent=args.get("intent"),
             )
+            if not str(args.get("intent") or "").strip():
+                summary = envelope.setdefault("agent_summary", {})
+                advisory = summary.setdefault("advisory", [])
+                note = (
+                    "intent_missing: pass intent on session_start so coordinator "
+                    "can classify greenfield vs hotfix before large UI code"
+                )
+                if note not in advisory:
+                    advisory.append(note)
 
-        if not episode_id and session_id:
-            episode_id = self._ensure_session_episode(
-                session_id=session_id,
-                project_id=project_id,
-                website_url=envelope.get("url") or args.get("website_url"),
-                repo_root=args.get("repo_root"),
-            )
+        # Do NOT mint episodes for unbound session_id on other tools (failed
+        # design_review / stale IDs after MCP restart). That created orphan
+        # episodes and rebound project/default, poisoning coordinator state.
+        if not episode_id and session_id and tool_name != "perception_session_start":
+            return envelope
 
         if not episode_id:
             return envelope
@@ -119,7 +126,8 @@ class CoordinatorBridge:
     ) -> str | None:
         if not session_id:
             return None
-        existing = self._bindings.resolve(session_id=session_id)
+        # Only reuse when THIS session already has an episode — never project/default.
+        existing = self._bindings.resolve_session(session_id)
         if existing and self._service.runtime.get(existing):
             psm = self._service.runtime.require(existing)
             if website_url:

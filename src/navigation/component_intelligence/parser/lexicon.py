@@ -54,6 +54,8 @@ PAGE_CONTEXTS: frozenset[str] = frozenset(
 		'ecommerce',
 		'blog',
 		'portfolio',
+		'about',
+		'about page',
 	}
 )
 

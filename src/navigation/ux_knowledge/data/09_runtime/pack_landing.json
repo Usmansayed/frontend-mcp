@@ -1,0 +1,303 @@
+{
+  "pack_id": "pack_landing",
+  "title": "Landing Page & Reading Flow Playbook",
+  "target_surfaces": [
+    "perception://guide/greenfield",
+    "greenfield",
+    "mockup"
+  ],
+  "retrieval_keys": {
+    "surface_type": [
+      "landing",
+      "marketing"
+    ],
+    "user_flow": [
+      "conversion"
+    ],
+    "problem": [
+      "reading flow",
+      "conversion",
+      "CTA",
+      "scannability",
+      "hero"
+    ],
+    "platform": [
+      "mobile",
+      "responsive"
+    ]
+  },
+  "playbook_id": "pb_landing",
+  "pattern_refs": [
+    "pat_12_step_color_scale",
+    "pat_accessible_color_tokens",
+    "pat_adaptive_faceted_navigation",
+    "pat_advanced_settings_accordion",
+    "pat_ai_legible_context_layer",
+    "pat_ai_legible_design_system_context",
+    "pat_aria_describedby_hints",
+    "pat_aria_describedby_instructions",
+    "pat_aria_live_status_announcer",
+    "pat_auto_save_draft",
+    "pat_bmap_cta_block",
+    "pat_bmap_cta_design"
+  ],
+  "related_principle_ids": [
+    "UX_VIS_PROXWHITES_001",
+    "UX_VIS_FZPATTERN_001",
+    "UX_VIS_LAWOFSIMILAR_001",
+    "UX_PRD_PEAKENDRULE_001",
+    "UX_PRD_BMAPDIAGN_001",
+    "UX_VIS_LAYOUTPRIMIT_001",
+    "UX_VIS_TEXTSCANNABI_001",
+    "UX_VIS_GEST_006",
+    "UX_COG_FOGG_013",
+    "UX_VIS_READ_014",
+    "UX_DS_DENS_002"
+  ],
+  "claim_stubs": [
+    {
+      "claim_id": "UX_VIS_TEXTSCANNABI_001",
+      "name": "Design Text for Scannability",
+      "engineering_meaning": "Format web text for scanning by using front-loaded and meaningful subheadings, bulleted lists, highlighted keywords, descriptive links, one idea per paragraph, and the inverted pyramid style to prevent F-pattern scanning and ensure critical content is seen.",
+      "how_to_detect_violations": "Identify dense 'walls of text' lacking structural breakers (subheadings, bulleted lists, bolded keywords), paragraphs containing multiple distinct ideas, or critical information buried in the middle or right side of text blocks.",
+      "when_to_apply": "Apply to web pages, informational sites, content-heavy articles, and documentation where users are scanning for specific facts or quick answers rather than reading comprehensively.",
+      "when_not_to_apply": "Do not apply to immersive reading experiences, storytelling, narrative fiction, or email newsletters where users are highly committed to reading every word and heavy formatting would disrupt the flow.",
+      "confidence": 1.0,
+      "source_ids": [
+        "url_nng_scan",
+        "url_vis_nng_f_pattern"
+      ],
+      "full_card_path": "kb://cards/UX_VIS_TEXTSCANNABI_001"
+    },
+    {
+      "claim_id": "UX_DS_DENS_002",
+      "name": "Standard Touch Target Size (44px)",
+      "engineering_meaning": "The default tap target size for elements relying on width and height dimensions on touch-enabled devices is 44px (2.75rem).",
+      "how_to_detect_violations": "Inspect the computed height and width of interactive elements (buttons, links, toggles) on touch devices. Flag elements where the clickable area is < 44px in either dimension.",
+      "when_to_apply": "Designing buttons, list items, and interactive icons for touch-enabled interfaces (mobile, tablet, touch-screen laptops).",
+      "when_not_to_apply": "Dense desktop-only interfaces operated exclusively by a precise pointer (mouse), where smaller targets (e.g., 32px or 24px) are acceptable.",
+      "confidence": 1.0,
+      "source_ids": [
+        "src_salesforce_slds"
+      ],
+      "full_card_path": "kb://cards/UX_DS_DENS_002"
+    },
+    {
+      "claim_id": "UX_PRD_BMAPDIAGN_001",
+      "name": "Diagnose Onboarding CTAs using B=MAP",
+      "engineering_meaning": "Ensure every critical onboarding CTA simultaneously provides Motivation, Ability, and a Prompt. If a user fails to act, diagnose the drop-off by identifying which of these three elements is missing.",
+      "how_to_detect_violations": "Audit onboarding drop-off points. Check if the user knows why to act (Motivation), how to act easily (Ability), and is explicitly asked to act now (Prompt).",
+      "when_to_apply": "When designing or optimizing user onboarding flows, permission requests, or core activation events where user action is required.",
+      "when_not_to_apply": "When actions are automated by the system or when dealing with passive informational consumption rather than interactive tasks.",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_pilot_fogg"
+      ],
+      "full_card_path": "kb://cards/UX_PRD_BMAPDIAGN_001"
+    },
+    {
+      "claim_id": "UX_VIS_GEST_006",
+      "name": "Gestalt Principle of Proximity",
+      "engineering_meaning": "Items close together are perceived as part of the same group, sharing functionality or traits. Proximity overpowers competing visual cues like color or shape.",
+      "how_to_detect_violations": "Measure pixel distances between elements. If distance(A, B) < distance(B, C), users will assume A and B are more related than B and C. Check if this matches the logical data model.",
+      "when_to_apply": "Layout design, navigation menus, typography hierarchy, and grouping UI controls or form fields.",
+      "when_not_to_apply": "When elements are strictly independent, or when using other strong grouping methods like Common Region (borders/backgrounds) in highly space-constrained environments.",
+      "confidence": 0.95,
+      "source_ids": [
+        "src_gestalt_proximity",
+        "url_vis_nng_common_region"
+      ],
+      "full_card_path": "kb://cards/UX_VIS_GEST_006"
+    },
+    {
+      "claim_id": "UX_VIS_LAWOFSIMILAR_001",
+      "name": "Gestalt Similarity for Control Grouping",
+      "engineering_meaning": "Group related UI controls and signify common functionality by applying shared visual characteristics—such as color, shape, or size—while intentionally varying these traits for unrelated or differing actions.",
+      "how_to_detect_violations": "Identify sets of controls or interactive elements. Verify that elements with similar functions share a distinct visual trait (e.g., color or shape) and that decorative or unrelated elements do not mimic these interactive traits.",
+      "when_to_apply": "When designing navigation, forms, or toolbars where users need to quickly scan and identify elements that perform similar functions or belong to the same category.",
+      "when_not_to_apply": "When elements are fundamentally different in function, importance, or interactivity (e.g., primary vs. secondary buttons, interactive buttons vs. decorative icons).",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_vis_nng_similarity"
+      ],
+      "full_card_path": "kb://cards/UX_VIS_LAWOFSIMILAR_001"
+    },
+    {
+      "claim_id": "UX_VIS_VONRESTORFFE_001",
+      "name": "Isolation Effect for Primary CTA Emphasis",
+      "engineering_meaning": "Make primary key actions visually distinctive from surrounding elements to ensure they are easily identified and remembered, while exercising restraint to prevent visual competition.",
+      "how_to_detect_violations": "Check if the primary CTA has a unique visual treatment (e.g., contrasting background color, size, or shape) compared to secondary buttons or surrounding elements, without relying solely on color.",
+      "when_to_apply": "When there is a clear primary action or critical information that users need to find and remember among a group of similar items.",
+      "when_not_to_apply": "When all actions have equal priority, or when overusing emphasis would cause visual competition and make elements look like advertisements.",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_lawsofux_vonrestorff"
+      ],
+      "full_card_path": "kb://cards/UX_VIS_VONRESTORFFE_001"
+    },
+    {
+      "claim_id": "UX_PRD_PEAKENDRULE_001",
+      "name": "Peak-End Rule for Onboarding Flows",
+      "engineering_meaning": "Optimize the emotional peak and the final step of onboarding flows to be highly positive and rewarding, as users judge the overall experience based on these specific moments rather than the average of all steps.",
+      "how_to_detect_violations": "Review multi-step onboarding flows. Identify the most friction-heavy step (potential negative peak) and the final success state (end). Flag if the final step lacks clear positive reinforcement, celebration, or if stressful steps lack supportive design.",
+      "when_to_apply": "When designing multi-step onboarding sequences, high-stakes user actions (e.g., launching a first campaign), or complex setup flows where user anxiety might be high.",
+      "when_not_to_apply": "During repetitive, high-frequency utility tasks where users prioritize pure speed and efficiency over emotional engagement or 'delight'.",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_agg_lawsofux_peakend"
+      ],
+      "full_card_path": "kb://cards/UX_PRD_PEAKENDRULE_001"
+    },
+    {
+      "claim_id": "UX_VIS_PROXWHITES_001",
+      "name": "Proximity Grouping via Whitespace",
+      "engineering_meaning": "Ensure the whitespace between distinct UI groups is noticeably larger than the whitespace within a group to clearly communicate relationships and visual hierarchy.",
+      "how_to_detect_violations": "Measure spacing tokens or CSS margins/padding. The gap between related elements (e.g., a label and its input, or a heading and its paragraph) must be strictly smaller than the gap separating that group from the next adjacent group.",
+      "when_to_apply": "When designing forms, navigation menus, text layouts, and responsive grids to help task-focused users quickly scan and identify related elements.",
+      "when_not_to_apply": "When elements are already strongly grouped using explicit visual boundaries (like borders or distinct background colors - Gestalt Common Region), though proximity still reinforces these boundaries.",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_pilot_nng_proximity"
+      ],
+      "full_card_path": "kb://cards/UX_VIS_PROXWHITES_001"
+    },
+    {
+      "claim_id": "UX_VIS_LAYOUTPRIMIT_001",
+      "name": "Use Layout Primitives for Spacing and Alignment",
+      "engineering_meaning": "Handle all layouts and spacing using dedicated layout primitives (e.g., Box, Block stack, Inline stack, Grid) rather than embedding custom CSS margins, padding, or flex/grid properties within feature components.",
+      "how_to_detect_violations": "Scan for custom CSS classes, inline styles, or styled-components applying 'margin', 'padding', 'display: flex', or 'display: grid' in feature components instead of using imported layout primitive components.",
+      "when_to_apply": "When arranging elements on a page, managing spacing between components, or building responsive layouts within a design system that provides layout primitives.",
+      "when_not_to_apply": "When building the foundational layout primitives themselves, or when working in a legacy codebase without a standardized set of layout components.",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_polaris_layout"
+      ],
+      "full_card_path": "kb://cards/UX_VIS_LAYOUTPRIMIT_001"
+    },
+    {
+      "claim_id": "UX_VIS_FZPATTERN_001",
+      "name": "Align CTAs with Natural Reading Patterns (F/Z-Patterns)",
+      "engineering_meaning": "Leverage natural reading patterns (F-pattern, Z-pattern) for text-heavy layouts, and place interactive elements (like CTAs) at the end of the user's compositional flow to prevent visual backtracking.",
+      "how_to_detect_violations": "Identify text-heavy pages or forms. Check if the primary CTA (e.g., 'Submit' or 'Buy Now') is placed before the information required to make the decision or complete the action, forcing the user's eye to move backwards.",
+      "when_to_apply": "Apply to text-heavy pages, search results, and sequential forms where users scan in predictable F or Z patterns.",
+      "when_not_to_apply": "Do not rely solely on these patterns when a page uses strong visual hierarchy, graphics, and rhythm to intentionally create a custom compositional flow.",
+      "confidence": 0.9,
+      "source_ids": [
+        "url_pilot_smashing_flow"
+      ],
+      "full_card_path": "kb://cards/UX_VIS_FZPATTERN_001"
+    },
+    {
+      "claim_id": "UX_VIS_READ_014",
+      "name": "Design Overrides Default Reading Patterns",
+      "engineering_meaning": "Default reading patterns like the F-pattern, Z-pattern, and Gutenberg diagram primarily apply to text-heavy, design-light pages. Introducing visual hierarchy, direction, movement, and rhythm overrides these natural patterns.",
+      "how_to_detect_violations": "Conduct eye-tracking or squint tests on a UI. If the most prominent visual elements do not align with the intended user journey, the design relies too heavily on assumed reading patterns.",
+      "when_to_apply": "Designing landing pages, dashboards, and complex web applications where specific user actions are desired.",
+      "when_not_to_apply": "Long-form articles, text-heavy documents, or search result pages where F-pattern scanning is natural and expected.",
+      "confidence": 0.9,
+      "source_ids": [
+        "src_smashing_compositional_flow"
+      ],
+      "full_card_path": "kb://cards/UX_VIS_READ_014"
+    },
+    {
+      "claim_id": "UX_COG_FOGG_013",
+      "name": "Fogg Behavior Model (B=MAP)",
+      "engineering_meaning": "A target behavior occurs when Motivation, Ability, and a Prompt converge at the same moment (B=MAP).",
+      "how_to_detect_violations": "High exposure + low conversion: check if prompt is hidden, task is hard, or value is unclear.",
+      "when_to_apply": "Conversion CTAs, onboarding, notifications, habit loops.",
+      "when_not_to_apply": "Passive reading surfaces; automated backend processes; manipulative dark patterns.",
+      "confidence": 0.9,
+      "source_ids": [
+        "src_fogg_behaviormodel",
+        "src_baymard_checkout",
+        "url_onb_fogg_logrocket"
+      ],
+      "full_card_path": "kb://cards/UX_COG_FOGG_013"
+    },
+    {
+      "claim_id": "UX_VIS_PAGINATIONVS_001",
+      "name": "Pagination over Infinite Scroll for Goal-Oriented Tasks",
+      "engineering_meaning": "Use pagination rather than infinite scrolling for goal-oriented finding tasks, such as locating specific content, comparing options, or backtracking. Reserve infinite scrolling for serendipitous exploration of flat-hierarchy content.",
+      "how_to_detect_violations": "Identify lists, search results, or feeds. Check if the loading mechanism is infinite scroll or pagination. Assess if the user's primary task is finding specific items (e.g., ecommerce) vs. open-ended browsing (e.g., social media).",
+      "when_to_apply": "Apply pagination when users need to locate specific items, compare products, remember item locations (e.g., 'page 3'), or when accurate scrollbar representation of page length is needed.",
+      "when_not_to_apply": "Do not use pagination when the content streams constantly, has a flat structure, and the user's goal is time-killing or serendipitous discovery.",
+      "confidence": 0.9,
+      "source_ids": [
+        "url_nng_pagination"
+      ],
+      "full_card_path": "kb://cards/UX_VIS_PAGINATIONVS_001"
+    },
+    {
+      "claim_id": "UX_PRD_WIZARDPATTER_001",
+      "name": "Use Wizards for Infrequent or Novice Multi-Step Tasks",
+      "engineering_meaning": "Use a wizard pattern to guide users through complex, multi-step tasks if the process is performed infrequently (e.g., onboarding, setup) or by novice users. Avoid wizards for frequent tasks or expert users, as the step-by-step flow increases interaction cost and limits control.",
+      "how_to_detect_violations": "Identify multi-step data entry flows. Check if the task is performed frequently by the same user or requires cross-referencing data across steps. If frequent or requires cross-referencing, a wizard is likely an anti-pattern.",
+      "when_to_apply": "When users are unfamiliar with a domain, lack expertise, or perform a complex process rarely (like initial account setup or onboarding), and need guided, sequential steps with branching logic.",
+      "when_not_to_apply": "When users perform the task repeatedly, need to compare information across steps, require flexible non-linear workflows, or are domain experts who need high control and efficiency.",
+      "confidence": 0.9,
+      "source_ids": [
+        "url_nng_wizard"
+      ],
+      "full_card_path": "kb://cards/UX_PRD_WIZARDPATTER_001"
+    }
+  ],
+  "conflict_pairs": [
+    {
+      "a": "ap_spacing_all_toolbar_butt",
+      "b": "UX_VIS_GEST_006",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_using_uniform_margins_e_",
+      "b": "UX_VIS_PROXWHITES_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_creating_small_24x24px_i",
+      "b": "UX_DS_DENS_002",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_a_naked_get_started_butt",
+      "b": "UX_PRD_BMAPDIAGN_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_firing_multiple_sequenti",
+      "b": "UX_COG_FOGG_013",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_placing_the_primary_cta_",
+      "b": "UX_VIS_FZPATTERN_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_relying_on_a_flat_unifor",
+      "b": "UX_VIS_READ_014",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "UX_VIS_FZPATTERN_001",
+      "b": "UX_VIS_TEXTSCANNABI_001",
+      "decision_hint": "UX_VIS_FZPATTERN_001 suggests leveraging the F-pattern for CTA placement, whereas UX_VIS_TEXTSCANNABI_001 recommends formatting text to actively prevent F-pattern scanning."
+    },
+    {
+      "a": "ap_applying_uniform_spacing",
+      "b": "UX_VIS_GEST_006",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_mixing_pill_shaped_and_s",
+      "b": "UX_VIS_LAWOFSIMILAR_001",
+      "decision_hint": "anti-pattern"
+    }
+  ],
+  "budgets": {
+    "max_claim_stubs": 20,
+    "max_rationale_tokens": 2500
+  },
+  "created_at": "2026-07-21",
+  "notes": "Graph-slice pack — deterministic retrieval, no embeddings."
+}

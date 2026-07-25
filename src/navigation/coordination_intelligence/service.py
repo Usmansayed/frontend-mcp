@@ -69,33 +69,22 @@ class CoordinationIntelligenceService:
 
     @staticmethod
     def _seed_sticky_design_scope(psm: ProjectSituationModel) -> None:
-        """Pin Done-ladder obligations before cluster resolve can bump debug.*"""
-        from navigation.coordination_intelligence.planning.situation_policy import sticky_design_scope
+        """Pin Done-ladder obligations before cluster resolve can bump debug.*
+
+        Must stay aligned with `_derive_task_scope` — bare "foundation" / "token"
+        must NOT sticky-pin system_setup (Test 11: component foundation → budget 28).
+        """
+        from navigation.coordination_intelligence.planning.situation_policy import (
+            _derive_task_scope,
+            sticky_design_scope,
+        )
 
         if sticky_design_scope(psm):
             return
         intent = " ".join(f.intent for f in psm.episode.intent_stack).lower()
-        if any(
-            k in intent
-            for k in (
-                "dashboard",
-                "landing",
-                "redesign",
-                "rebrand",
-                "from scratch",
-                "new saas",
-                "new product",
-                "marketing site",
-                "homepage",
-                "design system",
-            )
-        ):
-            if "redesign" in intent or "rebrand" in intent:
-                psm.episode.retry_counters["episode_design_scope"] = "redesign"
-            elif any(k in intent for k in ("design system", "token", "foundation")):
-                psm.episode.retry_counters["episode_design_scope"] = "system_setup"
-            else:
-                psm.episode.retry_counters["episode_design_scope"] = "design_driven"
+        scope = _derive_task_scope(intent, "", "", psm)
+        if scope in ("design_driven", "redesign", "system_setup"):
+            psm.episode.retry_counters["episode_design_scope"] = scope
 
     def apply_envelope(
         self,
@@ -211,28 +200,44 @@ class CoordinationIntelligenceService:
         envelope: dict[str, Any],
         briefing: CoordinatorBriefing,
     ) -> dict[str, Any]:
+        from navigation.coordination_intelligence.planning.coordinator_card import (
+            build_coordinator_card,
+            build_episode_card,
+        )
+
         data = envelope.setdefault("data", {})
-        data["coordinator"] = {
-            "episode_id": briefing.episode_id,
-            "briefing": briefing.to_dict(),
-            "integrated": True,
-            "suggested_capability": briefing.suggested_capability,
-            "suggested_semantic_action": briefing.suggested_semantic_action,
-            "stop_reason": briefing.stop_reason,
-            "psm_summary": briefing.psm_summary,
-            "routing_rationale": briefing.routing_rationale,
-            "benefit_claim": briefing.benefit_claim,
-            "skip_condition": briefing.skip_condition,
-            "investment": briefing.investment,
-        }
+        data["coordinator"] = build_coordinator_card(
+            episode_id=briefing.episode_id,
+            strategy=briefing.engineering_strategy,
+            suggested_capability=briefing.suggested_capability,
+            suggested_semantic_action=briefing.suggested_semantic_action,
+            stop_reason=briefing.stop_reason,
+        )
+        episode_card = build_episode_card(
+            episode_id=briefing.episode_id,
+            strategy=briefing.engineering_strategy,
+            suggested_capability=briefing.suggested_capability,
+            suggested_semantic_action=briefing.suggested_semantic_action,
+            stop_reason=briefing.stop_reason,
+        )
+        data["episode_card"] = episode_card
         if briefing.engineering_strategy:
-            surface_engineering_strategy(envelope, briefing.engineering_strategy)
-            strategy = briefing.engineering_strategy
-            coordinator = data["coordinator"]
-            coordinator["implementation_gate"] = strategy.get("implementation_gate")
-            coordinator["evidence_plan"] = strategy.get("evidence_plan") or []
-            coordinator["recommended_resource"] = strategy.get("recommended_resource")
-            coordinator["required_resources"] = strategy.get("required_resources") or []
+            surface_engineering_strategy(
+                envelope,
+                briefing.engineering_strategy,
+                episode_id=briefing.episode_id,
+                suggested_capability=briefing.suggested_capability,
+                suggested_semantic_action=briefing.suggested_semantic_action,
+                stop_reason=briefing.stop_reason,
+            )
+        else:
+            from navigation.coordination_intelligence.planning.engineering_strategy import (
+                promote_coordinator_visibility,
+            )
+
+            promote_coordinator_visibility(envelope, data["coordinator"])
+        agent_summary = envelope.setdefault("agent_summary", {})
+        agent_summary["episode_card"] = episode_card
         return envelope
 
     def _refresh_briefing(
@@ -245,12 +250,51 @@ class CoordinationIntelligenceService:
         self._compile_engineering_strategy(psm)
 
     def _compile_engineering_strategy(self, psm: ProjectSituationModel) -> None:
+        from navigation.coordination_intelligence.planning.coordinator_card import (
+            strategy_fingerprint,
+        )
+
         catalog = self._bundle.situation_policy_catalog or {}
         if not catalog:
             return
+        fp = strategy_fingerprint(psm)
+        cached = psm.briefing.engineering_strategy
+        if cached and psm.episode.retry_counters.get("strategy_fingerprint") == fp:
+            self._align_suggestion_with_gate(psm)
+            return
         strategy = compile_engineering_strategy(psm, catalog)
         psm.briefing.engineering_strategy = strategy.to_dict()
+        # Fingerprint after compile — compile may sticky-mutate surface_type etc.
+        psm.episode.retry_counters["strategy_fingerprint"] = strategy_fingerprint(psm)
+        self._align_suggestion_with_gate(psm)
 
+    @staticmethod
+    def _align_suggestion_with_gate(psm: ProjectSituationModel) -> None:
+        """One voice: on design/redesign episodes, gate.next wins when it conflicts with playbook."""
+        from navigation.coordination_intelligence.planning.situation_policy import sticky_design_scope
+
+        strategy = psm.briefing.engineering_strategy or {}
+        gate = strategy.get("implementation_gate") or {}
+        next_cap = gate.get("next_required_capability")
+        prohibited = list(gate.get("prohibited_actions") or [])
+        if not next_cap or "claim_complete" not in prohibited:
+            return
+        scope = str(
+            sticky_design_scope(psm)
+            or strategy.get("task_scope")
+            or ""
+        )
+        if scope not in ("design_driven", "redesign", "system_setup"):
+            return
+        current = psm.briefing.suggested_next_capability
+        if current == next_cap:
+            return
+        psm.briefing.suggested_next_capability = str(next_cap)
+        psm.briefing.suggested_semantic_action = f"follow_gate:{next_cap}"
+        rationale = psm.briefing.routing_rationale or ""
+        note = f"gate_aligned_next={next_cap}"
+        if note not in rationale:
+            psm.briefing.routing_rationale = f"{rationale}; {note}".strip("; ")
     def _apply_briefing_refresh(
         self,
         psm: ProjectSituationModel,

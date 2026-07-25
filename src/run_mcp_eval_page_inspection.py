@@ -43,7 +43,7 @@ def _record(report: dict, step: str, ok: bool, **details: object) -> None:
 
 async def main() -> int:
     parser = argparse.ArgumentParser(description=f"MCP eval {SCENARIO_ID} — page inspection")
-    parser.add_argument("--url", default="http://localhost:5173")
+    parser.add_argument("--url", default="http://127.0.0.1:18765")
     parser.add_argument("--route", default="/", help="Route to inspect")
     parser.add_argument("--headless", action="store_true")
     args = parser.parse_args()

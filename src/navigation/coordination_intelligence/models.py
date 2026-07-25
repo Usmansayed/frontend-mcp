@@ -163,20 +163,45 @@ class EpisodeState:
     completed_step_ids: list[str] = field(default_factory=list)
     verification_status: str = "pending"
     auth_status: str = "unknown"
+    # Episode context (not retry state) — coordination initiative surface discriminator.
+    surface_type: str = "unknown"
+    route_surfaces: dict[str, Any] = field(default_factory=dict)
+    active_route_path: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
+        counters = dict(self.retry_counters or {})
+        # Always keep core counters; preserve initiative/residue bookkeeping keys.
+        capability_attempts = dict(counters.get("capability_attempts") or {})
+        out_counters: dict[str, Any] = {
+            "verify_loop": int(counters.get("verify_loop", 0)),
+            "capability_attempts": capability_attempts,
+        }
+        for key in (
+            "episode_design_scope",
+            "polish_saturation",
+            "ship_council_run",
+            "ship_council_clear",
+            "evidence_plan_status",
+            "residue_scan",
+            "section_checklist",
+            "route_surfaces",
+            "active_route_path",
+            "strategy_fingerprint",
+        ):
+            if key in counters:
+                out_counters[key] = counters[key]
         return {
             "active_playbook_id": self.active_playbook_id,
             "active_step_id": self.active_step_id,
             "intent_stack": [f.to_dict() for f in self.intent_stack],
-            "retry_counters": {
-                "verify_loop": int(self.retry_counters.get("verify_loop", 0)),
-                "capability_attempts": dict(self.retry_counters.get("capability_attempts") or {}),
-            },
+            "retry_counters": out_counters,
             "confidence": self.confidence,
             "completed_step_ids": list(self.completed_step_ids),
             "verification_status": self.verification_status,
             "auth_status": self.auth_status,
+            "surface_type": self.surface_type or "unknown",
+            "route_surfaces": dict(self.route_surfaces or {}),
+            "active_route_path": self.active_route_path,
         }
 
 

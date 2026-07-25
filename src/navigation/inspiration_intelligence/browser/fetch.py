@@ -40,20 +40,36 @@ _OG_TITLE = re.compile(
 _JSON_LD = re.compile(r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>', re.DOTALL | re.IGNORECASE)
 
 
+def _ssl_context():
+	"""Prefer certifi CA bundle when available (avoids stale system roots)."""
+	import ssl
+
+	try:
+		import certifi
+
+		return ssl.create_default_context(cafile=certifi.where())
+	except Exception:
+		return ssl.create_default_context()
+
+
 def http_get(url: str, *, headers: dict[str, str] | None = None, timeout: float = 30.0) -> tuple[str, int | None, str | None]:
 	hdr = browser_headers(_DEFAULT_UA)
 	if headers:
 		hdr.update(headers)
 	req = urllib.request.Request(url, headers=hdr)
 	try:
-		with urllib.request.urlopen(req, timeout=timeout) as resp:
+		with urllib.request.urlopen(req, timeout=timeout, context=_ssl_context()) as resp:
 			body = resp.read().decode('utf-8', errors='replace')
 			return body, resp.status, None
 	except urllib.error.HTTPError as exc:
 		body = exc.read().decode('utf-8', errors='replace') if exc.fp else ''
 		return body, exc.code, str(exc)
 	except Exception as exc:
-		return '', None, str(exc)
+		msg = str(exc)
+		# Tag SSL failures so providers can degrade cleanly and cascade.
+		if 'CERTIFICATE' in msg.upper() or 'SSL' in msg.upper():
+			return '', None, f'SSL:{msg}'
+		return '', None, msg
 
 
 def extract_og_image(html: str) -> str:

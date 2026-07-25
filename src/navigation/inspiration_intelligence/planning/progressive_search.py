@@ -11,16 +11,44 @@ from typing import Any
 TARGET_IMAGE_REFS = 5
 MIN_IMAGE_REFS = 3
 
-# HTTP-friendly providers first (no Chromium for discovery when possible).
-IMAGE_FIRST_PROVIDER_ORDER: list[str] = [
-    "behance",
+# Anti-bot-friendly HTTP/CDN sources — default MCP happy path (no Chromium).
+# land-book stays registered for explicit pin only — not in default cascades.
+FAST_HTTP_PROVIDER_ORDER: list[str] = [
     "onepagelove",
+    "lapa",
+    "behance",
+    "httpster",
+    "siteinspire",
+]
+
+# Full cascade — browser-heavy galleries only after HTTP sources (or explicit provider_ids).
+IMAGE_FIRST_PROVIDER_ORDER: list[str] = [
+    "onepagelove",
+    "lapa",
+    "behance",
+    "httpster",
     "dribbble",
     "awwwards",
     "siteinspire",
     "godly",
-    "land-book",
 ]
+
+
+def resolve_collect_provider_order(
+    provider_ids: list[str] | None = None,
+    *,
+    fast: bool | None = None,
+) -> list[str]:
+    """Prefer HTTP-friendly sources unless the caller pins provider_ids."""
+    if provider_ids:
+        return list(provider_ids)
+    if fast is None:
+        from navigation.inspiration_intelligence.browser.policy import is_fast_mode
+
+        fast = is_fast_mode()
+    if fast:
+        return list(FAST_HTTP_PROVIDER_ORDER)
+    return list(IMAGE_FIRST_PROVIDER_ORDER)
 
 
 def progressive_queries(seed: str, *, max_queries: int = 5) -> list[str]:

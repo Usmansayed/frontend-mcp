@@ -48,8 +48,10 @@ STYLE_REGISTRY_AFFINITY: dict[str, tuple[str, ...]] = {
 	'saas': ('@tailark', '@blocks', '@magicui', '@shadcn'),
 	'premium': ('@aceternity', '@magicui', '@kokonutui'),
 	'pricing': ('@tailark', '@blocks', '@shadcn', '@magicui'),
-	'navbar': ('@aceternity', '@tailark', '@shadcn', '@magicui', '@kokonutui'),
-	'header': ('@tailark', '@shadcn', '@blocks', '@aceternity'),
+	# Prefer core foundation libs before specialty chrome packs (Test 12).
+	'navbar': ('@shadcn', '@tailark', '@aceternity', '@magicui', '@kokonutui'),
+	'header': ('@shadcn', '@tailark', '@blocks', '@aceternity'),
+	'hero': ('@shadcn', '@tailark', '@blocks', '@aceternity'),
 }
 
 DEFAULT_REGISTRIES: tuple[str, ...] = (

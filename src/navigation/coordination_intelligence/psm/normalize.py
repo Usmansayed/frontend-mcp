@@ -253,6 +253,25 @@ def _capability_outcome(
                 ),
             }
             status = "succeeded" if usable_refs >= 3 and not blocking else "provisional"
+        elif tool == "perception_visual_feedback":
+            fb = data.get("visual_feedback") if isinstance(data.get("visual_feedback"), dict) else {}
+            judgment = str(fb.get("judgment") or "").strip().lower()
+            evidence = data.get("visual_evidence")
+            has_look = bool(evidence) or bool(data.get("feedback_schema"))
+            quality = {
+                "purpose": data.get("purpose"),
+                "judgment": judgment or None,
+                "has_look": has_look,
+                "next_actions_count": len(data.get("next_actions") or []),
+                "phase": "judgment" if judgment else ("look" if has_look else "unknown"),
+            }
+            if judgment in ("ok", "needs_work", "unclear"):
+                status = "succeeded" if not blocking else "provisional"
+            elif has_look and not blocking:
+                # LOOK-only still pays the family so the scoreboard advances; agent should re-call with judgment.
+                status = "provisional"
+            else:
+                status = "provisional" if envelope.get("ok") else "failed"
         elif tool == "perception_build_design_snapshot":
             # Transport ok still advances; thin/degraded honesty lives in quality only.
             quality = _snapshot_evidence_quality(data)

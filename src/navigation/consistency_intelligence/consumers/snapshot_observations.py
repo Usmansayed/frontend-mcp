@@ -35,7 +35,7 @@ def observations_from_snapshot(snapshot: DesignSnapshot | dict[str, Any]) -> lis
 			continue
 		out.append({
 			'selector': selector,
-			'context': tag or 'element',
+			'context': _obs_context(tag, actual),
 			'actual': actual,
 		})
 
@@ -48,16 +48,30 @@ def observations_from_snapshot(snapshot: DesignSnapshot | dict[str, Any]) -> lis
 			actual['gap'] = f"{row['gap_px']}px"
 		pad = row.get('padding_px') or []
 		if pad:
-			actual['padding'] = f"{pad[0]}px" if len(pad) == 1 else str(pad)
+			actual['padding'] = f"{pad[0]}px" if len(pad) == 1 else ' '.join(f'{p}px' for p in pad)
 		if actual:
 			seen.add(selector)
 			out.append({
 				'selector': selector,
-				'context': str(row.get('tag') or 'element').lower(),
+				'context': _obs_context(str(row.get('tag') or 'element').lower(), actual),
 				'actual': actual,
 			})
 
 	return out
+
+
+def _obs_context(tag: str, actual: dict[str, str]) -> str:
+	"""Prefer foundation contexts learned by Discovery over raw HTML tags."""
+	keys = set(actual)
+	if keys & {'padding', 'gap', 'margin'} and not (keys & {'font-size', 'font-family', 'color'}):
+		return 'spacing'
+	if keys & {'font-size', 'font-family', 'font-weight', 'line-height'}:
+		return 'typography'
+	if keys & {'color', 'background-color'}:
+		return 'color'
+	if 'border-radius' in keys:
+		return 'radius'
+	return tag or 'element'
 
 
 def _style_actuals(style: dict[str, Any]) -> dict[str, str]:

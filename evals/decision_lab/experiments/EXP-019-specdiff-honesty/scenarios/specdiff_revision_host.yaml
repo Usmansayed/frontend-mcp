@@ -1,0 +1,54 @@
+id: exp019_specdiff_revision_host
+intent: redesign Meridian analytics dashboard
+lifecycle_stage: S03_design
+project_maturity: M1
+feeds:
+  - tool: perception_build_design_snapshot
+    ok: true
+    data:
+      snapshot_id: snap_019_rev
+      snapshot_summary:
+        layout_issues: 1
+        interactive_count: 12
+      snapshot:
+        layout:
+          regions:
+            - {role: nav}
+            - {role: main}
+      engineering_delta:
+        top_by_impact:
+          - {decision_id: hierarchy, severity: major, kind: value_drift, from_value: stacked, to_value: flat}
+          - {decision_id: spacing, severity: blocking, kind: value_drift, from_value: 8, to_value: 24}
+        items:
+          - {decision_id: hierarchy, severity: major, kind: value_drift, from_value: stacked, to_value: flat}
+          - {decision_id: spacing, severity: blocking, kind: value_drift, from_value: 8, to_value: 24}
+      spec_revision_gate:
+        reference_bound: true
+        evaluated: true
+        revision_required: true
+        passed: false
+        blocking_drifts:
+          - {decision_id: spacing, severity: blocking}
+        major_drifts:
+          - {decision_id: hierarchy, severity: major}
+    expect:
+      path:capability_ledger.design_snapshot.status: succeeded
+      path:capability_ledger.design_snapshot.advancement_eligible: true
+      path:capability_ledger.design_snapshot.quality.revision_required: true
+      path:capability_ledger.design_snapshot.quality.blocking_drift_count: 1
+      host_contains:
+        - "SPECDIFF REVISION"
+      evidence_quality_alerts_contains:
+        - "SPECDIFF REVISION"
+        - hierarchy
+expect:
+  host_contains:
+    - "SPECDIFF REVISION"
+    - "revision_required"
+  ledger_quality_keys:
+    capability: design_snapshot
+    keys:
+      - delta_top_ids
+      - soft_seed_skipped_count
+      - soft_seed_partial
+      - revision_required

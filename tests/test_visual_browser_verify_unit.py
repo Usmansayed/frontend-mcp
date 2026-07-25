@@ -142,6 +142,34 @@ async def test_verify_js_assertion_pass_and_fail() -> None:
 
 @pytest.mark.unit
 @pytest.mark.asyncio
+async def test_verify_chrome_permanence_failure_uses_stable_label() -> None:
+    from navigation.coordination_intelligence.planning.chrome_conventions import (
+        CHROME_PERMANENCE_ASSERTION,
+    )
+
+    failing = _FakeSession(url="https://example.com/", js_returns={CHROME_PERMANENCE_ASSERTION: False})
+    # Fake matches by exact key — also stub evaluate path via dict lookup of full expr
+    fail = await verify(failing, SuccessCriteria(js_assertions=[CHROME_PERMANENCE_ASSERTION]))
+    assert fail.ok is False
+    assert any(r.startswith("chrome_permanence_failed") for r in fail.reasons)
+    assert not any("querySelectorAll" in r for r in fail.reasons)
+
+
+@pytest.mark.unit
+def test_js_assertion_label_maps_chrome_conventions() -> None:
+    from navigation.coordination_intelligence.planning.chrome_conventions import (
+        CHROME_PERMANENCE_ASSERTION,
+        HORIZONTAL_OVERFLOW_ASSERTION,
+    )
+    from navigation.visual_browser_intelligence.verify.verification import _js_assertion_label
+
+    assert _js_assertion_label(CHROME_PERMANENCE_ASSERTION) == "chrome_permanence_failed"
+    assert _js_assertion_label(HORIZONTAL_OVERFLOW_ASSERTION) == "horizontal_overflow_failed"
+    assert _js_assertion_label("window.isReady") is None
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
 async def test_verify_accept_urls_auto_merges_failure() -> None:
     """When primary criteria fail but URL matches an accept_url, verification auto-merges."""
     session = _FakeSession(url="https://example.com/checkout/success")

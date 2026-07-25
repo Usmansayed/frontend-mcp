@@ -386,14 +386,6 @@ Full pipeline: search or `candidate_id` → select → integrate → validate �
 
 **Returns:** `data.integration_result` (`status`, `selection`, `integration`, `validation`, `repair_attempts`).
 
-## Figma Intelligence — MVP EXCLUDED
-
-All `perception_figma_*` tools and `perception://figma-guide` are **parked** for MVP.
-
-See [parked/MVP_EXCLUDE_FIGMA.md](../parked/MVP_EXCLUDE_FIGMA.md). Code: `parked/figma_intelligence/`.
-
-**Still available for design reference:** `perception_inspiration_*` and `perception_build_design_snapshot`.
-
 ## Design Snapshot / Design Sense / Consistency
 
 | Tool | Role |
@@ -436,14 +428,6 @@ common runner (`purpose=design|consistency` implied) — one capture/feedback co
 
 Loop: LOOK → fill `visual_feedback` per `feedback_schema` → act on `next_actions` → re-LOOK.
 Details: [features/visual.md](./features/visual.md).
-
-## SEO Intelligence — MVP EXCLUDED
-
-All `perception_seo_*` tools and `perception://seo-guide` are **parked** for MVP.
-
-See [parked/MVP_EXCLUDE_SEO.md](../parked/MVP_EXCLUDE_SEO.md). Code: `parked/seo_intelligence/`.
-
-**Still available:** `perception_audit_seo` (Frontend Quality — Lighthouse SEO category only).
 
 ## Resources
 

@@ -17,7 +17,7 @@ from navigation.resolver_intelligence.plugins.api_endpoint import patterns as ap
 from navigation.resolver_intelligence.plugins.component import resolve_component as resolve_component_plugin
 from navigation.resolver_intelligence.plugins.design_token import resolve_design_token as resolve_design_token_plugin
 from navigation.resolver_intelligence.plugins.layout import snapshot as layout_plugin
-from navigation.resolver_intelligence.plugins.route import react_router_v6
+from navigation.resolver_intelligence.plugins.route import next_app_router, react_router_v6
 from navigation.resolver_intelligence.plugins.state_owner import react_context as state_owner_plugin
 
 
@@ -30,6 +30,8 @@ class ResolverRegistry:
             path = str(params.get("path") or params.get("route") or "").strip()
             if not path:
                 return _error(query.kind, "path required", start)
+            if next_app_router.can_handle(ctx):
+                return next_app_router.resolve_route(path, ctx)
             if react_router_v6.can_handle(ctx):
                 return react_router_v6.resolve_route(path, ctx)
             return _unsupported(query.kind, start)

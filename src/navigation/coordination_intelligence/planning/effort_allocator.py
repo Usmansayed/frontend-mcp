@@ -62,7 +62,8 @@ def evaluate_allocation(
 
     spent = int(psm.episode.retry_counters.get("intelligence_spent") or 0)
     total = int(psm.episode.retry_counters.get("intelligence_budget_total") or 0)
-    if total <= 0:
+    # Raise-only: upgrade ceiling when a richer policy matches mid-episode.
+    if total < b_base:
         total = b_base
         psm.episode.retry_counters["intelligence_budget_total"] = total
     remaining = max(0, total - spent)
@@ -218,7 +219,20 @@ def _adjust_eqg(
 def debit_budget(psm: ProjectSituationModel, cost: int, capability_id: str | None) -> None:
     if cost <= 0:
         return
+    # Debit each capability once per episode — repeated tools (graph×2, inspiration discover+collect)
+    # must not exhaust a suite-sized budget.
+    if capability_id:
+        debited = list(psm.episode.retry_counters.get("intelligence_debited_caps") or [])
+        if capability_id in debited:
+            return
+        debited.append(capability_id)
+        psm.episode.retry_counters["intelligence_debited_caps"] = debited
     spent = int(psm.episode.retry_counters.get("intelligence_spent") or 0)
+    total = int(psm.episode.retry_counters.get("intelligence_budget_total") or 0)
+    if total > 0:
+        cost = min(cost, max(0, total - spent))
+    if cost <= 0:
+        return
     psm.episode.retry_counters["intelligence_spent"] = spent + cost
     if capability_id == "design_review":
         loops = int(psm.episode.retry_counters.get("polish_loops") or 0) + 1

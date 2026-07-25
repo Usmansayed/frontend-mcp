@@ -1,0 +1,335 @@
+# Guide Lab scenarios — isolated decision quizzes (EXP-026)
+# Gold = what a well-guided agent should choose. Policies A/B scored offline.
+
+- id: Q01
+  class: greenfield
+  ask: "Build a new professional SaaS landing page from scratch"
+  unpaid: [inspiration, snapshot, component]
+  gate: {state: blocked, next_required_capability: inspiration_workflow}
+  backlog_top: inspiration
+  gold:
+    owed: [inspiration, component]
+    owed_or: [[snapshot, component], [inspiration, component, observe]]
+    owed_mode: covers
+    first_family: inspiration
+    first_family_or: [snapshot, inspiration]
+    first_mode: reference_family
+    must_not: [seo]
+    require_multi_owed: true
+
+- id: Q02
+  class: greenfield
+  ask: "New marketing homepage, no Figma"
+  unpaid: [inspiration, component, observe]
+  gate: {state: blocked, next_required_capability: component_select}
+  backlog_top: inspiration
+  recommended_evidence: component_select
+  gold:
+    owed: [inspiration, component, observe]
+    owed_mode: covers
+    first_family: inspiration
+    first_family_or: [inspiration, snapshot]
+    must_not: [seo]
+    require_multi_owed: true
+
+- id: Q03
+  class: redesign
+  ask: "Redesign the current dashboard to look more professional"
+  unpaid: [inspiration, snapshot, component, observe]
+  gate: {state: blocked, next_required_capability: inspiration_workflow}
+  backlog_top: inspiration
+  gold:
+    owed: [snapshot, observe, component]
+    owed_mode: covers
+    first_family: snapshot
+    first_family_or: [snapshot, observe]
+    must_not: []
+    require_multi_owed: true
+
+- id: Q04
+  class: mockup
+  ask: "Make the hero match this uploaded mockup screenshot"
+  unpaid: [inspiration, snapshot, observe, verify]
+  gate: {state: provisional, next_required_capability: browser_observe}
+  backlog_top: observe
+  gold:
+    owed: [snapshot, observe, verify]
+    owed_mode: covers
+    first_family: snapshot
+    first_family_or: [snapshot]
+    must_not: [inspiration]
+    require_multi_owed: true
+
+- id: Q05
+  class: mockup
+  ask: "Match PrimeStay mockup; use bg-image.jpg"
+  unpaid: [snapshot, component, verify]
+  gate: {state: provisional, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [snapshot, verify]
+    owed_or: [[snapshot, component, verify]]
+    owed_mode: covers
+    first_family: snapshot
+    must_not: [seo]
+    require_multi_owed: true
+
+- id: Q06
+  class: feature
+  ask: "Add a forgot-password link on the login form"
+  unpaid: [observe, resolve, verify, inspiration]
+  gate: {state: ready, next_required_capability: browser_observe}
+  backlog_top: observe
+  gold:
+    owed: [observe, verify]
+    owed_or: [[observe, resolve, verify]]
+    owed_mode: covers
+    first_family: observe
+    must_not: [inspiration]
+    require_multi_owed: false
+
+- id: Q07
+  class: feature
+  ask: "Wire the settings save button to the existing owner component"
+  unpaid: [resolve, observe, verify]
+  gate: {state: provisional, next_required_capability: codebase_context}
+  backlog_top: resolve
+  gold:
+    owed: [resolve, observe, verify]
+    owed_mode: covers
+    first_family: resolve
+    first_family_or: [resolve, observe]
+    must_not: [inspiration]
+    require_multi_owed: true
+
+- id: Q08
+  class: hotfix
+  ask: "Login button is misaligned — fix it"
+  unpaid: [observe, verify, inspiration, component]
+  gate: {state: ready, next_required_capability: inspiration_workflow}
+  backlog_top: inspiration
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [inspiration]
+    require_multi_owed: false
+
+- id: Q09
+  class: polish
+  ask: "Reduce hero blur by 20%"
+  unpaid: [observe, verify, component]
+  gate: {state: blocked, next_required_capability: component_select}
+  backlog_top: component
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [component]
+    require_multi_owed: false
+
+- id: Q10
+  class: polish
+  ask: "Opacity looks the same — inspect and fix wash"
+  unpaid: [observe, verify]
+  gate: {state: ready, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    first_family_or: [observe, verify]
+    must_not: [inspiration, seo]
+    require_multi_owed: false
+
+- id: Q11
+  class: greenfield
+  ask: "Ship a landing; unpaid still lists inspiration and component"
+  unpaid: [inspiration, component, verify]
+  gate: {state: provisional, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [inspiration, component]
+    owed_or: [[inspiration, component, verify], [snapshot, component]]
+    owed_mode: covers
+    first_family: inspiration
+    first_family_or: [inspiration, snapshot, component]
+    first_mode: reference_family
+    must_not: [seo]
+    require_multi_owed: true
+
+- id: Q12
+  class: redesign
+  ask: "Professional clean white theme for the whole landing"
+  unpaid: [snapshot, observe, verify, design_review]
+  gate: {state: provisional, next_required_capability: browser_observe}
+  backlog_top: observe
+  gold:
+    owed: [snapshot, observe, verify]
+    owed_mode: covers
+    first_family: snapshot
+    first_family_or: [snapshot, observe]
+    must_not: []
+    require_multi_owed: true
+
+- id: Q13
+  class: hotfix
+  ask: "Fix horizontal overflow on mobile nav"
+  unpaid: [observe, verify, seo]
+  gate: {state: ready, next_required_capability: browser_observe}
+  backlog_top: observe
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [seo]
+    require_multi_owed: false
+
+- id: Q14
+  class: feature
+  ask: "Add empty state to the projects table"
+  unpaid: [observe, verify]
+  gate: {state: ready, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    first_family_or: [observe, verify]
+    must_not: [inspiration, figma]
+    require_multi_owed: false
+
+- id: Q15
+  class: mockup
+  ask: "Glass nav + sky hero like the reference PNG"
+  unpaid: [inspiration, snapshot, component]
+  gate: {state: blocked, next_required_capability: inspiration_workflow}
+  backlog_top: inspiration
+  gold:
+    owed: [snapshot, component]
+    owed_mode: covers
+    first_family: snapshot
+    must_not: [inspiration]
+    require_multi_owed: true
+
+- id: Q16
+  class: greenfield
+  ask: "New auth marketing page; foundation unpaid"
+  unpaid: [component, snapshot, observe]
+  gate: {state: blocked, next_required_capability: design_snapshot}
+  backlog_top: snapshot
+  gold:
+    owed: [snapshot, component, observe]
+    owed_mode: covers
+    first_family: snapshot
+    first_family_or: [snapshot, inspiration]
+    must_not: [seo]
+    require_multi_owed: true
+
+- id: Q17
+  class: redesign
+  ask: "After draft, gate says ship council required"
+  unpaid: [design_review, verify]
+  gate: {state: ready, next_required_capability: design_review}
+  backlog_top: design_review
+  gold:
+    owed: [design_review]
+    owed_or: [[design_review, verify]]
+    owed_mode: covers
+    first_family: design_review
+    must_not: [inspiration]
+    require_multi_owed: false
+
+- id: Q18
+  class: polish
+  ask: "Nudge CTA color slightly"
+  unpaid: [observe, verify, inspiration, snapshot, component]
+  gate: {state: blocked, next_required_capability: inspiration_workflow}
+  backlog_top: inspiration
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [inspiration]
+    require_multi_owed: false
+
+- id: Q19
+  class: feature
+  ask: "Which route owns /settings/billing?"
+  unpaid: [resolve, observe]
+  gate: {state: provisional, next_required_capability: codebase_context}
+  backlog_top: resolve
+  gold:
+    owed: [resolve]
+    owed_or: [[resolve, observe]]
+    owed_mode: covers
+    first_family: resolve
+    must_not: [inspiration]
+    require_multi_owed: false
+
+- id: Q20
+  class: greenfield
+  ask: "Do not tunnel: unpaid inspiration + component; next is observe"
+  unpaid: [inspiration, component]
+  gate: {state: provisional, next_required_capability: browser_observe}
+  backlog_top: observe
+  gold:
+    owed: [inspiration, component]
+    owed_mode: covers
+    first_family: inspiration
+    first_family_or: [inspiration, snapshot, component]
+    first_mode: reference_family
+    must_not: []
+    require_multi_owed: true
+
+- id: Q21
+  class: redesign
+  ask: "Snapshot unpaid; next pitches verify only"
+  unpaid: [snapshot, verify]
+  gate: {state: provisional, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [snapshot, verify]
+    owed_mode: covers
+    first_family: snapshot
+    must_not: []
+    require_multi_owed: true
+
+- id: Q22
+  class: hotfix
+  ask: "Wrong app on :5173 — user app is :5174"
+  unpaid: [observe, verify]
+  gate: {state: ready, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [seo]
+    require_multi_owed: false
+
+- id: Q23
+  class: mockup
+  ask: "Claim-done while snapshot and ship unpaid"
+  unpaid: [snapshot, design_review]
+  gate: {state: ready, next_required_capability: design_review}
+  backlog_top: design_review
+  gold:
+    owed: [snapshot, design_review]
+    owed_mode: covers
+    first_family: snapshot
+    must_not: []
+    require_multi_owed: true
+
+- id: Q24
+  class: feature
+  ask: "SEO audit before any observe on a small copy tweak"
+  unpaid: [observe, verify, seo]
+  gate: {state: ready, next_required_capability: browser_observe}
+  backlog_top: observe
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [seo]
+    require_multi_owed: false

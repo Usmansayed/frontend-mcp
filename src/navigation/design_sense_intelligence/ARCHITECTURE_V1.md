@@ -27,7 +27,8 @@ ReviewRequest
       ├─ SUBJECTIVE LANE ────────────────────────────┤
       │   reviewers: hierarchy, nav, component, ux, motion │
       │   providers: open_design, microsoft, uicrit,       │
-      │              design_knowledge, crit_rams             │
+      │              design_knowledge, ux_knowledge,         │
+      │              crit_rams                               │
       │                                                │
       ▼                                                ▼
               ReasoningEngine.synthesize()

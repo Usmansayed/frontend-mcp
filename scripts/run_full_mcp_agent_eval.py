@@ -275,8 +275,8 @@ read(rid); rid += 1
 send({"jsonrpc":"2.0","method":"notifications/initialized","params":{}})
 
 # all resources
-for uri in ("perception://agent-guide","perception://resolver-guide","perception://seo-guide",
-            "perception://inspiration-guide","perception://resource-guide","perception://figma-guide"):
+for uri in ("perception://agent-guide","perception://resolver-guide",
+            "perception://inspiration-guide","perception://resource-guide"):
     t0 = time.monotonic()
     send({"jsonrpc":"2.0","id":rid,"method":"resources/read","params":{"uri":uri}})
     resp = read(rid, 30)
@@ -326,9 +326,6 @@ if sid:
     if ep:
         rid, ms, e = call(rid, "perception_coordinator_briefing", {"episode_id": ep})
         out.append({"key": "stdio:perception_coordinator_briefing", "ok": e.get("ok"), "ms": ms})
-
-    rid, ms, e = call(rid, "perception_figma_connect", {"action": "status"})
-    out.append({"key": "stdio:perception_figma_connect", "ok": e.get("ok") is not None, "ms": ms})
 
     rid, ms, e = call(rid, "perception_resource_font_search", {"query": "inter", "max_results": 2})
     out.append({"key": "stdio:perception_resource_font_search", "ok": e.get("ok") or bool(e.get("degraded")), "ms": ms})

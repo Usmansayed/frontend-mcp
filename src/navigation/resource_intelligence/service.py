@@ -68,22 +68,9 @@ class ResourceIntelligenceService:
 		)
 
 	def check_license(self, asset_dict: dict[str, Any], request: ResourceDiscoveryRequest) -> dict[str, Any]:
-		from navigation.resource_intelligence.models import LicenseProfile
+		from navigation.resource_intelligence.license.resolver import normalize_license_input
 
-		lic = asset_dict.get('license') or {}
-		profile = LicenseProfile(
-			spdx_id=str(lic.get('spdx_id') or 'UNKNOWN'),
-			commercial_use=bool(lic.get('commercial_use')),
-			attribution_required=bool(lic.get('attribution_required')),
-			redistribution_allowed=bool(lic.get('redistribution_allowed', True)),
-			mcp_download_allowed=bool(lic.get('mcp_download_allowed', True)),
-			ai_training_allowed=bool(lic.get('ai_training_allowed', True)),
-			dataset_use_allowed=bool(lic.get('dataset_use_allowed', True)),
-			api_automation_allowed=bool(lic.get('api_automation_allowed', True)),
-			self_hostable=bool(lic.get('self_hostable')),
-			notes=list(lic.get('notes') or []),
-			source_url=str(lic.get('source_url') or ''),
-		)
+		profile = normalize_license_input(asset_dict.get('license'))
 		return build_license_summary(profile, request, provider_id=str(asset_dict.get('provider_id') or '')).to_dict()
 
 	def status(self) -> dict[str, object]:

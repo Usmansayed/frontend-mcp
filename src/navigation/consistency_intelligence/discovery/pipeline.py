@@ -49,6 +49,14 @@ class DiscoveryPipeline:
 			return graph, degraded, MergeStats()
 
 		graph, stats = merge_fragments(graph, non_empty)
+		# Drop contradictory empty-token signal when any source contributed tokens.
+		token_count = (
+			len(graph.foundations.color_tokens)
+			+ len(graph.foundations.shadow_tokens)
+			+ len(graph.foundations.motion_tokens)
+		)
+		if token_count > 0 or stats.tokens_added > 0 or stats.tokens_updated > 0:
+			degraded = [d for d in degraded if d != 'tokens_none_found']
 		return graph, degraded, stats
 
 

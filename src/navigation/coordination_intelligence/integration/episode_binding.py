@@ -19,6 +19,10 @@ class EpisodeBindingStore:
     def unbind_session(self, session_id: str) -> None:
         self._by_session.pop(session_id, None)
 
+    def resolve_session(self, session_id: str) -> str | None:
+        """Session map only — never fall through to project/default."""
+        return self._by_session.get(session_id)
+
     def resolve(
         self,
         *,
@@ -32,6 +36,9 @@ class EpisodeBindingStore:
             found = self._by_session.get(session_id)
             if found:
                 return found
+            # Unbound session_id must not silently reuse project/"default"
+            # (that caused session_start to attach a stale prior episode).
+            return None
         if project_id:
             return self._by_project.get(project_id)
         return self._by_project.get("default")

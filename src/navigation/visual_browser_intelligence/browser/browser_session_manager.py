@@ -706,7 +706,11 @@ class BrowserSessionManager:
             try:
                 await asyncio.sleep(timeout)
                 async with self._lock:
-                    if self._ref_count == 0 and self._managed is not None:
+                    if (
+                        self._ref_count == 0
+                        and not self._logical_sessions
+                        and self._managed is not None
+                    ):
                         logger.info("browser idle timeout (%.0fs) — closing", timeout)
                         await self._kill_managed(reason="idle_timeout")
             except asyncio.CancelledError:

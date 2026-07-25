@@ -1,0 +1,55 @@
+{
+  "name": "ai_readiness_single_page_waitlist",
+  "website_url": "https://example.com",
+  "mode": "development",
+  "evidence": [
+    {
+      "evidence_id": "ev:gsc:index:home",
+      "provider_id": "search-console",
+      "kind": "index_status",
+      "title": "Index status: https://example.com/",
+      "summary": "PASS: Submitted and indexed",
+      "page_url": "https://example.com/",
+      "severity": "info",
+      "metadata": {"verdict": "PASS", "indexStatusResult": {"verdict": "PASS"}}
+    },
+    {
+      "evidence_id": "ev:lh:meta",
+      "provider_id": "lighthouse",
+      "kind": "technical_issue",
+      "title": "Document does not have a meta description",
+      "summary": "Meta descriptions may be included in search results.",
+      "page_url": "https://example.com/",
+      "severity": "high",
+      "source_ref": "lighthouse.seo",
+      "metadata": {"id": "meta-description"}
+    },
+    {
+      "evidence_id": "ev:libre:schema",
+      "provider_id": "librecrawl",
+      "kind": "crawl_issue",
+      "title": "No Structured Data",
+      "summary": "Page has no JSON-LD or Schema.org markup",
+      "page_url": "https://example.com/",
+      "severity": "medium",
+      "source_ref": "librecrawl.crawl_status.issues",
+      "metadata": {"category": "Structured Data", "issue": "No Structured Data"}
+    },
+    {
+      "evidence_id": "ev:libre:twitter",
+      "provider_id": "librecrawl",
+      "kind": "crawl_issue",
+      "title": "Missing Twitter Card Tags",
+      "summary": "Page has no Twitter Card tags",
+      "page_url": "https://example.com/",
+      "severity": "medium",
+      "source_ref": "librecrawl.crawl_status.issues",
+      "metadata": {"category": "Social", "issue": "Missing Twitter Card Tags"}
+    }
+  ],
+  "expect": {
+    "correlation_ids_contains": ["ai_readiness_citation_readiness", "ai_readiness_entity_coverage"],
+    "min_reasoning_units": 1,
+    "min_recommendations": 1
+  }
+}

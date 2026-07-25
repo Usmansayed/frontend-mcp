@@ -1,0 +1,236 @@
+{
+  "pack_id": "pack_forms",
+  "title": "Form Design & Validation Playbook",
+  "target_surfaces": [
+    "perception://guide/forms",
+    "forms",
+    "feature"
+  ],
+  "retrieval_keys": {
+    "surface_type": [
+      "forms",
+      "checkout"
+    ],
+    "user_flow": [
+      "data_entry",
+      "checkout",
+      "signup"
+    ],
+    "ui_component": [
+      "textfield",
+      "checkbox",
+      "radio",
+      "select"
+    ]
+  },
+  "playbook_id": "pb_forms",
+  "pattern_refs": [
+    "pat_12_step_color_scale",
+    "pat_accessible_color_tokens",
+    "pat_adaptive_faceted_navigation",
+    "pat_advanced_settings_accordion",
+    "pat_ai_legible_context_layer",
+    "pat_ai_legible_design_system_context",
+    "pat_aria_describedby_hints",
+    "pat_aria_describedby_instructions",
+    "pat_aria_live_status_announcer",
+    "pat_auto_save_draft",
+    "pat_bmap_cta_block",
+    "pat_bmap_cta_design"
+  ],
+  "related_principle_ids": [
+    "UX_ARC_IMMEDIATEINL_001",
+    "UX_ARC_ERRORSUMMARY_001",
+    "UX_ARC_FORM_010",
+    "UX_ARC_ARIADESCRIBE_001",
+    "UX_ARC_INLINEERRORM_001",
+    "UX_ARC_FIELDSETLEGE_001",
+    "UX_ARC_ISO_001"
+  ],
+  "claim_stubs": [
+    {
+      "claim_id": "UX_ARC_ARIADESCRIBE_001",
+      "name": "Associate Form Instructions, Hints, and Errors via aria-describedby",
+      "engineering_meaning": "Use the aria-describedby attribute on form inputs to programmatically associate them with corresponding inline instructions, hint text, and error messages. Keep associated text concise (e.g., a single short sentence) and avoid interactive elements like links within the description.",
+      "how_to_detect_violations": "Identify form inputs with adjacent helper text or error messages. Verify the input has an aria-describedby attribute containing the ID(s) of the descriptive element(s). Check that the described-by elements do not contain complex formatting or interactive tags like <a>.",
+      "when_to_apply": "When a form field has specific formatting requirements, supplementary hint text, cues, or validation error messages located near the input field.",
+      "when_not_to_apply": "When instructions are general and placed at the beginning of the form, when the <label> text already fully encapsulates the instruction, or when the explanation requires complex, multi-sentence formatting or links.",
+      "confidence": 1.0,
+      "source_ids": [
+        "url_webaim_forms",
+        "url_a11y_govuk_text_input"
+      ],
+      "full_card_path": "kb://cards/UX_ARC_ARIADESCRIBE_001"
+    },
+    {
+      "claim_id": "UX_ARC_ERRORSUMMARY_001",
+      "name": "Form Error Summary Pattern",
+      "engineering_meaning": "Display an error summary at the top of the page on validation failure, move keyboard focus to it, and include links to the specific fields with errors. Ensure the summary text exactly matches the inline error messages.",
+      "how_to_detect_violations": "Trigger a form validation error. Verify an error summary appears at the top of the <main> container, focus shifts to it, and it contains anchor links pointing to the corresponding invalid input fields.",
+      "when_to_apply": "Always show an error summary when there is a form validation error upon submission, even if there is only a single error.",
+      "when_not_to_apply": "When validation is purely preventative (e.g., blocking invalid characters on keypress) without triggering a form-level submission error state.",
+      "confidence": 1.0,
+      "source_ids": [
+        "url_a11y_govuk_error_summary"
+      ],
+      "full_card_path": "kb://cards/UX_ARC_ERRORSUMMARY_001"
+    },
+    {
+      "claim_id": "UX_ARC_FIELDSETLEGE_001",
+      "name": "Group Related Inputs with Fieldset and Legend",
+      "engineering_meaning": "Group related form inputs (such as radio buttons, checkboxes, or multi-part fields like addresses and dates) within a <fieldset> element. The first child of the <fieldset> must be a <legend> that describes the group or asks the question. If the group is the sole question on the page, set the <legend> as the page heading (e.g., containing an <h1>).",
+      "how_to_detect_violations": "Identify related inputs (e.g., radios or checkboxes sharing a name attribute, or clustered fields like dates). Verify they are enclosed in a <fieldset> and that the first child is a <legend>. If it is the only form control on the page, check if the <legend> contains an <h1>.",
+      "when_to_apply": "When presenting mutually exclusive radio buttons, multiple related checkboxes, or a cohesive group of inputs (like an address) that require shared context to be fully understood.",
+      "when_not_to_apply": "When a single form control is used (e.g., a standalone text input or a single boolean checkbox for 'I agree to terms') where the individual <label> provides sufficient context.",
+      "confidence": 1.0,
+      "source_ids": [
+        "url_govuk_checkboxes",
+        "url_govuk_radios",
+        "url_govuk_fieldset"
+      ],
+      "full_card_path": "kb://cards/UX_ARC_FIELDSETLEGE_001"
+    },
+    {
+      "claim_id": "UX_ARC_IMMEDIATEINL_001",
+      "name": "Immediate Inline Validation Feedback",
+      "engineering_meaning": "Provide immediate inline validation feedback using client-side scripts or HTML5 constraints to verify data formats and display errors when a user leaves a field (on blur) or during entry, rather than waiting for form submission.",
+      "how_to_detect_violations": "Inspect form inputs for constraint validation attributes (e.g., required, pattern, type=\"email\") and verify the presence of 'blur' or 'input' event listeners that trigger inline error messages in the DOM before submission.",
+      "when_to_apply": "When forms require specific data formats, mandatory fields, or constraints (e.g., sign-up, checkout, contact forms), allowing users to correct errors immediately in context.",
+      "when_not_to_apply": "When input is entirely free-form, when validation strictly requires server-side context (e.g., checking username availability), or when aggressive 'input' validation would flag errors before the user finishes typing a valid entry.",
+      "confidence": 1.0,
+      "source_ids": [
+        "url_extra_mdn_forms",
+        "url_forms_freecodecamp_audit",
+        "url_polaris_textfield"
+      ],
+      "full_card_path": "kb://cards/UX_ARC_IMMEDIATEINL_001"
+    },
+    {
+      "claim_id": "UX_ARC_CONSTRAINTVA_001",
+      "name": "Integrate Custom Form Validation via setCustomValidity()",
+      "engineering_meaning": "Use the Constraint Validation API's setCustomValidity() method to enforce complex form constraints (e.g., cross-field checks, file size limits) while maintaining native browser validation UI. Pass an empty string to mark the field as valid, or a descriptive error message to mark it as invalid and display the message to the user.",
+      "how_to_detect_violations": "Look for custom form validation logic that manually manipulates DOM error messages and prevents submission via event.preventDefault(), instead of leveraging HTMLInputElement.setCustomValidity().",
+      "when_to_apply": "When standard HTML attributes (pattern, min, max) are insufficient for the validation logic (e.g., checking file sizes, comparing two password fields) but you still want to use native :valid/:invalid CSS and browser error popups.",
+      "when_not_to_apply": "When implementing a completely custom form validation UI that intentionally bypasses native browser tooltips (often using the novalidate attribute on the form).",
+      "confidence": 1.0,
+      "source_ids": [
+        "url_mdn_constraint_validation"
+      ],
+      "full_card_path": "kb://cards/UX_ARC_CONSTRAINTVA_001"
+    },
+    {
+      "claim_id": "UX_ARC_ISO_001",
+      "name": "ISO 9241-110 Suitability for the Task",
+      "engineering_meaning": "The dialog supports user goals without unnecessary effort or irrelevant complexity.",
+      "how_to_detect_violations": "For a screen, mark elements not supporting the primary task; if a large share is irrelevant, fail.",
+      "when_to_apply": "Task-focused flows: forms, checkout, setup wizards.",
+      "when_not_to_apply": "Command centers / multi-goal dashboards where breadth is the task.",
+      "confidence": 0.95,
+      "source_ids": [
+        "src_iso_9241_110",
+        "src_hick_law_pmc"
+      ],
+      "full_card_path": "kb://cards/UX_ARC_ISO_001"
+    },
+    {
+      "claim_id": "UX_ARC_INLINEERRORM_001",
+      "name": "Per-Field Error Message Pattern",
+      "engineering_meaning": "Display validation error messages directly above the affected input (after the label and hint text) in red, apply a red border to the input field, prepend a visually hidden 'Error:' prefix for screen readers, and preserve the user's invalid input.",
+      "how_to_detect_violations": "Trigger a form validation error. Verify the error text appears between the label/hint and the input field, the input has a red border, the original input value is retained, and a visually hidden 'Error:' span precedes the message text.",
+      "when_to_apply": "When a user submits a form containing field-level validation errors.",
+      "when_not_to_apply": "When the error is a system failure, lack of capacity, or eligibility issue rather than a correctable user input error.",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_govuk_error_message"
+      ],
+      "full_card_path": "kb://cards/UX_ARC_INLINEERRORM_001"
+    },
+    {
+      "claim_id": "UX_ARC_POSTELSLAW_001",
+      "name": "Postel's Law (Robustness Principle)",
+      "engineering_meaning": "Accept variable input from users and translate it to meet system requirements rather than forcing strict formatting.",
+      "how_to_detect_violations": "Identify form inputs (e.g., phone numbers, dates, credit cards) that throw validation errors for common formatting variations like spaces or dashes instead of auto-cleaning the data.",
+      "when_to_apply": "When designing forms and data entry fields where human input naturally varies in format (e.g., phone numbers, currency, dates).",
+      "when_not_to_apply": "When strict input validation is required for security reasons (e.g., passwords, cryptographic keys) or when ambiguous input could lead to destructive actions.",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_agg_lawsofux_postel"
+      ],
+      "full_card_path": "kb://cards/UX_ARC_POSTELSLAW_001"
+    },
+    {
+      "claim_id": "UX_ARC_FORM_010",
+      "name": "Single-Column Form Layout",
+      "engineering_meaning": "Present sequential form fields in a single primary vertical column rather than multi-column grids.",
+      "how_to_detect_violations": "Layout audit: consecutive unrelated inputs share similar vertical positions outside allowed micro-groups.",
+      "when_to_apply": "Checkout, signup, lead forms, most consumer forms.",
+      "when_not_to_apply": "Expert dense enterprise forms with trained users; tightly coupled date/name parts.",
+      "confidence": 0.95,
+      "source_ids": [
+        "src_baymard_form_design",
+        "src_iso_9241_110",
+        "url_forms_nng_web_forms",
+        "url_reform_layout"
+      ],
+      "full_card_path": "kb://cards/UX_ARC_FORM_010"
+    }
+  ],
+  "conflict_pairs": [
+    {
+      "a": "ap_placing_sequential_form_",
+      "b": "UX_ARC_FORM_010",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_placing_hint_text_near_a",
+      "b": "UX_ARC_ARIADESCRIBE_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_relying_solely_on_inline",
+      "b": "UX_ARC_ERRORSUMMARY_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_using_div_and_p_or_a_gen",
+      "b": "UX_ARC_FIELDSETLEGE_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_waiting_until_the_user_c",
+      "b": "UX_ARC_IMMEDIATEINL_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_building_completely_cust",
+      "b": "UX_ARC_CONSTRAINTVA_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_using_a_multi_column_gri",
+      "b": "UX_ARC_FORM_010",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_using_generic_div_elemen",
+      "b": "UX_ARC_FIELDSETLEGE_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_reinventing_native_valid",
+      "b": "UX_ARC_CONSTRAINTVA_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_placing_error_messages_b",
+      "b": "UX_ARC_INLINEERRORM_001",
+      "decision_hint": "anti-pattern"
+    }
+  ],
+  "budgets": {
+    "max_claim_stubs": 20,
+    "max_rationale_tokens": 2500
+  },
+  "created_at": "2026-07-21",
+  "notes": "Graph-slice pack — deterministic retrieval, no embeddings."
+}

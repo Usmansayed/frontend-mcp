@@ -1,0 +1,18 @@
+id: exp004_snapshot_clears_design_reference
+intent: redesign Meridian analytics dashboard
+lifecycle_stage: S03_design
+project_maturity: M1
+feeds:
+  - tool: perception_build_design_snapshot
+    ok: true
+    data:
+      snapshot_id: snap_exp004
+      layout:
+        regions:
+          - {role: main}
+          - {role: section}
+    expect:
+      portfolio_paid_contains: [snapshot]
+expect:
+  backlog_top_decision_not: design_reference
+  portfolio_paid_contains: [snapshot]

@@ -1,7 +1,7 @@
 {
   "bundle_version": "1.0.0",
-  "generated_at": "2026-07-13T22:04:51.854300+00:00",
-  "source_git_sha": "431312730d982ba4e7150cfdb2f9be75f3842a90",
+  "generated_at": "2026-07-25T14:31:51.339010+00:00",
+  "source_git_sha": "914b719cdf217b024b585fc55260c22934575c3a",
   "research_state_count": 150,
   "architecture_status": "frozen",
   "principles": [
@@ -18,8 +18,8 @@
     },
     "capability_graph": {
       "path": "capability_graph.v1.yaml",
-      "sha256": "45cadcef7b9622a03e6ac11998ed84bd73ee42d83db5bc730153150d349ab6e1",
-      "bytes": 22465
+      "sha256": "651f016372003e8f67812b1da5c495af9dc155f7601fbc1f9bcc813d190e245c",
+      "bytes": 23186
     },
     "cluster_registry": {
       "path": "cluster_registry.v1.yaml",
@@ -58,8 +58,8 @@
     },
     "situation_policy_catalog": {
       "path": "situation_policy_catalog.v1.yaml",
-      "sha256": "99f3bc69858203e6b12c9b356f05f3a449bba7f8ac00ab963fbbeafa9a71c1dc",
-      "bytes": 7410
+      "sha256": "202d626fcfdebfe3aede84e41bf86c43e5b3432ef70520d55c1d6ccb0359c1d6",
+      "bytes": 7659
     },
     "state_lexicon": {
       "path": "state_lexicon.v1.json",
@@ -68,14 +68,14 @@
     },
     "tool_bindings": {
       "path": "tool_bindings.v1.yaml",
-      "sha256": "b816502133f63bf402ec2bd8d0c4582a09d9ab6e0d4535a8a43c3a5b63b21bdd",
-      "bytes": 9613
+      "sha256": "afc78ef42b4d82523ce9998fcfd402703550497f901cfa8b51d89e714f6f05f1",
+      "bytes": 9492
     }
   },
   "capability_counts": {
-    "T1": 32,
-    "total": 32,
+    "T1": 33,
+    "total": 33,
     "edges": 8,
-    "mcp_ready_false": 1
+    "mcp_ready_false": 6
   }
 }

@@ -84,22 +84,6 @@ TOOL_INSIGHTS: dict[str, dict] = {
         "watch_out": "Run after verify on validation page, not before.",
         "improve_now": "Summarize which guard fired in agent_summary.",
     },
-    "perception_seo_status": {
-        "role": "SEO subsystem readiness",
-        "agent_value": 6,
-        "when_i_use_it": "Before seo_audit — know if companions/graph available.",
-        "improves": "Avoids starting audit when SEO stack not ready.",
-        "watch_out": "~2–3s; optional for pure UI tasks.",
-        "improve_now": "Clear dev vs pro mode in status payload.",
-    },
-    "perception_seo_audit_start_dev": {
-        "role": "Development SEO audit (scan reuse)",
-        "agent_value": 7,
-        "when_i_use_it": "When scan_id exists from observe — instant dev audit on same page.",
-        "improves": "Sub-second with scan reuse vs minutes for cold pro audit.",
-        "watch_out": "Pass scan_id + repo_root; skip companion bootstrap in eval via env.",
-        "improve_now": "Document scan_id reuse pattern in AGENT_GUIDE §SEO.",
-    },
     "perception_flow_describe": {
         "role": "Multi-step flow checkpoints",
         "agent_value": 7,
@@ -232,8 +216,6 @@ def _agent_take_pass(tool_key: str, evidence: dict) -> str:
         "perception_integrate_component": "Dry-run plan returned — I would show user the plan before apply.",
         "perception_verify": "Criteria met — I am allowed to claim this UI state is correct.",
         "perception_probe_guards": f"Session hygiene restored={evidence.get('restored')} — maze/guard pollution handled.",
-        "perception_seo_status": "SEO stack status known — I know if audit is worth starting.",
-        "perception_seo_audit_start_dev": f"Dev SEO completed (instant={evidence.get('instant')}) — fast enough for agent loop.",
         "perception_flow_describe": "Checkpoints loaded — I would verify each myself, not trust automation.",
         "perception_session_end": "Clean shutdown — no leaked browser.",
     }
@@ -431,7 +413,6 @@ def main() -> int:
         for uri in (
             "perception://agent-guide",
             "perception://resolver-guide",
-            "perception://seo-guide",
         ):
             key = f"resource:{uri}"
             rid, ms, res = read_resource(proc, rid, uri)
@@ -454,8 +435,6 @@ def main() -> int:
             ("perception_integrate_component", {"query": "date picker", "plan_only": True}, 60),
             ("perception_verify", None, 60),
             ("perception_probe_guards", None, 90),
-            ("perception_seo_status", {}, 60),
-            ("perception_seo_audit_start", None, 30),
             ("perception_flow_describe", {"flow_id": "validation-form"}, 30),
             ("perception_session_end", None, 30),
         ]
@@ -467,18 +446,12 @@ def main() -> int:
                 args = {"session_id": session_id, "criteria": {"url_contains": ["/forms/validation"]}}
             elif name == "perception_probe_guards" and session_id:
                 args = {"session_id": session_id, "mode": "maze"}
-            elif name == "perception_seo_audit_start" and session_id and scan_id:
-                args = {"website_url": URL, "scan_id": scan_id, "repo_root": REPO}
             elif name == "perception_session_end" and session_id:
                 args = {"session_id": session_id}
             elif args is None:
                 args = {}
 
-            log_key = "perception_seo_audit_start_dev" if name == "perception_seo_audit_start" else name
-            if name == "perception_seo_audit_start" and not scan_id:
-                _post_test_write(log_key, ok=False, duration_ms=0, evidence={}, error="no scan_id")
-                all_ok = False
-                continue
+            log_key = name
 
             rid, ms, env = call_tool(proc, rid, name, args, timeout)
             ok = env.get("ok") is True
@@ -508,11 +481,6 @@ def main() -> int:
                 evidence["verified"] = (env.get("data") or {}).get("verified")
             elif name == "perception_probe_guards":
                 evidence["restored"] = ((env.get("data") or {}).get("session_hygiene") or {}).get("restored")
-            elif name == "perception_seo_audit_start":
-                seo = env.get("data") or {}
-                evidence["instant"] = seo.get("instant")
-                evidence["status"] = seo.get("status")
-                ok = ok and seo.get("status") in ("completed", "partial", None)
             elif name == "perception_session_end":
                 session_id = None
 
@@ -544,7 +512,7 @@ def main() -> int:
     _append_log("2. **`detail: full` when debugging** — summary_only hides console/network entries.")
     _append_log("3. **verify after every act** — non-optional for trustworthy UI work.")
     _append_log("4. **Health first** — saves ~6s browser start when dev server is down.")
-    _append_log("5. **scan_id reuse for SEO** — dev audit stays in agent-time budgets.\n")
+    _append_log("5. **Prefer resolve_* over code_context** — faster, scoped answers for UI work.\n")
 
     LOG_JSON.parent.mkdir(parents=True, exist_ok=True)
     LOG_JSON.write_text(json.dumps({"ok": all_ok, "server_version": server_ver, "results": results}, indent=2), encoding="utf-8")

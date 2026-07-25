@@ -23,6 +23,7 @@ from navigation.inspiration_intelligence.planning.progressive_search import (
 	has_enough_image_refs,
 	image_ref_count,
 	progressive_queries,
+	resolve_collect_provider_order,
 )
 from navigation.inspiration_intelligence.planning.search_planner import DEFAULT_PROVIDER_PRIORITY
 from navigation.inspiration_intelligence.providers.manager import InspirationProviderRegistry
@@ -75,9 +76,9 @@ async def collect_inspiration_hits(
 
 	registry = InspirationProviderRegistry()
 	intent = parse_intent(query)
-	order = list(provider_ids) if provider_ids else list(IMAGE_FIRST_PROVIDER_ORDER)
-	# Keep unknown providers last; prefer image-first known order when caller omits ids.
-	if provider_ids is None:
+	order = resolve_collect_provider_order(provider_ids)
+	# Deep mode only: append any missing priority providers after the image-first order.
+	if provider_ids is None and order == list(IMAGE_FIRST_PROVIDER_ORDER):
 		for pid in DEFAULT_PROVIDER_PRIORITY:
 			if pid not in order:
 				order.append(pid)

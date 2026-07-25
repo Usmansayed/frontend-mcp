@@ -39,7 +39,22 @@ def test_coordinator_disabled_preserves_envelope_exactly(monkeypatch: pytest.Mon
 
 
 @pytest.mark.unit
-def test_session_start_auto_creates_psm_episode(bridge: CoordinatorBridge) -> None:
+def test_session_start_without_intent_advises(bridge: CoordinatorBridge) -> None:
+    out = bridge.process(
+        "perception_session_start",
+        {"base_url": "http://localhost:5173"},
+        make_envelope(
+            "perception_session_start",
+            ok=True,
+            session_id="sess_no_intent",
+            url="http://localhost:5173",
+        ),
+    )
+    advisory = out["agent_summary"].get("advisory") or []
+    assert any("intent_missing" in str(a) for a in advisory)
+    assert out["agent_summary"].get("coordinator")
+    assert out["agent_summary"].get("recommended_next")
+
     env = make_envelope(
         "perception_session_start",
         ok=True,
@@ -110,6 +125,8 @@ def test_structural_strategy_promotes_required_resource_and_readiness_gate(
     assert coordinator["recommended_resource"] == "perception://inspiration-guide"
     assert summary["implementation_gate"] == coordinator["implementation_gate"]
     assert summary["required_resource"] == "perception://inspiration-guide"
+    assert summary["coordinator"]["episode_id"] == coordinator["episode_id"]
+    assert summary.get("recommended_next")
 
 
 @pytest.mark.unit
@@ -233,3 +250,128 @@ def test_process_tool_envelope_module_entrypoint() -> None:
     env = make_envelope("perception_health", ok=True, url="http://localhost:5173")
     out = process_tool_envelope("perception_health", {}, env)
     assert out["ok"] is True
+
+
+@pytest.mark.unit
+def test_new_session_start_does_not_reuse_prior_episode(bridge: CoordinatorBridge) -> None:
+    """Unbound session_id must not fall through to project/default (stale episode leak)."""
+    first = bridge.process(
+        "perception_session_start",
+        {"base_url": "http://localhost:5173", "intent": "first task"},
+        make_envelope(
+            "perception_session_start",
+            ok=True,
+            session_id="sess_first",
+            url="http://localhost:5173",
+        ),
+    )
+    ep1 = first["data"]["coordinator"]["episode_id"]
+    # Seed stale checklist residue on ep1
+    psm1 = bridge.service.runtime.require(ep1)
+    psm1.artifacts.persistent["section_checklist"] = {
+        "required": True,
+        "sections": [{"section_id": "aside:0", "observed": True, "verified": False}],
+        "complete": False,
+    }
+    bridge.service.runtime.save(psm1)
+
+    second = bridge.process(
+        "perception_session_start",
+        {"base_url": "http://localhost:5173", "intent": "fresh redesign episode"},
+        make_envelope(
+            "perception_session_start",
+            ok=True,
+            session_id="sess_second",
+            url="http://localhost:5173",
+        ),
+    )
+    ep2 = second["data"]["coordinator"]["episode_id"]
+    assert ep2 != ep1
+    psm2 = bridge.service.runtime.require(ep2)
+    assert (psm2.artifacts.persistent or {}).get("section_checklist") in (None, {})
+
+
+@pytest.mark.unit
+def test_unbound_session_resolve_does_not_return_default() -> None:
+    from navigation.coordination_intelligence.integration.episode_binding import (
+        EpisodeBindingStore,
+    )
+
+    store = EpisodeBindingStore()
+    store.bind_project("default", "ep_old")
+    assert store.resolve(session_id="sess_new") is None
+    assert store.resolve(project_id="default") == "ep_old"
+    assert store.resolve_session("sess_new") is None
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_coordinator_episode_start_binds_project_for_sessionless_tools() -> None:
+    from navigation.coordination_intelligence.integration.bridge import get_coordinator_bridge
+    from navigation.mcp.coordination_handlers import handle_coordinator_episode_start
+
+    bridge = get_coordinator_bridge()
+    bridge._bindings.clear()
+    # Stale default episode via session_start
+    bridge.process(
+        "perception_session_start",
+        {"base_url": "http://localhost:5173"},
+        make_envelope(
+            "perception_session_start",
+            ok=True,
+            session_id="sess_bind_a",
+            url="http://localhost:5173",
+        ),
+    )
+    old_default = bridge._bindings.resolve(project_id="default")
+
+    out = await handle_coordinator_episode_start(
+        {
+            "project_id": "default",
+            "session_id": "sess_bind_b",
+            "intent": "fresh episode for resolve_route",
+            "website_url": "http://localhost:5173",
+        }
+    )
+    new_ep = out["data"]["episode_id"]
+    assert new_ep != old_default
+    assert bridge._bindings.resolve(project_id="default") == new_ep
+    assert bridge._bindings.resolve(session_id="sess_bind_b") == new_ep
+    # Session-less path (project only) now hits the fresh episode
+    assert bridge._bindings.resolve(session_id=None, project_id="default") == new_ep
+
+
+@pytest.mark.unit
+def test_failed_design_review_does_not_mint_orphan_episode(bridge: CoordinatorBridge) -> None:
+    """Unbound session_id on failed ship must not create ep_* or rebind project/default."""
+    live = bridge.process(
+        "perception_session_start",
+        {"base_url": "http://localhost:5173", "intent": "live redesign"},
+        make_envelope(
+            "perception_session_start",
+            ok=True,
+            session_id="sess_live",
+            url="http://localhost:5173",
+        ),
+    )
+    live_ep = live["data"]["coordinator"]["episode_id"]
+    before_default = bridge._bindings.resolve(project_id="default")
+    assert before_default == live_ep
+    before_count = len(bridge.service.runtime._episodes)
+
+    out = bridge.process(
+        "perception_design_review",
+        {"session_id": "sess_dead_stale", "mode": "ship", "snapshot_id": "snap_gone"},
+        make_envelope(
+            "perception_design_review",
+            ok=False,
+            session_id="sess_dead_stale",
+            error="unknown snapshot_id: snap_gone",
+            degraded=["registry_lost_rebootstrap"],
+        ),
+    )
+    assert out.get("ok") is False
+    assert bridge._bindings.resolve(session_id="sess_dead_stale") is None
+    assert bridge._bindings.resolve(project_id="default") == live_ep
+    assert len(bridge.service.runtime._episodes) == before_count
+    assert bridge._bindings.resolve(session_id="sess_live") == live_ep

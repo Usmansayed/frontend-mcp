@@ -1,0 +1,43 @@
+id: exp018_host_surfaces_thin_clear_ship
+intent: redesign Meridian analytics dashboard
+lifecycle_stage: S03_design
+project_maturity: M1
+feeds:
+  - tool: perception_build_design_snapshot
+    ok: true
+    data:
+      snapshot_id: snap_018b
+      snapshot_summary:
+        layout_issues: 1
+        interactive_count: 10
+      snapshot:
+        layout:
+          regions:
+            - {role: nav}
+            - {role: main}
+  - tool: perception_design_review
+    ok: true
+    data:
+      mode: ship
+      challenges: []
+      ship_gate:
+        council_clear: true
+        open_high_roi: 0
+        state: clear
+        coverage: thin
+        coverage_checks: {regions: false}
+        surface_type: dashboard
+    expect:
+      path:capability_ledger.design_review.quality.thin_clear: true
+      ship_council_clear: true
+      host_contains:
+        - "SHIP THIN-CLEAR"
+      evidence_quality_alerts_contains:
+        - "SHIP THIN-CLEAR"
+expect:
+  host_contains:
+    - "SHIP THIN-CLEAR"
+    - "thin coverage"
+  evidence_quality_alerts_contains:
+    - "SHIP THIN-CLEAR"
+  path:strategy.ship_council_hint.thin_clear: true

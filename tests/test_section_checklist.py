@@ -43,6 +43,9 @@ def test_normalize_sets_verification_from_data_verified_not_transport_ok() -> No
         bundle,
     )
     assert psm.episode.verification_status == "failed"
+    ledger = psm.evidence.capability_ledger.get("browser_verify") or {}
+    assert ledger.get("status") == "failed"
+    assert ledger.get("advancement_eligible") is False
 
     apply_envelope(
         psm,
@@ -54,6 +57,9 @@ def test_normalize_sets_verification_from_data_verified_not_transport_ok() -> No
         bundle,
     )
     assert psm.episode.verification_status == "passed"
+    ledger = psm.evidence.capability_ledger.get("browser_verify") or {}
+    assert ledger.get("status") == "succeeded"
+    assert ledger.get("advancement_eligible") is True
 
 
 @pytest.mark.unit

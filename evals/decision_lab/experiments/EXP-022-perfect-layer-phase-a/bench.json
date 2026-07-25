@@ -1,0 +1,8 @@
+{
+  "n": 30,
+  "p50_ms": 0.346,
+  "p95_ms": 0.406,
+  "max_ms": 0.415,
+  "target_p95_ms": 50.0,
+  "under_target": true
+}

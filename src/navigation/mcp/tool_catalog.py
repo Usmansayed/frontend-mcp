@@ -13,10 +13,8 @@ GROUP_ORDER: dict[str, int] = {
     "Resolver": 40,
     "Component": 50,
     "Design": 60,
-    "SEO": 70,
     "Resources": 80,
     "Inspiration": 85,
-    "Figma": 90,
     "Diagnostics": 100,
     "Coordinator": 110,
 }
@@ -110,18 +108,6 @@ _WORKFLOW: dict[str, dict[str, str]] = {
         "before": "search_components",
         "next": "verify UI",
     },
-    "perception_seo_audit_start": {
-        "what": "Start SEO audit (dev=inline, pro=async).",
-        "when": "After observe; pass scan_id.",
-        "before": "navigate_and_observe",
-        "next": "seo_audit_poll (pro only)",
-    },
-    "perception_seo_audit_poll": {
-        "what": "Poll professional SEO job.",
-        "when": "After seo_audit_start returns job_id.",
-        "before": "seo_audit_start",
-        "next": "seo_verify",
-    },
     "perception_probe_form": {
         "what": "Discover form fields and selectors.",
         "when": "Before filling unknown forms.",
@@ -150,8 +136,8 @@ _COMMON_SCHEMA_EXAMPLES: dict[str, Any] = {
         "description": "Absolute path to app root (package.json). Env: FRONTEND_PERCEPTION_DEFAULT_REPO_ROOT",
         "examples": ["/path/to/my-app"],
     },
-    "url": {"type": "string", "description": "Path or absolute URL", "examples": ["/forms/validation", "http://localhost:5173/"]},
-    "base_url": {"type": "string", "examples": ["http://localhost:5173"]},
+    "url": {"type": "string", "description": "Path or absolute URL", "examples": ["/forms/validation", "http://127.0.0.1:18765/"]},
+    "base_url": {"type": "string", "examples": ["http://127.0.0.1:18765"]},
 }
 
 _DETAIL_ENUM_DOC = (
@@ -190,14 +176,10 @@ def infer_group(name: str) -> str:
         return "Component"
     if name.startswith("perception_design_") or name.startswith("perception_consistency_") or name == "perception_build_design_snapshot":
         return "Design"
-    if name.startswith("perception_seo_"):
-        return "SEO"
     if name.startswith("perception_resource_"):
         return "Resources"
     if name.startswith("perception_inspiration_"):
         return "Inspiration"
-    if name.startswith("perception_figma_"):
-        return "Figma"
     if any(x in name for x in ("audit_", "diagnosis", "debug_mode", "detect_framework", "framework_docs", "full_diagnosis")):
         return "Diagnostics"
     if name.startswith("perception_coordinator_"):
@@ -216,8 +198,6 @@ def _infer_workflow(name: str) -> dict[str, str]:
             "before": "read perception://resolver-guide",
             "next": "edit + verify",
         }
-    if group == "SEO":
-        return {"what": "SEO intelligence.", "when": "SEO tasks.", "before": "seo_status", "next": "verify or report"}
     if group == "Diagnostics":
         return {"what": "Lighthouse/diagnosis.", "when": "Quality audit.", "before": "loaded page", "next": "review scores"}
     return {"what": "See description.", "when": "As needed.", "before": "AGENT_GUIDE", "next": "verify"}
@@ -259,9 +239,6 @@ def _enhance_schema(name: str, schema: dict[str, Any]) -> dict[str, Any]:
             "examples",
             [{"route": "/forms/validation", "file": "src/pages/forms/ValidationForm.jsx", "component": {"name": "ValidationForm"}}],
         )
-    if name == "perception_seo_audit_start":
-        props.setdefault("scan_id", _COMMON_SCHEMA_EXAMPLES["scan_id"])
-        out.setdefault("examples", [{"website_url": "http://localhost:5173", "scan_id": "scan_abc", "repo_root": "/path/to/app"}])
     return out
 
 

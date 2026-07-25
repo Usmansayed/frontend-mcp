@@ -99,6 +99,7 @@ class FrontendEngineeringSpec:
         by_group: dict[str, dict[str, Any]] = {g: {} for g in V1_GROUPS}
         unresolved: list[dict[str, Any]] = []
         resolved_count = 0
+        na_count = 0
         for did, dec in sorted(
             self.decisions.items(),
             key=lambda item: (-item[1].impact_weight, item[0]),
@@ -110,7 +111,10 @@ class FrontendEngineeringSpec:
                 unresolved.append(blob)
             elif dec.status == "resolved":
                 resolved_count += 1
+            elif dec.status == "not_applicable":
+                na_count += 1
 
+        settled = resolved_count + na_count
         return {
             "schema_version": self.schema_version,
             "catalog_version": self.catalog_version,
@@ -122,9 +126,10 @@ class FrontendEngineeringSpec:
             "coverage": {
                 "total": len(self.decisions),
                 "resolved": resolved_count,
+                "not_applicable": na_count,
                 "unresolved_or_partial": len(unresolved),
                 "coverage_ratio": round(
-                    resolved_count / max(len(self.decisions), 1), 4
+                    settled / max(len(self.decisions), 1), 4
                 ),
             },
             "unresolved_by_impact": unresolved[:16],

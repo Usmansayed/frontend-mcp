@@ -1,3 +1,5 @@
+# NOTE: CVW workflows that require perception_seo_* or perception_figma_* are MVP-excluded.
+# See parked/MVP_EXCLUDE_SEO.md and parked/MVP_EXCLUDE_FIGMA.md.
 schema_version: "1.0"
 description: >
   Coordination Intelligence validation workflows. Each workflow defines the expected
@@ -6,6 +8,7 @@ description: >
 
 workflows:
   - workflow_id: CVW-01
+    mvp_excluded: true
     title: Build landing page from Figma
     engineering_goal: Greenfield landing page aligned to Figma design source
     modules: [figma_intelligence, visual_browser_intelligence, design_snapshot_engine, design_sense_intelligence, consistency_intelligence, codebase_intelligence]
@@ -248,6 +251,7 @@ workflows:
       max_unnecessary_tools: 2
 
   - workflow_id: CVW-07
+    mvp_excluded: true
     title: Improve SEO
     engineering_goal: SEO evidence collect, fix, verify, diff
     modules: [seo_intelligence, visual_browser_intelligence, codebase_intelligence]
@@ -282,6 +286,7 @@ workflows:
       max_unnecessary_tools: 2
 
   - workflow_id: CVW-08
+    mvp_excluded: true
     title: Improve AI Visibility
     engineering_goal: SEO audit with AI readiness block, verify recommendations
     modules: [seo_intelligence, visual_browser_intelligence]

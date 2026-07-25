@@ -157,8 +157,8 @@ def _detect_build_tool(deps: dict[str, str], root: Path, framework: str | None) 
 
 def _detect_rendering_and_router(root: Path, framework: str | None) -> tuple[str | None, str | None]:
 	if framework == 'Next.js':
-		has_app = (root / 'app').is_dir()
-		has_pages = (root / 'pages').is_dir()
+		has_app = (root / 'app').is_dir() or (root / 'src' / 'app').is_dir()
+		has_pages = (root / 'pages').is_dir() or (root / 'src' / 'pages').is_dir()
 		router = 'app' if has_app else ('pages' if has_pages else None)
 		mode = 'SSR/SSG (hybrid)'
 		return mode, router
@@ -181,8 +181,8 @@ def _project_structure(root: Path) -> dict[str, Any]:
 
 	return {
 		'has_src': has('src'),
-		'has_app_dir': has('app'),
-		'has_pages_dir': has('pages'),
+		'has_app_dir': has('app') or has('src/app'),
+		'has_pages_dir': has('pages') or has('src/pages'),
 		'has_public': has('public'),
 		'has_components': has('src/components') or has('components'),
 		'has_routes': has('src/routes') or has('src/router.jsx') or has('src/router.tsx'),

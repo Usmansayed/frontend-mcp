@@ -1,0 +1,23 @@
+id: exp002_one_voice_after_observe
+intent: redesign Meridian dashboard and workspace settings preferences
+lifecycle_stage: S03_design
+project_maturity: M1
+feeds:
+  - tool: perception_navigate_and_observe
+    ok: true
+    data:
+      url: http://localhost:5173/dashboard
+      scan_id: scan_exp002
+      agent_summary:
+        blocking: []
+    expect:
+      next_capability: design_snapshot
+      # One voice: suggested must match gate next when claim blocked
+      suggested_capability: design_snapshot
+      portfolio_paid_contains: [observe]
+      portfolio_unpaid_contains: [snapshot]
+expect:
+  suggested_capability: design_snapshot
+  next_capability: design_snapshot
+  host_theme: EVIDENCE PLAN
+  prohibited_contains: [claim_complete]

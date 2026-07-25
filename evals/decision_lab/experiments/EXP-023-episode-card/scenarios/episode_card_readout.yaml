@@ -1,0 +1,19 @@
+id: exp023_episode_card_readout
+intent: redesign Meridian analytics dashboard
+lifecycle_stage: S03_design
+project_maturity: M1
+expect_after_start:
+  path:episode_card.schema: episode_card.v1
+  path:episode_card.gate.state: blocked
+feeds:
+  - tool: perception_build_design_snapshot
+    ok: true
+    data: {snapshot_id: snap_023}
+    expect:
+      path:episode_card.schema: episode_card.v1
+      path:capability_ledger.design_snapshot.quality.thin: true
+expect:
+  path:episode_card.schema: episode_card.v1
+  path:episode_card.surface_type: dashboard
+  host_contains:
+    - "EVIDENCE THIN"

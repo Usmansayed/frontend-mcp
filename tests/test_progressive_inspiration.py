@@ -45,8 +45,27 @@ def test_has_enough_image_refs_stops_at_target() -> None:
 
 
 def test_image_first_provider_order_http_friendly() -> None:
-    assert IMAGE_FIRST_PROVIDER_ORDER[0] in ("behance", "onepagelove")
-    assert "land-book" == IMAGE_FIRST_PROVIDER_ORDER[-1]
+    assert IMAGE_FIRST_PROVIDER_ORDER[0] == "onepagelove"
+    assert IMAGE_FIRST_PROVIDER_ORDER[1] == "lapa"
+    assert "httpster" in IMAGE_FIRST_PROVIDER_ORDER
+    assert "land-book" not in IMAGE_FIRST_PROVIDER_ORDER
+
+
+def test_resolve_collect_provider_order_fast_http_only(monkeypatch: pytest.MonkeyPatch) -> None:
+    from navigation.inspiration_intelligence.planning.progressive_search import (
+        FAST_HTTP_PROVIDER_ORDER,
+        resolve_collect_provider_order,
+    )
+
+    monkeypatch.setenv("INSPIRATION_FAST", "1")
+    assert resolve_collect_provider_order(None) == list(FAST_HTTP_PROVIDER_ORDER)
+    assert "lapa" in FAST_HTTP_PROVIDER_ORDER
+    assert "httpster" in FAST_HTTP_PROVIDER_ORDER
+    assert "land-book" not in FAST_HTTP_PROVIDER_ORDER
+    monkeypatch.setenv("INSPIRATION_FAST", "0")
+    assert resolve_collect_provider_order(None)[0] == "onepagelove"
+    assert "dribbble" in resolve_collect_provider_order(None)
+    assert resolve_collect_provider_order(["behance"]) == ["behance"]
 
 
 @pytest.mark.asyncio

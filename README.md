@@ -42,12 +42,19 @@ Your coding agent (Cursor/Claude/Codex) remains the brain.
 
 ### Install
 
-Both PyPI names install the same MCP server:
+One PyPI package only:
 
-| Package | Install / upgrade |
-|---------|-------------------|
-| `frontend-perception-engine` | `pip install --upgrade frontend-perception-engine` |
-| `frontend-mcp` (alias) | `pip install --upgrade frontend-mcp` |
+```bash
+pip install --upgrade frontend-perception-engine
+```
+
+That provides the `frontend-mcp` / `frontend-perception-mcp` CLI.  
+Do **not** install the old separate `frontend-mcp` alias package (it caused version skew). If you have it:
+
+```bash
+pip uninstall frontend-mcp
+pip install --upgrade frontend-perception-engine
+```
 
 Use `--upgrade` when a version is already installed — plain `pip install` may leave an older release in place.
 
@@ -57,12 +64,7 @@ Recommended (quiet output + next steps):
 
 ```bash
 uvx --from frontend-perception-engine frontend-perception-install
-```
-
-Or the shorter alias name:
-
-```bash
-uvx --from frontend-mcp frontend-mcp-install
+# or: uvx --from frontend-perception-engine frontend-mcp-install
 ```
 
 With Chromium for Browser Use:
@@ -100,9 +102,9 @@ frontend-perception-mcp
 Using `uvx` (no local install in current environment):
 
 ```bash
-uvx --from frontend-perception-engine frontend-perception-mcp
+uvx --from frontend-perception-engine frontend-mcp
 # or
-uvx --from frontend-mcp frontend-mcp
+uvx --from frontend-perception-engine frontend-perception-mcp
 ```
 
 ### Cursor MCP config

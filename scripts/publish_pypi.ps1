@@ -1,4 +1,4 @@
-# Publish frontend-perception-engine and frontend-mcp to PyPI (same version).
+# Publish the single package: frontend-perception-engine (includes frontend-mcp CLI).
 # Loads TWINE_* from ../../.env (pipy_username / pipy_password).
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
@@ -17,7 +17,7 @@ if (-not $env:TWINE_USERNAME -or -not $env:TWINE_PASSWORD) {
 
 Set-Location $Root
 
-Write-Host "Building frontend-perception-engine..."
+Write-Host "Building frontend-perception-engine (single package)..."
 if (Test-Path dist) { Remove-Item -Recurse -Force dist }
 python -m build
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -26,16 +26,5 @@ Write-Host "Uploading frontend-perception-engine..."
 uvx twine upload dist/*
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-$aliasDir = Join-Path $Root "packages\frontend-mcp"
-Set-Location $aliasDir
-if (Test-Path dist) { Remove-Item -Recurse -Force dist }
-
-Write-Host "Building frontend-mcp alias..."
-python -m build
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-Write-Host "Uploading frontend-mcp..."
-uvx twine upload dist/*
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-Write-Host "Done. Published both packages at version in pyproject.toml."
+Write-Host "Done. Published frontend-perception-engine only (CLI: frontend-mcp)."
+Write-Host "Do NOT install the old separate frontend-mcp PyPI alias - uninstall it if present."

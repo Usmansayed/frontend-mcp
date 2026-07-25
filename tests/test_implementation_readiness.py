@@ -115,6 +115,52 @@ def test_image_urls_without_materialized_refs_remain_provisional() -> None:
 
 
 @pytest.mark.unit
+def test_redesign_prefers_snapshot_over_inspiration_gate() -> None:
+    """Live redesign must tip gate.next to design_snapshot, not gallery inspiration."""
+    service = CoordinationIntelligenceService()
+    psm = service.episode_start(
+        session_id="sess_redesign_route",
+        intent=(
+            "Redesign the Pulse Maze sandbox dashboard home for clearer hierarchy: "
+            "one primary focus, less equal-weight KPI noise"
+        ),
+        lifecycle_stage="S05_implementation",
+        project_maturity="M2",
+    )
+    strategy = psm.briefing.engineering_strategy
+    assert strategy is not None
+    assert strategy["task_scope"] == "redesign"
+    gate = strategy["implementation_gate"]
+    assert gate["next_required_capability"] == "design_snapshot"
+    assert gate["required_resource"] == "perception://redesign-workflow"
+    assert strategy["recommended_resource"] == "perception://redesign-workflow"
+    rec = strategy.get("recommended_evidence") or {}
+    assert rec.get("capability_id") == "design_snapshot"
+    unpaid = [
+        u["family"]
+        for u in (strategy.get("episode_portfolio") or {}).get("unpaid") or []
+    ]
+    assert "snapshot" in unpaid
+    assert "inspiration" not in unpaid
+    assert "inspiration_workflow" not in (strategy.get("host_action") or "")
+    assert "design_snapshot" in (strategy.get("host_action") or "")
+
+
+@pytest.mark.unit
+def test_greenfield_still_routes_inspiration_first() -> None:
+    service = CoordinationIntelligenceService()
+    psm = service.episode_start(
+        session_id="sess_greenfield_route",
+        intent="build a new SaaS analytics dashboard from scratch",
+        lifecycle_stage="S03_design",
+        project_maturity="M1",
+    )
+    gate = psm.briefing.engineering_strategy["implementation_gate"]
+    assert gate["next_required_capability"] == "inspiration_workflow"
+    assert gate["required_resource"] == "perception://inspiration-guide"
+
+
+@pytest.mark.unit
 def test_usable_component_selection_resolves_foundation_evidence() -> None:
     service = CoordinationIntelligenceService()
     psm = _structural_episode(service)
@@ -142,3 +188,65 @@ def test_usable_component_selection_resolves_foundation_evidence() -> None:
         for item in updated.briefing.engineering_strategy["unresolved_decisions"]
     }
     assert "component_foundation" not in decisions
+
+
+@pytest.mark.unit
+def test_component_plan_does_not_resolve_foundation() -> None:
+    """Plan pays progress but foundation stays open and next tips select (Test 9)."""
+    from navigation.coordination_intelligence.models import ProjectSituationModel
+    from navigation.coordination_intelligence.planning.episode_portfolio import (
+        compile_episode_portfolio,
+    )
+    from navigation.coordination_intelligence.planning.evidence_plan_status import (
+        get_plan_status_map,
+        open_evidence_plan_items,
+    )
+    from navigation.coordination_intelligence.planning.implementation_readiness import (
+        compile_implementation_readiness,
+    )
+
+    psm = ProjectSituationModel()
+    psm.episode.retry_counters["episode_design_scope"] = "design_driven"
+    psm.evidence.capability_ledger["component_search_plan"] = {
+        "status": "succeeded",
+        "advancement_eligible": True,
+    }
+    unresolved = [
+        {
+            "decision_id": "component_foundation",
+            "title": "Component foundation selection",
+            "priority": 9,
+            "structural": True,
+            "resolving_capabilities": ["component_search_plan", "component_select"],
+        }
+    ]
+    gate, evidence_plan, _ = compile_implementation_readiness(
+        psm,
+        influence_level="structural",
+        task_scope="design_driven",
+        unresolved_decisions=unresolved,
+    )
+    assert evidence_plan
+    assert evidence_plan[0]["capability_id"] == "component_select"
+    assert "plan alone" in str(evidence_plan[0].get("completion_criteria") or "").lower()
+    open_items = open_evidence_plan_items(psm, evidence_plan)
+    assert open_items
+    assert open_items[0]["capability_id"] == "component_select"
+    status = get_plan_status_map(psm)
+    assert (status.get("component_foundation") or {}).get("state") not in (
+        "completed",
+        "skipped",
+        "superseded",
+    )
+    assert gate["next_required_capability"] == "component_select"
+    portfolio = compile_episode_portfolio(
+        psm=psm,
+        unresolved_decisions=unresolved,
+        implementation_gate=gate,
+        initiative_on=True,
+        task_scope="design_driven",
+    )
+    component_unpaid = [u for u in portfolio["unpaid"] if u.get("family") == "component"]
+    assert component_unpaid
+    assert "not selected" in str(component_unpaid[0].get("reason") or "").lower()
+    assert component_unpaid[0].get("suggested") == "perception_select_component_foundation"

@@ -51,7 +51,7 @@ jobs:
         run: |
           pytest -m "unit or golden" -v --timeout=60
 
-  # T2 contract + T4 validation-form eval — needs sandbox on :5173.
+  # T2 contract + T4 validation-form eval — needs sandbox on :18765.
   contract-and-eval:
     name: T2 contract + T4 eval (sandbox)
     runs-on: ubuntu-latest
@@ -89,13 +89,13 @@ jobs:
       - name: Start sandbox dev server
         working-directory: sandbox
         run: |
-          nohup npm run dev -- --host 127.0.0.1 --port 5173 > sandbox.log 2>&1 &
+          nohup npm run dev -- --host 127.0.0.1 --port 18765 > sandbox.log 2>&1 &
           echo "sandbox_pid=$!" >> $GITHUB_ENV
 
       - name: Wait for sandbox
         run: |
           for i in $(seq 1 60); do
-            if curl -sSf http://127.0.0.1:5173/ > /dev/null; then
+            if curl -sSf http://127.0.0.1:18765/ > /dev/null; then
               echo "sandbox ready"
               exit 0
             fi
@@ -117,7 +117,7 @@ jobs:
           PYTHONUTF8: "1"
           PYTHONIOENCODING: "utf-8"
           SEO_SKIP_COMPANION_BOOTSTRAP: "1"
-        run: python src/run_mcp_contract_tests.py --url http://127.0.0.1:5173 --headless
+        run: python src/run_mcp_contract_tests.py --url http://127.0.0.1:18765 --headless
 
       - name: T4 validation-form eval
         env:
@@ -125,7 +125,7 @@ jobs:
           PYTHONIOENCODING: "utf-8"
           SEO_SKIP_COMPANION_BOOTSTRAP: "1"
         continue-on-error: true
-        run: python src/run_mcp_eval_validation_form.py --url http://127.0.0.1:5173 --headless
+        run: python src/run_mcp_eval_validation_form.py --url http://127.0.0.1:18765 --headless
 
       - name: Upload contract artifacts
         if: always()
@@ -175,12 +175,12 @@ jobs:
       - name: Start sandbox
         working-directory: sandbox
         run: |
-          nohup npm run dev -- --host 127.0.0.1 --port 5173 > sandbox.log 2>&1 &
+          nohup npm run dev -- --host 127.0.0.1 --port 18765 > sandbox.log 2>&1 &
 
       - name: Wait for sandbox
         run: |
           for i in $(seq 1 60); do
-            if curl -sSf http://127.0.0.1:5173/ > /dev/null; then exit 0; fi
+            if curl -sSf http://127.0.0.1:18765/ > /dev/null; then exit 0; fi
             sleep 1
           done
           exit 1
@@ -190,7 +190,7 @@ jobs:
           PYTHONUTF8: "1"
           PYTHONIOENCODING: "utf-8"
           SEO_SKIP_COMPANION_BOOTSTRAP: "1"
-        run: python src/run_all_phases.py --url http://127.0.0.1:5173 --headless
+        run: python src/run_all_phases.py --url http://127.0.0.1:18765 --headless
         continue-on-error: true
 
       - name: Upload phase artifacts

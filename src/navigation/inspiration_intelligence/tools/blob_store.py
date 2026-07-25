@@ -100,26 +100,38 @@ class InspirationBlobStore:
 			normalize_image_url(preview_url),
 			provider_id=provider_id,
 		)
-		source = medium_url or normalize_image_url(preview_url) or screenshot_path
-		if not source:
+		original = normalize_image_url(preview_url)
+		candidates: list[str] = []
+		for u in (medium_url, original, screenshot_path):
+			u = (u or '').strip()
+			if u and u not in candidates:
+				candidates.append(u)
+		if not candidates:
 			return None
-		if provider_id == 'land-book' and 'og-image' in source:
+		if provider_id == 'land-book' and all('og-image' in c for c in candidates if is_http_url(c)):
 			return None
 
 		stem = _slugify(f'{provider_id}-{candidate_id or title}')
 		dest = session_dir / f'{stem}.jpg'
 
 		raw: bytes | None = None
-		if is_local_image_ref(source):
-			path = Path(source)
-			if source.startswith('file://'):
-				from urllib.parse import unquote, urlparse
+		source = ''
+		for candidate in candidates:
+			if provider_id == 'land-book' and 'og-image' in candidate:
+				continue
+			source = candidate
+			if is_local_image_ref(source):
+				path = Path(source)
+				if source.startswith('file://'):
+					from urllib.parse import unquote, urlparse
 
-				path = Path(unquote(urlparse(source).path))
-			if path.is_file():
-				raw = path.read_bytes()
-		elif is_http_url(source):
-			raw = self._fetch_bytes(source, referer=page_url)
+					path = Path(unquote(urlparse(source).path))
+				if path.is_file():
+					raw = path.read_bytes()
+			elif is_http_url(source):
+				raw = self._fetch_bytes(source, referer=page_url)
+			if raw:
+				break
 
 		if not raw:
 			return None
@@ -219,12 +231,32 @@ class InspirationBlobStore:
 
 	def _fetch_bytes(self, url: str, *, referer: str) -> bytes | None:
 		try:
-			headers = {'User-Agent': 'Mozilla/5.0'}
+			headers = {
+				'User-Agent': (
+					'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+					'(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+				),
+				'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+				'Accept-Language': 'en-US,en;q=0.9',
+			}
 			if referer:
 				headers['Referer'] = referer
 			req = urllib.request.Request(url, headers=headers)
-			with urllib.request.urlopen(req, timeout=45) as resp:
-				return resp.read()
+			ctx = None
+			try:
+				import ssl
+				import certifi
+
+				ctx = ssl.create_default_context(cafile=certifi.where())
+			except Exception:
+				ctx = None
+			with urllib.request.urlopen(req, timeout=45, context=ctx) as resp:
+				data = resp.read()
+				ctype = (resp.headers.get('Content-Type') or '').lower()
+				# Reject HTML error pages returned as 200
+				if 'text/html' in ctype and len(data) < 50_000:
+					return None
+				return data
 		except Exception:
 			return None
 
@@ -233,7 +265,10 @@ class InspirationBlobStore:
 			from PIL import Image
 
 			img = Image.open(BytesIO(raw))
+			# AVIF / RGBA / palette → RGB for JPEG
 			if img.mode not in ('RGB', 'L'):
+				img = img.convert('RGB')
+			elif img.mode == 'L':
 				img = img.convert('RGB')
 			w, h = img.size
 			if w > MEDIUM_MAX_WIDTH:

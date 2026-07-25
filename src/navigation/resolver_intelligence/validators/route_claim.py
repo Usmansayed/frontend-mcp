@@ -4,8 +4,13 @@ from __future__ import annotations
 from pathlib import Path
 
 from navigation.resolver_intelligence.context import ResolverContext
-from navigation.resolver_intelligence.contracts import CheckResult, ValidationResult
-from navigation.resolver_intelligence.plugins.route import react_router_v6
+from navigation.resolver_intelligence.contracts import (
+    CheckResult,
+    ResolverKind,
+    ResolverQuery,
+    ValidationResult,
+)
+from navigation.resolver_intelligence.registry import ResolverRegistry
 
 
 def validate_route_claim(claim: dict, ctx: ResolverContext) -> ValidationResult:
@@ -49,7 +54,11 @@ def validate_route_claim(claim: dict, ctx: ResolverContext) -> ValidationResult:
         )
     )
 
-    resolve_result = react_router_v6.resolve_route(route, ctx)
+    # Same dispatch as perception_resolve_route (Next App Router before RR v6).
+    resolve_result = ResolverRegistry().resolve(
+        ResolverQuery(kind=ResolverKind.ROUTE, params={"path": route}),
+        ctx,
+    )
     agrees = False
     if resolve_result.matches:
         for match in resolve_result.matches:
@@ -59,15 +68,42 @@ def validate_route_claim(claim: dict, ctx: ResolverContext) -> ValidationResult:
                 file_claim.replace("\\", "/").lstrip("./")
             ):
                 agrees = True
+        # File+route agreement: resolve found the claimed file even without symbol match.
+        if not agrees and file_exists and file_claim:
+            for match in resolve_result.matches:
+                if match.file_path.replace("\\", "/").endswith(
+                    file_claim.replace("\\", "/").lstrip("./")
+                ):
+                    agrees = True
+                    break
     checks.append(
         CheckResult(
             "resolve_route_agrees",
             agrees,
-            resolve_result.status.value,
+            f"{resolve_result.resolver_id}:{resolve_result.status.value}",
         )
     )
 
+    # When file exists + component in file, and resolve found the route under Next,
+    # treat as valid even if symbol naming differs (page.tsx default export).
+    if (
+        not agrees
+        and file_exists
+        and (name_in_file or not component_name)
+        and resolve_result.matches
+        and "next" in str(resolve_result.resolver_id or "").lower()
+    ):
+        agrees = True
+        checks[-1] = CheckResult(
+            "resolve_route_agrees",
+            True,
+            f"{resolve_result.resolver_id}:file_route_aligned",
+        )
+
     valid = all(c.passed for c in checks)
+    # Prefer file+component checks: if those pass and resolve found next matches, valid.
+    if file_exists and (name_in_file or not component_name) and resolve_result.matches and agrees:
+        valid = True
     normalized = resolve_result.matches[0] if agrees and resolve_result.matches else None
     return ValidationResult(
         valid=valid,

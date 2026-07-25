@@ -32,24 +32,26 @@ def detect_sandbox_url() -> str:
     import os
     import urllib.request
 
+    from navigation.core.paths import SANDBOX_DEFAULT_BASE_URL, SANDBOX_DEV_PORT
+
     explicit = os.getenv("SANDBOX_URL")
     if explicit:
         return explicit
-    for port in (5173, 5174, 5175):
-        url = f"http://localhost:{port}"
+    for port in (SANDBOX_DEV_PORT, 18766, 5173):
+        url = f"http://127.0.0.1:{port}"
         try:
             with urllib.request.urlopen(url, timeout=2) as resp:
                 if resp.status == 200:
                     return url
         except Exception:
             continue
-    return "http://localhost:5173"
+    return SANDBOX_DEFAULT_BASE_URL
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run perception engine with Browser Use + graph hints")
     parser.add_argument("--task", default=DEFAULT_TASK, help="Natural-language browser task")
-    parser.add_argument("--url", default=None, help="Sandbox URL (default: SANDBOX_URL or http://localhost:5173)")
+    parser.add_argument("--url", default=None, help="Sandbox URL (default: SANDBOX_URL or http://127.0.0.1:18765)")
     parser.add_argument("--model", default=None, help="Bedrock model id (default: BEDROCK_MODEL env)")
     parser.add_argument("--region", default=None, help="AWS region (default: AWS_REGION)")
     parser.add_argument("--max-steps", type=int, default=25, help="Max agent steps")

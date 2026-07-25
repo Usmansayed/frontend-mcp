@@ -46,10 +46,7 @@ class _Spinner:
 
 
 def _resolve_install_package() -> str:
-	"""Match PyPI package to the install entry point (frontend-mcp vs engine)."""
-	prog = Path(sys.argv[0]).name.lower()
-	if prog.startswith('frontend-mcp'):
-		return 'frontend-mcp'
+	"""Always install the single engine package (CLI name may still be frontend-mcp-*)."""
 	return DEFAULT_PACKAGE_NAME
 
 
@@ -102,7 +99,7 @@ def _build_install_command(
 
 	raise SystemExit(
 		'No installer available. Install pip or uv, or use:\n'
-		'  uvx --from frontend-mcp frontend-mcp\n',
+		'  uvx --from frontend-perception-engine frontend-mcp\n',
 	)
 
 
@@ -134,27 +131,24 @@ def _installed_version(package: str) -> str | None:
 
 def _print_success(*, package: str, with_browser: bool) -> None:
 	engine_version = _installed_version(DEFAULT_PACKAGE_NAME)
-	alias_version = _installed_version('frontend-mcp')
-	version_bits: list[str] = []
-	if package == 'frontend-mcp' and alias_version:
-		version_bits.append(f'frontend-mcp {alias_version}')
-	if engine_version:
-		version_bits.append(f'frontend-perception-engine {engine_version}')
-	version_suffix = f' ({", ".join(version_bits)})' if version_bits else ''
-	sys.stdout.write(f'\n  OK  Successfully installed {package}{version_suffix}\n\n')
+	version_suffix = f' ({DEFAULT_PACKAGE_NAME} {engine_version})' if engine_version else ''
+	sys.stdout.write(f'\n  OK  Successfully installed {DEFAULT_PACKAGE_NAME}{version_suffix}\n\n')
 	sys.stdout.write('  Run MCP server:\n')
 	sys.stdout.write('    frontend-mcp\n')
 	sys.stdout.write('    # or: frontend-perception-mcp\n\n')
 	sys.stdout.write('  Or with uvx (always latest from PyPI):\n')
-	sys.stdout.write('    uvx --from frontend-mcp frontend-mcp\n\n')
+	sys.stdout.write('    uvx --from frontend-perception-engine frontend-mcp\n\n')
 	sys.stdout.write('  Install agent rules (in your app folder):\n')
+	sys.stdout.write('    frontend-mcp setup\n')
 	sys.stdout.write('    frontend-mcp install rules\n\n')
 	sys.stdout.write('  Cursor MCP config:\n')
 	sys.stdout.write('    {\n')
 	sys.stdout.write('      "mcpServers": {\n')
 	sys.stdout.write('        "frontend-perception": {\n')
 	sys.stdout.write('          "command": "uvx",\n')
-	sys.stdout.write('          "args": ["--from", "frontend-mcp", "frontend-mcp"]\n')
+	sys.stdout.write(
+		'          "args": ["--from", "frontend-perception-engine", "frontend-mcp"]\n'
+	)
 	sys.stdout.write('        }\n')
 	sys.stdout.write('      }\n')
 	sys.stdout.write('    }\n')

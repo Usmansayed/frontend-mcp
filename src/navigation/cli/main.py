@@ -1,4 +1,4 @@
-"""CLI entry: serve MCP by default, or `install rules` for agent rule setup."""
+"""CLI entry: serve MCP by default, or setup / install rules."""
 from __future__ import annotations
 
 import sys
@@ -6,6 +6,11 @@ import sys
 
 def main(argv: list[str] | None = None) -> None:
     args = list(sys.argv[1:] if argv is None else argv)
+
+    if args and args[0] == "setup":
+        from navigation.cli.setup import main as setup_main
+
+        raise SystemExit(setup_main(args[1:]))
 
     if args and args[0] == "install":
         rest = args[1:]
@@ -15,6 +20,7 @@ def main(argv: list[str] | None = None) -> None:
             raise SystemExit(rules_main(rest[1:]))
         sys.stderr.write(
             "Usage:\n"
+            "  frontend-mcp setup [--cursor-skill] [--cursor-rule] [--agents-md]\n"
             "  frontend-mcp install rules     Install agent rules (interactive)\n"
             "  frontend-mcp-install            Install/upgrade the MCP package from PyPI\n"
             "  frontend-mcp                    Start the MCP server (default)\n"

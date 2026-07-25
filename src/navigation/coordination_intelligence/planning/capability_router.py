@@ -116,7 +116,7 @@ class CapabilityRouter:
             "ui_runtime": "browser_observe",
             "codebase": "codebase_context",
             "design_system": "design_graph_manage",
-            "seo": "seo_readiness",
+            # SEO Intelligence parked — never gather seo_readiness in MVP
         }
         return mapping.get(domain)
 

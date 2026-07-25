@@ -19,7 +19,10 @@ This guide encodes **how each gallery site is navigated**, **how preview URLs ar
 
 **URL-first:** Prefer `agent_view_url` (live page). Use `inspiration_blob` only for quick visual reference — blobs expire (~24h) and are deleted on session end.
 
-**Provider priority (early stop):** Dribbble → Behance → One Page Love → Awwwards → SiteInspire → Godly → Land-book
+**Provider priority (early stop, `INSPIRATION_FAST=1` default):** One Page Love → Behance only (HTTP/CDN, no Chromium).  
+**Deep research (`INSPIRATION_FAST=0` or explicit `provider_ids` / `provider_preference`):** One Page Love → Behance → Dribbble → Awwwards → SiteInspire → Godly → Land-book  
+
+Prefer **One Page Love** and **Behance** for speed and reliability. Do not lead with Dribbble (WAF / headed browser).
 
 ---
 

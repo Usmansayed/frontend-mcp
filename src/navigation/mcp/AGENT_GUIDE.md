@@ -153,7 +153,7 @@ Read `perception://resolver-guide` before any `perception_resolve_*` tool.
 - `perception_diff` (before/after)
 - `perception_correlate_live` (with resolver resolution)
 - Scan resources (`perception://scan/{scan_id}/…`)
-- Optional: `perception_audit_seo` (Lighthouse SEO category — not SEO Intelligence)
+- Optional: `perception_audit_seo` (Lighthouse SEO category)
 
 **Serial execution:** Call browser tools **one at a time** per `session_id`. Parallel MCP batches can corrupt session state.
 
@@ -626,30 +626,6 @@ Guideline:
 
 ---
 
-## 16. Playbook: SEO orchestration (SEO Intelligence) — MVP EXCLUDED
-
-**Status:** Parked for MVP. Do **not** call `perception_seo_*` or read `perception://seo-guide`.
-
-Code and docs live under `parked/seo_intelligence/` — see `parked/MVP_EXCLUDE_SEO.md`.
-
-**Still available:** `perception_audit_seo` — page-level Lighthouse SEO category (Frontend Quality), not the SEO Intelligence product.
-
-When SEO Intelligence is restored later, follow the restore checklist in `parked/MVP_EXCLUDE_SEO.md`.
-
----
-
-## 17. Playbook: Figma design context (Figma Intelligence) — MVP EXCLUDED
-
-**Status:** Parked for MVP. Do **not** call `perception_figma_*` or read `perception://figma-guide`.
-
-Code and docs live under `parked/figma_intelligence/` — see `parked/MVP_EXCLUDE_FIGMA.md`.
-
-**Still available for design reference:** `perception_inspiration_*` and `perception_build_design_snapshot`.
-
-When Figma Intelligence is restored later, follow the restore checklist in `parked/MVP_EXCLUDE_FIGMA.md`.
-
----
-
 ## 18. Tool quick reference (secondary to playbooks)
 
 Use tools **only as steps inside playbooks above**.
@@ -684,8 +660,7 @@ Use tools **only as steps inside playbooks above**.
 | `perception_resource_search` | Ranked creative assets (fast) |
 | `perception_resource_preview` | URLs + ephemeral resource vision blobs |
 | `perception_resource_session_end` | Delete ephemeral resource blobs |
-| `perception_audit_seo` | Lighthouse SEO category (page-level; not SEO Intelligence) |
-| ~~`perception_figma_*`~~ | MVP excluded — see `parked/MVP_EXCLUDE_FIGMA.md` |
+| `perception_audit_seo` | Lighthouse SEO category (page-level) |
 
 ---
 

@@ -10,15 +10,23 @@ MEDIUM_JPEG_QUALITY = int(__import__('os').environ.get('INSPIRATION_BLOB_JPEG_QU
 
 
 def normalize_image_url(url: str) -> str:
-	"""Normalize preview/srcset URLs without breaking cdn-cgi comma params."""
+	"""Normalize preview/srcset URLs without breaking cdn-cgi comma params.
+
+	Srcset lists look like: ``https://a.jpg 420w, https://b.jpg 840w``.
+	Cloudflare image URLs contain commas *inside* the path
+	(``.../cdn-cgi/image/width=840,height=560/...``) — those must stay intact.
+	"""
 	url = url.strip()
 	if not url:
 		return ''
 	if url.startswith('file://'):
 		return Path(unquote(urlparse(url).path)).as_posix()
-	# srcset list: "https://a.jpg 420w, https://b.jpg 840w"
-	if re.search(r',\s*https?://', url):
-		return url.split(',')[0].strip().split()[0]
+	# True srcset: comma followed by another absolute URL
+	parts = re.split(r',\s*(?=https?://)', url)
+	if len(parts) > 1:
+		# Prefer the last (usually largest) candidate; take the URL token only.
+		candidate = parts[-1].strip().split()[0]
+		return candidate
 	return url
 
 
@@ -47,17 +55,30 @@ def to_medium_inspiration_url(url: str, *, provider_id: str = '') -> str:
 		return re.sub(r'width=\d+', 'width=480', url).replace('quality=85', 'quality=75')
 
 	if 'siteinspire.com' in url:
+		# Cloudflare Images: force JPEG so Pillow can open without AVIF support.
 		out = re.sub(r'width=\d+', 'width=640', url)
-		return out.replace('quality=75', 'quality=70')
+		out = re.sub(r'quality=\d+', 'quality=70', out)
+		if 'format=' in out:
+			out = re.sub(r'format=[a-z0-9]+', 'format=jpeg', out, flags=re.I)
+		else:
+			out = out.replace('/cdn-cgi/image/', '/cdn-cgi/image/format=jpeg,')
+		return out
 
+	# Behance /project_modules/800/ is dead (404). Prefer max_1200 or leave 1400.
 	if 'behance.net' in url and '/project_modules/1400/' in url:
-		return url.replace('/project_modules/1400/', '/project_modules/800/')
-
+		return url.replace('/project_modules/1400/', '/project_modules/max_1200/')
 	if 'behance.net' in url and '/project_modules/fs/' in url:
-		return url.replace('/project_modules/fs/', '/project_modules/800/')
+		return url.replace('/project_modules/fs/', '/project_modules/max_1200/')
+	if 'behance.net' in url and '/project_modules/800/' in url:
+		return url.replace('/project_modules/800/', '/project_modules/max_1200/')
 
-	if 'awwwards.com' in url and 'thumb_440_330' in url:
-		return url.replace('thumb_440_330', 'thumb_440_330')  # resize on save via Pillow
+	# Lapa CDN: prefer 1x thumbs for faster blob materialization.
+	if 'cdn.lapa.ninja' in url and '/2x/' in url:
+		return url.replace('/2x/', '/1x/')
+
+	# Dribbble template placeholders → concrete mid size
+	if 'cdn.dribbble.com' in url and '{width}' in url:
+		return url.replace('{width}', '800').replace('{height}', '600')
 
 	if pid == 'land-book' and 'og-image' in url:
 		return ''

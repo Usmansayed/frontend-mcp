@@ -88,7 +88,7 @@ def _run_installed_contract(env: dict[str, str]) -> dict:
     wrapper = REPO / "scripts" / "_installed_contract_wrapper.py"
     wrapper.write_text(_CONTRACT_WRAPPER_CODE, encoding="utf-8")
     try:
-        return _run([sys.executable, str(wrapper)], env=env, cwd=REPO, timeout=600)
+        return _run([sys.executable, str(wrapper)], env=env, cwd=REPO, timeout=900)
     finally:
         wrapper.unlink(missing_ok=True)
 

@@ -32,9 +32,10 @@ def service() -> CoordinationIntelligenceService:
 
 @pytest.mark.unit
 def test_runtime_artifacts_load(bundle: RuntimeArtifactBundle) -> None:
-    assert len(bundle.capability_by_id) == 32
+    assert len(bundle.capability_by_id) == 33
     assert "invalid_before_valid.form" in bundle.playbook_by_id
     assert bundle.tool_to_capability["perception_probe_form"] == "form_probe"
+    assert bundle.tool_to_capability["perception_visual_feedback"] == "visual_feedback"
 
 
 @pytest.mark.unit

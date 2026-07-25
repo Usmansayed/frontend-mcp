@@ -1,0 +1,42 @@
+{
+  "name": "pricing_index_render_correlation",
+  "website_url": "https://example.com",
+  "mode": "professional",
+  "evidence": [
+    {
+      "evidence_id": "ev:gsc:index:pricing01",
+      "provider_id": "search-console",
+      "kind": "index_status",
+      "title": "Index fail /pricing",
+      "summary": "FAIL",
+      "page_url": "https://example.com/pricing",
+      "severity": "high",
+      "metadata": {"verdict": "FAIL", "impressions": 1200}
+    },
+    {
+      "evidence_id": "ev:browser:render:pricing01",
+      "provider_id": "browser",
+      "kind": "rendering_issue",
+      "title": "Hydration error",
+      "summary": "Client render mismatch",
+      "page_url": "https://example.com/pricing",
+      "severity": "high"
+    },
+    {
+      "evidence_id": "ev:librecrawl:tech:pricing01",
+      "provider_id": "librecrawl",
+      "kind": "technical_issue",
+      "title": "Missing meta description",
+      "summary": "thin metadata",
+      "page_url": "https://example.com/pricing",
+      "severity": "medium"
+    }
+  ],
+  "expect": {
+    "correlation_ids_contains": ["indexing_rendering_correlation"],
+    "min_reasoning_units": 1,
+    "min_recommendations": 1,
+    "page_urls_contains": ["https://example.com/pricing"],
+    "provider_agreement_v2_min": 0.3
+  }
+}

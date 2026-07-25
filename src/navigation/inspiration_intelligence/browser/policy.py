@@ -141,6 +141,22 @@ _DEFAULT_POLICIES: dict[str, ProviderFetchPolicy] = {
 		headless_default=False,
 		max_requests_per_run=4,
 	),
+	'lapa': ProviderFetchPolicy(
+		provider_id='lapa',
+		min_delay_s=0.4,
+		max_delay_s=1.2,
+		hydration_wait_s=3.0,
+		headless_default=True,
+		max_requests_per_run=4,
+	),
+	'httpster': ProviderFetchPolicy(
+		provider_id='httpster',
+		min_delay_s=0.3,
+		max_delay_s=1.0,
+		hydration_wait_s=2.0,
+		headless_default=True,
+		max_requests_per_run=4,
+	),
 }
 
 

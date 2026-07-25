@@ -44,7 +44,8 @@ def build_installation_plan(
 	if (repo_root / 'postcss.config.js').is_file() or (repo_root / 'postcss.config.mjs').is_file():
 		steps.append(InstallationStep(action='verify_postcss_config', target='postcss'))
 
-	for hint in selection.guidance.codebase.preferred_implementations:
+	codebase = selection.guidance.codebase if selection.guidance is not None else None
+	for hint in list(getattr(codebase, 'preferred_implementations', None) or []):
 		steps.append(InstallationStep(action='apply_codebase_preference', target=hint))
 
 	return InstallationPlan(

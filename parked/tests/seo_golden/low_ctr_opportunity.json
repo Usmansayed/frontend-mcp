@@ -1,0 +1,22 @@
+{
+  "name": "low_ctr_opportunity",
+  "website_url": "https://example.com",
+  "mode": "professional",
+  "evidence": [
+    {
+      "evidence_id": "ev:gsc:query:widget01",
+      "provider_id": "search-console",
+      "kind": "search_query",
+      "title": "buy widgets online",
+      "summary": "high impressions low ctr",
+      "page_url": "https://example.com/products/widgets",
+      "severity": "info",
+      "metadata": {"impressions": 2500, "ctr": 0.008, "position": 6.2}
+    }
+  ],
+  "expect": {
+    "correlation_ids_contains": ["opportunity_low_ctr"],
+    "min_reasoning_units": 1,
+    "min_recommendations": 0
+  }
+}

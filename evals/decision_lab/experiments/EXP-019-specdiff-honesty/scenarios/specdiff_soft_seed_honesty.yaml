@@ -1,0 +1,38 @@
+id: exp019_specdiff_soft_seed_honesty
+intent: redesign Meridian analytics dashboard
+lifecycle_stage: S03_design
+project_maturity: M1
+feeds:
+  - tool: perception_design_review
+    ok: true
+    data:
+      mode: review
+      passed: true
+      findings: []
+      engineering_delta:
+        top_by_impact:
+          - {decision_id: hierarchy, severity: major, kind: value_drift, from_value: null, to_value: null}
+        items:
+          - {decision_id: hierarchy, severity: major, kind: value_drift, from_value: null, to_value: null}
+          - {decision_id: density, severity: blocking, kind: missing, from_value: null, to_value: null}
+      spec_revision_gate:
+        reference_bound: true
+        evaluated: true
+        revision_required: false
+        passed: true
+        blocking_drifts: []
+        major_drifts: []
+    expect:
+      path:capability_ledger.design_review.status: succeeded
+      path:capability_ledger.design_review.quality.revision_required: false
+      path:capability_ledger.design_review.quality.soft_seed_partial: true
+      path:capability_ledger.design_review.quality.soft_seed_skipped_count: 2
+      host_contains:
+        - "SPECDIFF SOFT-SEED"
+      evidence_quality_alerts_contains:
+        - "SPECDIFF SOFT-SEED"
+expect:
+  host_contains:
+    - "SPECDIFF SOFT-SEED"
+    - "null seed"
+  path:capability_ledger.design_review.quality.delta_top_ids: [hierarchy]

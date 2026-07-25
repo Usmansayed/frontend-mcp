@@ -80,12 +80,16 @@ def _collect_from_snapshot(snapshot: DesignSnapshot, *, scan_id: str | None = No
 			if std:
 				standards.append(std)
 
-	# Spacing
-	all_spacing = (
-		snapshot.spacing.padding_values_px
-		+ snapshot.spacing.margin_values_px
-		+ snapshot.spacing.gap_values_px
-	)
+	# Spacing — drop sub-4px noise (borders/hairlines), keep rhythm-scale values.
+	all_spacing = [
+		v
+		for v in (
+			snapshot.spacing.padding_values_px
+			+ snapshot.spacing.margin_values_px
+			+ snapshot.spacing.gap_values_px
+		)
+		if isinstance(v, (int, float)) and float(v) >= 4.0
+	]
 	if all_spacing:
 		cluster = build_scale_cluster('spacing', all_spacing)
 		if cluster:

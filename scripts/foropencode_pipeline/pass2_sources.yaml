@@ -1,0 +1,47 @@
+# Sealed Pass-2 sources: deepen design systems + Priority B gaps.
+# Prefer specific docs pages over marketing homepages.
+
+sources:
+  - source_id: src_goms_wikipedia
+    claim_id: UX_HCI_KLM_008
+    title: GOMS / Keystroke-Level Model
+    urls:
+      - https://web.archive.org/web/20240101000000/https://en.wikipedia.org/wiki/GOMS
+      - https://web.archive.org/web/2023/https://en.wikipedia.org/wiki/Keystroke-level_model
+      - https://en.wikipedia.org/wiki/GOMS
+    min_bytes: 3000
+    notes: Wikipedia blocked in this environment; use Wayback snapshot of GOMS/KLM
+
+  - source_id: src_smashing_compositional_flow
+    claim_id: UX_VIS_READ_014
+    title: Compositional Flow and Rhythm (F/Z)
+    urls:
+      - https://www.smashingmagazine.com/2015/04/design-principles-compositional-flow-and-rhythm/
+    min_bytes: 3000
+    notes: Report UX_VIS_READ_014
+
+  - source_id: src_salesforce_slds
+    claim_id: UX_DS_DENS_002
+    title: Salesforce Lightning Design System (density / guidelines)
+    urls:
+      - https://www.lightningdesignsystem.com/guidelines/overview/
+      - https://www.lightningdesignsystem.com/design-tokens/
+      - https://www.lightningdesignsystem.com/components/overview/
+      - https://raw.githubusercontent.com/salesforce-ux/design-system/master/README.md
+      - https://www.lightningdesignsystem.com/
+    min_bytes: 1500
+    notes: Deepen beyond homepage stub; enterprise density patterns
+
+  - source_id: src_shopify_polaris
+    claim_id: UX_DS_TOKEN_001
+    title: Shopify Polaris (color / design foundations)
+    urls:
+      - https://polaris.shopify.com/design/colors
+      - https://polaris.shopify.com/design
+      - https://shopify.dev/docs/api/app-home/polaris-web-components
+      - https://github.com/Shopify/polaris/blob/main/documentation/guides/tokens.md
+      - https://raw.githubusercontent.com/Shopify/polaris/main/documentation/guides/tokens.md
+      - https://polaris.shopify.com/components
+      - https://polaris.shopify.com/
+    min_bytes: 2000
+    notes: Deepen semantic color / merchant UI foundations; revise TOKEN_001
