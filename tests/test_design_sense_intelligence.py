@@ -36,7 +36,7 @@ def test_design_lint_rules_on_computed_styles() -> None:
 	assert any(f.source == 'design_lint' for f in result.findings)
 
 
-async def test_coordinator_runs_specialists_and_providers() -> None:
+async def _coordinator_runs_specialists_and_providers() -> None:
 	coordinator = ReviewCoordinator()
 	report = await coordinator.run(
 		ReviewRequest(
@@ -58,14 +58,14 @@ async def test_coordinator_runs_specialists_and_providers() -> None:
 	assert report.workflow_phases
 
 
-async def test_service_review_facade() -> None:
+async def _service_review_facade() -> None:
 	service = DesignSenseService()
 	report = await service.review(ReviewRequest(user_task='Sign in'))
 	assert isinstance(report.summary, str)
 	assert report.findings or report.degraded
 
 
-async def test_knowledge_from_gemini_research() -> None:
+async def _knowledge_from_gemini_research() -> None:
 	from navigation.design_sense_intelligence.knowledge import KnowledgeService
 	from navigation.design_sense_intelligence.knowledge.catalog import KNOWLEDGE_TOPICS
 	from navigation.design_sense_intelligence.knowledge.epistemology import NIELSEN_HEURISTICS
@@ -80,10 +80,23 @@ async def test_knowledge_from_gemini_research() -> None:
 	assert any('checkout' in n or 'ecommerce' in n for n in contrib.notes)
 
 
+def test_coordinator_runs_specialists_and_providers() -> None:
+	asyncio.run(_coordinator_runs_specialists_and_providers())
+
+
+def test_service_review_facade() -> None:
+	asyncio.run(_service_review_facade())
+
+
+def test_knowledge_from_gemini_research() -> None:
+	asyncio.run(_knowledge_from_gemini_research())
+
+
 def main() -> int:
 	test_design_lint_rules_on_computed_styles()
-	asyncio.run(test_coordinator_runs_specialists_and_providers())
-	asyncio.run(test_service_review_facade())
+	test_coordinator_runs_specialists_and_providers()
+	test_service_review_facade()
+	test_knowledge_from_gemini_research()
 	print('design sense intelligence: PASS')
 	return 0
 

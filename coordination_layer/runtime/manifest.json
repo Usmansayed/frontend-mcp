@@ -1,7 +1,7 @@
 {
   "bundle_version": "1.0.0",
-  "generated_at": "2026-07-13T22:04:51.854300+00:00",
-  "source_git_sha": "431312730d982ba4e7150cfdb2f9be75f3842a90",
+  "generated_at": "2026-07-25T13:54:03.268712+00:00",
+  "source_git_sha": "b59ffaa47b04264c81ed510e03ec5d1978dda674",
   "research_state_count": 150,
   "architecture_status": "frozen",
   "principles": [
@@ -58,8 +58,8 @@
     },
     "situation_policy_catalog": {
       "path": "situation_policy_catalog.v1.yaml",
-      "sha256": "99f3bc69858203e6b12c9b356f05f3a449bba7f8ac00ab963fbbeafa9a71c1dc",
-      "bytes": 7410
+      "sha256": "9f5e69b669ee3bd097928fef7593e39897cd587067712bdb8b3937f280b81ba7",
+      "bytes": 7753
     },
     "state_lexicon": {
       "path": "state_lexicon.v1.json",
