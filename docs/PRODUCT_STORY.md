@@ -79,6 +79,8 @@ Unlike BrowserTools and similar stacks: **pip install / uvx only** → MCP → B
 
 Observe, verify-fail, and diff return **inline images** the model can actually see — not just file paths. Annotated screenshots, element crops, viewport modes, visual heatmaps.
 
+Design Snapshot, Design Review, and Consistency review/audit also attach **viewport + full page + section** screenshots by default. After looking, the agent passes `visual_feedback` and receives ranked `next_actions` (remeasure, verify section, propose_fix).
+
 ### Verify is a first-class tool
 
 `perception_verify` with `url_contains`, `text_contains`, `js_assertions`. On failure: auto re-observe, attach failure screenshot, return structured criterion breakdown. Then `perception_diff` for before/after regression.
@@ -213,18 +215,18 @@ We say what’s shipped vs planned. Credibility beats hype.
 
 ```bash
 # Recommended
-uvx --from frontend-mcp frontend-mcp-install
+uvx --from frontend-perception-engine frontend-mcp-install
 
 # With Chromium
-uvx --from frontend-mcp frontend-mcp-install --with-browser
+uvx --from frontend-perception-engine frontend-mcp-install --with-browser
 
 # Run server
-uvx --from frontend-mcp frontend-mcp
+uvx --from frontend-perception-engine frontend-mcp
 ```
 
 **Cursor config** — one JSON block, no API keys for core browser tools.
 
-**Packages:** `frontend-perception-engine` and `frontend-mcp` are the same server (alias on PyPI).
+**Package:** install only `frontend-perception-engine` (CLI name remains `frontend-mcp`).
 
 ---
 

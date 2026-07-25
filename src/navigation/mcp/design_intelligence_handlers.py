@@ -1,10 +1,14 @@
 """MCP handlers for design snapshot + design sense + consistency pipeline."""
 from __future__ import annotations
 
+import asyncio
+import uuid
+from pathlib import Path
 from typing import Any
 
 from navigation.consistency_intelligence.service import ConsistencyIntelligenceService, _project_id_from_url
 from navigation.core.envelope import make_envelope
+from navigation.core.paths import default_code_repo_root
 from navigation.core.scan_registry import ScanRegistry
 from navigation.core.snapshot_registry import SnapshotRecord, SnapshotRegistry
 from navigation.design_sense_intelligence import DesignSenseService
@@ -13,6 +17,240 @@ from navigation.design_snapshot_engine import DesignSnapshotEngine
 from navigation.design_snapshot_engine.integrations.designlang import augment_snapshot_from_designlang
 from navigation.design_snapshot_engine.models import DesignSnapshot
 from navigation.visual_browser_intelligence.browser.session_store import SessionStore
+from navigation.visual_browser_intelligence.visual.visual_response import attach_visual_paths
+
+
+def _stored_screenshot_ref(
+	scans: ScanRegistry,
+	scan_id: str,
+	snapshot: DesignSnapshot | None,
+) -> str | None:
+	"""Fallback screenshot for offline (snapshot_id) design/consistency calls."""
+	if scan_id:
+		rec = scans.get(scan_id)
+		obs = getattr(rec, 'observation', None) if rec else None
+		if isinstance(obs, dict):
+			ref = obs.get('annotated_screenshot_path') or obs.get('screenshot_path')
+			if ref and Path(str(ref)).is_file():
+				return str(ref)
+	if snapshot is not None:
+		prov = getattr(snapshot, 'provenance', None) or {}
+		ref = prov.get('screenshot_ref')
+		if ref and Path(str(ref)).is_file():
+			return str(ref)
+	return None
+
+
+async def _capture_or_reuse_visuals(
+	*,
+	store: SessionStore,
+	scans: ScanRegistry,
+	session_id: str,
+	snapshot: DesignSnapshot | None,
+	arguments: dict[str, Any],
+	tool: str,
+	scan_id: str,
+	live_ok: bool,
+	pack_kwargs: dict[str, Any] | None = None,
+) -> list[tuple[str, str]]:
+	"""Live-capture a design-evidence pack, else reuse a stored screenshot. Best-effort."""
+	from navigation.visual_browser_intelligence.visual.visual_capture import (
+		capture_design_evidence,
+	)
+
+	paths: list[tuple[str, str]] = []
+	rec = None
+	if live_ok and session_id:
+		try:
+			rec = await store.ensure(session_id)
+		except Exception:
+			rec = None
+	if rec is not None and getattr(rec, 'browser', None) is not None:
+		try:
+			regions = list((snapshot.layout.regions if snapshot and snapshot.layout else None) or [])
+			kwargs = dict(pack_kwargs or {})
+			# Back-compat if caller did not resolve pack.
+			if not kwargs:
+				selector = str(arguments.get('screenshot_selector') or '').strip() or None
+				try:
+					max_sections = int(arguments.get('max_sections', 3))
+				except (TypeError, ValueError):
+					max_sections = 3
+				kwargs = {
+					'want_viewport': True,
+					'want_full': True,
+					'want_sections': True,
+					'want_element': bool(selector),
+					'selector': selector,
+					'max_sections': max_sections,
+					'prefer_sections': [],
+				}
+			try:
+				timeout_s = float(arguments.get('screenshot_timeout_s', 25.0))
+			except (TypeError, ValueError):
+				timeout_s = 25.0
+			paths, _deg = await asyncio.wait_for(
+				capture_design_evidence(
+					rec.browser,
+					rec.artifacts_dir / 'images',
+					f"{tool.replace('perception_', '')}-{uuid.uuid4().hex[:8]}",
+					regions=regions,
+					selector=kwargs.get('selector'),
+					max_sections=int(kwargs.get('max_sections') or 0),
+					prefer_sections=list(kwargs.get('prefer_sections') or []),
+					want_viewport=bool(kwargs.get('want_viewport', True)),
+					want_full=bool(kwargs.get('want_full', True)),
+					want_sections=bool(kwargs.get('want_sections', True)),
+					want_element=bool(kwargs.get('want_element', True)),
+				),
+				timeout=timeout_s,
+			)
+		except Exception:
+			paths = []
+	if not paths:
+		ref = _stored_screenshot_ref(scans, scan_id, snapshot)
+		if ref:
+			paths = [('reference_screenshot', ref)]
+	return paths
+
+
+async def attach_design_visuals(
+	envelope: dict[str, Any],
+	*,
+	store: SessionStore,
+	scans: ScanRegistry,
+	snapshots: SnapshotRegistry,
+	arguments: dict[str, Any],
+	tool: str,
+) -> dict[str, Any]:
+	"""Post-hook: inline screenshots + turn agent visual feedback into next_actions.
+
+	Design/consistency tools always present rendered appearance (viewport / full /
+	section by default). When the agent returns visual_feedback (judgment, focus
+	sections/selector, notes), we narrow the pack and emit ranked next_actions so
+	the loop is: look → judge → act → remeasure — not code-blind edits.
+	"""
+	try:
+		from navigation.visual_browser_intelligence.visual.design_evidence_policy import (
+			PACK_NONE,
+			build_visual_next_actions,
+			normalize_visual_feedback,
+			pack_capture_kwargs,
+			resolve_screenshot_pack,
+			visual_feedback_advisory,
+		)
+
+		if not isinstance(envelope, dict) or not envelope.get('ok'):
+			return envelope
+
+		feedback = normalize_visual_feedback(arguments)
+		pack = resolve_screenshot_pack(tool, arguments, feedback=feedback)
+		if pack == PACK_NONE:
+			# Still record feedback → next_actions even without new captures.
+			if feedback and isinstance(envelope.get('data'), dict):
+				next_actions = build_visual_next_actions(
+					tool=tool, envelope=envelope, feedback=feedback
+				)
+				envelope['data']['visual_feedback'] = feedback
+				envelope['data']['next_actions'] = next_actions
+				summ = envelope['data'].setdefault('agent_summary', {})
+				if isinstance(summ, dict):
+					summ['visual_feedback'] = feedback
+					summ['next_actions'] = next_actions
+					adv = summ.setdefault('advisory', [])
+					if isinstance(adv, list):
+						adv.extend(visual_feedback_advisory(feedback, next_actions))
+			return envelope
+
+		data = envelope.get('data') if isinstance(envelope.get('data'), dict) else {}
+		snapshot_id = str(data.get('snapshot_id') or arguments.get('snapshot_id') or '').strip()
+		scan_id = str(
+			envelope.get('scan_id') or data.get('scan_id') or arguments.get('scan_id') or ''
+		).strip()
+
+		snapshot: DesignSnapshot | None = None
+		rec = snapshots.get(snapshot_id) if snapshot_id else None
+		if rec is None and scan_id:
+			rec = snapshots.get_by_scan(scan_id)
+		if rec is not None:
+			try:
+				snapshot = DesignSnapshot.from_dict(rec.snapshot)
+			except Exception:
+				snapshot = None
+		if snapshot is None and isinstance(data.get('snapshot'), dict):
+			try:
+				snapshot = DesignSnapshot.from_dict(data['snapshot'])
+			except Exception:
+				snapshot = None
+
+		session_id = str(
+			envelope.get('session_id')
+			or arguments.get('session_id')
+			or (rec.session_id if rec else '')
+			or ''
+		).strip()
+		snapshot_id_only = bool(arguments.get('snapshot_id')) and not (
+			arguments.get('session_id') or arguments.get('scan_id')
+		)
+
+		pack_kwargs = pack_capture_kwargs(pack, arguments, feedback)
+		paths = await _capture_or_reuse_visuals(
+			store=store,
+			scans=scans,
+			session_id=session_id,
+			snapshot=snapshot,
+			arguments=arguments,
+			tool=tool,
+			scan_id=scan_id,
+			live_ok=not snapshot_id_only,
+			pack_kwargs=pack_kwargs,
+		)
+		if paths:
+			attach_visual_paths(envelope, paths)
+			if isinstance(envelope.get('data'), dict):
+				envelope['data']['visual_evidence'] = [
+					{'label': label, 'path': path} for label, path in paths
+				]
+				envelope['data']['screenshot_pack'] = pack
+				summ = envelope['data'].setdefault('agent_summary', {})
+				if isinstance(summ, dict):
+					summ['visual_evidence'] = [label for label, _ in paths]
+					summ['screenshot_pack'] = pack
+					adv = summ.setdefault('advisory', [])
+					if isinstance(adv, list):
+						adv.append(
+							f'VISUAL EVIDENCE attached (pack={pack}: '
+							+ ', '.join(label for label, _ in paths)
+							+ '). LOOK at the images and drive changes from appearance, not code alone.'
+						)
+
+		if feedback and isinstance(envelope.get('data'), dict):
+			next_actions = build_visual_next_actions(
+				tool=tool, envelope=envelope, feedback=feedback
+			)
+			envelope['data']['visual_feedback'] = feedback
+			envelope['data']['next_actions'] = next_actions
+			summ = envelope['data'].setdefault('agent_summary', {})
+			if isinstance(summ, dict):
+				summ['visual_feedback'] = feedback
+				summ['next_actions'] = next_actions
+				adv = summ.setdefault('advisory', [])
+				if isinstance(adv, list):
+					adv.extend(visual_feedback_advisory(feedback, next_actions))
+	except Exception:
+		return envelope
+	return envelope
+
+
+def _resolve_repo_root(arguments: dict[str, Any]) -> str | None:
+	"""Prefer explicit repo_root; otherwise default code root so graph I/O is durable."""
+	raw = str(arguments.get('repo_root') or '').strip()
+	if raw:
+		return raw
+	try:
+		return str(default_code_repo_root())
+	except Exception:
+		return None
 
 
 async def _build_or_load_snapshot(
@@ -29,7 +267,14 @@ async def _build_or_load_snapshot(
 	if snapshot_id:
 		rec = snapshots.get(snapshot_id)
 		if rec is None:
-			return None, None, make_envelope('', ok=False, error=f'unknown snapshot_id: {snapshot_id}')
+			from navigation.core.process_identity import registry_lost_message
+
+			return None, None, make_envelope(
+				'',
+				ok=False,
+				error=registry_lost_message('snapshot_id', snapshot_id),
+				degraded=['registry_lost_rebootstrap'],
+			)
 		return DesignSnapshot.from_dict(rec.snapshot), rec, None
 
 	if scan_id:
@@ -38,7 +283,14 @@ async def _build_or_load_snapshot(
 			return DesignSnapshot.from_dict(existing.snapshot), existing, None
 		scan_rec = scans.get(scan_id)
 		if scan_rec is None:
-			return None, None, make_envelope('', ok=False, error=f'unknown scan_id: {scan_id}')
+			from navigation.core.process_identity import registry_lost_message
+
+			return None, None, make_envelope(
+				'',
+				ok=False,
+				error=registry_lost_message('scan_id', scan_id),
+				degraded=['registry_lost_rebootstrap'],
+			)
 		session_id = scan_rec.session_id
 
 	if not session_id:
@@ -46,8 +298,15 @@ async def _build_or_load_snapshot(
 
 	try:
 		rec = await store.ensure(session_id)
-	except KeyError as exc:
-		return None, None, make_envelope('', ok=False, error=str(exc))
+	except KeyError:
+		from navigation.core.process_identity import session_lost_message
+
+		return None, None, make_envelope(
+			'',
+			ok=False,
+			error=session_lost_message(session_id),
+			degraded=['session_lost_rebootstrap'],
+		)
 
 	engine = DesignSnapshotEngine()
 	obs_dict: dict[str, Any] = {}
@@ -75,6 +334,63 @@ async def _build_or_load_snapshot(
 		session_id=session_id,
 	)
 	return snapshot, snap_rec, None
+
+
+async def ensure_measured_spec_from_scan(
+	store: SessionStore,
+	scans: ScanRegistry,
+	snapshots: SnapshotRegistry,
+	*,
+	session_id: str,
+	scan_id: str,
+) -> dict[str, Any]:
+	"""Build/load DesignSnapshot for scan and persist measured engineering Spec (fail soft)."""
+	try:
+		snapshot, snap_rec, err = await _build_or_load_snapshot(
+			store,
+			scans,
+			snapshots,
+			{"session_id": session_id, "scan_id": scan_id},
+		)
+		if err or snapshot is None:
+			return {"measured": False, "error": (err or {}).get("error") if isinstance(err, dict) else "snapshot_failed"}
+
+		from navigation.engineering_knowledge import compile_live_spec
+		from navigation.engineering_knowledge.reference_binding import (
+			foundation_hint_from_psm,
+			resolve_psm_for_session,
+			store_measured_spec,
+		)
+
+		psm = resolve_psm_for_session(session_id or None)
+		eng_spec = compile_live_spec(snapshot, foundation_hint=foundation_hint_from_psm(psm))
+		spec_dict = eng_spec.to_dict()
+		store_meta = store_measured_spec(
+			eng_spec,
+			session_id=session_id or None,
+			psm=psm,
+			source="live_dom",
+			scan_id=scan_id,
+			snapshot_id=snap_rec.snapshot_id if snap_rec else None,
+			note="Auto-measured from observe scan",
+		)
+		if psm is not None:
+			try:
+				from navigation.coordination_intelligence.integration.bridge import get_coordinator_bridge
+
+				get_coordinator_bridge().service.runtime.save(psm)
+			except Exception:
+				pass
+		return {
+			"measured": True,
+			"snapshot_id": snap_rec.snapshot_id if snap_rec else "",
+			"scan_id": scan_id,
+			"engineering_spec_coverage": spec_dict.get("coverage"),
+			"catalog_status": "measured",
+			"store": store_meta,
+		}
+	except Exception as exc:
+		return {"measured": False, "error": str(exc)}
 
 
 def _snapshot_summary(snapshot: DesignSnapshot) -> dict[str, Any]:
@@ -151,6 +467,38 @@ async def handle_build_design_snapshot(
 				pass
 		gate = evaluate_revision_gate(eng_spec, eng_spec, phase='reference_captured')
 		unresolved = list(spec_dict.get('unresolved_by_impact') or [])
+		from navigation.coordination_intelligence.psm.normalize import _snapshot_evidence_quality
+
+		snap_payload = {
+			'snapshot_id': snap_rec.snapshot_id if snap_rec else '',
+			'snapshot_summary': _snapshot_summary(snapshot),
+			'snapshot': snapshot.to_dict(),
+			'engineering_spec': spec_dict,
+			'spec_revision_gate': gate,
+			'degraded': list(snapshot.degraded),
+		}
+		evidence_quality = _snapshot_evidence_quality(snap_payload)
+		advisory = [
+			'Reference Spec bound. Implement from Spec, then remeasure (bind_as_reference=false) for SpecDiff gate.',
+		]
+		if evidence_quality.get('thin'):
+			advisory.append(
+				'EVIDENCE THIN: snapshot quality.thin=true — do not treat advancement as a dense measured draft.'
+			)
+		elif evidence_quality.get('degraded_count', 0) > 0:
+			advisory.append(
+				'EVIDENCE DEGRADED: read evidence_quality before locking layout from this snapshot.'
+			)
+		if evidence_quality.get('revision_required'):
+			tops = ', '.join(evidence_quality.get('delta_top_ids') or []) or 'see SpecDiff'
+			advisory.append(
+				f'SPECDIFF REVISION: revision_required — fix drifts before treating draft as aligned ({tops}).'
+			)
+		elif evidence_quality.get('soft_seed_partial'):
+			advisory.append(
+				f"SPECDIFF SOFT-SEED: {evidence_quality.get('soft_seed_skipped_count')} "
+				'major/blocking item(s) skipped (null seed values) — gate pass is not full SpecDiff coverage.'
+			)
 		return make_envelope(
 			'perception_build_design_snapshot',
 			ok=True,
@@ -160,8 +508,8 @@ async def handle_build_design_snapshot(
 			data={
 				'snapshot_id': snap_rec.snapshot_id if snap_rec else '',
 				'scan_id': snap_rec.scan_id if snap_rec else snapshot.scan_id,
-				'snapshot_summary': _snapshot_summary(snapshot),
-				'snapshot': snapshot.to_dict(),
+				'snapshot_summary': snap_payload['snapshot_summary'],
+				'snapshot': snap_payload['snapshot'],
 				'engineering_spec': spec_dict,
 				'reference_engineering_spec': spec_dict,
 				'spec_role': 'reference',
@@ -172,9 +520,8 @@ async def handle_build_design_snapshot(
 					'unresolved_engineering_decisions': unresolved[:8],
 					'spec_revision_gate': gate,
 					'coordinator_headline': gate.get('host_action'),
-					'advisory': [
-						'Reference Spec bound. Implement from Spec, then remeasure (bind_as_reference=false) for SpecDiff gate.',
-					],
+					'evidence_quality': evidence_quality,
+					'advisory': advisory,
 				},
 			},
 			degraded=list(snapshot.degraded),
@@ -201,8 +548,23 @@ async def handle_build_design_snapshot(
 		checklist = None
 
 	# Current (post-draft) Spec + SpecDiff vs bound reference
-	eng_spec = compile_live_spec(snapshot)
+	from navigation.engineering_knowledge.reference_binding import (
+		foundation_hint_from_psm,
+		store_measured_spec,
+	)
+
+	eng_spec = compile_live_spec(snapshot, foundation_hint=foundation_hint_from_psm(psm))
 	spec_dict = eng_spec.to_dict()
+
+	store_measured_spec(
+		eng_spec,
+		session_id=session_id or None,
+		psm=psm,
+		source="live_dom",
+		scan_id=snap_rec.scan_id if snap_rec else snapshot.scan_id,
+		snapshot_id=snap_rec.snapshot_id if snap_rec else None,
+		note="Measured from perception_build_design_snapshot",
+	)
 	ref_spec, ref_meta = get_reference_spec(
 		session_id=session_id or None,
 		psm=psm,
@@ -218,6 +580,41 @@ async def handle_build_design_snapshot(
 	if not ref_spec and unresolved:
 		headline = unresolved[0].get('why') or headline
 
+	from navigation.coordination_intelligence.psm.normalize import _snapshot_evidence_quality
+
+	snap_payload = {
+		'snapshot_id': snap_rec.snapshot_id if snap_rec else '',
+		'snapshot_summary': _snapshot_summary(snapshot),
+		'snapshot': snapshot.to_dict(),
+		'engineering_spec': spec_dict,
+		'spec_revision_gate': gate,
+		'degraded': list(snapshot.degraded),
+		'agent_summary': {'unresolved_engineering_decisions': unresolved},
+	}
+	evidence_quality = _snapshot_evidence_quality(snap_payload)
+	advisory = [
+		'Closed loop: if revision_required, fix drifts listed in spec_revision_gate then remeasure.',
+		'After draft: observe+verify each section_checklist item before Ship Council / claim-done.',
+	]
+	if evidence_quality.get('thin'):
+		advisory.append(
+			'EVIDENCE THIN: snapshot quality.thin=true — do not treat advancement as a dense measured draft.'
+		)
+	elif evidence_quality.get('degraded_count', 0) > 0:
+		advisory.append(
+			'EVIDENCE DEGRADED: read evidence_quality before locking layout from this snapshot.'
+		)
+	if evidence_quality.get('revision_required'):
+		tops = ', '.join(evidence_quality.get('delta_top_ids') or []) or 'see SpecDiff'
+		advisory.append(
+			f'SPECDIFF REVISION: revision_required — fix drifts before treating draft as aligned ({tops}).'
+		)
+	elif evidence_quality.get('soft_seed_partial'):
+		advisory.append(
+			f"SPECDIFF SOFT-SEED: {evidence_quality.get('soft_seed_skipped_count')} "
+			'major/blocking item(s) skipped (null seed values) — gate pass is not full SpecDiff coverage.'
+		)
+
 	return make_envelope(
 		'perception_build_design_snapshot',
 		ok=True,
@@ -227,8 +624,8 @@ async def handle_build_design_snapshot(
 		data={
 			'snapshot_id': snap_rec.snapshot_id if snap_rec else '',
 			'scan_id': snap_rec.scan_id if snap_rec else snapshot.scan_id,
-			'snapshot_summary': _snapshot_summary(snapshot),
-			'snapshot': snapshot.to_dict(),
+			'snapshot_summary': snap_payload['snapshot_summary'],
+			'snapshot': snap_payload['snapshot'],
 			'engineering_spec': spec_dict,
 			'spec_role': 'current',
 			'spec_revision_gate': gate,
@@ -241,10 +638,8 @@ async def handle_build_design_snapshot(
 				'revision_required': gate.get('revision_required'),
 				'coordinator_headline': headline,
 				'section_checklist': checklist,
-				'advisory': [
-					'Closed loop: if revision_required, fix drifts listed in spec_revision_gate then remeasure.',
-					'After draft: observe+verify each section_checklist item before Ship Council / claim-done.',
-				],
+				'evidence_quality': evidence_quality,
+				'advisory': advisory,
 			},
 		},
 		degraded=list(snapshot.degraded),
@@ -271,6 +666,7 @@ async def handle_design_review(
 	)
 	from navigation.engineering_knowledge.reference_binding import (
 		evaluate_revision_gate,
+		foundation_hint_from_psm,
 		get_reference_spec,
 		resolve_psm_for_session,
 	)
@@ -279,10 +675,14 @@ async def handle_design_review(
 		arguments.get('session_id') or (snap_rec.session_id if snap_rec else '') or ''
 	)
 	psm = resolve_psm_for_session(session_id or None)
+	# Never mint a throwaway registered-looking PSM — that poisoned coordinator
+	# episode_id surfaces after failed/orphan ship paths.
 	if psm is None:
 		from navigation.coordination_intelligence.models import ProjectSituationModel
+
 		psm = ProjectSituationModel()
-	current_spec = compile_live_spec(snapshot)
+		psm.episode_id = ''
+	current_spec = compile_live_spec(snapshot, foundation_hint=foundation_hint_from_psm(psm))
 	engineering_delta = None
 	reference_spec_summary = None
 	ref_source = None
@@ -351,10 +751,12 @@ async def handle_design_review(
 	if bound_meta:
 		revision_gate['reference_meta'] = bound_meta
 
+	repo_root = str(arguments.get('repo_root') or '').strip()
 	request = review_request_from_snapshot(
 		snapshot,
 		user_task=user_task,
 		scope=str(arguments.get('scope') or 'page'),
+		repo_root=repo_root,
 	)
 	report = await DesignSenseService().review(request, compare_references=compare_references)
 
@@ -384,6 +786,28 @@ async def handle_design_review(
 			or report.summary
 		)
 	)
+
+	from navigation.coordination_intelligence.psm.normalize import _specdiff_quality_fields
+
+	specdiff_quality = _specdiff_quality_fields(
+		{
+			'engineering_delta': engineering_delta,
+			'spec_revision_gate': revision_gate,
+		}
+	)
+	review_advisory = [
+		'Prefer engineering_delta (SpecDiff) over English findings for rebuild decisions.',
+	]
+	if specdiff_quality.get('revision_required'):
+		tops = ', '.join(specdiff_quality.get('delta_top_ids') or []) or 'see SpecDiff'
+		review_advisory.append(
+			f'SPECDIFF REVISION: revision_required — fix drifts before treating draft as aligned ({tops}).'
+		)
+	elif specdiff_quality.get('soft_seed_partial'):
+		review_advisory.append(
+			f"SPECDIFF SOFT-SEED: {specdiff_quality.get('soft_seed_skipped_count')} "
+			'major/blocking item(s) skipped (null seed values) — gate pass is not full SpecDiff coverage.'
+		)
 
 	mode = str(arguments.get('mode') or 'review').strip().lower()
 	if mode not in ('review', 'ship'):
@@ -443,6 +867,7 @@ async def handle_design_review(
 		council_clear = bool(ship_gate.get('council_clear'))
 		challenges = list(ship.get('challenges') or [])
 		coverage = str(ship_gate.get('coverage') or 'partial')
+		thin_clear = bool(council_clear and coverage == 'thin')
 		coordination_evidence = {
 			'capability_id': 'design_review',
 			'outcome': 'success' if council_clear else 'degraded',
@@ -454,6 +879,9 @@ async def handle_design_review(
 				'open_high_roi': ship_gate.get('open_high_roi', 0),
 				'council_clear': council_clear,
 				'coverage': coverage,
+				'coverage_checks': ship_gate.get('coverage_checks'),
+				'surface_type': ship_gate.get('surface_type'),
+				'thin_clear': thin_clear,
 			},
 			'artifact_refs': {'snapshot_id': snap_rec.snapshot_id if snap_rec else ''},
 		}
@@ -462,6 +890,8 @@ async def handle_design_review(
 			f"gate={ship_gate.get('state')}; council_clear={council_clear}; "
 			f"coverage={coverage}"
 		)
+		if thin_clear:
+			ship_headline = f"{ship_headline}; SHIP THIN-CLEAR"
 		if council_clear and coverage in ('thin', 'partial'):
 			next_hint = (
 				'Council cleared with limited detector coverage. '
@@ -472,6 +902,10 @@ async def handle_design_review(
 				'ship_gate.council_clear is true but coverage is not full — '
 				'do not treat empty challenges as strong design approval.',
 			]
+			if thin_clear:
+				advisory.append(
+					'SHIP THIN-CLEAR: council_clear with thin coverage — not strong design approval.'
+				)
 		elif council_clear:
 			next_hint = (
 				'Ship Council clear with adequate coverage; claim-done only if '
@@ -521,6 +955,7 @@ async def handle_design_review(
 						'resource': 'perception://ship-council',
 						'next': next_hint,
 						'coverage': coverage,
+						'thin_clear': thin_clear,
 					},
 					'coordinator_headline': ship_headline,
 					'spec_revision_gate': revision_gate,
@@ -573,9 +1008,8 @@ async def handle_design_review(
 				'spec_revision_gate': revision_gate,
 				'revision_required': revision_gate.get('revision_required'),
 				'coordinator_headline': headline,
-				'advisory': [
-					'Prefer engineering_delta (SpecDiff) over English findings for rebuild decisions.',
-				],
+				'evidence_quality': specdiff_quality,
+				'advisory': review_advisory,
 			},
 		},
 		degraded=list(report.degraded),
@@ -594,7 +1028,7 @@ async def handle_consistency_review(
 		return {**err, 'tool': 'perception_consistency_review'}
 
 	repo_root = arguments.get('repo_root')
-	project_id = str(arguments.get('project_id') or _project_id_from_url(snapshot.url))
+	project_id = str(arguments.get('project_id') or '').strip() or 'default'
 	service = ConsistencyIntelligenceService(repo_root=repo_root) if repo_root else ConsistencyIntelligenceService()
 
 	await service.refresh_graph(
@@ -635,20 +1069,76 @@ async def handle_consistency_audit(
 		return {**err, 'tool': 'perception_consistency_audit'}
 
 	repo_root = arguments.get('repo_root')
-	project_id = str(arguments.get('project_id') or _project_id_from_url(snapshot.url))
+	# Align with design_graph_refresh: default project_id is "default" so standalone
+	# audit sees the same graph refresh just wrote (hardcore: URL-key mismatch → stub).
+	raw_project = str(arguments.get('project_id') or '').strip()
+	project_id = raw_project or 'default'
 	service = ConsistencyIntelligenceService(repo_root=repo_root) if repo_root else ConsistencyIntelligenceService()
 	audit_detail = service.audit_snapshot_detail(
 		snapshot,
 		project_id=project_id,
 		max_elements=int(arguments.get('max_elements', 40)),
 	)
+	data = dict(audit_detail)
+	data['project_id'] = project_id
+	degraded = list(audit_detail.get('degraded') or [])
+	stub_codes = ('knowledge_query_stub_phase1', 'discovery_pipeline_phase2')
+	has_stub_codes = any(d in degraded for d in stub_codes)
+	overlap_skip = 'audit_no_overlapping_standards' in degraded
+	# Only Phase-1 stub codes count as stub; overlap-skip is incomplete but not a stub
+	# (Test 11: do_not_treat_as_pass on skip was misread as Phase-1 stub).
+	if has_stub_codes:
+		data['agent_summary'] = {
+			'consistency': {
+				'usable': False,
+				'incomplete': True,
+				'do_not_treat_as_pass': True,
+				'phase1_stub': True,
+				'reason': str(
+					audit_detail.get('summary')
+					or 'Consistency audit stub/incomplete — Discovery not ready; do not treat as pass.'
+				),
+			},
+		}
+	elif overlap_skip and not list(audit_detail.get('findings') or []):
+		data['agent_summary'] = {
+			'consistency': {
+				'usable': False,
+				'incomplete': True,
+				'do_not_treat_as_pass': True,
+				'phase1_stub': False,
+				'overlap_skip': True,
+				'reason': str(
+					audit_detail.get('summary')
+					or 'No overlapping foundation standards for audited elements — not a Phase-1 stub.'
+				),
+			},
+		}
+	elif (
+		audit_detail.get('passed') is False
+		and not list(audit_detail.get('findings') or [])
+		and int(audit_detail.get('elements_audited') or 0) > 0
+		and not overlap_skip
+	):
+		data['agent_summary'] = {
+			'consistency': {
+				'usable': False,
+				'incomplete': True,
+				'do_not_treat_as_pass': True,
+				'phase1_stub': False,
+				'reason': str(
+					audit_detail.get('summary')
+					or 'Consistency audit incomplete — do not treat as pass.'
+				),
+			},
+		}
 
 	return make_envelope(
 		'perception_consistency_audit',
 		ok=True,
 		url=snapshot.url,
-		data=audit_detail,
-		degraded=list(audit_detail.get('degraded') or []),
+		data=data,
+		degraded=degraded,
 	)
 
 
@@ -666,7 +1156,7 @@ async def handle_design_knowledge_query(
 	if not isinstance(params, dict):
 		params = {}
 	project_id = str(_arguments.get('project_id') or 'default')
-	repo_root = _arguments.get('repo_root')
+	repo_root = _resolve_repo_root(_arguments)
 
 	service = ConsistencyIntelligenceService(repo_root=repo_root) if repo_root else ConsistencyIntelligenceService()
 	resp = service.query(query_id, params, project_id=project_id)
@@ -683,7 +1173,7 @@ async def handle_design_graph_summary(
 	arguments: dict[str, Any],
 ) -> dict[str, Any]:
 	project_id = str(arguments.get('project_id') or 'default')
-	repo_root = arguments.get('repo_root')
+	repo_root = _resolve_repo_root(arguments)
 
 	service = ConsistencyIntelligenceService(repo_root=repo_root) if repo_root else ConsistencyIntelligenceService()
 	resp = service.graph_summary(project_id=project_id)
@@ -691,7 +1181,12 @@ async def handle_design_graph_summary(
 	return make_envelope(
 		'perception_design_graph_summary',
 		ok=True,
-		data={'knowledge': resp.to_dict(), 'summary': resp.summary_text()},
+		data={
+			'knowledge': resp.to_dict(),
+			'summary': resp.summary_text(),
+			'project_id': project_id,
+			'repo_root': repo_root,
+		},
 		degraded=list(resp.degraded),
 	)
 
@@ -774,7 +1269,7 @@ async def handle_design_graph_refresh(
 	arguments: dict[str, Any],
 ) -> dict[str, Any]:
 	"""Run Discovery Pipeline — ingest knowledge from enabled sources into the graph."""
-	repo_root = arguments.get('repo_root')
+	repo_root = _resolve_repo_root(arguments)
 	project_id = str(arguments.get('project_id') or 'default')
 	enabled_raw = arguments.get('enabled_sources')
 	enabled_sources: frozenset[str] | None = None
@@ -799,8 +1294,11 @@ async def handle_design_graph_refresh(
 				error='repo_root or snapshot (session_id/scan_id/snapshot_id/design_snapshot) required',
 			)
 
-	if snapshot and snapshot.url and project_id == 'default':
-		project_id = _project_id_from_url(snapshot.url)
+	# Keep stable project_id=default unless the agent explicitly passes one.
+	# Auto host_path ids (127.0.0.1:3000_about) fragment the graph and make
+	# assess miss Discovery unless the agent remembers the exact key.
+	if not str(arguments.get('project_id') or '').strip():
+		project_id = 'default'
 
 	service = ConsistencyIntelligenceService(repo_root=repo_root) if repo_root else ConsistencyIntelligenceService()
 	graph, degraded, stats = await service.refresh_graph(
@@ -818,6 +1316,7 @@ async def handle_design_graph_refresh(
 		url=snapshot.url if snapshot else '',
 		data={
 			'project_id': project_id,
+			'repo_root': repo_root,
 			'graph_version': graph.meta.graph_version,
 			'snapshot_count': graph.meta.snapshot_count,
 			'merge_stats': stats.to_dict(),

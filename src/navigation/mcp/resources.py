@@ -102,18 +102,8 @@ def list_resources(scans: ScanRegistry | None = None) -> list[dict[str, str]]:
 			'description': 'Resolver Intelligence — fast route/component/token lookup (read before resolve_* tools)',
 			'mimeType': 'text/markdown',
 		},
-		{
-			'uri': 'perception://seo-guide',
-			'name': 'SEO_AGENT_GUIDE',
-			'description': 'SEO Intelligence — free-first SEO orchestration, providers, verify loop (read before seo tools)',
-			'mimeType': 'text/markdown',
-		},
-		{
-			'uri': 'perception://figma-guide',
-			'name': 'FIGMA_AGENT_GUIDE',
-			'description': 'Figma Intelligence — PAT connect, normalized design context (read before figma tools)',
-			'mimeType': 'text/markdown',
-		},
+		# perception://seo-guide excluded from MVP — see parked/MVP_EXCLUDE_SEO.md
+		# perception://figma-guide excluded from MVP — see parked/MVP_EXCLUDE_FIGMA.md
 		{
 			'uri': 'perception://eval/validation-form',
 			'name': 'Validation Form Eval',
@@ -198,19 +188,8 @@ def read_resource(uri: str, scans: ScanRegistry | None = None) -> tuple[str, str
 			'RESOLVER_AGENT_GUIDE.md',
 		)
 
-	if uri == 'perception://seo-guide':
-		return _cached_guide(
-			uri,
-			module_doc('seo_intelligence', 'docs', 'SEO_AGENT_GUIDE.md'),
-			'SEO_AGENT_GUIDE.md',
-		)
-
-	if uri == 'perception://figma-guide':
-		return _cached_guide(
-			uri,
-			module_doc('figma_intelligence', 'docs', 'FIGMA_AGENT_GUIDE.md'),
-			'FIGMA_AGENT_GUIDE.md',
-		)
+	# perception://seo-guide excluded from MVP — see parked/MVP_EXCLUDE_SEO.md
+	# perception://figma-guide excluded from MVP — see parked/MVP_EXCLUDE_FIGMA.md
 
 	if uri == 'perception://eval/validation-form':
 		return _cached_guide(uri, validation_form_eval_path(), 'VALIDATION_FORM_EVAL.md')

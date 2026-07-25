@@ -22,12 +22,13 @@ def perception_tools(mcp_types: Any) -> list[Any]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "url": {"type": "string", "description": "Base URL, e.g. http://localhost:5173"},
+                    "url": {"type": "string", "description": "Base URL, e.g. http://127.0.0.1:18765"},
                     "intent": {
                         "type": "string",
                         "description": (
-                            "Optional task description for bootstrap Engineering Strategy "
-                            "(full strategy after session_start with intent)."
+                            "Real user task (e.g. 'Build a SaaS dashboard'). Required for "
+                            "useful coordinator bootstrap — without intent, greenfield vs "
+                            "hotfix routing is weak."
                         ),
                     },
                 },
@@ -48,9 +49,10 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                     "intent": {
                         "type": "string",
                         "description": (
-                            "Natural-language task intent (e.g. 'Build a SaaS dashboard', "
-                            "'Production hotfix for login button'). Drives R12 policy + "
-                            "agent_summary.engineering_strategy."
+                            "Required for structural UI: natural-language task intent "
+                            "(e.g. 'Build a SaaS dashboard', 'Production hotfix for login'). "
+                            "Drives coordinator phase + agent_summary.engineering_strategy. "
+                            "Omit only for pure connectivity smoke."
                         ),
                     },
                     "repo_root": {
@@ -858,6 +860,14 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                         "type": "string",
                         "description": "Optional provider id to prefer (e.g. dribbble, behance)",
                     },
+                    "repo_root": {
+                        "type": "string",
+                        "description": "Project root for stack/hints scoring (avoids hints_without_repo_root)",
+                    },
+                    "session_id": {
+                        "type": "string",
+                        "description": "Optional browser session — inherits repo_root from episode when omitted",
+                    },
                 },
                 "required": ["query"],
             },
@@ -1116,10 +1126,42 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         ),
         T(
             name="perception_resource_license_check",
-            description="Resource Intelligence. Structured license check for a resource asset object.",
+            description=(
+                "Resource Intelligence. Structured license check for a resource asset. "
+                "asset.license may be a LicenseProfile object "
+                "({spdx_id|name, commercial_use, ...}) or a flat SPDX/name string (e.g. \"ISC\")."
+            ),
             inputSchema={
                 "type": "object",
-                "properties": {"asset": {"type": "object"}, "commercial_required": {"type": "boolean", "default": True}},
+                "properties": {
+                    "asset": {
+                        "type": "object",
+                        "description": (
+                            "Asset dict. license may be string (\"MIT\") or object "
+                            "({spdx_id|name, commercial_use, attribution_required, ...})."
+                        ),
+                        "properties": {
+                            "provider_id": {"type": "string"},
+                            "license": {
+                                "oneOf": [
+                                    {"type": "string", "description": "SPDX or common name, e.g. ISC"},
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "spdx_id": {"type": "string"},
+                                            "name": {"type": "string"},
+                                            "commercial_use": {"type": "boolean"},
+                                            "attribution_required": {"type": "boolean"},
+                                        },
+                                    },
+                                ]
+                            },
+                        },
+                    },
+                    "commercial_required": {"type": "boolean", "default": True},
+                    "attribution_ok": {"type": "boolean", "default": True},
+                    "query": {"type": "string"},
+                },
                 "required": ["asset"],
             },
         ),
@@ -1139,268 +1181,16 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                 "required": ["scan_id", "query"],
             },
         ),
-        T(
-            name="perception_seo_status",
-            description=(
-                "SEO Intelligence. Module phase, free-first provider catalog, knowledge graph summary. "
-                "Read perception://seo-guide first. Not Ahrefs/Semrush — orchestration layer only."
-            ),
-            inputSchema={"type": "object", "properties": {}},
-        ),
-        T(
-            name="perception_seo_audit",
-            description=(
-                "SEO Intelligence. Default mode=development (no auth): Browser, Lighthouse, LibreCrawl. "
-                "mode=professional adds GSC/GA4 when user requests live search optimization."
-            ),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "website_url": {"type": "string", "description": "Site to audit (required)"},
-                    "mode": {
-                        "type": "string",
-                        "enum": ["development", "professional"],
-                        "description": "Omit for auto (development default; professional when GSC/GA4 intents requested)",
-                    },
-                    "property_url": {
-                        "type": "string",
-                        "description": "Advanced: GSC property override if auto-discovery failed",
-                    },
-                    "ga4_property_id": {
-                        "type": "string",
-                        "description": "Advanced: GA4 property override if auto-discovery failed",
-                    },
-                    "bing_site_url": {
-                        "type": "string",
-                        "description": "Advanced: Bing site override if auto-discovery failed",
-                    },
-                    "scan_id": {"type": "string", "description": "Browser Intelligence scan for rendering evidence"},
-                    "repo_root": {"type": "string", "description": "Frontend repo root for codebase_hints and browser_code_links (Sprint 2)"},
-                    "providers": {"type": "array", "items": {"type": "string"}},
-                    "intents": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "Capabilities e.g. keyword_research, technical_crawl, core_web_vitals",
-                    },
-                    "include_cross_analysis": {"type": "boolean", "default": True},
-                    "include_recommendations": {"type": "boolean", "default": True},
-                    "include_ai_visibility": {
-                        "type": "boolean",
-                        "default": True,
-                        "description": "Run the AI Visibility layer (derived analysis over SEO evidence). Set false to skip.",
-                    },
-                    "ai_reasoning": {
-                        "type": "boolean",
-                        "description": "Use host LLM over reasoning_units (auto when Bedrock creds available; false forces deterministic fallback)",
-                    },
-                },
-                "required": ["website_url"],
-            },
-        ),
-        T(
-            name="perception_seo_audit_start",
-            description=(
-                "SEO Intelligence. Development mode (default): instant inline audit (2–5s) from scan_id — "
-                "no polling. Professional mode: async job — poll perception_seo_audit_poll. "
-                "Localhost auto-detects development. Read perception://seo-guide."
-            ),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "website_url": {"type": "string", "description": "Site to audit (required)"},
-                    "mode": {"type": "string", "enum": ["development", "professional"]},
-                    "property_url": {"type": "string"},
-                    "ga4_property_id": {"type": "string"},
-                    "bing_site_url": {"type": "string"},
-                    "scan_id": {"type": "string"},
-                    "repo_root": {"type": "string"},
-                    "providers": {"type": "array", "items": {"type": "string"}},
-                    "intents": {"type": "array", "items": {"type": "string"}},
-                    "include_cross_analysis": {"type": "boolean", "default": True},
-                    "include_recommendations": {"type": "boolean", "default": True},
-                    "include_ai_visibility": {"type": "boolean", "default": True},
-                    "ai_reasoning": {"type": "boolean"},
-                },
-                "required": ["website_url"],
-            },
-        ),
-        T(
-            name="perception_seo_audit_poll",
-            description=(
-                "SEO Intelligence (async). Poll background audit job for status, progress, and evidence deltas."
-            ),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "audit_job_id": {"type": "string"},
-                    "since_evidence_seq": {
-                        "type": "integer",
-                        "description": "Return evidence_delta entries after this sequence number",
-                    },
-                },
-                "required": ["audit_job_id"],
-            },
-        ),
-        T(
-            name="perception_seo_audit_cancel",
-            description="SEO Intelligence (async). Cancel a background audit job by audit_job_id.",
-            inputSchema={
-                "type": "object",
-                "properties": {"audit_job_id": {"type": "string"}},
-                "required": ["audit_job_id"],
-            },
-        ),
-        T(
-            name="perception_seo_connect",
-            description=(
-                "SEO Intelligence setup and on-demand OAuth. Default action=setup registers website_url only. "
-                "Use action=connect_google or connect_bing when user requests provider-specific analysis."
-            ),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "website_url": {"type": "string", "description": "Website URL"},
-                    "provider": {
-                        "type": "string",
-                        "enum": ["google", "bing"],
-                        "description": "Required for connect_bing; use with action=connect for Google",
-                    },
-                    "action": {
-                        "type": "string",
-                        "enum": [
-                            "status",
-                            "setup",
-                            "connect",
-                            "connect_google",
-                            "connect_bing",
-                            "refresh_discovery",
-                        ],
-                        "default": "setup",
-                    },
-                    "interactive": {
-                        "type": "boolean",
-                        "default": True,
-                        "description": "When true, opens browser and waits for localhost OAuth callback",
-                    },
-                    "code": {
-                        "type": "string",
-                        "description": "Manual OAuth code override (automation/testing only)",
-                    },
-                    "api_key": {
-                        "type": "string",
-                        "description": "Bing API key fallback when Bing OAuth client not configured",
-                    },
-                },
-            },
-        ),
-        T(
-            name="perception_seo_query",
-            description=(
-                "Query the SEO knowledge graph — page issues, audit diff, traffic signals. "
-                "Omit query_id to list available queries. Run perception_seo_audit_start first to populate the graph."
-            ),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "query_id": {
-                        "type": "string",
-                        "enum": [
-                            "graph.summary",
-                            "page.issues",
-                            "audit.latest",
-                            "audit.diff",
-                            "site.traffic_signals",
-                        ],
-                    },
-                    "page_url": {"type": "string", "description": "For page.issues"},
-                    "audit_id": {"type": "string", "description": "For audit.diff (default: latest)"},
-                    "params": {"type": "object", "description": "Alternative param bag"},
-                },
-            },
-        ),
-        T(
-            name="perception_seo_verify",
-            description=(
-                "SEO Intelligence verification loop. Re-audit site and compare against graph baseline recommendations."
-            ),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "website_url": {"type": "string"},
-                    "property_url": {"type": "string"},
-                    "ga4_property_id": {"type": "string"},
-                    "scan_id": {"type": "string"},
-                    "recommendation_ids": {"type": "array", "items": {"type": "string"}},
-                    "providers": {"type": "array", "items": {"type": "string"}},
-                    "intents": {"type": "array", "items": {"type": "string"}},
-                },
-                "required": ["website_url"],
-            },
-        ),
-        T(
-            name="perception_figma_status",
-            description=(
-                "Figma Intelligence. Connection state, session, health of southleft/figma-console-mcp. "
-                "Read perception://figma-guide first. Connection + coordination only — not design critique."
-            ),
-            inputSchema={"type": "object", "properties": {}},
-        ),
-        T(
-            name="perception_figma_connect",
-            description=(
-                "Figma Intelligence. Connect user's Figma account with Personal Access Token (stored locally). "
-                "action=status to check connection; action=disconnect to clear token."
-            ),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "pat": {"type": "string", "description": "Figma Personal Access Token"},
-                    "figma_pat": {"type": "string", "description": "Alias for pat"},
-                    "action": {
-                        "type": "string",
-                        "enum": ["connect", "status", "disconnect"],
-                        "description": "Default connect — validates and stores PAT",
-                    },
-                    "account_hint": {"type": "string", "description": "Optional label for stored token"},
-                },
-            },
-        ),
-        T(
-            name="perception_figma_context",
-            description=(
-                "Does: loads normalized Figma frames, components, variables, styles, tokens, and selection. "
-                "Use when: a Figma reference should govern structural design decisions. "
-                "Returns: file-scoped design context and evidence quality; connection alone is not context evidence. "
-                "Next: compile/bind the reference Spec, then implement and remeasure."
-            ),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "file_key": {"type": "string"},
-                    "file_url": {"type": "string", "description": "Figma file or design URL"},
-                    "file_name": {"type": "string"},
-                    "page_id": {"type": "string"},
-                    "frame_id": {"type": "string"},
-                    "selection_node_ids": {"type": "array", "items": {"type": "string"}},
-                    "refresh": {"type": "boolean", "default": False},
-                    "session_id": {
-                        "type": "string",
-                        "description": "Browser session for binding seed Spec to episode",
-                    },
-                    "bind_as_reference": {
-                        "type": "boolean",
-                        "default": False,
-                        "description": "Bind Figma seed Spec as reference for SpecDiff gate",
-                    },
-                },
-            },
-        ),
+        # SEO Intelligence tools excluded from MVP — see parked/MVP_EXCLUDE_SEO.md
+        # Figma Intelligence tools excluded from MVP — see parked/MVP_EXCLUDE_FIGMA.md
         T(
             name="perception_build_design_snapshot",
             description=(
                 "Does: measures a Design Snapshot and Frontend Engineering Spec from live scan evidence. "
                 "Use when: before structural redesign decisions, when binding a measured reference, and after a draft. "
-                "Returns: geometry/tokens/components, Spec coverage, reference binding quality, and SpecDiff gate. "
+                "Returns: geometry/tokens/components, Spec coverage, reference binding quality, SpecDiff gate, and "
+                "inline rendered screenshots (annotated viewport + full page + section crops) — LOOK at them, "
+                "then pass visual_feedback so next_actions guide the next edit. "
                 "Next: resolve low coverage or revise required drifts before verification."
             ),
             inputSchema={
@@ -1428,6 +1218,74 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                         "default": False,
                         "description": "Augment with designlang CLI when DESIGNLANG_ENABLED=1",
                     },
+                    "include_screenshots": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Attach rendered screenshots (default on for design/consistency)",
+                    },
+                    "screenshot_pack": {
+                        "type": "string",
+                        "enum": ["auto", "design", "viewport", "full", "section", "element", "none"],
+                        "default": "auto",
+                        "description": (
+                            "auto→design pack for these tools (viewport+full+sections). "
+                            "Narrow with section/element when visual_feedback focuses a block."
+                        ),
+                    },
+                    "screenshot_selector": {
+                        "type": "string",
+                        "description": "CSS selector — also attach a cropped screenshot of this element",
+                    },
+                    "max_sections": {
+                        "type": "number",
+                        "default": 3,
+                        "description": "Max number of section crops (header/nav/main/footer/...) to attach",
+                    },
+                    "focus_sections": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Prefer these section roles/labels in crops (e.g. header, footer, hero)",
+                    },
+                    "visual_feedback": {
+                        "type": "object",
+                        "description": (
+                            "Agent judgment after LOOKING at screenshots. Drives next_actions "
+                            "(remeasure, verify section, propose_fix, edit_then_remeasure)."
+                        ),
+                        "properties": {
+                            "judgment": {
+                                "type": "string",
+                                "enum": ["ok", "needs_work", "unclear"],
+                            },
+                            "notes": {"type": "string"},
+                            "focus_sections": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                            },
+                            "focus_selector": {"type": "string"},
+                            "issues": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "section": {"type": "string"},
+                                        "selector": {"type": "string"},
+                                        "problem": {"type": "string"},
+                                        "wanted": {"type": "string"},
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    "visual_notes": {
+                        "type": "string",
+                        "description": "Flat alias for visual_feedback.notes",
+                    },
+                    "visual_judgment": {
+                        "type": "string",
+                        "enum": ["ok", "needs_work", "unclear"],
+                        "description": "Flat alias for visual_feedback.judgment",
+                    },
                 },
             },
         ),
@@ -1436,7 +1294,9 @@ def perception_tools(mcp_types: Any) -> list[Any]:
             description=(
                 "Does: reviews a measured snapshot (review mode) or runs Ship Council challenges (mode=ship). "
                 "Use when: a draft exists; use ship after verify on structural/balanced work before claim-done. "
-                "Returns: review findings and SpecDiff, or top ROI-ranked ship challenges, ship_gate, and ship_summary. "
+                "Returns: review findings and SpecDiff (or ROI-ranked ship challenges, ship_gate, ship_summary) plus "
+                "inline rendered screenshots (annotated viewport + full page + section crops) — LOOK at them and "
+                "pass visual_feedback so next_actions guide the next edit. "
                 "Next: revise challenges, accept with engineering rationale, or remeasure after revisions."
             ),
             inputSchema={
@@ -1446,6 +1306,13 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                     "scan_id": {"type": "string"},
                     "snapshot_id": {"type": "string"},
                     "user_task": {"type": "string", "description": "What the user is trying to accomplish"},
+                    "repo_root": {
+                        "type": "string",
+                        "description": (
+                            "Repo root containing ForOpenCode/ (UX Knowledge Brain) for "
+                            "design_review ux_knowledge provider; also used for PDG enrichment"
+                        ),
+                    },
                     "mode": {
                         "type": "string",
                         "enum": ["review", "ship"],
@@ -1484,6 +1351,74 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                         "description": "Optional explicit reference Spec",
                     },
                     "use_designlang": {"type": "boolean", "default": False},
+                    "include_screenshots": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Attach rendered screenshots (default on for design/consistency)",
+                    },
+                    "screenshot_pack": {
+                        "type": "string",
+                        "enum": ["auto", "design", "viewport", "full", "section", "element", "none"],
+                        "default": "auto",
+                        "description": (
+                            "auto→design pack (viewport+full+sections). "
+                            "Narrow with section/element when visual_feedback focuses a block."
+                        ),
+                    },
+                    "screenshot_selector": {
+                        "type": "string",
+                        "description": "CSS selector — also attach a cropped screenshot of this element",
+                    },
+                    "max_sections": {
+                        "type": "number",
+                        "default": 3,
+                        "description": "Max number of section crops to attach",
+                    },
+                    "focus_sections": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Prefer these section roles/labels in crops",
+                    },
+                    "visual_feedback": {
+                        "type": "object",
+                        "description": (
+                            "Agent judgment after LOOKING at screenshots. Returns next_actions "
+                            "to remeasure, verify section, propose_fix, or edit_then_remeasure."
+                        ),
+                        "properties": {
+                            "judgment": {
+                                "type": "string",
+                                "enum": ["ok", "needs_work", "unclear"],
+                            },
+                            "notes": {"type": "string"},
+                            "focus_sections": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                            },
+                            "focus_selector": {"type": "string"},
+                            "issues": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "section": {"type": "string"},
+                                        "selector": {"type": "string"},
+                                        "problem": {"type": "string"},
+                                        "wanted": {"type": "string"},
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    "visual_notes": {
+                        "type": "string",
+                        "description": "Flat alias for visual_feedback.notes",
+                    },
+                    "visual_judgment": {
+                        "type": "string",
+                        "enum": ["ok", "needs_work", "unclear"],
+                        "description": "Flat alias for visual_feedback.judgment",
+                    },
                 },
             },
         ),
@@ -1491,7 +1426,9 @@ def perception_tools(mcp_types: Any) -> list[Any]:
             name="perception_consistency_review",
             description=(
                 "Consistency Intelligence: refresh Project Design Graph from snapshot + codebase/tokens, "
-                "then batch-audit interactive elements against learned standards."
+                "then batch-audit interactive elements against learned standards. "
+                "Attaches viewport + full page + section screenshots — LOOK at them, then pass "
+                "visual_feedback so next_actions guide propose_fix / section edits."
             ),
             inputSchema={
                 "type": "object",
@@ -1502,6 +1439,44 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                     "repo_root": {"type": "string"},
                     "project_id": {"type": "string"},
                     "use_designlang": {"type": "boolean", "default": False},
+                    "include_screenshots": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Attach rendered screenshots (default on)",
+                    },
+                    "screenshot_pack": {
+                        "type": "string",
+                        "enum": ["auto", "design", "viewport", "full", "section", "element", "none"],
+                        "default": "auto",
+                    },
+                    "screenshot_selector": {"type": "string"},
+                    "max_sections": {"type": "number", "default": 3},
+                    "focus_sections": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "visual_feedback": {
+                        "type": "object",
+                        "description": "Agent visual judgment → next_actions",
+                        "properties": {
+                            "judgment": {
+                                "type": "string",
+                                "enum": ["ok", "needs_work", "unclear"],
+                            },
+                            "notes": {"type": "string"},
+                            "focus_sections": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                            },
+                            "focus_selector": {"type": "string"},
+                            "issues": {"type": "array", "items": {"type": "object"}},
+                        },
+                    },
+                    "visual_notes": {"type": "string"},
+                    "visual_judgment": {
+                        "type": "string",
+                        "enum": ["ok", "needs_work", "unclear"],
+                    },
                 },
             },
         ),
@@ -1509,7 +1484,9 @@ def perception_tools(mcp_types: Any) -> list[Any]:
             name="perception_consistency_audit",
             description=(
                 "Consistency Intelligence: batch audit snapshot elements against populated Project Design Graph. "
-                "Run perception_design_graph_refresh first if graph is empty."
+                "Run perception_design_graph_refresh first if graph is empty. "
+                "Attaches viewport + full page + section screenshots — LOOK at them, then pass "
+                "visual_feedback so next_actions guide propose_fix / section edits."
             ),
             inputSchema={
                 "type": "object",
@@ -1521,21 +1498,67 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                     "repo_root": {"type": "string"},
                     "project_id": {"type": "string"},
                     "max_elements": {"type": "number", "default": 40},
+                    "include_screenshots": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Attach rendered screenshots (default on)",
+                    },
+                    "screenshot_pack": {
+                        "type": "string",
+                        "enum": ["auto", "design", "viewport", "full", "section", "element", "none"],
+                        "default": "auto",
+                    },
+                    "screenshot_selector": {"type": "string"},
+                    "max_sections": {"type": "number", "default": 3},
+                    "focus_sections": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "visual_feedback": {
+                        "type": "object",
+                        "description": "Agent visual judgment → next_actions",
+                        "properties": {
+                            "judgment": {
+                                "type": "string",
+                                "enum": ["ok", "needs_work", "unclear"],
+                            },
+                            "notes": {"type": "string"},
+                            "focus_sections": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                            },
+                            "focus_selector": {"type": "string"},
+                            "issues": {"type": "array", "items": {"type": "object"}},
+                        },
+                    },
+                    "visual_notes": {"type": "string"},
+                    "visual_judgment": {
+                        "type": "string",
+                        "enum": ["ok", "needs_work", "unclear"],
+                    },
                 },
             },
         ),
         T(
             name="perception_design_knowledge_query",
             description=(
-                "Consistency Intelligence Knowledge API: query the Project Design Graph. "
-                "Returns evidence, standards, confidence, exceptions, alternatives, and recommendations. "
-                "Use query_id from the catalog (e.g. graph.summary, standard.for_context, component.variants)."
+                "Knowledge API: query Project Design Graph OR ForOpenCode UX Knowledge Brain. "
+                "For UX engineering guidance use query_id `ux.retrieve` with params: "
+                "intent, surface_type (landing|dashboard|forms|...), phase, task, ui_component, problem. "
+                "Returns playbook, decisions, patterns, principles, conflicts, evidence. "
+                "Legacy PDG queries: graph.summary, standard.for_context, etc."
             ),
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "query_id": {"type": "string", "description": "Registered query id"},
-                    "params": {"type": "object", "description": "Query parameters"},
+                    "query_id": {
+                        "type": "string",
+                        "description": "ux.retrieve | graph.summary | ...",
+                    },
+                    "params": {
+                        "type": "object",
+                        "description": "For ux.retrieve: intent, surface_type, phase, task, ui_component, user_flow, problem",
+                    },
                     "project_id": {"type": "string", "default": "default"},
                     "repo_root": {"type": "string", "description": "Optional repo root for graph persistence"},
                 },
@@ -1628,9 +1651,10 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_coordinator_episode_start",
             description=(
-                "Coordination Intelligence: start a coordinator episode and initialize PSM Runtime. "
-                "Returns advisory briefing with next capability and compiled MCP tools. "
-                "Host LLM remains the reasoner — coordinator is deterministic and advisory."
+                "Coordination Intelligence: start or reuse a coordinator episode and initialize PSM Runtime. "
+                "DEFAULT: if session_id is already bound to a live episode, REUSE it (preserves budget, "
+                "evidence, and implementation gate). Pass force_new=true for an explicit hard reset that "
+                "does NOT merge prior episode state. Returns advisory briefing with next capability."
             ),
             inputSchema={
                 "type": "object",
@@ -1644,6 +1668,14 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                     "website_url": {"type": "string"},
                     "session_id": {"type": "string"},
                     "intent": {"type": "string"},
+                    "force_new": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": (
+                            "If true, always mint a fresh episode (hard reset). "
+                            "Default false reuses the session's existing episode."
+                        ),
+                    },
                     "leaf_hint": {"type": "string", "description": "Telemetry only"},
                     "step_context": {"type": "object"},
                 },

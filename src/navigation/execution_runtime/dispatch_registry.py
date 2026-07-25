@@ -13,6 +13,7 @@ from navigation.mcp.coordination_handlers import (
     handle_coordinator_episode_start,
 )
 from navigation.mcp.design_intelligence_handlers import (
+    attach_design_visuals,
     handle_build_design_snapshot,
     handle_consistency_assess,
     handle_consistency_audit,
@@ -49,9 +50,6 @@ from navigation.mcp.handlers import (
     handle_execute_script,
     handle_flow_describe,
     handle_framework_docs,
-    handle_figma_connect,
-    handle_figma_context,
-    handle_figma_status,
     handle_full_diagnosis,
     handle_health,
     handle_inspiration_collect,
@@ -81,14 +79,6 @@ from navigation.mcp.handlers import (
     handle_resource_session_end,
     handle_search_components,
     handle_select_component_foundation,
-    handle_seo_audit,
-    handle_seo_audit_cancel,
-    handle_seo_audit_poll,
-    handle_seo_audit_start,
-    handle_seo_connect,
-    handle_seo_query,
-    handle_seo_status,
-    handle_seo_verify,
     handle_session_end,
     handle_session_start,
     handle_state_list,
@@ -137,10 +127,10 @@ class DispatchRegistry:
             return await handle_navigate(store, args)
 
         async def navigate_and_observe(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_navigate_and_observe(store, scans, args)
+            return await handle_navigate_and_observe(store, scans, snapshots, args)
 
         async def observe(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_observe(store, scans, args)
+            return await handle_observe(store, scans, snapshots, args)
 
         async def execute_script(args: dict[str, Any]) -> dict[str, Any]:
             return await handle_execute_script(store, scans, args)
@@ -304,50 +294,52 @@ class DispatchRegistry:
         async def resource_observe_bridge(args: dict[str, Any]) -> dict[str, Any]:
             return await handle_resource_observe_bridge(scans, args)
 
-        async def seo_status(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_seo_status(args)
-
-        async def seo_connect(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_seo_connect(args)
-
-        async def seo_audit(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_seo_audit(scans, args)
-
-        async def seo_audit_start(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_seo_audit_start(scans, args)
-
-        async def seo_audit_poll(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_seo_audit_poll(args)
-
-        async def seo_audit_cancel(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_seo_audit_cancel(args)
-
-        async def seo_query(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_seo_query(args)
-
-        async def seo_verify(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_seo_verify(scans, args)
-
-        async def figma_status(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_figma_status(args)
-
-        async def figma_connect(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_figma_connect(args)
-
-        async def figma_context(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_figma_context(args)
+        # SEO Intelligence tools excluded from MVP — see parked/MVP_EXCLUDE_SEO.md
+        # Figma Intelligence tools excluded from MVP — see parked/MVP_EXCLUDE_FIGMA.md
 
         async def build_design_snapshot(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_build_design_snapshot(store, scans, snapshots, args)
+            env = await handle_build_design_snapshot(store, scans, snapshots, args)
+            return await attach_design_visuals(
+                env,
+                store=store,
+                scans=scans,
+                snapshots=snapshots,
+                arguments=args,
+                tool="perception_build_design_snapshot",
+            )
 
         async def design_review(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_design_review(store, scans, snapshots, args)
+            env = await handle_design_review(store, scans, snapshots, args)
+            return await attach_design_visuals(
+                env,
+                store=store,
+                scans=scans,
+                snapshots=snapshots,
+                arguments=args,
+                tool="perception_design_review",
+            )
 
         async def consistency_review(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_consistency_review(store, scans, snapshots, args)
+            env = await handle_consistency_review(store, scans, snapshots, args)
+            return await attach_design_visuals(
+                env,
+                store=store,
+                scans=scans,
+                snapshots=snapshots,
+                arguments=args,
+                tool="perception_consistency_review",
+            )
 
         async def consistency_audit(args: dict[str, Any]) -> dict[str, Any]:
-            return await handle_consistency_audit(store, scans, snapshots, args)
+            env = await handle_consistency_audit(store, scans, snapshots, args)
+            return await attach_design_visuals(
+                env,
+                store=store,
+                scans=scans,
+                snapshots=snapshots,
+                arguments=args,
+                tool="perception_consistency_audit",
+            )
 
         async def design_knowledge_query(args: dict[str, Any]) -> dict[str, Any]:
             return await handle_design_knowledge_query(args)
@@ -434,17 +426,6 @@ class DispatchRegistry:
             "perception_resource_animation_search": resource_animation_search,
             "perception_resource_license_check": resource_license_check,
             "perception_resource_observe_bridge": resource_observe_bridge,
-            "perception_seo_status": seo_status,
-            "perception_seo_connect": seo_connect,
-            "perception_seo_audit": seo_audit,
-            "perception_seo_audit_start": seo_audit_start,
-            "perception_seo_audit_poll": seo_audit_poll,
-            "perception_seo_audit_cancel": seo_audit_cancel,
-            "perception_seo_query": seo_query,
-            "perception_seo_verify": seo_verify,
-            "perception_figma_status": figma_status,
-            "perception_figma_connect": figma_connect,
-            "perception_figma_context": figma_context,
             "perception_build_design_snapshot": build_design_snapshot,
             "perception_design_review": design_review,
             "perception_consistency_review": consistency_review,

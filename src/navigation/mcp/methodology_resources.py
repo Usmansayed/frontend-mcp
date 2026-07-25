@@ -49,12 +49,16 @@ engineering decision.
 1. `resources/read` → `perception://getting-started` (this page)
 2. `perception_health({ url, intent })` with the real task wording
 3. If reachable: `perception_session_start({ base_url, intent })` → save `session_id`
-4. Read `agent_summary.engineering_strategy` (influence, unresolved_decisions,
-   recommended_resource, recommended_evidence, implementation_gate)
+   (`intent` is required for useful greenfield vs hotfix routing)
+4. Read **`agent_summary.coordinator`** and **`recommended_next`** first (slim briefing);
+   then `engineering_strategy` / `episode_card` for gate, unpaid, influence, resources
 5. `resources/read` the `recommended_resource`
 6. Gather only evidence that changes an unresolved decision; then implement
 7. After ACT: Done ladder in `perception://verification-guide`
    (`data.verified=true` → section checklist if required → Ship Council if required)
+
+Situation cards (short): `perception://guide/scoreboard`, `greenfield`, `redesign`,
+`feature`, `hotfix`, `forms`, `hard-fails` — also see always-on agent rule.
 
 ## Failure and fallback
 A completed tool call is not automatically usable evidence. Read `coordination_evidence`
@@ -101,7 +105,9 @@ you have obeyed the gate; claim-done only after the Done ladder clears.
             "Redesign Workflow",
             "Changing the visual system or full-page composition of an existing interface.",
             "Current baseline, target reference, intentional changes, and preserved behavior.",
-            "Observe and build a Design Snapshot; bind/measure the target; use SpecDiff and Design Review.",
+            "Observe and build a Design Snapshot; bind/measure the target; use SpecDiff and Design Review. "
+            "build_design_snapshot / design_review / consistency tools now inline rendered screenshots "
+            "(viewport + full page + section crops) — after every UI change, re-run the tool and LOOK at the images.",
             "Do not rewrite the full UI before the current and target evidence are measurable.",
             "Required revisions are applied, remeasured, section checklist complete, Ship Council clear, and verified.",
         ),
@@ -122,10 +128,136 @@ you have obeyed the gate; claim-done only after the Done ladder clears.
         _guide(
             "Engineering Strategy",
             "When reading coordinator strategy or deciding whether evidence is worth collecting.",
-            "Influence level, unresolved decisions, ROI, allowed actions, and stop conditions.",
-            "Use strategy fields as a decision contract, especially implementation_gate and evidence_plan.",
-            "Recommended evidence is required when the gate says blocked; it is optional only when the gate permits implementation.",
-            "The next action matches the gate and the highest-impact unresolved decision.",
+            "Influence level, surface_type, episode_backlog, episode_portfolio, episode_confidence, unresolved decisions, ROI, allowed actions, and stop conditions. "
+            "`data.coordinator` is slim `coordinator_card.v1` (host_action, gate, portfolio ids, confidence, evidence_quality_alerts); full strategy lives under `agent_summary.engineering_strategy`.",
+            "Use strategy as a decision contract — implementation_gate ladder (sections → residue → ship → evidence terminals), backlog.top for ROI next, portfolio for unpaid families. Initiative is advisory only. "
+            "Prefer `agent_summary.episode_card` (`episode_card.v1`) as the single readout: gate, portfolio, confidence, alerts, what_matters. "
+            "You (the agent) coordinate: build a ≤3 unpaid owed plan from portfolio — do not tunnel on gate.next alone. "
+            "See `perception://agent-coordination` and `perception://guide/*` situation cards.",
+            "Recommended evidence is required when the gate says blocked; residue is one remasure pass only. Skip evidence with a valid reason rather than ritual tool calls.",
+            "Next action matches gate.next as the immediate pitch, but unpaid structural families still bind the brain; confidence is a readout, not a gate.",
+        ),
+    ),
+    "perception://agent-coordination": (
+        "Agent-Brain Coordination",
+        """# Agent-Brain Coordination
+
+## Use when
+Every structural / balanced / redesign UI episode — after reading `episode_card` or engineering strategy.
+MCP stays a **facts scoreboard**. You decide which families to pay.
+
+## Decisions to resolve
+Which unpaid families are owed for *this* task class (≤3), which single tool to call next,
+and when evidence is enough to lock UI direction (or skip with a valid reason).
+
+## Minimum evidence
+1. Read `episode_card`: unpaid + gate + backlog.top (+ confidence).
+2. Classify: greenfield | redesign | mockup | feature | hotfix | polish | forms.
+3. Read the matching `perception://guide/*` card; build owed ≤3 from unpaid ∩ class.
+4. One tool from owed (`gate.next` / `backlog.top` only if inside owed); re-read unpaid before locking UI.
+5. If unpaid is empty (outside design initiative), still run the class minimum path.
+
+## Implementation boundary
+Do not invent new MCP gates. Do not call every family. Do not obey only `gate.next`
+while other structural unpaid remain. Soft text verify is not redesign-done.
+Primary short contract: always-on agent rule. Situation cards: `perception://guide/*`.
+
+## Done condition
+Gate allows claim; structural unpaid cleared (paid / skip / supersede); Done ladder if required.
+""",
+    ),
+    "perception://guide/scoreboard": (
+        "Guide: Scoreboard",
+        _guide(
+            "Guide: Scoreboard",
+            "Every structural/balanced turn — before locking UI direction.",
+            "Which unpaid families bind, whether gate blocks claim, and which single tool is next inside the owed plan.",
+            "Read episode_card unpaid + gate + backlog.top. Build owed ≤3 from unpaid ∩ task class. "
+            "Prefer backlog.top only if it is already in owed. Re-read unpaid after each evidence call. "
+            "If unpaid empty, still run class min path (feature/hotfix often have empty portfolio).",
+            "Do not treat gate.next or recommended_evidence as the whole plan. Confidence is a readout, not a gate.",
+            "Owed plan clear; next call is from owed; structural locks only after advancement_eligible evidence.",
+        ),
+    ),
+    "perception://guide/greenfield": (
+        "Guide: Greenfield",
+        _guide(
+            "Guide: Greenfield",
+            "New product UI / landing / no mockup yet (maps to design_driven).",
+            "Design reference (inspiration or snapshot), component foundation, live baseline, then verify.",
+            "Pay inspiration **or** snapshot while design_reference unpaid (one progressive collect 3–5 refs — stop when usable). "
+            "Pay component if foundation unpaid. Observe, then implement, then data.verified=true; sections/ship if gated.",
+            "Skip SEO, ritual 2–3 inspiration loops, and ship before reference+foundation are paid/skipped.",
+            "Reference + foundation settled (or valid skip); draft remeasured if Spec bound; Done ladder clear.",
+        ),
+    ),
+    "perception://guide/redesign": (
+        "Guide: Redesign / Mockup",
+        _guide(
+            "Guide: Redesign / Mockup",
+            "Visual overhaul, rebrand, or user-uploaded mockup/reference image.",
+            "Measured baseline/target (snapshot), intentional changes, verify, ship when gated.",
+            "Mockup or redesign with snapshot unpaid → perception_build_design_snapshot (bind) first — not gallery inspiration. "
+            "Inspiration only if direction still open and snapshot not the path. Observe correct port/app. "
+            "After draft: SpecDiff / remeasure; hard verify; sections then ship if required. "
+            "Dashboard ship may challenge equal-weight KPIs; settings/auth use form/footer signals — do not force KPI fixes on settings.",
+            "Do not match a mockup with soft text verify alone. Do not re-run inspiration after Spec/mockup bound.",
+            "Snapshot/Spec path honored; data.verified=true; checklist/ship clear when required.",
+        ),
+    ),
+    "perception://guide/feature": (
+        "Guide: Feature",
+        _guide(
+            "Guide: Feature",
+            "Add or change a feature on an existing surface (not full redesign).",
+            "Affected routes, owners if unclear, and verification of the change.",
+            "Observe affected routes. If owners unclear → perception_resolve_route / perception_resolve_component "
+            "(even when resolve is not listed in unpaid). Implement. Verify with data.verified=true. "
+            "Ladder only if gate flags sections/ship.",
+            "Skip greenfield inspiration and new foundation selection unless unpaid and truly required.",
+            "Change verified; no open claim prohibition.",
+        ),
+    ),
+    "perception://guide/hotfix": (
+        "Guide: Hotfix / Polish",
+        _guide(
+            "Guide: Hotfix / Polish",
+            "Bug, surgical CSS, blur/opacity nudge, or micro polish (maps to hotfix/surgical/debug).",
+            "Symptom reproduction, smallest fix, hard verification.",
+            "Observe live page on the correct port (blocking first). Smallest fix. "
+            "Verify with hard criteria (computed style / JS). For opacity/blur “looks the same,” measure competing overlays/washes.",
+            "Skip inspiration, foundation, and ship — **unless** this episode already drafted design_driven/redesign UI (sticky design): then finish section checklist + Ship Council. "
+            "If unpaid includes sections or residue, pay those ladder families before claim (sections/residue outrank class tables).",
+            "data.verified=true for the symptom; ladder complete only when sticky design / gate requires it.",
+        ),
+    ),
+    "perception://guide/forms": (
+        "Guide: Forms / Guards / Flows",
+        _guide(
+            "Guide: Forms / Guards / Flows",
+            "Form validation, auth gates, multi-step flows — not a full marketing landing.",
+            "Playbook criteria, invalid then valid paths, guard boundaries.",
+            "Read strategy. Use perception_probe_form / perception_probe_guards / flow checkpoints as appropriate. "
+            "Still verify with data.verified=true. Do not treat a new product landing as “just a form.”",
+            "Avoid greenfield inspiration tours unless the surface is actually new marketing UI.",
+            "Probe criteria covered; verify passed; auth requires_human stops for the user.",
+        ),
+    ),
+    "perception://guide/hard-fails": (
+        "Guide: Hard Fails",
+        _guide(
+            "Guide: Hard Fails",
+            "Any UI episode — memorize these process fails.",
+            "Whether the agent is about to tunnel, skip reference, false-green, or claim early.",
+            "Stop if: (1) only gate.next while other structural unpaid remain; "
+            "(2) large UI with inspiration and snapshot both unpaid; "
+            "(3) mockup without snapshot; (4) soft text verify for visual claims; "
+            "(5) claim while claim_complete prohibited or sections/ship unpaid; "
+            "(6) SEO/thoroughness spam; (7) wrong port/product; "
+            "(8) foundation reopen on 2-line polish; (9) parallel browser tools on one session_id; "
+            "(10) end-of-task MCP only after coding the full UI.",
+            "These are host process fails — MCP may still return ok. Do not rationalize past them.",
+            "No hard-fail pattern present before claim-done.",
         ),
     ),
     "perception://decision-ledger": (
@@ -144,10 +276,11 @@ you have obeyed the gate; claim-done only after the Done ladder clears.
         _guide(
             "Ship Council",
             "After section checklist is complete on structural/balanced UI — before claiming done.",
-            "Top 3–5 ROI-ranked ship decisions (hierarchy, composition, theme coupling, Spec drift) — not sticky/overflow conventions (those fail in verify).",
-            "perception_design_review(mode=\"ship\") with snapshot; optional dispositions array.",
+            "Top 3–5 ROI-ranked ship decisions gated by surface_type (dashboard vs settings_form vs auth vs marketing). Settings prefer form measure / footer rhythm; skip equal-weight KPI on settings. Not sticky/overflow conventions (those fail in verify).",
+            "perception_design_review(mode=\"ship\") with snapshot; optional dispositions array. "
+            "Obey revise_guidance / anti_patterns on each challenge — e.g. equal_weight_kpi_cluster must NOT be fixed with col-span that breaks equal columns. Thin or empty-dense clears may require one residue remasure.",
             "Agent revises high-ROI design challenges; accept requires concrete engineering rationale; ask_user only for brand/subjective conflicts.",
-            "Section checklist complete, ship_gate.council_clear is true, and ship_summary reflects dispositions.",
+            "Section checklist complete, residue closed when required, ship_gate.council_clear is true, and ship_summary reflects dispositions.",
         ),
     ),
     "perception://verification-guide": (

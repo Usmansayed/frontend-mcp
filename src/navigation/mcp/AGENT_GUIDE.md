@@ -1,4 +1,4 @@
-﻿# Agent Guide — Programming the Host Agent
+# Agent Guide — Programming the Host Agent
 
 **Audience:** Cursor, Claude Code, Codex, or any MCP-connected coding agent.
 
@@ -28,13 +28,24 @@ The MCP has **no LLM**. **You are the brain.** The MCP only navigates, observes,
 
 ## 0. Universal loop (every task)
 
+**Branch by class first** (from intent + `agent_summary.coordinator`):
+
+| Class | First move | Skip |
+|-------|------------|------|
+| **greenfield** / new landing / new dashboard | Read coordinator → design orientation evidence (inspiration **or** snapshot) before scaffolding pages | Soft verify-only |
+| **redesign** / mockup match | Snapshot bind first — not gallery inspiration | Ritual inspiration loops |
+| **feature** on existing UI | Bound Spec if any → observe affected routes → implement → verify | Restarting greenfield inspiration |
+| **hotfix** / surgical bug | Observe blocking → smallest fix → verify | Inspiration, foundation, ship (unless sticky design draft this episode) |
+| **polish** | High-ROI visual only while strategy allows | Ignoring checklist/ship if a design draft already exists |
+| **forms** / guards / flows | `probe_form` / `probe_guards` / flow checkpoints | Treating new product UI as “just a form” |
+
 ```text
 STRATEGIZE  →  OBSERVE  →  REASON  →  ACT  →  VERIFY  →  (repeat or STOP)
 ```
 
 | Phase | Who | What |
 |-------|-----|------|
-| **STRATEGIZE** | You read MCP | `agent_summary.engineering_strategy` from `perception_health` / `perception_session_start` / observe responses — unresolved decisions, influence level, risks, stop conditions |
+| **STRATEGIZE** | You read MCP | `agent_summary.coordinator` + `recommended_next` (and `engineering_strategy` / `episode_card`) from health / session_start / observe — unpaid, gate, influence |
 | **OBSERVE** | You call MCP | `perception_navigate_and_observe` or `perception_observe` — save `scan_id` |
 | **REASON** | You (in IDE) | Read `agent_summary.blocking`, DOM, dev insights; edit code or plan script |
 | **ACT** | You call MCP | `perception_execute_script` / `perception_execute_actions` — save `scan_id_before` |
@@ -42,18 +53,39 @@ STRATEGIZE  →  OBSERVE  →  REASON  →  ACT  →  VERIFY  →  (repeat or ST
 | **STOP** | You | Done ladder complete (below); or stop and ask user (auth gate, ambiguous requirements) |
 
 **Hard rules:**
-1. Read `engineering_strategy` before planning implementation — especially `unresolved_decisions`, `influence_level`, and `implementation_gate`.
+1. Read `coordinator` / `engineering_strategy` before planning implementation — especially `unresolved_decisions`, `influence_level`, and `implementation_gate`.
 2. Never claim done on transport `ok` alone. Require **`data.verified=true`**, then complete the Done ladder (§19) when `section_checklist_required` / `ship_council_required`.
 3. Never loop login/MFA — if `perception_auth_gate` → `requires_human: true`, ask the user.
 4. Always read `blocking` before `advisory` in dev insights.
 5. On verify failure: re-observe with screenshot, then `perception_diff`.
 6. After a draft UI: remeasure with `perception_build_design_snapshot` and honor `spec_revision_gate` — if `revision_required`, revise before claiming done.
 
+---
+
+## 0b. Coordinator (read this channel)
+
+The coordinator is **advisory scoreboard**, not an auto-agent. It does not replace your judgment.
+
+On every `perception_health`, `perception_session_start`, and observe-family result, read:
+
+| Field | Meaning |
+|-------|---------|
+| `agent_summary.recommended_next` | One-line host action (highest signal) |
+| `agent_summary.coordinator` | Slim card: `host_action`, `gate`, unpaid/paid families, confidence |
+| `agent_summary.episode_card` | Single readout for gate + portfolio + what_matters |
+| `agent_summary.engineering_strategy` | Full strategy (influence, unresolved_decisions, evidence plan) |
+
+**Bootstrap:** always pass **`intent`** on health and session_start so R12 can classify greenfield vs hotfix. Missing intent adds an advisory and weak routing.
+
+**Do not** tunnel on `gate.next` alone while other structural unpaid families remain — build owed ≤3 from unpaid ∩ task class.
+
+**Do not** treat coordinator suggestions as mandatory tool calls. Evidence packets (inspiration blobs, snapshots, verify) are inputs; you decide and implement.
+
 **Closed loop (reference Spec → draft → SpecDiff gate):**
 
 ```text
 Reference Spec bound
-  (inspiration seed / Figma seed / build_design_snapshot bind_as_reference=true)
+  (inspiration seed / build_design_snapshot bind_as_reference=true)
        ↓
 Host implements from Spec decisions
        ↓
@@ -69,7 +101,7 @@ spec_revision_gate → revision_required?
 
 | Step | Tool | What to read |
 |------|------|----------------|
-| Bind reference | `perception_inspiration_collect` / `perception_build_design_snapshot({ bind_as_reference: true })` / Figma `bind_as_reference` | `engineering_spec`, `reference_bind` |
+| Bind reference | `perception_inspiration_collect` / `perception_build_design_snapshot({ bind_as_reference: true })` | `engineering_spec`, `reference_bind` |
 | Draft | Your code edits | Spec decisions by impact — not gallery tags |
 | Gate | `perception_build_design_snapshot` (default) or `perception_design_review` | `agent_summary.spec_revision_gate`, `section_checklist` |
 | Pass | `data.verified=true` + checklist/ship clear when required | Then claim-done (§19) |
@@ -119,9 +151,9 @@ Read `perception://resolver-guide` before any `perception_resolve_*` tool.
 
 **Scan reuse:** Save `scan_id` from every `navigate_and_observe` / `observe`. Reuse for:
 - `perception_diff` (before/after)
-- `perception_seo_audit_start` (development mode — instant audit)
 - `perception_correlate_live` (with resolver resolution)
 - Scan resources (`perception://scan/{scan_id}/…`)
+- Optional: `perception_audit_seo` (Lighthouse SEO category — not SEO Intelligence)
 
 **Serial execution:** Call browser tools **one at a time** per `session_id`. Parallel MCP batches can corrupt session state.
 
@@ -446,6 +478,36 @@ Observe, verify-fail, and diff tools **inline PNG images** in the MCP tool respo
 - Use `screenshot_mode: element` with a CSS selector for focused form/checkout debugging.
 - `perception_diff` returns side-by-side + heatmap images when both scans have screenshots.
 
+**Design & consistency tools now inline screenshots too.** `perception_build_design_snapshot`,
+`perception_design_review`, `perception_consistency_review`, and `perception_consistency_audit`
+attach the rendered appearance so you change UI from what the page *looks like*, not code alone:
+
+- `viewport_annotated` — annotated fold with interactive/blocking boxes
+- `full_page` — the entire page top to bottom
+- `section:<role>` — cropped header / nav / main / footer / section blocks (up to `max_sections`, default 3)
+- `element:<selector>` — pass `screenshot_selector` when editing one element/section
+
+`screenshot_pack` (default `auto` → `design` for these tools): `design` | `viewport` | `full` | `section` | `element` | `none`.
+
+### Visual feedback loop (required after looking)
+
+1. Call design/consistency tool → **LOOK** at attached images.
+2. Call again (or continue) with `visual_feedback`:
+   - `judgment`: `ok` | `needs_work` | `unclear`
+   - `notes`: free text (e.g. "header too dense, footer cramped")
+   - `focus_sections`: `["header","footer"]` — narrows crops + verify targets
+   - `focus_selector`: CSS for one element
+   - `issues[]`: `{section, selector, problem, wanted}`
+3. Read `data.next_actions` / `agent_summary.next_actions` — ranked tool calls
+   (`reobserve_element`, `verify_section`, `propose_consistency_fix`, `edit_then_remeasure`).
+4. Edit UI → re-run the same tool with screenshots + updated `visual_feedback`.
+
+Flat aliases: `visual_notes`, `visual_judgment`, `focus_sections`, `screenshot_selector`.
+
+`data.visual_evidence` lists attached image labels. Set `include_screenshots: false` / `screenshot_pack: none`
+to skip capture (offline `snapshot_id`-only still reuses stored scan screenshot as `reference_screenshot`).
+After any UI change: re-run the design/consistency tool, **LOOK at the new images**, pass feedback, then act.
+
 ---
 
 ## 12.1 Observe detail levels (M4)
@@ -545,67 +607,27 @@ Guideline:
 
 ---
 
-## 16. Playbook: SEO orchestration (SEO Intelligence)
+## 16. Playbook: SEO orchestration (SEO Intelligence) — MVP EXCLUDED
 
-**When:** User asks about search rankings, indexing, CTR, Core Web Vitals, technical SEO, or site-wide SEO audit.
+**Status:** Parked for MVP. Do **not** call `perception_seo_*` or read `perception://seo-guide`.
 
-**Read first:** MCP resource `perception://seo-guide` — Development vs Professional modes, verify loop, boundaries.
+Code and docs live under `parked/seo_intelligence/` — see `parked/MVP_EXCLUDE_SEO.md`.
 
-```text
-1. perception_seo_status()                         → phase + provider catalog
-2. perception_observe / navigate_and_observe       → scan_id (required for development)
-3. perception_seo_audit_start({ website_url, scan_id, repo_root? })
-   Development (default): inline result — data.status=completed, data.instant=true (2–5s; no poll)
-   Professional: data.audit_job_id → perception_seo_audit_poll until terminal
-4. perception_seo_connect(...)                     → OAuth only when user asks (professional)
-5. Read evidence + recommendations — every claim has evidence_ids
-6. Fix code / config from evidence
-7. perception_observe → perception_verify on affected pages
-8. perception_seo_verify or perception_seo_audit_start again to measure gains
-```
+**Still available:** `perception_audit_seo` — page-level Lighthouse SEO category (Frontend Quality), not the SEO Intelligence product.
 
-**Async rule:** Never use blocking `perception_seo_audit` in agent loops.
-Development: `audit_start` only (no poll). Professional: `audit_start` + poll.
-Cancel long jobs with `perception_seo_audit_cancel({ audit_job_id })`.
-
-| Provider | Role |
-|----------|------|
-| Search Console | Queries, index, crawl issues, CWV in GSC |
-| GA4 | Traffic, landing pages, conversions |
-| LibreCrawl | Technical crawl (local — not our crawler) |
-| Lighthouse | Lab CWV + SEO score |
-| Browser Intelligence | Rendering evidence via `scan_id` |
-
-**Do not:** Build keyword/backlink databases. Scrape SERPs ad-hoc. Claim SEO fixes without verify.
-
-**Stop when:** Recommendations addressed and verified, or user confirms stop.
+When SEO Intelligence is restored later, follow the restore checklist in `parked/MVP_EXCLUDE_SEO.md`.
 
 ---
 
-## 17. Playbook: Figma design context (Figma Intelligence)
+## 17. Playbook: Figma design context (Figma Intelligence) — MVP EXCLUDED
 
-**When:** User asks to analyze their Figma file, implement a frame, extract tokens, or compare design with code.
+**Status:** Parked for MVP. Do **not** call `perception_figma_*` or read `perception://figma-guide`.
 
-**Read first:** MCP resource `perception://figma-guide`.
+Code and docs live under `parked/figma_intelligence/` — see `parked/MVP_EXCLUDE_FIGMA.md`.
 
-```text
-1. perception_figma_status()                         → connection + session
-2. perception_figma_connect({ pat })                 → once per user (PAT stored locally)
-3. perception_figma_context({ file_url, refresh? })  → normalized design context
-4. Pass context to Design Sense / Consistency / Component Intelligence as needed
-5. perception_observe → perception_verify for code implementation
-```
+**Still available for design reference:** `perception_inspiration_*` and `perception_build_design_snapshot`.
 
-| Layer | Role |
-|-------|------|
-| Connection Manager | PAT connect, validate, reuse |
-| Session Manager | Active file, page, frame, selection |
-| Console MCP Adapter | southleft/figma-console-mcp (hidden) |
-| Context Normalizer | `FigmaDesignContext` for all modules |
-
-**Do not:** Reimplement Figma APIs. Run public inspiration here — use Inspiration Intelligence. Critique designs here — use Design Sense.
-
-**Stop when:** Context retrieved and downstream task complete, or user confirms stop.
+When Figma Intelligence is restored later, follow the restore checklist in `parked/MVP_EXCLUDE_FIGMA.md`.
 
 ---
 
@@ -643,15 +665,8 @@ Use tools **only as steps inside playbooks above**.
 | `perception_resource_search` | Ranked creative assets (fast) |
 | `perception_resource_preview` | URLs + ephemeral resource vision blobs |
 | `perception_resource_session_end` | Delete ephemeral resource blobs |
-| `perception_seo_status` | SEO module phase + provider catalog |
-| `perception_seo_audit_start` | Dev: inline audit from scan_id; Pro: enqueue + poll |
-| `perception_seo_audit_poll` | Poll audit job status + partial evidence |
-| `perception_seo_audit_cancel` | Cancel background audit |
-| `perception_seo_audit` | Legacy sync audit — prefer start + poll |
-| `perception_seo_verify` | Re-audit vs graph baseline |
-| `perception_figma_status` | Figma connection + session health |
-| `perception_figma_connect` | Connect Figma PAT (once) |
-| `perception_figma_context` | Normalized file, tokens, components, selection |
+| `perception_audit_seo` | Lighthouse SEO category (page-level; not SEO Intelligence) |
+| ~~`perception_figma_*`~~ | MVP excluded — see `parked/MVP_EXCLUDE_FIGMA.md` |
 
 ---
 

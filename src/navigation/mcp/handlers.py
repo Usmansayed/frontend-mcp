@@ -109,8 +109,15 @@ def _require_session(store: SessionStore, session_id: str) -> tuple[Any | None, 
         return None, make_envelope("", ok=False, error="session_id required")
     try:
         return store.require(session_id), None
-    except KeyError as exc:
-        return None, make_envelope("", ok=False, error=str(exc))
+    except KeyError:
+        from navigation.core.process_identity import session_lost_message
+
+        return None, make_envelope(
+            "",
+            ok=False,
+            error=session_lost_message(session_id),
+            degraded=["session_lost_rebootstrap"],
+        )
 
 
 async def _ensure_session(
@@ -121,14 +128,23 @@ async def _ensure_session(
         return None, make_envelope("", ok=False, error="session_id required")
     try:
         return await store.ensure(session_id), None
-    except KeyError as exc:
-        return None, make_envelope("", ok=False, error=str(exc))
+    except KeyError:
+        from navigation.core.process_identity import session_lost_message
+
+        return None, make_envelope(
+            "",
+            ok=False,
+            error=session_lost_message(session_id),
+            degraded=["session_lost_rebootstrap"],
+        )
 
 
 async def handle_health(arguments: dict[str, Any]) -> dict[str, Any]:
     from importlib.metadata import PackageNotFoundError, version
 
-    url = str(arguments.get("url") or "http://localhost:5173")
+    from navigation.core.paths import SANDBOX_DEFAULT_BASE_URL
+
+    url = str(arguments.get("url") or SANDBOX_DEFAULT_BASE_URL)
     reachable = False
     status: int | None = None
     error: str | None = None
@@ -143,15 +159,14 @@ async def handle_health(arguments: dict[str, Any]) -> dict[str, Any]:
     except Exception as exc:
         error = str(exc)
 
-    engine_ver = frontend_mcp_ver = None
+    engine_ver = None
     try:
         engine_ver = version("frontend-perception-engine")
     except PackageNotFoundError:
         pass
-    try:
-        frontend_mcp_ver = version("frontend-mcp")
-    except PackageNotFoundError:
-        pass
+    # Single package only — do not read a separate frontend-mcp dist (historical skew).
+    # frontend_mcp is a module inside this package; version fields always match.
+    package_ver = engine_ver
 
     browser_available = True
     try:
@@ -169,6 +184,9 @@ async def handle_health(arguments: dict[str, Any]) -> dict[str, Any]:
     if not reachable:
         recommended = None
 
+    from navigation.core.process_identity import process_identity_dict, version_skew_report
+
+    skew = version_skew_report(package_ver)
     return make_envelope(
         "perception_health",
         ok=reachable,
@@ -177,12 +195,20 @@ async def handle_health(arguments: dict[str, Any]) -> dict[str, Any]:
         data={
             "reachable": reachable,
             "status": status,
-            "server_version": engine_ver or frontend_mcp_ver or "unknown",
-            "package_version": engine_ver,
-            "frontend_mcp_version": frontend_mcp_ver,
+            "server_version": package_ver or "unknown",
+            "package_name": "frontend-perception-engine",
+            "package_version": package_ver,
+            # Same value as package_version (compat for agents that still read this key).
+            "frontend_mcp_version": package_ver,
+            "version_skew": bool(skew.get("version_skew")),
+            "version_skew_reasons": list(skew.get("version_skew_reasons") or []),
+            "code_revision": skew.get("code_revision"),
+            "restart_required": bool(skew.get("restart_required")),
+            "restart_hint": skew.get("restart_hint"),
             "browser_runtime_available": browser_available,
             "browser_manager": browser_manager,
             "recommended_next_tool": recommended,
+            **process_identity_dict(),
         },
     )
 
@@ -191,7 +217,9 @@ async def handle_session_start(
     store: SessionStore,
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
-    base_url = str(arguments.get("base_url") or "http://localhost:5173")
+    from navigation.core.paths import SANDBOX_DEFAULT_BASE_URL
+
+    base_url = str(arguments.get("base_url") or SANDBOX_DEFAULT_BASE_URL)
     headless = bool(arguments.get("headless", True))
     viewport = arguments.get("viewport") or {}
     try:
@@ -204,6 +232,8 @@ async def handle_session_start(
     except Exception as exc:
         return make_envelope("perception_session_start", ok=False, error=str(exc))
 
+    from navigation.core.process_identity import process_identity_dict
+
     return make_envelope(
         "perception_session_start",
         session_id=rec.session_id,
@@ -214,6 +244,7 @@ async def handle_session_start(
             "run_id": rec.current_run_id,
             "base_url": rec.base_url,
             "artifacts_dir": str(rec.artifacts_dir),
+            **process_identity_dict(),
         },
     )
 
@@ -223,20 +254,40 @@ async def handle_session_end(store: SessionStore, arguments: dict[str, Any]) -> 
     if not session_id:
         return make_envelope("perception_session_end", ok=False, error="session_id required")
     ended = await store.end(session_id)
+    if ended:
+        try:
+            from navigation.coordination_intelligence.integration.bridge import (
+                get_coordinator_bridge,
+            )
+
+            get_coordinator_bridge()._bindings.unbind_session(session_id)
+        except Exception:
+            pass
+    from navigation.core.process_identity import session_lost_message
+
     return make_envelope(
         "perception_session_end",
         ok=ended,
         session_id=session_id,
-        error=None if ended else f"unknown session_id: {session_id}",
+        error=None if ended else session_lost_message(session_id),
         data={"ended": ended},
+        degraded=[] if ended else ["session_lost_rebootstrap"],
     )
 
 
 async def handle_navigate_and_observe(
     store: SessionStore,
     scans: ScanRegistry,
-    arguments: dict[str, Any],
+    snapshots: Any = None,
+    arguments: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    # Backward-compat: older callers used (store, scans, arguments)
+    if arguments is None and isinstance(snapshots, dict):
+        arguments = snapshots
+        snapshots = None
+    arguments = arguments or {}
+    if snapshots is None:
+        snapshots = SnapshotRegistry()
     session_id = str(arguments.get("session_id") or "")
     url_arg = str(arguments.get("url") or "")
     if not session_id or not url_arg:
@@ -299,6 +350,20 @@ async def handle_navigate_and_observe(
     )
     summary = agent_summary_from_observation(obs_dict)
 
+    measured: dict[str, Any] = {}
+    try:
+        from navigation.mcp.design_intelligence_handlers import ensure_measured_spec_from_scan
+
+        measured = await ensure_measured_spec_from_scan(
+            store,
+            scans,
+            snapshots,
+            session_id=session_id,
+            scan_id=scan_rec.scan_id,
+        )
+    except Exception:
+        measured = {"measured": False}
+
     envelope = make_envelope(
         "perception_navigate_and_observe",
         session_id=session_id,
@@ -311,6 +376,7 @@ async def handle_navigate_and_observe(
             **_observation_payload(obs_dict, summary, detail, scan_rec.scan_id),
             "detail": detail,
             "preflight": result.preflight.to_dict() if result.preflight else None,
+            "measured_catalog": measured if measured.get("measured") else None,
         },
     )
     if include_shot and detail != "metadata_only":
@@ -587,8 +653,16 @@ async def handle_navigate(store: SessionStore, arguments: dict[str, Any]) -> dic
 async def handle_observe(
     store: SessionStore,
     scans: ScanRegistry,
-    arguments: dict[str, Any],
+    snapshots: Any = None,
+    arguments: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    # Backward-compat: older callers used (store, scans, arguments)
+    if arguments is None and isinstance(snapshots, dict):
+        arguments = snapshots
+        snapshots = None
+    arguments = arguments or {}
+    if snapshots is None:
+        snapshots = SnapshotRegistry()
     session_id = str(arguments.get("session_id") or "")
     if not session_id:
         return make_envelope("perception_observe", ok=False, error="session_id required")
@@ -611,6 +685,19 @@ async def handle_observe(
         annotate_screenshot=annotate,
     )
     summary = agent_summary_from_observation(obs_dict)
+    measured: dict[str, Any] = {}
+    try:
+        from navigation.mcp.design_intelligence_handlers import ensure_measured_spec_from_scan
+
+        measured = await ensure_measured_spec_from_scan(
+            store,
+            scans,
+            snapshots,
+            session_id=session_id,
+            scan_id=scan_rec.scan_id,
+        )
+    except Exception:
+        measured = {"measured": False}
     envelope = make_envelope(
         "perception_observe",
         session_id=session_id,
@@ -622,6 +709,7 @@ async def handle_observe(
             "scan_id": scan_rec.scan_id,
             **_observation_payload(obs_dict, summary, detail, scan_rec.scan_id),
             "detail": detail,
+            "measured_catalog": measured if measured.get("measured") else None,
         },
     )
     if include_shot and detail != "metadata_only":
@@ -639,6 +727,11 @@ async def handle_execute_actions(
         click_link_text,
         set_input_by_label,
     )
+    from navigation.visual_browser_intelligence.observe.preflight import (
+        wait_for_page_ready,
+        wait_for_spa_navigation_settle,
+    )
+    from navigation.visual_browser_intelligence.verify.verification import read_current_url
 
     session_id = str(arguments.get("session_id") or "")
     actions = arguments.get("actions") or []
@@ -656,6 +749,7 @@ async def handle_execute_actions(
     insights_dict: dict[str, Any] | None = None
     all_ok = True
     error: str | None = None
+    settle_degraded: list[str] = []
 
     async def _run_actions() -> None:
         nonlocal all_ok, error
@@ -667,6 +761,9 @@ async def handle_execute_actions(
                 break
             kind = str(action.get("type") or "")
             ok = False
+            url_before = ""
+            if kind in ("click_button", "click_link"):
+                url_before = await read_current_url(rec.browser)
             if kind == "click_button":
                 ok = await click_button_text(rec.browser, str(action.get("text") or ""))
             elif kind == "click_link":
@@ -682,12 +779,26 @@ async def handle_execute_actions(
                 all_ok = False
                 error = f"unknown action type: {kind}"
                 break
-            results.append({"index": idx, "type": kind, "ok": ok})
+            result_row: dict[str, Any] = {"index": idx, "type": kind, "ok": ok}
             if not ok:
+                results.append(result_row)
                 all_ok = False
                 error = f"action {idx} ({kind}) failed"
                 break
-            await wait_for_page_ready(rec.browser, timeout=3.0)
+            # readyState alone is insufficient for SPA client transitions.
+            await wait_for_page_ready(rec.browser, timeout=2.0)
+            if kind in ("click_button", "click_link"):
+                settle = await wait_for_spa_navigation_settle(
+                    rec.browser,
+                    url_before=url_before,
+                    timeout=float(action.get("settle_timeout_s") or 6.0),
+                )
+                result_row["url_after"] = settle.get("url")
+                result_row["title_after"] = settle.get("title")
+                result_row["navigation_changed"] = bool(settle.get("changed"))
+                if settle.get("timed_out"):
+                    settle_degraded.append(f"spa_settle_timeout:action_{idx}")
+            results.append(result_row)
 
     try:
         if capture:
@@ -706,6 +817,7 @@ async def handle_execute_actions(
         name=f"after-actions-{rec.run_counter}",
         annotate_screenshot=True,
     )
+    degraded = list(dict.fromkeys(list(obs_dict.get("degraded") or []) + settle_degraded))
     return attach_observation_visuals(
         make_envelope(
             "perception_execute_actions",
@@ -715,7 +827,7 @@ async def handle_execute_actions(
             scan_id=scan_rec.scan_id,
             url=obs_dict.get("url") or "",
             error=error,
-            degraded=list(obs_dict.get("degraded") or []),
+            degraded=degraded,
             data={
                 "actions_ok": all_ok,
                 "action_results": results,
@@ -1696,21 +1808,50 @@ async def handle_select_component_foundation(arguments: dict[str, Any]) -> dict[
     except ValueError as exc:
         return make_envelope("perception_select_component_foundation", ok=False, error=str(exc))
 
+    usable = bool(selection.usable and (selection.chosen is not None or selection.library_id))
+    degraded = list(selection.degraded or [])
+    if not usable and "foundation_relevance_too_low" not in degraded and selection.reject_reason:
+        degraded.append(str(selection.reject_reason))
+    blocking: list[str] = []
+    if selection.guidance:
+        blocking = list(selection.guidance.framework.issues or [])
+    if not usable:
+        blocking = list(
+            dict.fromkeys(
+                [
+                    *blocking,
+                    selection.reject_reason
+                    or "foundation_not_usable — refine query; do not treat as selected",
+                ]
+            )
+        )
+
     return make_envelope(
         "perception_select_component_foundation",
         ok=True,
-        degraded=selection.degraded,
+        degraded=degraded,
         data={
             "foundation_selection": selection.to_dict(),
             "component_search": search.to_dict(),
             "agent_summary": {
                 "query": query,
-                "chosen": selection.chosen.to_dict(),
-                "synthesis": selection.guidance.synthesis.to_dict(),
+                "library_id": selection.library_id,
+                "lock_evidence": list(selection.lock_evidence or []),
+                "chosen": selection.chosen.to_dict() if selection.chosen else None,
+                "starter": selection.starter.to_dict() if selection.starter else None,
+                "usable": usable,
+                "reject_reason": selection.reject_reason,
+                "synthesis": (
+                    selection.guidance.synthesis.to_dict() if selection.guidance else None
+                ),
                 "rationale": selection.rationale,
                 "runner_up_count": len(selection.runner_ups),
-                "blocking": selection.guidance.framework.issues,
-                "advisory": selection.guidance.framework.compatibility_warnings,
+                "blocking": blocking,
+                "advisory": (
+                    list(selection.guidance.framework.compatibility_warnings)
+                    if selection.guidance
+                    else []
+                ),
             },
         },
     )
@@ -1754,16 +1895,24 @@ async def handle_integrate_component(arguments: dict[str, Any]) -> dict[str, Any
     try:
         result = await asyncio.wait_for(service.integrate_component(request), timeout=timeout_s)
     except asyncio.TimeoutError:
-        partial = await service.integrate_component(
-            IntegrationRequest(
-                query=query,
-                candidate_id=candidate_id,
-                repo_root=str(repo_root),
-                preview_url=request.preview_url,
-                search_plan=search_plan,
-                plan_only=True,
+        try:
+            partial = await service.integrate_component(
+                IntegrationRequest(
+                    query=query,
+                    candidate_id=candidate_id,
+                    repo_root=str(repo_root),
+                    preview_url=request.preview_url,
+                    search_plan=search_plan,
+                    plan_only=True,
+                )
             )
-        )
+        except Exception as exc:
+            return make_envelope(
+                "perception_integrate_component",
+                ok=False,
+                error=f"integration_timeout_and_partial_failed:{exc}",
+                degraded=["integration_timeout", "integration_partial_failed"],
+            )
         return make_envelope(
             "perception_integrate_component",
             ok=True,
@@ -1773,7 +1922,7 @@ async def handle_integrate_component(arguments: dict[str, Any]) -> dict[str, Any
                 "partial": True,
                 "agent_summary": {
                     "status": partial.status.value,
-                    "foundation": partial.selection.chosen.to_dict() if partial.selection else None,
+                    "foundation": partial.selection.chosen.to_dict() if partial.selection and partial.selection.chosen else None,
                     "install_commands": (
                         partial.integration.installation_plan.install_commands
                         if partial.integration and partial.integration.installation_plan
@@ -1783,6 +1932,23 @@ async def handle_integrate_component(arguments: dict[str, Any]) -> dict[str, Any
                     "advisory": [
                         f"Full pipeline exceeded {timeout_s}s — returning partial plan only.",
                         "Set plan_only=false and execute_install=true only when full install is required.",
+                    ],
+                },
+            },
+        )
+    except Exception as exc:
+        return make_envelope(
+            "perception_integrate_component",
+            ok=False,
+            error=str(exc),
+            degraded=["integration_exception"],
+            data={
+                "agent_summary": {
+                    "status": "failed",
+                    "blocking": [f"integrate_failed:{type(exc).__name__}"],
+                    "advisory": [
+                        "plan_only integrate should never crash — report this error.",
+                        "Retry with candidate_id from perception_search_components after select_foundation.",
                     ],
                 },
             },
@@ -1862,18 +2028,41 @@ async def handle_inspiration_discover(arguments: dict[str, Any]) -> dict[str, An
     if not query:
         return make_envelope("perception_inspiration_discover", ok=False, error="query required")
 
+    repo_root = str(arguments.get("repo_root") or "").strip()
+    session_id = str(arguments.get("session_id") or "").strip() or None
+    if not repo_root and session_id:
+        try:
+            from navigation.engineering_knowledge.reference_binding import resolve_psm_for_session
+
+            psm = resolve_psm_for_session(session_id)
+            if psm is not None and getattr(psm.artifacts, "repo_root", None):
+                repo_root = str(psm.artifacts.repo_root)
+        except Exception:
+            pass
+
     service = InspirationIntelligenceService()
     result = await service.discover(
         InspirationDiscoveryRequest(
             query=query,
             max_candidates=int(arguments.get("max_candidates") or 12),
             provider_preference=arguments.get("provider_preference"),
+            repo_root=repo_root,
         )
     )
     ok = bool(result.candidates) or bool(result.degraded)
     blocking: list[str] = []
     if not result.candidates:
         blocking.append("no_inspiration_candidates")
+    # Prefer collect when discover has weak/no previews — agents often stop at discover.
+    advisory = [
+        "Read perception://inspiration-guide for per-site navigation and preview URL rules.",
+        "Prefer perception_inspiration_collect for image blobs agents can actually see.",
+    ]
+    if result.candidates and not any(
+        str(getattr(c.candidate, "preview_ref", "") or "").startswith("http")
+        for c in result.candidates[:5]
+    ):
+        advisory.insert(0, "Discover returned no preview URLs — call perception_inspiration_collect next.")
     return make_envelope(
         "perception_inspiration_discover",
         ok=ok,
@@ -1886,10 +2075,7 @@ async def handle_inspiration_discover(arguments: dict[str, Any]) -> dict[str, An
                 "providers": list(result.search_plan.provider_ids),
                 "top_hits": _inspiration_top_hits(result.candidates),
                 "blocking": blocking,
-                "advisory": [
-                    "Read perception://inspiration-guide for per-site navigation and preview URL rules.",
-                    "Call perception_inspiration_collect when you need agent_view_url + ephemeral vision blobs.",
-                ],
+                "advisory": advisory,
             },
         },
     )
@@ -2329,603 +2515,88 @@ async def handle_resource_session_end(arguments: dict[str, Any]) -> dict[str, An
     )
 
 
-async def handle_seo_status(arguments: dict[str, Any]) -> dict[str, Any]:
-    from navigation.seo_intelligence import SeoIntelligenceService
+# SEO Intelligence handlers parked for MVP — see parked/MVP_EXCLUDE_SEO.md
+# Restore: parked/mcp_seo_handlers.py.bak + parked/seo_intelligence/
 
-    service = SeoIntelligenceService()
-    status = service.status()
+_SEO_MVP_EXCLUDED = (
+    "SEO Intelligence is excluded from MVP MCP. "
+    "Code lives in parked/seo_intelligence/. See parked/MVP_EXCLUDE_SEO.md. "
+    "For page-level Lighthouse SEO category only, use perception_audit_seo."
+)
+
+
+async def _seo_mvp_excluded(tool_name: str) -> dict[str, Any]:
     return make_envelope(
-        "perception_seo_status",
-        ok=True,
+        tool_name,
+        ok=False,
+        error=_SEO_MVP_EXCLUDED,
         data={
-            "seo_status": status,
-            "ai_visibility": status.get("ai_visibility"),
+            "mvp_excluded": True,
+            "parked": "parked/seo_intelligence",
             "agent_summary": {
-                "phase": status.get("phase"),
-                "integrations": status.get("integrations"),
                 "advisory": [
-                    "Read perception://seo-guide before SEO audits.",
-                    "Default mode: development — instant browser scan + AI visibility from scan_id (no crawl/auth).",
-                    "Professional mode (mode=professional): GSC + GA4 + crawl — OAuth when user asks; poll for results.",
+                    "Do not call perception_seo_* in MVP.",
+                    "Optional: perception_audit_seo for Lighthouse SEO category only.",
                 ],
             },
         },
     )
+
+
+async def handle_seo_status(arguments: dict[str, Any]) -> dict[str, Any]:
+    return await _seo_mvp_excluded("perception_seo_status")
 
 
 async def handle_seo_query(arguments: dict[str, Any]) -> dict[str, Any]:
-    from navigation.seo_intelligence import SeoIntelligenceService
-
-    query_id = str(arguments.get("query_id") or "").strip()
-    if not query_id:
-        service = SeoIntelligenceService()
-        return make_envelope(
-            "perception_seo_query",
-            ok=True,
-            data={
-                "seo_query": {"queries": service.list_graph_queries()},
-                "agent_summary": {
-                    "advisory": [
-                        "Pass query_id e.g. page.issues, audit.diff, site.traffic_signals, graph.summary.",
-                        "Run perception_seo_audit_start first to populate the graph.",
-                    ],
-                },
-            },
-        )
-
-    params = arguments.get("params") if isinstance(arguments.get("params"), dict) else {}
-    for key in ("page_url", "audit_id"):
-        if arguments.get(key) and key not in params:
-            params[key] = arguments.get(key)
-
-    service = SeoIntelligenceService()
-    outcome = service.graph_query(query_id, params)
-    ok = bool(outcome.get("ok"))
-    return make_envelope(
-        "perception_seo_query",
-        ok=ok,
-        error=str(outcome.get("error") or "") if not ok else None,
-        data={
-            "seo_query": outcome,
-            "agent_summary": {
-                "query_id": query_id,
-                "advisory": [
-                    "Use page.issues before fixing a URL.",
-                    "Use site.traffic_signals after professional audits for drop hypotheses.",
-                ],
-            },
-        },
-    )
+    return await _seo_mvp_excluded("perception_seo_query")
 
 
 async def handle_seo_connect(arguments: dict[str, Any]) -> dict[str, Any]:
-    from navigation.seo_intelligence.auth.bing import bing_auth_status
-    from navigation.seo_intelligence.auth.connect import connect_bing, connect_google
-    from navigation.seo_intelligence.auth.google import google_oauth_status
-    from navigation.seo_intelligence.setup.onboarding import SeoOnboardingService
-
-    onboarding = SeoOnboardingService()
-    website_url = str(arguments.get("website_url") or arguments.get("url") or "").strip()
-    code = str(arguments.get("code") or "").strip()
-    api_key = str(arguments.get("api_key") or "").strip()
-    provider = str(arguments.get("provider") or "").strip().lower()
-    action = str(arguments.get("action") or "setup").strip().lower()
-    interactive = bool(arguments.get("interactive", True))
-
-    if action == "status" and not website_url:
-        google_oauth = google_oauth_status()
-        bing_oauth = bing_auth_status()
-        return make_envelope(
-            "perception_seo_connect",
-            ok=True,
-            data={
-                "google_oauth": google_oauth,
-                "bing_oauth": bing_oauth,
-                "onboarding": {
-                    "steps": ["website_url"],
-                    "auth_on_demand": True,
-                    "auth_flow": "local_browser_oauth",
-                },
-                "agent_summary": {
-                    "advisory": [
-                        "Initial setup: perception_seo_connect with website_url only.",
-                        "Google/Bing OAuth only when user requests provider-specific analysis.",
-                    ],
-                },
-            },
-        )
-
-    if not website_url:
-        return make_envelope("perception_seo_connect", ok=False, error="website_url required")
-
-    oauth_actions = {"connect_google", "connect_bing", "connect"}
-    wants_google = action == "connect_google" or (action == "connect" and provider == "google")
-    wants_bing = action == "connect_bing" or (action == "connect" and provider == "bing")
-
-    if wants_bing or (provider == "bing" and action in oauth_actions):
-        if api_key:
-            try:
-                result = await onboarding.complete_bing_api_key(website_url, api_key)
-            except Exception as exc:
-                return make_envelope("perception_seo_connect", ok=False, error=str(exc))
-            profile = result.get("profile") or {}
-            return make_envelope(
-                "perception_seo_connect",
-                ok=True,
-                data={**result, "agent_summary": {"bing_connected": profile.get("bing_connected")}},
-                degraded=list(result.get("discovery_notes") or []),
-            )
-
-        if code:
-            try:
-                result = await onboarding.complete_bing_connect(website_url, code)
-            except Exception as exc:
-                return make_envelope("perception_seo_connect", ok=False, error=str(exc))
-            profile = result.get("profile") or {}
-            return make_envelope(
-                "perception_seo_connect",
-                ok=True,
-                data={**result, "agent_summary": {"bing_connected": profile.get("bing_connected")}},
-                degraded=list(result.get("discovery_notes") or []),
-            )
-
-        if action == "refresh_discovery":
-            try:
-                profile = await onboarding.refresh_discovery(website_url, provider="bing")
-            except Exception as exc:
-                return make_envelope("perception_seo_connect", ok=False, error=str(exc))
-            return make_envelope(
-                "perception_seo_connect",
-                ok=True,
-                data={
-                    "website_url": website_url,
-                    "provider": "bing",
-                    "profile": profile.to_dict(),
-                    "discovery_notes": list(profile.discovery_notes),
-                },
-            )
-
-        if interactive:
-            try:
-                result = await connect_bing(website_url, onboarding=onboarding)
-            except Exception as exc:
-                return make_envelope("perception_seo_connect", ok=False, error=str(exc))
-            profile = result.get("profile") or {}
-            return make_envelope(
-                "perception_seo_connect",
-                ok=True,
-                data={
-                    **result,
-                    "agent_summary": {
-                        "bing_connected": profile.get("bing_connected"),
-                        "auth_flow": "local_browser_oauth",
-                        "prompt": "Bing Webmaster connected.",
-                    },
-                },
-                degraded=list(result.get("discovery_notes") or []),
-            )
-
-        try:
-            auth = await onboarding.start_bing_connect(website_url)
-        except Exception as exc:
-            return make_envelope("perception_seo_connect", ok=False, error=str(exc))
-        return make_envelope("perception_seo_connect", ok=True, data={**auth, "interactive": False})
-
-    if wants_google:
-        if code:
-            try:
-                result = await onboarding.complete_google_connect(website_url, code)
-            except Exception as exc:
-                return make_envelope("perception_seo_connect", ok=False, error=str(exc))
-            profile = result.get("profile") or {}
-            return make_envelope(
-                "perception_seo_connect",
-                ok=True,
-                data={
-                    **result,
-                    "agent_summary": {
-                        "google_connected": profile.get("google_connected"),
-                        "auto_configured": profile.get("auto_configured"),
-                        "prompt": "Google Search Console and Analytics connected.",
-                    },
-                },
-                degraded=list(result.get("discovery_notes") or []),
-            )
-
-        if action == "refresh_discovery":
-            try:
-                profile = await onboarding.refresh_discovery(website_url, provider="google")
-            except Exception as exc:
-                return make_envelope("perception_seo_connect", ok=False, error=str(exc))
-            return make_envelope(
-                "perception_seo_connect",
-                ok=True,
-                data={
-                    "website_url": website_url,
-                    "profile": profile.to_dict(),
-                    "discovery_notes": list(profile.discovery_notes),
-                },
-            )
-
-        if interactive:
-            try:
-                result = await connect_google(website_url, onboarding=onboarding)
-            except Exception as exc:
-                return make_envelope("perception_seo_connect", ok=False, error=str(exc))
-            profile = result.get("profile") or {}
-            return make_envelope(
-                "perception_seo_connect",
-                ok=True,
-                data={
-                    **result,
-                    "agent_summary": {
-                        "google_connected": profile.get("google_connected"),
-                        "auto_configured": profile.get("auto_configured"),
-                        "auth_flow": "local_browser_oauth",
-                        "prompt": "Google Search Console and Analytics connected.",
-                    },
-                },
-                degraded=list(result.get("discovery_notes") or []),
-            )
-
-        try:
-            auth = await onboarding.start_google_connect(website_url)
-        except Exception as exc:
-            return make_envelope("perception_seo_connect", ok=False, error=str(exc))
-        return make_envelope("perception_seo_connect", ok=True, data={**auth, "interactive": False})
-
-    if action == "refresh_discovery":
-        try:
-            profile = await onboarding.refresh_discovery(website_url)
-        except Exception as exc:
-            return make_envelope("perception_seo_connect", ok=False, error=str(exc))
-        return make_envelope(
-            "perception_seo_connect",
-            ok=True,
-            data={
-                "website_url": website_url,
-                "profile": profile.to_dict(),
-                "discovery_notes": list(profile.discovery_notes),
-            },
-        )
-
-    # Default: website-only setup (no OAuth)
-    try:
-        result = await onboarding.register_website(website_url)
-    except Exception as exc:
-        return make_envelope("perception_seo_connect", ok=False, error=str(exc))
-    site = await onboarding.site_status(website_url)
-    return make_envelope(
-        "perception_seo_connect",
-        ok=True,
-        data={
-            **result,
-            **site,
-            "agent_summary": {
-                "ready": True,
-                "advisory": [
-                    "Website registered. SEO Intelligence ready without OAuth.",
-                    "Connect Google only when user requests Search Console or GA4 analysis.",
-                    "Connect Bing only when user requests Bing Webmaster analysis.",
-                ],
-            },
-        },
-    )
-
-
-def _prepare_seo_audit_request(arguments: dict[str, Any]) -> tuple[Any, list[str]]:
-    from navigation.seo_intelligence import SeoAuditRequest
-    from navigation.seo_intelligence.planning.modes import parse_audit_mode
-    from navigation.seo_intelligence.setup.onboarding import SeoOnboardingService
-
-    website_url = str(arguments.get("website_url") or arguments.get("url") or "").strip()
-    mode_raw = arguments.get("mode")
-    mode = parse_audit_mode(str(mode_raw)) if mode_raw else None
-    request = SeoAuditRequest(
-        website_url=website_url,
-        property_url=str(arguments.get("property_url") or ""),
-        repo_root=str(arguments.get("repo_root") or ""),
-        scan_id=str(arguments.get("scan_id") or ""),
-        ga4_property_id=str(arguments.get("ga4_property_id") or ""),
-        bing_site_url=str(arguments.get("bing_site_url") or ""),
-        providers=[str(p) for p in (arguments.get("providers") or []) if p],
-        intents=[str(i) for i in (arguments.get("intents") or []) if i],
-        mode=mode,
-        include_cross_analysis=bool(arguments.get("include_cross_analysis", True)),
-        include_recommendations=bool(arguments.get("include_recommendations", True)),
-        include_ai_visibility=bool(arguments.get("include_ai_visibility", True)),
-        ai_reasoning=arguments.get("ai_reasoning") if "ai_reasoning" in arguments else None,
-    )
-    enriched, _profile, notes = SeoOnboardingService().enrich_audit_request(request)
-    return enriched, notes
+    return await _seo_mvp_excluded("perception_seo_connect")
 
 
 async def handle_seo_audit(scans: ScanRegistry, arguments: dict[str, Any]) -> dict[str, Any]:
-    from navigation.seo_intelligence import SeoIntelligenceService
-    from navigation.seo_intelligence.planning.modes import mode_summary, resolve_effective_mode
-    from navigation.seo_intelligence.setup.auth_requirements import auth_prompts_for_request, audit_blocked_by_auth
-
-    website_url = str(arguments.get("website_url") or arguments.get("url") or "").strip()
-    if not website_url:
-        return make_envelope("perception_seo_audit", ok=False, error="website_url required")
-    request, setup_notes = _prepare_seo_audit_request(arguments)
-    effective_mode = resolve_effective_mode(request)
-
-    if audit_blocked_by_auth(request):
-        prompts = auth_prompts_for_request(request)
-        return make_envelope(
-            "perception_seo_audit",
-            ok=False,
-            error="auth_required",
-            data={
-                "auth_required": prompts,
-                "mode": effective_mode.value,
-                "agent_summary": {
-                    "blocking": [p["prompt"] for p in prompts],
-                    "advisory": [
-                        "Professional SEO requires Google OAuth — run perception_seo_connect with action=connect_google (interactive opens browser).",
-                        "Then retry perception_seo_audit with mode=professional.",
-                    ],
-                },
-            },
-        )
-
-    service = SeoIntelligenceService(scan_registry=scans)
-    result = await service.audit(request)
-    payload = result.to_dict()
-    advisory = [
-        "Every recommendation must cite evidence_ids — run perception_seo_verify after fixes.",
-        "Pass scan_id from perception_observe for Browser Intelligence rendering evidence.",
-    ]
-    if effective_mode.value == "development":
-        advisory.append(
-            "Development SEO mode (default) — no auth. Use mode=professional when user asks to optimize with Search Console data."
-        )
-    else:
-        advisory.append("Professional SEO mode — live GSC/GA4 evidence included when connected.")
-    if setup_notes:
-        advisory.append(f"onboarding:{','.join(setup_notes[:3])}")
-    if result.degraded:
-        advisory.append(f"degraded:{','.join(result.degraded[:5])}")
-    return make_envelope(
-        "perception_seo_audit",
-        ok=True,
-        data={
-            "seo_audit": payload,
-            "mode": mode_summary(effective_mode),
-            "agent_summary": {
-                "website_url": website_url,
-                "mode": effective_mode.value,
-                "evidence_count": len(result.evidence),
-                "recommendation_count": len(result.recommendations),
-                "capability_routes": [r.to_dict() for r in result.capability_routes],
-                "connections": result.connections,
-                "advisory": advisory + [
-                    "Prefer perception_seo_audit_start + perception_seo_audit_poll for long audits (non-blocking).",
-                ],
-            },
-        },
-        degraded=result.degraded + setup_notes,
-    )
+    return await _seo_mvp_excluded("perception_seo_audit")
 
 
 async def handle_seo_audit_start(scans: ScanRegistry, arguments: dict[str, Any]) -> dict[str, Any]:
-    import asyncio
-
-    from navigation.seo_intelligence.jobs import SeoAuditJobRunner, get_job_store
-    from navigation.seo_intelligence.models import SeoAuditMode
-    from navigation.seo_intelligence.planning.modes import mode_summary, resolve_effective_mode
-    from navigation.seo_intelligence.planning.orchestrator import SeoAuditOrchestrator
-    from navigation.seo_intelligence.setup.auth_requirements import audit_blocked_by_auth, auth_prompts_for_request
-
-    website_url = str(arguments.get("website_url") or arguments.get("url") or "").strip()
-    if not website_url:
-        return make_envelope("perception_seo_audit_start", ok=False, error="website_url required")
-
-    request, setup_notes = _prepare_seo_audit_request(arguments)
-    effective_mode = resolve_effective_mode(request)
-
-    if audit_blocked_by_auth(request):
-        prompts = auth_prompts_for_request(request)
-        return make_envelope(
-            "perception_seo_audit_start",
-            ok=False,
-            error="auth_required",
-            data={
-                "auth_required": prompts,
-                "mode": effective_mode.value,
-                "agent_summary": {
-                    "blocking": [p["prompt"] for p in prompts],
-                    "advisory": [
-                        "Professional SEO requires Google OAuth — run perception_seo_connect first.",
-                    ],
-                },
-            },
-        )
-
-    # Development SEO: synchronous instant audit (2–5s usefulness-first budget).
-    if effective_mode == SeoAuditMode.DEVELOPMENT:
-        if not request.scan_id:
-            return make_envelope(
-                "perception_seo_audit_start",
-                ok=False,
-                error="scan_id required for development SEO",
-                data={
-                    "mode": mode_summary(effective_mode),
-                    "agent_summary": {
-                        "blocking": ["Run perception_observe or perception_navigate_and_observe first, then pass scan_id."],
-                    },
-                },
-            )
-        orchestrator = SeoAuditOrchestrator(scan_registry=scans)
-        budget_s = float(arguments.get("budget_s") or 5.0)
-        result, partial = await orchestrator.development_audit_bounded(request, budget_s=budget_s)
-        advisory = [
-            "Development SEO completed inline — no polling required.",
-            f"Use perception_seo_query with audit_id={result.audit_id} for graph reads.",
-        ]
-        if partial:
-            advisory.insert(
-                0,
-                f"Partial audit returned within {budget_s}s budget — rerun with professional mode for full crawl.",
-            )
-        return make_envelope(
-            "perception_seo_audit_start",
-            ok=True,
-            data={
-                "status": "completed" if not partial else "partial",
-                "instant": True,
-                "terminal": True,
-                "partial": partial,
-                "audit_id": result.audit_id,
-                "seo_audit": result.to_dict(),
-                "mode": mode_summary(effective_mode),
-                "agent_summary": {
-                    "website_url": website_url,
-                    "mode": effective_mode.value,
-                    "recommendation_count": len(result.recommendations),
-                    "evidence_count": len(result.evidence),
-                    "advisory": advisory,
-                },
-            },
-            degraded=sorted(set(setup_notes + list(result.degraded))),
-        )
-
-    # Professional SEO: async background job.
-    runner = SeoAuditJobRunner(scan_registry=scans)
-    audit_job_id = runner.start(request, setup_notes=setup_notes)
-    job = get_job_store().get(audit_job_id)
-
-    return make_envelope(
-        "perception_seo_audit_start",
-        ok=True,
-        data={
-            "audit_job_id": audit_job_id,
-            "status": job.status.value if job else "queued",
-            "instant": False,
-            "poll_interval_ms": 2000,
-            "poll_tool": "perception_seo_audit_poll",
-            "mode": mode_summary(effective_mode),
-            "agent_summary": {
-                "website_url": website_url,
-                "mode": effective_mode.value,
-                "advisory": [
-                    "Poll perception_seo_audit_poll until terminal status.",
-                    "Use perception_seo_query for fast graph reads after evidence arrives.",
-                    "Cancel with perception_seo_audit_cancel if needed.",
-                ],
-            },
-        },
-        degraded=setup_notes,
-    )
+    return await _seo_mvp_excluded("perception_seo_audit_start")
 
 
 async def handle_seo_audit_poll(arguments: dict[str, Any]) -> dict[str, Any]:
-    from navigation.seo_intelligence.jobs import get_job_store
-
-    audit_job_id = str(arguments.get("audit_job_id") or "").strip()
-    if not audit_job_id:
-        return make_envelope("perception_seo_audit_poll", ok=False, error="audit_job_id required")
-
-    since_seq = int(arguments.get("since_evidence_seq") or 0)
-    store = get_job_store()
-    job = store.get(audit_job_id)
-    if job is None:
-        return make_envelope("perception_seo_audit_poll", ok=False, error="audit_job_not_found")
-
-    job.poll_seq += 1
-    store.save(job)
-
-    evidence_delta = store.evidence_delta_since(audit_job_id, since_seq)
-    partial_summary: dict[str, Any] = {
-        "evidence_count": len(job.evidence_ids),
-        "recommendation_count": 0,
-    }
-    if job.seo_audit:
-        partial_summary["recommendation_count"] = len((job.seo_audit.get("recommendations") or []))
-
-    data: dict[str, Any] = {
-        **job.to_dict(),
-        "evidence_delta": evidence_delta,
-        "partial_summary": partial_summary,
-    }
-    if job.terminal and job.seo_audit:
-        data["seo_audit"] = job.seo_audit
-
-    advisory = [
-        "Poll until status is completed, failed, or cancelled.",
-        "Pass since_evidence_seq to receive only new evidence deltas.",
-    ]
-    if job.terminal and job.latest_audit_id:
-        advisory.append(f"Use perception_seo_query with audit_id={job.latest_audit_id}.")
-
-    return make_envelope(
-        "perception_seo_audit_poll",
-        ok=True,
-        data={
-            "seo_audit_job": data,
-            "agent_summary": {
-                "audit_job_id": audit_job_id,
-                "status": job.status.value,
-                "terminal": job.terminal,
-                "evidence_count": len(job.evidence_ids),
-                "advisory": advisory,
-            },
-        },
-        degraded=job.degraded,
-        error=job.error if job.status.value == "failed" else None,
-    )
+    return await _seo_mvp_excluded("perception_seo_audit_poll")
 
 
 async def handle_seo_audit_cancel(arguments: dict[str, Any]) -> dict[str, Any]:
-    from navigation.seo_intelligence.jobs import get_job_store
-
-    audit_job_id = str(arguments.get("audit_job_id") or "").strip()
-    if not audit_job_id:
-        return make_envelope("perception_seo_audit_cancel", ok=False, error="audit_job_id required")
-
-    job = get_job_store().request_cancel(audit_job_id)
-    if job is None:
-        return make_envelope("perception_seo_audit_cancel", ok=False, error="audit_job_not_found")
-
-    return make_envelope(
-        "perception_seo_audit_cancel",
-        ok=True,
-        data={
-            "audit_job_id": audit_job_id,
-            "status": job.status.value,
-            "agent_summary": {
-                "advisory": ["Job marked cancelled; in-flight provider work may finish briefly."],
-            },
-        },
-    )
+    return await _seo_mvp_excluded("perception_seo_audit_cancel")
 
 
 async def handle_seo_verify(scans: ScanRegistry, arguments: dict[str, Any]) -> dict[str, Any]:
-    from navigation.seo_intelligence import SeoIntelligenceService
+    return await _seo_mvp_excluded("perception_seo_verify")
 
-    website_url = str(arguments.get("website_url") or arguments.get("url") or "").strip()
-    if not website_url:
-        return make_envelope("perception_seo_verify", ok=False, error="website_url required")
-    request, _setup_notes = _prepare_seo_audit_request(arguments)
-    rec_ids = [str(r) for r in (arguments.get("recommendation_ids") or []) if r]
-    service = SeoIntelligenceService(scan_registry=scans)
-    outcome = await service.verify(request, recommendation_ids=rec_ids)
-    ok = bool(outcome.get("ok"))
-    verification = outcome.get("verification") or {}
+
+# Figma Intelligence handlers parked for MVP — see parked/MVP_EXCLUDE_FIGMA.md
+# Restore: parked/mcp_figma_handlers.py.bak + parked/figma_intelligence/
+
+_FIGMA_MVP_EXCLUDED = (
+    "Figma Intelligence is excluded from MVP MCP. "
+    "Code lives in parked/figma_intelligence/. See parked/MVP_EXCLUDE_FIGMA.md. "
+    "Use inspiration or perception_build_design_snapshot for design reference."
+)
+
+
+async def _figma_mvp_excluded(tool_name: str) -> dict[str, Any]:
     return make_envelope(
-        "perception_seo_verify",
-        ok=ok,
-        error=str(outcome.get("error") or "") if not ok else None,
+        tool_name,
+        ok=False,
+        error=_FIGMA_MVP_EXCLUDED,
         data={
-            "seo_verify": outcome,
+            "mvp_excluded": True,
+            "parked": "parked/figma_intelligence",
             "agent_summary": {
-                "passed_count": verification.get("passed_count"),
-                "failed_count": verification.get("failed_count"),
-                "pending_resolved": verification.get("items"),
                 "advisory": [
-                    "Verification compares graph baseline to fresh audit evidence.",
-                    "Also run perception_verify for UI-level confirmation.",
+                    "Do not call perception_figma_* in MVP.",
+                    "Use perception_inspiration_collect or perception_build_design_snapshot instead.",
                 ],
             },
         },
@@ -2933,216 +2604,12 @@ async def handle_seo_verify(scans: ScanRegistry, arguments: dict[str, Any]) -> d
 
 
 async def handle_figma_status(arguments: dict[str, Any]) -> dict[str, Any]:
-    from navigation.figma_intelligence import FigmaIntelligenceService
-
-    service = FigmaIntelligenceService()
-    status = service.status()
-    health = await service.health()
-    return make_envelope(
-        "perception_figma_status",
-        ok=True,
-        data={
-            "figma_status": status,
-            "health": health,
-            "agent_summary": {
-                "connected": status.get("connected"),
-                "phase": status.get("phase"),
-                "advisory": [
-                    "Read perception://figma-guide before Figma tools.",
-                    "Connect once with perception_figma_connect — PAT stored locally.",
-                    "Use perception_figma_context for normalized design context.",
-                ],
-            },
-        },
-        degraded=list(health.get("degraded") or []),
-    )
+    return await _figma_mvp_excluded("perception_figma_status")
 
 
 async def handle_figma_connect(arguments: dict[str, Any]) -> dict[str, Any]:
-    from navigation.figma_intelligence import FigmaIntelligenceService
-
-    service = FigmaIntelligenceService()
-    action = str(arguments.get("action") or "connect").strip().lower()
-    pat = str(arguments.get("pat") or arguments.get("figma_pat") or arguments.get("token") or "").strip()
-    account_hint = str(arguments.get("account_hint") or "").strip()
-
-    if action in {"status", "check"}:
-        conn = service.connection_status()
-        return make_envelope(
-            "perception_figma_connect",
-            ok=True,
-            data={
-                "connection": conn,
-                "agent_summary": {
-                    "connected": conn.get("connected"),
-                    "advisory": [
-                        "Provide pat from Figma → Settings → Security → Personal access tokens.",
-                        "User should only connect once unless token is invalid.",
-                    ],
-                },
-            },
-        )
-
-    if action in {"disconnect", "clear"}:
-        result = service.disconnect()
-        return make_envelope(
-            "perception_figma_connect",
-            ok=True,
-            data={"connection": result, "agent_summary": {"connected": False}},
-        )
-
-    if not pat:
-        return make_envelope(
-            "perception_figma_connect",
-            ok=False,
-            error="pat required — ask user for Figma Personal Access Token",
-            data={
-                "agent_summary": {
-                    "advisory": [
-                        "Prompt user: create PAT at Figma Settings → Security.",
-                        "Retry perception_figma_connect with pat parameter.",
-                    ],
-                },
-            },
-        )
-
-    try:
-        result = await service.connect(pat, account_hint=account_hint)
-    except Exception as exc:
-        return make_envelope("perception_figma_connect", ok=False, error=str(exc))
-
-    return make_envelope(
-        "perception_figma_connect",
-        ok=True,
-        data={
-            "connection": result,
-            "agent_summary": {
-                "connected": True,
-                "advisory": ["Token stored locally. Use perception_figma_context next."],
-            },
-        },
-    )
+    return await _figma_mvp_excluded("perception_figma_connect")
 
 
 async def handle_figma_context(arguments: dict[str, Any]) -> dict[str, Any]:
-    from navigation.figma_intelligence import FigmaIntelligenceService
-
-    service = FigmaIntelligenceService()
-    refresh = bool(arguments.get("refresh", False))
-    file_key = str(arguments.get("file_key") or "").strip()
-    file_url = str(arguments.get("file_url") or arguments.get("url") or "").strip()
-    page_id = str(arguments.get("page_id") or arguments.get("active_page_id") or "").strip()
-    frame_id = str(arguments.get("frame_id") or arguments.get("active_frame_id") or "").strip()
-    file_name = str(arguments.get("file_name") or "").strip()
-    selection = arguments.get("selection_node_ids") or arguments.get("node_ids") or []
-
-    if file_key or file_url:
-        service.set_active_file(file_key=file_key, file_url=file_url, file_name=file_name)
-    if page_id:
-        service.set_active_page(page_id)
-    if frame_id:
-        service.set_active_frame(frame_id)
-    if selection:
-        service.set_selection([str(n) for n in selection if n])
-
-    if not service.connection_status().get("connected"):
-        return make_envelope(
-            "perception_figma_context",
-            ok=False,
-            error="figma_not_connected",
-            data={
-                "agent_summary": {
-                    "advisory": ["Run perception_figma_connect with user PAT first."],
-                },
-            },
-        )
-
-    context = await service.get_context(refresh=refresh)
-    payload = context.to_dict()
-    advisory = []
-    if context.degraded:
-        advisory.append(f"degraded:{','.join(context.degraded[:5])}")
-    if context.file is None:
-        advisory.append("Set file_url or file_key to load a Figma file.")
-
-    from navigation.engineering_knowledge import compile_figma_seed_spec
-
-    seed_ctx = {
-        "file_key": context.file.file_key if context.file else None,
-        "tokens": {
-            (t.get("name") or t.get("id") or str(i)): (t.get("value") or t.get("color") or t)
-            for i, t in enumerate(list(context.tokens or [])[:40])
-            if isinstance(t, dict) or True
-        },
-        "fonts": [],
-        "frames": [],
-    }
-    # Normalize tokens list → dict when tokens are objects
-    token_map: dict = {}
-    for t in list(context.tokens or [])[:40]:
-        if isinstance(t, dict):
-            name = str(t.get("name") or t.get("id") or "")
-            val = t.get("value") or t.get("color") or t.get("hex")
-            if name and val is not None:
-                token_map[name] = val
-                low = name.lower()
-                if "primary" in low or "accent" in low or "brand" in low:
-                    token_map["primary"] = val
-        elif isinstance(t, str):
-            token_map[t] = t
-    seed_ctx["tokens"] = token_map
-    eng_spec_obj = compile_figma_seed_spec(seed_ctx)
-    eng_spec = eng_spec_obj.to_dict()
-    advisory.append(
-        "engineering_spec is a Figma seed Spec — verify with live DesignSnapshot after implementation."
-    )
-
-    from navigation.engineering_knowledge.reference_binding import (
-        bind_reference_spec,
-        resolve_psm_for_session,
-    )
-
-    browser_session_id = str(arguments.get("session_id") or "").strip() or None
-    bind_as_reference = bool(arguments.get("bind_as_reference", False))
-    bind_meta = None
-    if bind_as_reference:
-        psm = resolve_psm_for_session(browser_session_id)
-        bind_meta = bind_reference_spec(
-            eng_spec_obj,
-            session_id=browser_session_id,
-            psm=psm,
-            source="figma_seed",
-            note="Figma seed Spec — harden via live DesignSnapshot after implementation",
-        )
-        if psm is not None:
-            try:
-                from navigation.coordination_intelligence.integration.bridge import (
-                    get_coordinator_bridge,
-                )
-
-                get_coordinator_bridge().service.runtime.save(psm)
-            except Exception:
-                pass
-        advisory.append("Figma seed Spec bound as reference for SpecDiff gate.")
-
-    return make_envelope(
-        "perception_figma_context",
-        ok=True,
-        session_id=browser_session_id,
-        data={
-            "figma_context": payload,
-            "engineering_spec": eng_spec,
-            "reference_bind": bind_meta,
-            "agent_summary": {
-                "connected": context.connected,
-                "file_key": context.file.file_key if context.file else None,
-                "component_count": len(context.components),
-                "token_count": len(context.tokens),
-                "cache_hit": bool((context.cache or {}).get("hit")),
-                "unresolved_engineering_decisions": eng_spec.get("unresolved_by_impact", [])[:8],
-                "reference_bound": bool(bind_meta and bind_meta.get("bound")),
-                "advisory": advisory,
-            },
-        },
-        degraded=list(context.degraded),
-    )
+    return await _figma_mvp_excluded("perception_figma_context")

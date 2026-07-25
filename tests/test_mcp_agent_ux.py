@@ -41,6 +41,14 @@ def test_guidance_for_degraded_scan() -> None:
 
 
 @pytest.mark.unit
+def test_guidance_for_consistency_stub() -> None:
+    g = guidance_for_degraded(["knowledge_query_stub_phase1", "discovery_pipeline_phase2"])
+    assert len(g) == 2
+    assert any("fail-closed" in item["agent_action"] or "not a clean" in item["agent_action"] for item in g)
+    assert any("Discovery" in item["agent_action"] for item in g)
+
+
+@pytest.mark.unit
 def test_envelope_attaches_guidance_on_error() -> None:
     env = make_envelope("perception_verify", ok=False, error="session_id required")
     assert env.get("agent_guidance")
@@ -50,7 +58,8 @@ def test_envelope_attaches_guidance_on_error() -> None:
 @pytest.mark.unit
 def test_tool_groups_cover_all_tools() -> None:
     tools = perception_tools(_StubTypes)
-    assert len(tools) >= 83
+    # SEO + Figma tools parked for MVP — catalog is smaller than pre-park (~83+).
+    assert len(tools) >= 70
     for t in tools:
         assert infer_group(t.name), t.name
         assert t.description.startswith("["), t.name

@@ -18,11 +18,40 @@ _DEGRADED_EXACT: dict[str, str] = {
     "graph_empty_run_refresh": "Run perception_design_graph_refresh with a recent scan_id.",
     "evaluation_without_repo_root": "Add repo_root pointing to your app root (package.json).",
     "deep_review_without_repo_root": "Add repo_root for codebase-aware review.",
-    "figma_not_connected": "Run perception_figma_connect with PAT, or skip Figma tools.",
+    "figma_not_connected": "Figma Intelligence is MVP-excluded — use inspiration or design_snapshot.",
     "docs_provider_unavailable": "Framework docs provider offline. Use host IDE docs or retry.",
     "grounded_docs_cli_unavailable": "Install Node 18+ for grounded docs CLI.",
     "selection_empty_ranked_pool": "Broaden inspiration query or try perception_inspiration_discover.",
     "framework_context_unavailable": "Pass repo_root for framework-aware resource ranking.",
+    "knowledge_query_stub_phase1": (
+        "Consistency Knowledge Query is stub/incomplete — passed:false is fail-closed, "
+        "not a clean bill of health. Do not claim consistency; refresh design graph / wait for Discovery."
+    ),
+    "discovery_pipeline_phase2": (
+        "Consistency Discovery pipeline incomplete — audit findings are not authoritative. "
+        "Treat as unpaid quality signal; do not ship on empty findings."
+    ),
+    "audit_no_observations_in_snapshot": "Snapshot has no auditable elements. Rebuild design snapshot after observe.",
+    "session_lost_rebootstrap": (
+        "Browser session was wiped from memory (usually MCP process restart — not the 600s idle timer). "
+        "Call perception_health (check process_boot_id), then session_start → observe; discard old session/scan/snapshot IDs."
+    ),
+    "registry_lost_rebootstrap": (
+        "scan_id/snapshot_id unknown — registries are in-memory and die with MCP restart. "
+        "Re-observe and rebuild snapshot before Ship Council."
+    ),
+    "foundation_relevance_too_low": (
+        "Foundation select rejected — candidate below relevance floor or auth-mismatched. "
+        "Refine query (e.g. shadcn card / about / portfolio block); do not lock foundation."
+    ),
+    "observation_no_matching_standard": (
+        "Observation had no overlapping foundation standards — skipped, not a Phase-1 stub. "
+        "Broaden Discovery or assess properties that exist on the graph (spacing/typography)."
+    ),
+    "audit_no_overlapping_standards": (
+        "Consistency audit found no overlapping standards for observed props — not a pass. "
+        "Refresh design graph from a richer snapshot or extend Discovery."
+    ),
 }
 
 # Prefix patterns for dynamic degraded codes
@@ -31,13 +60,13 @@ _DEGRADED_PREFIX: list[tuple[str, str]] = [
     ("scan_id", "Run perception_navigate_and_observe first; reuse scan_id from that response."),
     ("session_id", "Call perception_session_start; pass session_id to all browser tools."),
     ("lighthouse_", "Lighthouse audit issue. Ensure Node 18+ and page is fully loaded."),
-    ("librecrawl_", "SEO crawl timeout. Use development SEO with scan_id reuse instead."),
+    ("librecrawl_", "LibreCrawl companion not used in MVP (SEO Intelligence parked)."),
     ("perception_scan_failed", "Browser observe failed. Check session_id and URL; re-observe."),
     ("discovery_missing_provider", "Inspiration provider unavailable. Try another query or provider."),
     ("inspiration_", "Inspiration rate limit or provider issue. Wait and retry."),
-    ("gsc_discovery", "Google Search Console not linked. Use perception_seo_connect or skip GSC fields."),
-    ("bing_discovery", "Bing Webmaster not configured. Optional — continue without Bing data."),
-    ("ga4_discovery", "GA4 property match weak. Confirm website_url in seo_connect."),
+    ("gsc_discovery", "SEO Intelligence parked for MVP — ignore GSC prompts."),
+    ("bing_discovery", "SEO Intelligence parked for MVP — ignore Bing prompts."),
+    ("ga4_discovery", "SEO Intelligence parked for MVP — ignore GA4 prompts."),
 ]
 
 _ERROR_EXACT: dict[str, str] = {
@@ -55,6 +84,9 @@ _ERROR_EXACT: dict[str, str] = {
 
 _ERROR_CONTAINS: list[tuple[str, str]] = [
     ("Unknown session", "Call perception_session_start; use returned session_id."),
+    ("unknown session_id", "MCP may have restarted. perception_health → session_start → observe; discard stale IDs."),
+    ("unknown scan_id", "Re-run navigate_and_observe; reuse new scan_id. Old scans die on MCP restart."),
+    ("unknown snapshot_id", "Rebuild design snapshot after observe. Old snapshots die on MCP restart."),
     ("unreachable", "Start dev server. Run perception_health again before session_start."),
     ("parallel", "Call MCP browser tools one at a time on the same session_id."),
 ]

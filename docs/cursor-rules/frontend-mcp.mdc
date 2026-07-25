@@ -87,8 +87,8 @@ Skip: deep SEO, consistency tours, polish before a coherent first draft.
 
 **Redesign / visual overhaul**  
 Resolve: what must change vs current or target reference.  
-Evidence: Design Snapshot (± bind reference) → SpecDiff / Design Review → code → remeasure → verify → section checklist → Ship Council.  
-Inspiration only if direction is still undecided.
+Evidence: Design Snapshot (± bind reference) → SpecDiff / Design Review (**LOOK at attached screenshots**) → pass `visual_feedback` → follow `next_actions` → code → remeasure → verify → section checklist → Ship Council.  
+Inspiration only if direction is still undecided. Consistency review/audit also attach viewport/full/section shots — same feedback loop.
 
 **Feature on existing UI**  
 Resolve: only decisions on the affected surface.  
@@ -135,8 +135,9 @@ Gallery URLs and English design prose are not the source of truth.
 - Only `coordination_evidence.advancement_eligible=true` can lock or advance a
   structural decision; degraded, failed, noop, cleanup, and connection-only calls cannot
 - After draft vs a bound reference Spec: remeasure with `perception_build_design_snapshot`; honor `spec_revision_gate` (`revision_required` → revise)  
+- On design/consistency tools: LOOK at attached screenshots, pass `visual_feedback`, follow `next_actions` — do not lock structural UI from code alone  
 - Read **blocking** before advisory  
-- Auth/MFA/CAPTCHA: `perception_auth_gate` → `requires_human` → stop and ask the user  
+- Auth/MFA/CAPTCHA: `perception_auth_gate` → `requires_human` → stop and ask the user
 - One Chromium per MCP process; user may close the window — next tool recovers; do not leave the browser on external gallery sites  
 
 ---
