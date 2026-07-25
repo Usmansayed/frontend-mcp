@@ -1,9 +1,6 @@
 """MCP handlers for design snapshot + design sense + consistency pipeline."""
 from __future__ import annotations
 
-import asyncio
-import uuid
-from pathlib import Path
 from typing import Any
 
 from navigation.consistency_intelligence.service import ConsistencyIntelligenceService, _project_id_from_url
@@ -17,101 +14,6 @@ from navigation.design_snapshot_engine import DesignSnapshotEngine
 from navigation.design_snapshot_engine.integrations.designlang import augment_snapshot_from_designlang
 from navigation.design_snapshot_engine.models import DesignSnapshot
 from navigation.visual_browser_intelligence.browser.session_store import SessionStore
-from navigation.visual_browser_intelligence.visual.visual_response import attach_visual_paths
-
-
-def _stored_screenshot_ref(
-	scans: ScanRegistry,
-	scan_id: str,
-	snapshot: DesignSnapshot | None,
-) -> str | None:
-	"""Fallback screenshot for offline (snapshot_id) design/consistency calls."""
-	if scan_id:
-		rec = scans.get(scan_id)
-		obs = getattr(rec, 'observation', None) if rec else None
-		if isinstance(obs, dict):
-			ref = obs.get('annotated_screenshot_path') or obs.get('screenshot_path')
-			if ref and Path(str(ref)).is_file():
-				return str(ref)
-	if snapshot is not None:
-		prov = getattr(snapshot, 'provenance', None) or {}
-		ref = prov.get('screenshot_ref')
-		if ref and Path(str(ref)).is_file():
-			return str(ref)
-	return None
-
-
-async def _capture_or_reuse_visuals(
-	*,
-	store: SessionStore,
-	scans: ScanRegistry,
-	session_id: str,
-	snapshot: DesignSnapshot | None,
-	arguments: dict[str, Any],
-	tool: str,
-	scan_id: str,
-	live_ok: bool,
-	pack_kwargs: dict[str, Any] | None = None,
-) -> list[tuple[str, str]]:
-	"""Live-capture a design-evidence pack, else reuse a stored screenshot. Best-effort."""
-	from navigation.visual_browser_intelligence.visual.visual_capture import (
-		capture_design_evidence,
-	)
-
-	paths: list[tuple[str, str]] = []
-	rec = None
-	if live_ok and session_id:
-		try:
-			rec = await store.ensure(session_id)
-		except Exception:
-			rec = None
-	if rec is not None and getattr(rec, 'browser', None) is not None:
-		try:
-			regions = list((snapshot.layout.regions if snapshot and snapshot.layout else None) or [])
-			kwargs = dict(pack_kwargs or {})
-			# Back-compat if caller did not resolve pack.
-			if not kwargs:
-				selector = str(arguments.get('screenshot_selector') or '').strip() or None
-				try:
-					max_sections = int(arguments.get('max_sections', 3))
-				except (TypeError, ValueError):
-					max_sections = 3
-				kwargs = {
-					'want_viewport': True,
-					'want_full': True,
-					'want_sections': True,
-					'want_element': bool(selector),
-					'selector': selector,
-					'max_sections': max_sections,
-					'prefer_sections': [],
-				}
-			try:
-				timeout_s = float(arguments.get('screenshot_timeout_s', 25.0))
-			except (TypeError, ValueError):
-				timeout_s = 25.0
-			paths, _deg = await asyncio.wait_for(
-				capture_design_evidence(
-					rec.browser,
-					rec.artifacts_dir / 'images',
-					f"{tool.replace('perception_', '')}-{uuid.uuid4().hex[:8]}",
-					regions=regions,
-					selector=kwargs.get('selector'),
-					max_sections=int(kwargs.get('max_sections') or 0),
-					prefer_sections=list(kwargs.get('prefer_sections') or []),
-					want_viewport=bool(kwargs.get('want_viewport', True)),
-					want_full=bool(kwargs.get('want_full', True)),
-					want_sections=bool(kwargs.get('want_sections', True)),
-					want_element=bool(kwargs.get('want_element', True)),
-				),
-				timeout=timeout_s,
-			)
-		except Exception:
-			paths = []
-	if not paths:
-		ref = _stored_screenshot_ref(scans, scan_id, snapshot)
-		if ref:
-			paths = [('reference_screenshot', ref)]
-	return paths
 
 
 async def attach_design_visuals(
@@ -125,121 +27,30 @@ async def attach_design_visuals(
 ) -> dict[str, Any]:
 	"""Post-hook: inline screenshots + turn agent visual feedback into next_actions.
 
-	Design/consistency tools always present rendered appearance (viewport / full /
-	section by default). When the agent returns visual_feedback (judgment, focus
-	sections/selector, notes), we narrow the pack and emit ranked next_actions so
-	the loop is: look → judge → act → remeasure — not code-blind edits.
+	Thin alias over the common visual-feedback runner (purpose=design|consistency)
+	so design/consistency tools share the exact capture + feedback code path with
+	``perception_visual_feedback``. Loop: look → judge → act → remeasure — never
+	code-blind edits.
 	"""
 	try:
-		from navigation.visual_browser_intelligence.visual.design_evidence_policy import (
-			PACK_NONE,
-			build_visual_next_actions,
-			normalize_visual_feedback,
-			pack_capture_kwargs,
-			resolve_screenshot_pack,
-			visual_feedback_advisory,
+		from navigation.mcp.visual_feedback_handlers import run_visual_feedback
+		from navigation.visual_browser_intelligence.visual.visual_feedback_policy import (
+			purpose_for_tool,
 		)
 
 		if not isinstance(envelope, dict) or not envelope.get('ok'):
 			return envelope
-
-		feedback = normalize_visual_feedback(arguments)
-		pack = resolve_screenshot_pack(tool, arguments, feedback=feedback)
-		if pack == PACK_NONE:
-			# Still record feedback → next_actions even without new captures.
-			if feedback and isinstance(envelope.get('data'), dict):
-				next_actions = build_visual_next_actions(
-					tool=tool, envelope=envelope, feedback=feedback
-				)
-				envelope['data']['visual_feedback'] = feedback
-				envelope['data']['next_actions'] = next_actions
-				summ = envelope['data'].setdefault('agent_summary', {})
-				if isinstance(summ, dict):
-					summ['visual_feedback'] = feedback
-					summ['next_actions'] = next_actions
-					adv = summ.setdefault('advisory', [])
-					if isinstance(adv, list):
-						adv.extend(visual_feedback_advisory(feedback, next_actions))
-			return envelope
-
-		data = envelope.get('data') if isinstance(envelope.get('data'), dict) else {}
-		snapshot_id = str(data.get('snapshot_id') or arguments.get('snapshot_id') or '').strip()
-		scan_id = str(
-			envelope.get('scan_id') or data.get('scan_id') or arguments.get('scan_id') or ''
-		).strip()
-
-		snapshot: DesignSnapshot | None = None
-		rec = snapshots.get(snapshot_id) if snapshot_id else None
-		if rec is None and scan_id:
-			rec = snapshots.get_by_scan(scan_id)
-		if rec is not None:
-			try:
-				snapshot = DesignSnapshot.from_dict(rec.snapshot)
-			except Exception:
-				snapshot = None
-		if snapshot is None and isinstance(data.get('snapshot'), dict):
-			try:
-				snapshot = DesignSnapshot.from_dict(data['snapshot'])
-			except Exception:
-				snapshot = None
-
-		session_id = str(
-			envelope.get('session_id')
-			or arguments.get('session_id')
-			or (rec.session_id if rec else '')
-			or ''
-		).strip()
-		snapshot_id_only = bool(arguments.get('snapshot_id')) and not (
-			arguments.get('session_id') or arguments.get('scan_id')
-		)
-
-		pack_kwargs = pack_capture_kwargs(pack, arguments, feedback)
-		paths = await _capture_or_reuse_visuals(
+		return await run_visual_feedback(
+			envelope,
 			store=store,
 			scans=scans,
-			session_id=session_id,
-			snapshot=snapshot,
+			snapshots=snapshots,
 			arguments=arguments,
 			tool=tool,
-			scan_id=scan_id,
-			live_ok=not snapshot_id_only,
-			pack_kwargs=pack_kwargs,
+			purpose=purpose_for_tool(tool),
 		)
-		if paths:
-			attach_visual_paths(envelope, paths)
-			if isinstance(envelope.get('data'), dict):
-				envelope['data']['visual_evidence'] = [
-					{'label': label, 'path': path} for label, path in paths
-				]
-				envelope['data']['screenshot_pack'] = pack
-				summ = envelope['data'].setdefault('agent_summary', {})
-				if isinstance(summ, dict):
-					summ['visual_evidence'] = [label for label, _ in paths]
-					summ['screenshot_pack'] = pack
-					adv = summ.setdefault('advisory', [])
-					if isinstance(adv, list):
-						adv.append(
-							f'VISUAL EVIDENCE attached (pack={pack}: '
-							+ ', '.join(label for label, _ in paths)
-							+ '). LOOK at the images and drive changes from appearance, not code alone.'
-						)
-
-		if feedback and isinstance(envelope.get('data'), dict):
-			next_actions = build_visual_next_actions(
-				tool=tool, envelope=envelope, feedback=feedback
-			)
-			envelope['data']['visual_feedback'] = feedback
-			envelope['data']['next_actions'] = next_actions
-			summ = envelope['data'].setdefault('agent_summary', {})
-			if isinstance(summ, dict):
-				summ['visual_feedback'] = feedback
-				summ['next_actions'] = next_actions
-				adv = summ.setdefault('advisory', [])
-				if isinstance(adv, list):
-					adv.extend(visual_feedback_advisory(feedback, next_actions))
 	except Exception:
 		return envelope
-	return envelope
 
 
 def _resolve_repo_root(arguments: dict[str, Any]) -> str | None:

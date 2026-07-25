@@ -407,22 +407,34 @@ See [parked/MVP_EXCLUDE_FIGMA.md](../parked/MVP_EXCLUDE_FIGMA.md). Code: `parked
 | `perception_design_graph_refresh` / `_summary` | Project Design Graph I/O |
 | `perception_design_knowledge_query` | PDG queries or `ux.retrieve` |
 
-### Shared visual args (snapshot / design_review / consistency_review / consistency_audit)
+## Common Visual Feedback — `perception_visual_feedback`
+
+ONE tool for the LOOK → judge → act loop for **any** UI work. `purpose`
+(`design | consistency | component | inspiration | hotfix | forms | general`) picks the
+screenshot pack default, the `recommended_resource` guide, the purpose-shaped
+`feedback_schema` the agent fills, and the advisory `next_actions` routing.
 
 | Arg | Notes |
 |-----|-------|
-| `include_screenshots` | default `true` |
-| `screenshot_pack` | `auto` → `design` (viewport + full + sections); also `viewport` \| `full` \| `section` \| `element` \| `none` |
-| `screenshot_selector` | element crop |
-| `max_sections` | default 3 |
-| `focus_sections` | prefer these region labels in crops |
-| `visual_feedback` | agent judgment after looking → drives `next_actions` |
+| `session_id` | live capture (preferred) |
+| `scan_id` | offline reuse of stored screenshot |
+| `purpose` | why you are looking — shapes pack, guide, schema, actions |
+| `include_screenshots` | default `true`; `false` = process feedback only |
+| `screenshot_pack` | `auto` → purpose default; also `design` \| `viewport` \| `full` \| `section` \| `element` \| `none` |
+| `screenshot_selector` | element crop (forces `element`) |
+| `max_sections` / `focus_sections` | section-crop control |
+| `visual_feedback` | agent judgment after looking → drives `next_actions` (purpose extras: `borrow`/`ignore`, `standard_hints`, `field_issues`, `slot_notes`, `regression_watch`, `hierarchy_issues`) |
 | `visual_notes` / `visual_judgment` | flat aliases |
 
-**Returns (when screenshots on):** inline MCP images + `data.visual_evidence` + `data.screenshot_pack`.  
-**Returns (when feedback passed):** `data.next_actions` / `agent_summary.next_actions` (`verify_section`, `propose_consistency_fix`, `edit_then_remeasure`, …).
+**LOOK phase (no judgment yet):** inline MCP images + `data.visual_evidence` + `data.feedback_schema` + `data.feedback_prompt` + `data.recommended_resource`.
+**Judgment phase:** normalized `data.visual_feedback` + advisory `data.next_actions` (`verify_section`, `propose_consistency_fix`, `edit_then_remeasure`, `collect_inspiration`, `probe_form`, `diff_after_fix`, …). Hints only — the agent decides.
 
-Loop: call → LOOK → pass `visual_feedback` → act on `next_actions` → remeasure.  
+### Shared visual args (snapshot / design_review / consistency_review / consistency_audit)
+
+The four design/consistency tools accept the same visual args as **thin aliases** over the
+common runner (`purpose=design|consistency` implied) — one capture/feedback code path.
+
+Loop: LOOK → fill `visual_feedback` per `feedback_schema` → act on `next_actions` → re-LOOK.
 Details: [features/visual.md](./features/visual.md).
 
 ## SEO Intelligence — MVP EXCLUDED

@@ -1184,6 +1184,68 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         # SEO Intelligence tools excluded from MVP — see parked/MVP_EXCLUDE_SEO.md
         # Figma Intelligence tools excluded from MVP — see parked/MVP_EXCLUDE_FIGMA.md
         T(
+            name="perception_visual_feedback",
+            description=(
+                "Does: the common LOOK → judge → act loop for ANY UI work. Captures a purpose-shaped "
+                "screenshot pack (viewport/full/section/element) with inline images, returns the exact "
+                "feedback JSON schema to fill for that purpose, and — when you pass visual_feedback back — "
+                "advisory next_actions. "
+                "Use when: before/after design, consistency, component, inspiration, hotfix, or forms changes; "
+                "whenever you must know how the page LOOKS before locking a decision. "
+                "Returns: inline screenshots, purpose, recommended_resource guide, feedback_schema/feedback_prompt "
+                "(LOOK phase) or normalized visual_feedback + next_actions (judgment phase). "
+                "Next: LOOK at the images, fill visual_feedback per feedback_schema, call again, then act on next_actions."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "session_id": {"type": "string", "description": "Live capture (preferred)"},
+                    "scan_id": {"type": "string", "description": "Reuse stored screenshot when live capture unavailable"},
+                    "purpose": {
+                        "type": "string",
+                        "enum": ["design", "consistency", "component", "inspiration", "hotfix", "forms", "general"],
+                        "default": "general",
+                        "description": "Why you are looking — picks pack default, guide, and feedback schema",
+                    },
+                    "screenshot_pack": {
+                        "type": "string",
+                        "enum": ["auto", "design", "viewport", "full", "section", "element", "none"],
+                        "default": "auto",
+                        "description": "auto = purpose default. design=viewport+full+sections.",
+                    },
+                    "screenshot_selector": {
+                        "type": "string",
+                        "description": "CSS selector for element crop (forces pack=element when set)",
+                    },
+                    "focus_sections": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Semantic blocks to prioritize for section crops, e.g. ['header','hero']",
+                    },
+                    "max_sections": {"type": "integer", "default": 3},
+                    "include_screenshots": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "false = process visual_feedback only, no new captures",
+                    },
+                    "visual_feedback": {
+                        "type": "object",
+                        "description": (
+                            "Your judgment AFTER looking at the images. Shape follows feedback_schema for the purpose: "
+                            "{judgment: ok|needs_work|unclear, notes, focus_sections[], focus_selector, issues[], "
+                            "+ purpose extras (borrow/ignore, standard_hints, field_issues, ...)}. Drives next_actions."
+                        ),
+                    },
+                    "visual_notes": {"type": "string", "description": "Flat alias for visual_feedback.notes"},
+                    "visual_judgment": {
+                        "type": "string",
+                        "enum": ["ok", "needs_work", "unclear"],
+                        "description": "Flat alias for visual_feedback.judgment",
+                    },
+                },
+            },
+        ),
+        T(
             name="perception_build_design_snapshot",
             description=(
                 "Does: measures a Design Snapshot and Frontend Engineering Spec from live scan evidence. "

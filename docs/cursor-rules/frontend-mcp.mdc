@@ -135,7 +135,7 @@ Gallery URLs and English design prose are not the source of truth.
 - Only `coordination_evidence.advancement_eligible=true` can lock or advance a
   structural decision; degraded, failed, noop, cleanup, and connection-only calls cannot
 - After draft vs a bound reference Spec: remeasure with `perception_build_design_snapshot`; honor `spec_revision_gate` (`revision_required` → revise)  
-- On design/consistency tools: LOOK at attached screenshots, pass `visual_feedback`, follow `next_actions` — do not lock structural UI from code alone  
+- Before/after structural UI work: `perception_visual_feedback` with `purpose` (design/consistency/component/inspiration/hotfix/forms) — LOOK at attached screenshots, fill `visual_feedback` per `feedback_schema`, act on advisory `next_actions`; never lock structural UI from code alone (design/consistency tools alias the same loop)
 - Read **blocking** before advisory  
 - Auth/MFA/CAPTCHA: `perception_auth_gate` → `requires_human` → stop and ask the user
 - One Chromium per MCP process; user may close the window — next tool recovers; do not leave the browser on external gallery sites  

@@ -107,6 +107,63 @@ async def main() -> int:
     scan_id = nav.get('scan_id') or (nav.get('data') or {}).get('scan_id')
     print(f'scan {scan_id} ok={nav.get("ok")}', flush=True)
 
+    # Common tool: LOOK phase (schema/prompt) then judgment round-trip (next_actions).
+    look = await call(
+        'perception_visual_feedback',
+        {'session_id': sid, 'scan_id': scan_id, 'purpose': 'design'},
+    )
+    look_vis = _inspect_visuals(look)
+    look_data = look.get('data') if isinstance(look.get('data'), dict) else {}
+    look_pass = (
+        bool(look.get('ok'))
+        and look_vis['has_viewport']
+        and look_vis['files_exist'] >= 1
+        and bool(look_data.get('feedback_schema'))
+        and bool(look_data.get('recommended_resource'))
+    )
+    results.append(
+        {
+            'tool': 'perception_visual_feedback[look:design]',
+            'ok': bool(look.get('ok')),
+            'status': 'PASS' if look_pass else 'FAIL',
+            'visuals': look_vis,
+        }
+    )
+    print(
+        f"  perception_visual_feedback[look] -> {'PASS' if look_pass else 'FAIL'} "
+        f"labels={look_vis['labels']} schema={sorted((look_data.get('feedback_schema') or {}).keys())[:4]}",
+        flush=True,
+    )
+
+    judged = await call(
+        'perception_visual_feedback',
+        {
+            'session_id': sid,
+            'scan_id': scan_id,
+            'purpose': 'design',
+            'visual_feedback': {
+                'judgment': 'needs_work',
+                'notes': 'hero lacks focal point',
+                'focus_sections': ['header'],
+            },
+        },
+    )
+    judged_data = judged.get('data') if isinstance(judged.get('data'), dict) else {}
+    judged_actions = [a.get('action') for a in (judged_data.get('next_actions') or [])]
+    judged_pass = bool(judged.get('ok')) and bool(judged_actions)
+    results.append(
+        {
+            'tool': 'perception_visual_feedback[judgment:design]',
+            'ok': bool(judged.get('ok')),
+            'status': 'PASS' if judged_pass else 'FAIL',
+            'visuals': {'next_actions': judged_actions},
+        }
+    )
+    print(
+        f"  perception_visual_feedback[judgment] -> {'PASS' if judged_pass else 'FAIL'} next={judged_actions}",
+        flush=True,
+    )
+
     tool_args = {
         'perception_build_design_snapshot': {'session_id': sid, 'scan_id': scan_id},
         'perception_design_review': {

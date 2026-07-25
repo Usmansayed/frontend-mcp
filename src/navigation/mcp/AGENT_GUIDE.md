@@ -489,24 +489,43 @@ attach the rendered appearance so you change UI from what the page *looks like*,
 
 `screenshot_pack` (default `auto` → `design` for these tools): `design` | `viewport` | `full` | `section` | `element` | `none`.
 
+### Common visual feedback tool: `perception_visual_feedback`
+
+ONE tool for the LOOK → judge → act loop, for **any** UI work — not just design/consistency.
+Pass `purpose` so the pack, guide pointer, and feedback schema match why you are looking:
+
+| `purpose` | pack default | feedback focus | typical next_actions |
+|---|---|---|---|
+| `design` | design (vp+full+sections) | hierarchy, density, brand, first viewport | design_review / remeasure |
+| `consistency` | design | token drift, rhythm vs project graph (`standard_hints[]`) | propose_fix / assess |
+| `component` | viewport (+element) | fit to slot, visual match (`slot_notes`) | select_foundation |
+| `inspiration` | full | `borrow[]` / `ignore[]` — transferable ideas | inspiration_collect |
+| `hotfix` | viewport/element | blast radius (`regression_watch[]`) | verify / diff |
+| `forms` | section | labels, errors, affordances (`field_issues[]`) | probe_form / verify |
+| `general` | viewport | free notes + `issues[]` | observe / verify |
+
 ### Visual feedback loop (required after looking)
 
-1. Call design/consistency tool → **LOOK** at attached images.
-2. Call again (or continue) with `visual_feedback`:
+1. Call `perception_visual_feedback` with `purpose` (or any design/consistency tool) → **LOOK** at attached images.
+   LOOK phase returns `data.feedback_schema` + `data.feedback_prompt` — the exact JSON to fill for that purpose.
+2. Call again with `visual_feedback`:
    - `judgment`: `ok` | `needs_work` | `unclear`
    - `notes`: free text (e.g. "header too dense, footer cramped")
    - `focus_sections`: `["header","footer"]` — narrows crops + verify targets
    - `focus_selector`: CSS for one element
-   - `issues[]`: `{section, selector, problem, wanted}`
-3. Read `data.next_actions` / `agent_summary.next_actions` — ranked tool calls
-   (`reobserve_element`, `verify_section`, `propose_consistency_fix`, `edit_then_remeasure`).
-4. Edit UI → re-run the same tool with screenshots + updated `visual_feedback`.
+   - `issues[]`: `{section, selector, problem, wanted}` + purpose extras (see table)
+3. Read `data.next_actions` / `agent_summary.next_actions` — **advisory** ranked tool calls
+   (`reobserve_element`, `verify_section`, `propose_consistency_fix`, `edit_then_remeasure`,
+   `collect_inspiration`, `probe_form`, `diff_after_fix`, ...). You decide; they are hints, not orders.
+4. Edit UI → re-LOOK with updated `visual_feedback`.
 
 Flat aliases: `visual_notes`, `visual_judgment`, `focus_sections`, `screenshot_selector`.
 
-`data.visual_evidence` lists attached image labels. Set `include_screenshots: false` / `screenshot_pack: none`
-to skip capture (offline `snapshot_id`-only still reuses stored scan screenshot as `reference_screenshot`).
-After any UI change: re-run the design/consistency tool, **LOOK at the new images**, pass feedback, then act.
+`data.visual_evidence` lists attached image labels; `data.recommended_resource` points at the methodology
+guide for the purpose. Set `include_screenshots: false` / `screenshot_pack: none` to skip capture
+(offline `scan_id` / `snapshot_id`-only still reuses the stored scan screenshot as `reference_screenshot`).
+The four design/consistency tools accept the same `visual_feedback` args as thin aliases over this loop.
+After any UI change: re-LOOK, pass feedback, then act.
 
 ---
 

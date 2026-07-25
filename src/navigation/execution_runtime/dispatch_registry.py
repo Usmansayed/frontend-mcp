@@ -12,6 +12,7 @@ from navigation.mcp.coordination_handlers import (
     handle_coordinator_briefing,
     handle_coordinator_episode_start,
 )
+from navigation.mcp.visual_feedback_handlers import handle_visual_feedback
 from navigation.mcp.design_intelligence_handlers import (
     attach_design_visuals,
     handle_build_design_snapshot,
@@ -297,6 +298,9 @@ class DispatchRegistry:
         # SEO Intelligence tools excluded from MVP — see parked/MVP_EXCLUDE_SEO.md
         # Figma Intelligence tools excluded from MVP — see parked/MVP_EXCLUDE_FIGMA.md
 
+        async def visual_feedback(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_visual_feedback(store, scans, snapshots, args)
+
         async def build_design_snapshot(args: dict[str, Any]) -> dict[str, Any]:
             env = await handle_build_design_snapshot(store, scans, snapshots, args)
             return await attach_design_visuals(
@@ -426,6 +430,7 @@ class DispatchRegistry:
             "perception_resource_animation_search": resource_animation_search,
             "perception_resource_license_check": resource_license_check,
             "perception_resource_observe_bridge": resource_observe_bridge,
+            "perception_visual_feedback": visual_feedback,
             "perception_build_design_snapshot": build_design_snapshot,
             "perception_design_review": design_review,
             "perception_consistency_review": consistency_review,

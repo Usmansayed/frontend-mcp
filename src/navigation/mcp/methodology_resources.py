@@ -106,8 +106,8 @@ you have obeyed the gate; claim-done only after the Done ladder clears.
             "Changing the visual system or full-page composition of an existing interface.",
             "Current baseline, target reference, intentional changes, and preserved behavior.",
             "Observe and build a Design Snapshot; bind/measure the target; use SpecDiff and Design Review. "
-            "build_design_snapshot / design_review / consistency tools now inline rendered screenshots "
-            "(viewport + full page + section crops) — after every UI change, re-run the tool and LOOK at the images.",
+            "perception_visual_feedback (and the design/consistency tools as aliases) inlines rendered screenshots "
+            "(viewport + full page + section crops) — after every UI change, re-LOOK, pass visual_feedback, act on next_actions.",
             "Do not rewrite the full UI before the current and target evidence are measurable.",
             "Required revisions are applied, remeasured, section checklist complete, Ship Council clear, and verified.",
         ),

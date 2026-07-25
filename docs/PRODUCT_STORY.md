@@ -79,7 +79,7 @@ Unlike BrowserTools and similar stacks: **pip install / uvx only** → MCP → B
 
 Observe, verify-fail, and diff return **inline images** the model can actually see — not just file paths. Annotated screenshots, element crops, viewport modes, visual heatmaps.
 
-Design Snapshot, Design Review, and Consistency review/audit also attach **viewport + full page + section** screenshots by default. After looking, the agent passes `visual_feedback` and receives ranked `next_actions` (remeasure, verify section, propose_fix).
+One common tool — **`perception_visual_feedback`** — runs the LOOK → judge → act loop for any UI work: pass a `purpose` (design / consistency / component / inspiration / hotfix / forms), get the right screenshot pack + a purpose-shaped feedback schema, return your judgment JSON, receive advisory `next_actions`. Design Snapshot, Design Review, and Consistency review/audit alias the same loop with **viewport + full page + section** screenshots by default.
 
 ### Verify is a first-class tool
 

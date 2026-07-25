@@ -16,13 +16,25 @@
 | `full` | Full scrollable page |
 | `element` | CSS selector crop |
 
-## Design / consistency evidence packs
+## Common visual feedback — `perception_visual_feedback`
 
-Design intelligence and consistency tools **attach rendered screenshots by default** so the agent edits from appearance, not code alone.
+ONE shared LOOK → judge → act loop for any UI work. `purpose` shapes the pack default,
+the guide pointer (`recommended_resource`), the feedback JSON the agent fills
+(`feedback_schema` / `feedback_prompt`), and the advisory `next_actions` routing:
+
+| `purpose` | Pack default | Purpose extras in feedback |
+|-----------|--------------|----------------------------|
+| `design` | `design` | `hierarchy_issues[]` |
+| `consistency` | `design` | `standard_hints[]` |
+| `component` | `viewport` | `slot_notes` |
+| `inspiration` | `full` | `borrow[]` / `ignore[]` |
+| `hotfix` | `viewport` | `regression_watch[]` |
+| `forms` | `section` | `field_issues[]` |
+| `general` | `viewport` | — |
 
 | Pack (`screenshot_pack`) | Captures |
 |--------------------------|----------|
-| `auto` (default) | → `design` for snapshot / design_review / consistency_* |
+| `auto` (default) | → purpose default (`design` for design/consistency) |
 | `design` | annotated viewport + full page + section crops |
 | `viewport` | annotated viewport only |
 | `full` | viewport + full page |
@@ -32,16 +44,16 @@ Design intelligence and consistency tools **attach rendered screenshots by defau
 
 Section crops use layout region rects (`header` / `nav` / `main` / `footer` / …). Pass `focus_sections` or `visual_feedback.focus_sections` to prefer flagged blocks.
 
-Tools: `perception_build_design_snapshot`, `perception_design_review`, `perception_consistency_review`, `perception_consistency_audit`.
+Thin aliases: `perception_build_design_snapshot`, `perception_design_review`, `perception_consistency_review`, `perception_consistency_audit` accept the same visual args and run the same shared code path (`purpose=design|consistency` implied).
 
 ### Visual feedback loop
 
-1. Call a design/consistency tool → **LOOK** at inline images (`data.visual_evidence`).
+1. Call `perception_visual_feedback` with `purpose` (or a design/consistency tool) → **LOOK** at inline images (`data.visual_evidence`); LOOK phase returns `feedback_schema` + `feedback_prompt`.
 2. Re-call with `visual_feedback` (or flat `visual_notes` / `visual_judgment` / `focus_sections`):
    - `judgment`: `ok` | `needs_work` | `unclear`
-   - `notes`, `focus_sections`, `focus_selector`, `issues[]`
-3. Read `data.next_actions` — ranked tool hints (`verify_section`, `propose_consistency_fix`, `edit_then_remeasure`, …).
-4. Edit UI → remeasure with screenshots → repeat.
+   - `notes`, `focus_sections`, `focus_selector`, `issues[]` + purpose extras
+3. Read `data.next_actions` — **advisory** tool hints (`verify_section`, `propose_consistency_fix`, `edit_then_remeasure`, `collect_inspiration`, `probe_form`, `diff_after_fix`, …). The agent decides.
+4. Edit UI → re-LOOK → repeat.
 
 ## Annotations
 
