@@ -55,7 +55,7 @@ async def _observe(
 ) -> tuple[dict[str, Any], Any, list[str]]:
 	degraded: list[str] = []
 	images_dir = rec.artifacts_dir / 'images' if options.include_screenshot else None
-	name = f'diagnosis-{options.mode}-{rec.run_counter}'
+	name = f'diagnosis-{options.mode}-{rec.next_capture_name("diag")}'
 
 	if options.url:
 		target = _resolve_url(rec.base_url, options.url)

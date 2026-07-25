@@ -53,11 +53,20 @@ async def attach_design_visuals(
 		return envelope
 
 
-def _resolve_repo_root(arguments: dict[str, Any]) -> str | None:
-	"""Prefer explicit repo_root; otherwise default code root so graph I/O is durable."""
+def _resolve_repo_root(arguments: dict[str, Any], *, project_id: str = 'default') -> str | None:
+	"""Prefer explicit repo_root; then last refresh / populated process store; else default."""
 	raw = str(arguments.get('repo_root') or '').strip()
 	if raw:
 		return raw
+	from navigation.consistency_intelligence.graph.persistence import (
+		find_populated_graph_root,
+		last_graph_root,
+	)
+
+	pid = str(arguments.get('project_id') or project_id or 'default')
+	remembered = last_graph_root(pid) or find_populated_graph_root(pid)
+	if remembered:
+		return remembered
 	try:
 		return str(default_code_repo_root())
 	except Exception:
@@ -984,10 +993,14 @@ async def handle_design_graph_summary(
 	arguments: dict[str, Any],
 ) -> dict[str, Any]:
 	project_id = str(arguments.get('project_id') or 'default')
-	repo_root = _resolve_repo_root(arguments)
+	explicit = bool(str(arguments.get('repo_root') or '').strip())
+	repo_root = _resolve_repo_root(arguments, project_id=project_id)
 
 	service = ConsistencyIntelligenceService(repo_root=repo_root) if repo_root else ConsistencyIntelligenceService()
 	resp = service.graph_summary(project_id=project_id)
+	degraded = list(resp.degraded)
+	if 'graph_empty' in degraded and not explicit:
+		degraded.append('pass_same_repo_root_as_refresh')
 
 	return make_envelope(
 		'perception_design_graph_summary',
@@ -997,8 +1010,9 @@ async def handle_design_graph_summary(
 			'summary': resp.summary_text(),
 			'project_id': project_id,
 			'repo_root': repo_root,
+			'repo_root_explicit': explicit,
 		},
-		degraded=list(resp.degraded),
+		degraded=degraded,
 	)
 
 
@@ -1119,6 +1133,10 @@ async def handle_design_graph_refresh(
 		enabled_sources=enabled_sources,
 		repo_root=repo_root,
 	)
+	if repo_root:
+		from navigation.consistency_intelligence.graph.persistence import remember_graph_root
+
+		remember_graph_root(project_id, repo_root)
 	summary = service.graph_summary(project_id=project_id)
 
 	return make_envelope(

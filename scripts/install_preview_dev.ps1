@@ -9,7 +9,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
-$Version = "1.2.0.dev45"
+$Version = "1.2.0.dev46"
 # Prefer Lib\site-packages — getsitepackages()[0] can be the conda prefix root.
 $Site = python -c "import site; ps=site.getsitepackages(); print(next((p for p in ps if p.endswith('site-packages')), ps[-1]))"
 

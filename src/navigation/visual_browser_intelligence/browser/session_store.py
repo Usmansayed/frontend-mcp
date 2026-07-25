@@ -28,6 +28,7 @@ class SessionRecord:
     console: SessionConsoleService = field(default_factory=SessionConsoleService)
     network: SessionNetworkService = field(default_factory=SessionNetworkService)
     run_counter: int = 0
+    capture_seq: int = 0
     current_run_id: str = ""
     headless: bool = True
     viewport_width: int = 1920
@@ -42,6 +43,11 @@ class SessionRecord:
         self.run_counter += 1
         self.current_run_id = f"run_{self.run_counter:04d}"
         return self.current_run_id
+
+    def next_capture_name(self, prefix: str) -> str:
+        """Unique screenshot basename so earlier scans are not overwritten on disk."""
+        self.capture_seq += 1
+        return f"{prefix}-{self.run_counter}-{self.capture_seq:04d}"
 
     def rebind(self, managed: ManagedBrowser) -> None:
         self.browser = managed.browser

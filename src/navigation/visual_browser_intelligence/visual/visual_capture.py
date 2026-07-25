@@ -159,6 +159,12 @@ async def capture_visuals(
 	degraded: list[str] = []
 	images_dir.mkdir(parents=True, exist_ok=True)
 	base_path = images_dir / f'{name}.png'
+	# Never overwrite an existing capture — stale before-frames break perception_diff.
+	if base_path.exists():
+		from uuid import uuid4
+
+		base_path = images_dir / f'{name}-{uuid4().hex[:8]}.png'
+	stem = base_path.stem
 
 	visual = await collect_visual_insights(session) if collect_insights else None
 	clip: dict[str, int] | None = None
@@ -181,7 +187,7 @@ async def capture_visuals(
 
 	crop_path: str | None = None
 	if mode == 'element' and clip is not None:
-		crop_file = images_dir / f'{name}-crop.png'
+		crop_file = images_dir / f'{stem}-crop.png'
 		crop_file.write_bytes(raw_bytes)
 		crop_path = str(crop_file)
 
@@ -192,7 +198,7 @@ async def capture_visuals(
 			base_path,
 			boxes,
 			extra_labels=extra_labels,
-			out_path=images_dir / f'{name}-annotated.png',
+			out_path=images_dir / f'{stem}-annotated.png',
 		)
 		if ann is not None:
 			annotated_path = str(ann)

@@ -317,7 +317,7 @@ async def handle_navigate_and_observe(
         rec.browser,
         target,
         images_dir=images_dir,
-        name=f"scan-{rec.run_counter}",
+        name=rec.next_capture_name("scan"),
         budget=budget,
         screenshot_mode=shot_mode,
         screenshot_selector=shot_selector,
@@ -480,7 +480,7 @@ async def handle_verify(
             scans,
             session_id,
             include_screenshot=True,
-            name=f"verify-fail-{rec.run_counter}",
+            name=rec.next_capture_name("verify-fail"),
             extra_visual_labels=[f"verify: {r}" for r in vr.reasons[:5]],
         )
         scan_id = scan_rec.scan_id
@@ -546,7 +546,7 @@ async def handle_execute_script(
     obs = await collect_observation(
         rec.browser,
         images_dir=rec.artifacts_dir / "images",
-        name=f"after-exec-{rec.run_counter}",
+        name=rec.next_capture_name("after-exec"),
         annotate_screenshot=True,
     )
     scan_after = scans.register(
@@ -605,7 +605,7 @@ async def _observe_and_register(
     obs = await collect_observation(
         rec.browser,
         images_dir=images_dir,
-        name=name or f"observe-{rec.run_counter}",
+        name=name or rec.next_capture_name("observe"),
         screenshot_mode=screenshot_mode,  # type: ignore[arg-type]
         screenshot_selector=screenshot_selector,
         annotate_screenshot=annotate_screenshot,
@@ -814,7 +814,7 @@ async def handle_execute_actions(
         rec,
         scans,
         session_id,
-        name=f"after-actions-{rec.run_counter}",
+        name=rec.next_capture_name("after-actions"),
         annotate_screenshot=True,
     )
     degraded = list(dict.fromkeys(list(obs_dict.get("degraded") or []) + settle_degraded))
@@ -942,15 +942,39 @@ async def handle_probe_form(store: SessionStore, arguments: dict[str, Any]) -> d
             error=f"unsupported form probe: {form}",
         )
 
-    probe = await probe_validation_form(rec.browser, rec.base_url)
+    force_sandbox = bool(arguments.get("force_sandbox_path") or arguments.get("path"))
+    probe = await probe_validation_form(
+        rec.browser,
+        rec.base_url,
+        prefer_current_page=not force_sandbox,
+        force_sandbox_path=force_sandbox,
+    )
+    degraded: list[str] = []
+    advisory: list[str] = []
+    if probe.error == "no_forms_on_surface":
+        degraded.append("no_forms_on_surface")
+        advisory.append(
+            "No <form> on the current page; sandbox /forms/validation was not used. "
+            "Navigate to a form route, then re-call; or pass force_sandbox_path=true on the sandbox app."
+        )
+    elif probe.error and str(probe.error).startswith("sandbox_validation_form_unavailable"):
+        degraded.append("sandbox_validation_form_unavailable")
+        advisory.append(
+            "Sandbox validation form is unavailable on this app. Probe current-page forms instead."
+        )
+
     return make_envelope(
         "perception_probe_form",
         ok=probe.ok,
         session_id=session_id,
         run_id=rec.current_run_id,
         url=probe.form_url,
-        error=probe.error,
-        data={"probe": probe.to_dict()},
+        error=None if probe.ok else probe.error,
+        degraded=degraded,
+        data={
+            "probe": probe.to_dict(),
+            "agent_summary": {"advisory": advisory, "guidance_code": probe.error or ""},
+        },
     )
 
 
@@ -1982,11 +2006,38 @@ async def handle_integrate_component(arguments: dict[str, Any]) -> dict[str, Any
 
 
 async def handle_framework_docs(arguments: dict[str, Any]) -> dict[str, Any]:
-    from navigation.framework_intelligence import FrameworkIntelligenceService
+    """Deprecated — fail fast. Prefer host Context7 / IDE docs over Grounded Docs."""
+    import os
 
     topic = str(arguments.get("topic") or "").strip()
     if not topic:
         return make_envelope("perception_framework_docs", ok=False, error="topic required")
+
+    force = bool(arguments.get("force_network")) or os.environ.get("FRAMEWORK_DOCS_ALLOW_NETWORK") == "1"
+    if not force:
+        return make_envelope(
+            "perception_framework_docs",
+            ok=False,
+            degraded=["framework_docs_deprecated", "use_host_context7"],
+            error=(
+                "perception_framework_docs is deprecated (Grounded Docs path). "
+                "Use host Context7 / IDE docs for framework APIs; "
+                "use perception_detect_framework for stack detection. "
+                "Pass force_network=true only if you must hit the legacy path."
+            ),
+            data={
+                "topic": topic,
+                "agent_summary": {
+                    "advisory": [
+                        "Use Context7 or IDE docs instead of perception_framework_docs.",
+                        "perception_detect_framework still works for stack detection.",
+                    ],
+                    "guidance_code": "framework_docs_deprecated",
+                },
+            },
+        )
+
+    from navigation.framework_intelligence import FrameworkIntelligenceService
 
     repo_root = _default_repo_root(arguments)
     use_cache = bool(arguments.get("use_cache", True))
@@ -1996,7 +2047,7 @@ async def handle_framework_docs(arguments: dict[str, Any]) -> dict[str, Any]:
     return make_envelope(
         "perception_framework_docs",
         ok=ok,
-        degraded=response.degraded,
+        degraded=list(response.degraded) + ["framework_docs_deprecated_forced"],
         data={
             "framework_knowledge": response.to_dict(),
             "agent_summary": service.agent_summary_from_response(response),
