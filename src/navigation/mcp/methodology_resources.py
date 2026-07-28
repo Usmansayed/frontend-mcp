@@ -44,6 +44,9 @@ Skip-bootstrap is a hard fail for structural UI.
 5. Optional depth: `resources/read` → `card.resource` (usually `perception://spine/{class}`)
 6. Pay `owed` → implement → clear non-skip `finish` → `data.verified=true` → claim only if `claim_ok`
 
+## Operator doc
+Repo guide: `docs/AGENT_FACE_COORDINATION.md` (boards + hard fails + card contract).
+
 ## Depth
 - `light` — observe/probe + verify (hotfix/forms)
 - `standard` — observe + LOOK + verify (feature)
