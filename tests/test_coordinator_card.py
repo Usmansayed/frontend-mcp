@@ -145,6 +145,21 @@ def test_face_done_state_does_not_respine() -> None:
     assert hotfix["next"] == ""
     assert hotfix["next"] != "perception_navigate_and_observe"
 
+    # Empty portfolio after verify must not re-inject forms owed.
+    forms_empty = build_agent_face_card(
+        episode_id="ep_done_forms_empty",
+        strategy={
+            "task_scope": "forms",
+            "intent": "Verify /forms/validation",
+            "verification_status": "passed",
+            "implementation_gate": {"state": "ready", "prohibited_actions": []},
+            "episode_portfolio": {"paid": [{"family": "verify"}], "unpaid": []},
+        },
+    )
+    assert forms_empty["claim_ok"] is True
+    assert forms_empty["next"] == ""
+    assert "forms" not in {o["family"] for o in forms_empty["owed"]}
+
 
 @pytest.mark.unit
 def test_face_claim_ok_false_when_claim_extra_even_if_gate_allows() -> None:
@@ -211,6 +226,32 @@ def test_face_polish_not_greenfield_under_design_driven() -> None:
     assert "inspiration" not in finish_ids or any(
         row["id"] == "inspiration" and row["status"] == "skip" for row in face["finish"]
     )
+
+
+@pytest.mark.unit
+def test_face_feature_incremental_not_stolen_by_polish_tier() -> None:
+    """Feature scope must stay feature even when right_sizing recommends polish."""
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        classify_agent_face,
+        build_agent_face_card,
+    )
+
+    strategy = {
+        "task_scope": "feature_incremental",
+        "intent": "Add a settings toggle to an existing page",
+        "influence_level": "balanced",
+        "right_sizing": {"tier": "polish"},
+        "verification_status": "pending",
+        "implementation_gate": {"state": "ready", "prohibited_actions": ["claim_complete"]},
+        "episode_portfolio": {
+            "paid": [],
+            "unpaid": [{"family": "observe", "suggested": "perception_navigate_and_observe"}],
+        },
+    }
+    assert classify_agent_face(strategy) == "feature"
+    face = build_agent_face_card(episode_id="ep_feat_tier", strategy=strategy)
+    assert face["class"] == "feature"
+    assert face["resource"] == "perception://spine/feature"
 
 
 @pytest.mark.unit
