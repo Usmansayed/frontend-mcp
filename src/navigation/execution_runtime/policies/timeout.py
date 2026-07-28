@@ -62,8 +62,9 @@ DEFAULT_TIMEOUT_POLICY = TimeoutPolicy(
         "perception_flow_describe": 15.0,
         "perception_code_context": 30.0,
         # Component search/select can hit many registries — keep generous.
-        "perception_search_components": 90.0,
-        "perception_select_component_foundation": 90.0,
+        "perception_select_component_foundation": 35.0,
+        "perception_search_components": 35.0,
+        "perception_plan_component_search": 20.0,
         "perception_integrate_component": 30.0,
         "perception_observe": 45.0,
         "perception_navigate_and_observe": 45.0,

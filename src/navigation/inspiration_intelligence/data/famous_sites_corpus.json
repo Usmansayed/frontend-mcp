@@ -1,0 +1,54 @@
+{
+  "schema": "famous_sites_corpus.v1",
+  "description": "Curated live-site screenshot targets for Inspiration Intelligence channel B. Not a SERP crawl — planner picks by intent category.",
+  "categories": {
+    "marketing": {
+      "intent_hints": ["landing", "marketing", "saas", "homepage", "hero"],
+      "sites": [
+        {"id": "stripe", "url": "https://stripe.com", "title": "Stripe"},
+        {"id": "linear", "url": "https://linear.app", "title": "Linear"},
+        {"id": "vercel", "url": "https://vercel.com", "title": "Vercel"},
+        {"id": "resend", "url": "https://resend.com", "title": "Resend"},
+        {"id": "cal", "url": "https://cal.com", "title": "Cal.com"}
+      ]
+    },
+    "dashboard": {
+      "intent_hints": ["dashboard", "admin", "analytics", "crm", "console"],
+      "sites": [
+        {"id": "notion", "url": "https://www.notion.so/product", "title": "Notion product"},
+        {"id": "figma", "url": "https://www.figma.com", "title": "Figma"},
+        {"id": "mixpanel", "url": "https://mixpanel.com", "title": "Mixpanel"},
+        {"id": "datadog", "url": "https://www.datadoghq.com", "title": "Datadog"}
+      ]
+    },
+    "docs": {
+      "intent_hints": ["docs", "documentation", "developer", "api reference"],
+      "sites": [
+        {"id": "tailwind", "url": "https://tailwindcss.com/docs", "title": "Tailwind Docs"},
+        {"id": "nextjs", "url": "https://nextjs.org/docs", "title": "Next.js Docs"},
+        {"id": "stripe_docs", "url": "https://docs.stripe.com", "title": "Stripe Docs"}
+      ]
+    },
+    "ecommerce": {
+      "intent_hints": ["ecommerce", "shop", "store", "checkout", "cart"],
+      "sites": [
+        {"id": "shopify", "url": "https://www.shopify.com", "title": "Shopify"},
+        {"id": "apple", "url": "https://www.apple.com", "title": "Apple"}
+      ]
+    },
+    "auth": {
+      "intent_hints": ["login", "signup", "sign in", "auth", "onboarding"],
+      "sites": [
+        {"id": "clerk", "url": "https://clerk.com", "title": "Clerk"},
+        {"id": "auth0", "url": "https://auth0.com", "title": "Auth0"}
+      ]
+    }
+  },
+  "defaults": {
+    "max_sites_fast": 2,
+    "max_sites_broad": 4,
+    "capture": "viewport",
+    "browser_concurrency": 1,
+    "source_kind": "live_site"
+  }
+}

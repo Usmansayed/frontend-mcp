@@ -53,5 +53,5 @@ def design_reference_workflow_resource(
     if prefer_snapshot_first(task_scope) and psm is not None and not snapshot_reference_paid(psm):
         return "perception://redesign-workflow"
     if next_capability == "inspiration_workflow":
-        return "perception://inspiration-guide"
+        return "perception://guide/inspiration"
     return None

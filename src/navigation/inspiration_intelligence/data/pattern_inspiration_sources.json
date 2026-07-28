@@ -1,0 +1,228 @@
+{
+  "schema": "pattern_inspiration_sources.v1",
+  "description": "Specialist galleries for component/section inspiration — HTTP CDN thumbs preferred. Fonts → Resource Intelligence (metadata), not this pack.",
+  "updated": "2026-07-27",
+  "specialist_galleries": [
+    {
+      "id": "navbar_gallery",
+      "url": "https://www.navbar.gallery/",
+      "title": "Navbar Gallery",
+      "tier": "fast_http",
+      "scopes": ["component"],
+      "match": ["navbar", "nav bar", "navigation", "mega menu", "header nav", "top nav", "menubar"],
+      "extract": "webflow_cdn",
+      "notes": "Dedicated nav screenshots on Webflow CDN — measured ~0.4–0.9s, many thumbs"
+    },
+    {
+      "id": "footer_design",
+      "url": "https://www.footer.design/",
+      "title": "Footer.design",
+      "tier": "fast_http",
+      "scopes": ["section", "component"],
+      "match": ["footer", "site footer", "footer links"],
+      "extract": "webflow_cdn",
+      "notes": "Dedicated footer gallery — measured ~70–500ms"
+    },
+    {
+      "id": "hero_gallery",
+      "url": "https://www.hero.gallery/",
+      "title": "Hero Gallery",
+      "tier": "fast_http",
+      "scopes": ["section"],
+      "match": ["hero", "above the fold", "first viewport", "hero section"],
+      "extract": "framer_cdn",
+      "notes": "Framer SPA — fewer static thumbs than navbar.gallery; still useful"
+    },
+    {
+      "id": "saasframe",
+      "url": "https://www.saasframe.io/",
+      "title": "SaaSframe",
+      "tier": "fast_http",
+      "scopes": ["section", "page"],
+      "match": ["pricing", "saas landing", "saas page", "pricing section", "pricing cards", "pricing table"],
+      "extract": "webflow_cdn",
+      "notes": "Measured ~100ms, Webflow CDN thumbs — strong for pricing/SaaS sections"
+    },
+    {
+      "id": "saasframe_login",
+      "url": "https://www.saasframe.io/categories/login",
+      "title": "SaaSframe Login",
+      "tier": "fast_http",
+      "scopes": ["section", "page"],
+      "match": ["login", "sign in", "signin", "log in", "authentication", "auth form"],
+      "extract": "webflow_cdn",
+      "notes": "Spike 2026-07-27 — category CDN thumbs for login/auth"
+    },
+    {
+      "id": "saasframe_signup",
+      "url": "https://www.saasframe.io/categories/sign-up-flow",
+      "title": "SaaSframe Sign-up",
+      "tier": "fast_http",
+      "scopes": ["section", "page"],
+      "match": ["signup", "sign up", "registration", "register", "onboarding", "create account"],
+      "extract": "webflow_cdn",
+      "notes": "Spike 2026-07-27 — sign-up flow category CDN thumbs"
+    },
+    {
+      "id": "saasframe_checkout",
+      "url": "https://www.saasframe.io/categories/checkout",
+      "title": "SaaSframe Checkout",
+      "tier": "fast_http",
+      "scopes": ["section", "page"],
+      "match": ["checkout", "payment form", "cart", "billing", "order summary"],
+      "extract": "webflow_cdn",
+      "notes": "Spike 2026-07-27 — checkout category CDN thumbs"
+    },
+    {
+      "id": "nicelydone_auth",
+      "url": "https://nicelydone.club/tags/authentication",
+      "title": "Nicelydone Authentication",
+      "tier": "fast_http",
+      "scopes": ["section", "page"],
+      "match": ["login", "signup", "sign in", "auth", "authentication", "sign up"],
+      "extract": "any_img",
+      "notes": "Spike 2026-07-27 — assets.nicelydone.club auth screenshots"
+    },
+    {
+      "id": "saasinterface",
+      "url": "https://saasinterface.com/",
+      "title": "SaaS Interface",
+      "tier": "fast_http",
+      "scopes": ["component", "section"],
+      "match": ["sidebar", "dashboard sidebar", "app shell", "admin sidebar", "side nav"],
+      "extract": "any_img",
+      "notes": "Measured ~0.5s, many UI imgs — sidebar/dashboard chrome"
+    },
+    {
+      "id": "saaslandingpage",
+      "url": "https://saaslandingpage.com/",
+      "title": "SaaS Landing Page",
+      "tier": "fast_http",
+      "scopes": ["section", "page"],
+      "match": ["pricing", "saas landing", "landing section"],
+      "extract": "any_img",
+      "notes": "Measured ~0.5s with imgs + OG — pricing/landing backup"
+    },
+    {
+      "id": "aceternity_buttons",
+      "url": "https://ui.aceternity.com/components/tailwindcss-buttons",
+      "title": "Aceternity Tailwind Buttons",
+      "tier": "fast_http",
+      "scopes": ["chrome", "component"],
+      "match": ["button", "btn", "hover", "cta", "primary button", "button hover"],
+      "extract": "any_img",
+      "notes": "Measured 2026-07-27 — assets.aceternity.com button demos"
+    },
+    {
+      "id": "shadcnblocks",
+      "url": "https://www.shadcnblocks.com/",
+      "title": "shadcnblocks",
+      "tier": "fast_http",
+      "scopes": ["chrome", "component", "section"],
+      "match": ["button", "card", "chrome", "ui block", "shadcn", "component block"],
+      "extract": "any_img",
+      "notes": "Measured 2026-07-27 — many CDN block thumbs for chrome/component"
+    },
+    {
+      "id": "ibelick_buttons",
+      "url": "https://buttons.ibelick.com/",
+      "title": "Buttons by Ibelick",
+      "tier": "fast_http",
+      "scopes": ["chrome"],
+      "match": ["button", "btn", "hover", "primary button"],
+      "extract": "any_img",
+      "notes": "OG + page imgs — chrome button variety"
+    }
+  ],
+  "section_doc_pages": [
+    {
+      "id": "flowbite_navbar_docs",
+      "url": "https://flowbite.com/docs/components/navbar/",
+      "match": ["navbar", "navigation", "header nav"],
+      "title": "Flowbite Navbar",
+      "tier": "docs_page",
+      "extract": "any_img"
+    },
+    {
+      "id": "flowbite_modal_docs",
+      "url": "https://flowbite.com/docs/components/modal/",
+      "match": ["modal", "dialog"],
+      "title": "Flowbite Modal",
+      "tier": "docs_page",
+      "extract": "any_img"
+    },
+    {
+      "id": "flowbite_sidebar_docs",
+      "url": "https://flowbite.com/docs/components/sidebar/",
+      "match": ["sidebar", "side nav", "drawer nav"],
+      "title": "Flowbite Sidebar",
+      "tier": "docs_page",
+      "extract": "any_img"
+    },
+    {
+      "id": "flowbite_button_docs",
+      "url": "https://flowbite.com/docs/components/buttons/",
+      "match": ["button", "btn", "primary button", "hover"],
+      "title": "Flowbite Buttons",
+      "tier": "docs_page",
+      "extract": "any_img"
+    }
+  ],
+  "component_docs_cdn": [
+    {
+      "id": "daisyui_components",
+      "base": "https://img.daisyui.com/images/components/{slug}.webp",
+      "docs": "https://daisyui.com/components/{slug}/",
+      "tier": "direct_cdn",
+      "map": {
+        "navbar": "navbar",
+        "nav": "navbar",
+        "button": "button",
+        "btn": "button",
+        "modal": "modal",
+        "dialog": "modal",
+        "drawer": "drawer",
+        "dropdown": "dropdown",
+        "menu": "menu",
+        "tabs": "tab",
+        "tab": "tab",
+        "card": "card",
+        "badge": "badge",
+        "toggle": "toggle",
+        "checkbox": "checkbox",
+        "input": "input",
+        "select": "select",
+        "textarea": "textarea",
+        "text area": "textarea",
+        "multiline": "textarea",
+        "fieldset": "fieldset",
+        "label": "label",
+        "file input": "file-input",
+        "file-input": "file-input",
+        "range": "range",
+        "toast": "toast",
+        "tooltip": "tooltip",
+        "avatar": "avatar",
+        "table": "table",
+        "pagination": "pagination",
+        "breadcrumb": "breadcrumbs",
+        "sidebar": "drawer",
+        "footer": "footer",
+        "hero": "hero",
+        "stat": "stat",
+        "progress": "progress",
+        "loading": "loading",
+        "alert": "alert",
+        "search": "input",
+        "form": "input"
+      },
+      "notes": "Zero-scrape CDN preview. form→input (form.webp 404). textarea/fieldset/label live 2026-07-27."
+    }
+  ],
+  "font_policy": {
+    "route": "resource_intelligence",
+    "tools": ["perception_resource_font_search"],
+    "match": ["font", "typeface", "typography", "google font", "serif display", "sans font"],
+    "notes": "Fonts are metadata + license — use Resource Intelligence, not gallery screenshots as primary"
+  }
+}

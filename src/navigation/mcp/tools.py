@@ -860,9 +860,10 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_inspiration_discover",
             description=(
-                "Inspiration Intelligence. Ranked discovery across Dribbble, Behance, One Page Love, "
-                "Awwwards, SiteInspire, Godly, and Land-book with priority cascade and early stop. "
-                "Returns URLs and scores — no capture. Read perception://inspiration-guide for per-site rules."
+                "Inspiration Intelligence scout — concurrent HTTP gallery URL discovery (no blobs). "
+                "Returns ranked candidates + discover_token. Pass discover_token to "
+                "perception_inspiration_collect to acquire blobs without re-running the cascade. "
+                "Pick effort on collect via inspiration_level — see perception://guide/inspiration."
             ),
             inputSchema={
                 "type": "object",
@@ -891,10 +892,11 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_inspiration_collect",
             description=(
-                "Does: collects 3–5 deduplicated image-first references as ephemeral host-viewable blobs. "
-                "Use when: design direction is unresolved and strategy assigns inspiration high ROI. "
-                "Returns: references, blob quality, provisional Engineering Spec priors, and evidence outcome. "
-                "Next: inspect images and harden priors with measured design evidence; use browser fallback only when directed."
+                "Does: collects image-first inspiration refs as ephemeral blobs. "
+                "Pass inspiration_level (light|standard|wide|max) — agent picks from task context; "
+                "MCP runs the concurrency/budget. See perception://guide/inspiration. "
+                "Pass discover_token or candidate_urls to skip double cascade. "
+                "Next: LOOK at blobs; visual_feedback(purpose=inspiration)."
             ),
             inputSchema={
                 "type": "object",
@@ -909,16 +911,87 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                         "default": True,
                         "description": "Bind inspiration seed Spec as reference for SpecDiff gate",
                     },
+                    "mode": {
+                        "type": "string",
+                        "enum": ["fast", "broad", "deep"],
+                        "description": "Legacy — prefer inspiration_level (light|standard|wide|max)",
+                    },
+                    "inspiration_level": {
+                        "type": "string",
+                        "enum": ["light", "standard", "wide", "max"],
+                        "description": (
+                    "Agent-picked search effort (not a hard ref quota). "
+                    "light|standard|wide|max — look at task → pick one. "
+                    "Soft-stop only ends the hunt early for speed. "
+                    "Read perception://guide/inspiration"
+                ),
+                    },
+                    "include_live_sites": {
+                        "type": "boolean",
+                        "description": (
+                            "Capture curated famous product sites (stripe, linear, …). "
+                            "Default follows inspiration_level (on for max only)."
+                        ),
+                    },
+                    "include_web_search": {
+                        "type": "boolean",
+                        "description": (
+                            "DuckDuckGo search → page OG thumbs (+ screenshots on wide/max). "
+                            "Default on for standard/wide/max when the pack is thin."
+                        ),
+                    },
+                    "max_web_screenshots": {
+                        "type": "integer",
+                        "description": (
+                            "How many search-result pages to visit and screenshot. "
+                            "Default: 0 on standard, 2 on wide, 4 on max. "
+                            "Also raised when allow_browser_screenshot=true."
+                        ),
+                    },
+                    "use_multi_scout": {
+                        "type": "boolean",
+                        "description": (
+                            "Override corpus multi-scout. Default follows inspiration_level "
+                            "(off for light; on for standard/wide/max when pack needs it)."
+                        ),
+                    },
+                    "discover_token": {
+                        "type": "string",
+                        "description": "Token from perception_inspiration_discover — reuse scout URLs, skip re-cascade",
+                    },
+                    "candidate_urls": {
+                        "type": "array",
+                        "description": "Explicit scout hits (url/preview_url objects or URL strings) — skip cascade",
+                        "items": {
+                            "oneOf": [
+                                {"type": "string"},
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "url": {"type": "string"},
+                                        "preview_url": {"type": "string"},
+                                        "title": {"type": "string"},
+                                        "provider_id": {"type": "string"},
+                                        "candidate_id": {"type": "string"},
+                                    },
+                                },
+                            ]
+                        },
+                    },
                     "per_provider": {"type": "integer", "default": 4},
                     "target_refs": {
                         "type": "integer",
-                        "default": 5,
-                        "description": "Stop after this many high-quality image refs (default 5)",
+                        "description": (
+                            "Optional soft-stop: stop hunting early once this many usable refs exist. "
+                            "Not a hard cap on returned hits. Default = level soft_stop_refs."
+                        ),
                     },
                     "min_refs": {
                         "type": "integer",
-                        "default": 3,
-                        "description": "Minimum image refs before early-stop is allowed",
+                        "description": (
+                            "Optional minimum before soft early-stop is allowed. "
+                            "Default derived from level."
+                        ),
                     },
                     "allow_browser_screenshot": {
                         "type": "boolean",
@@ -948,6 +1021,62 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                         "default": False,
                         "description": "Permanently download preview images (separate from ephemeral blobs)",
                     },
+                },
+                "required": ["query"],
+            },
+        ),
+        T(
+            name="perception_inspiration_pulse",
+            description=(
+                "Fast inspiration spark — same as collect with inspiration_level=light, "
+                "no live screenshots. Use for quick visual direction; call "
+                "perception_inspiration_widen if the pack is thin. "
+                "See perception://guide/inspiration."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Inspiration search query"},
+                    "session_id": {"type": "string"},
+                    "blob_session_id": {"type": "string"},
+                    "discover_token": {"type": "string"},
+                    "bind_as_reference": {"type": "boolean", "default": True},
+                    "include_web_search": {"type": "boolean", "default": True},
+                },
+                "required": ["query"],
+            },
+        ),
+        T(
+            name="perception_inspiration_widen",
+            description=(
+                "Escalate inspiration hunt one level (light→standard→wide→max). "
+                "Pass from_level or inspiration_level of the prior collect, plus "
+                "discover_token / blob_session_id to reuse scout work. "
+                "See perception://guide/inspiration."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Same or refined query"},
+                    "from_level": {
+                        "type": "string",
+                        "enum": ["light", "standard", "wide", "max"],
+                        "description": "Prior level to bump from (default standard→wide)",
+                    },
+                    "inspiration_level": {
+                        "type": "string",
+                        "enum": ["light", "standard", "wide", "max"],
+                        "description": "Alias for from_level when from_level omitted",
+                    },
+                    "session_id": {"type": "string"},
+                    "blob_session_id": {"type": "string"},
+                    "discover_token": {"type": "string"},
+                    "candidate_urls": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "bind_as_reference": {"type": "boolean", "default": True},
+                    "include_web_search": {"type": "boolean"},
                 },
                 "required": ["query"],
             },

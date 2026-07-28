@@ -36,7 +36,7 @@ def _workflow_resource(
         )
         if routed:
             return routed
-        return "perception://inspiration-guide"
+        return "perception://guide/inspiration"
     if effort_tier in ("touch_up", "polish") and not blocking:
         return RIGHT_SIZING_RESOURCE
     if task_scope == "redesign":
@@ -186,6 +186,11 @@ def compile_implementation_readiness(
     else:
         allowed = ["implement", "verify"]
         prohibited = []
+
+    # Never allow claim-done before hard verify — maintenance/ready used to leave
+    # prohibited empty, so agent_summary.card.claim_ok flipped true too early.
+    if psm.episode.verification_status != "passed":
+        prohibited = list(dict.fromkeys([*prohibited, "claim_complete"]))
 
     section_required = episode_needs_section_checklist(psm, strategy)
     ship_required = episode_needs_ship_council(psm, strategy)

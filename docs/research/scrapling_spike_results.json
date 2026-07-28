@@ -1,0 +1,1256 @@
+{
+  "verdict": "hybrid_best_reliability",
+  "summaries": {
+    "ours": {
+      "engine": "ours",
+      "targets_ok": 10,
+      "targets_total": 12,
+      "ok_rate": 0.833,
+      "p50_ms": 42.6,
+      "p95_ms": 767.4,
+      "mean_ms": 318.9,
+      "failed": [
+        "lapa",
+        "landbook"
+      ]
+    },
+    "scrapling_cold": {
+      "engine": "scrapling_cold",
+      "targets_ok": 10,
+      "targets_total": 12,
+      "ok_rate": 0.833,
+      "p50_ms": 339.5,
+      "p95_ms": 918.9,
+      "mean_ms": 532.9,
+      "failed": [
+        "behance",
+        "landbook"
+      ]
+    },
+    "scrapling_session": {
+      "engine": "scrapling_session",
+      "targets_ok": 10,
+      "targets_total": 12,
+      "ok_rate": 0.833,
+      "p50_ms": 119.3,
+      "p95_ms": 750.3,
+      "mean_ms": 420.6,
+      "failed": [
+        "behance",
+        "landbook"
+      ]
+    },
+    "hybrid": {
+      "engine": "hybrid",
+      "targets_ok": 11,
+      "targets_total": 12,
+      "ok_rate": 0.917,
+      "p50_ms": 110.4,
+      "p95_ms": 714.0,
+      "mean_ms": 429.9,
+      "failed": [
+        "landbook"
+      ]
+    }
+  },
+  "bursts": [
+    {
+      "engine": "ours",
+      "n": 8,
+      "ok": 8,
+      "wall_ms": 518.1
+    },
+    {
+      "engine": "scrapling_cold",
+      "n": 8,
+      "ok": 8,
+      "wall_ms": 536.1
+    },
+    {
+      "engine": "scrapling_session",
+      "n": 8,
+      "ok": 8,
+      "wall_ms": 532.1
+    },
+    {
+      "engine": "hybrid",
+      "n": 8,
+      "ok": 8,
+      "wall_ms": 176.9
+    },
+    {
+      "engine": "scrapling_async_session",
+      "n": 8,
+      "ok": 8,
+      "wall_ms": 554.4
+    }
+  ],
+  "collect": [
+    {
+      "hits": 4,
+      "wall_ms": 1168.7,
+      "providers": [
+        "daisyui"
+      ],
+      "ok": true,
+      "stop": "",
+      "backend": "ours",
+      "query": "login form saas"
+    },
+    {
+      "hits": 5,
+      "wall_ms": 1147.4,
+      "providers": [
+        "behance",
+        "daisyui"
+      ],
+      "ok": true,
+      "stop": "",
+      "backend": "ours",
+      "query": "checkout form"
+    },
+    {
+      "hits": 4,
+      "wall_ms": 468.0,
+      "providers": [
+        "saasframe"
+      ],
+      "ok": true,
+      "stop": "enough_relevant_refs_pattern",
+      "backend": "ours",
+      "query": "pricing page saas"
+    },
+    {
+      "hits": 4,
+      "wall_ms": 691.4,
+      "providers": [
+        "daisyui"
+      ],
+      "ok": true,
+      "stop": "",
+      "backend": "scrapling",
+      "query": "login form saas"
+    },
+    {
+      "hits": 4,
+      "wall_ms": 533.7,
+      "providers": [
+        "daisyui"
+      ],
+      "ok": true,
+      "stop": "",
+      "backend": "scrapling",
+      "query": "checkout form"
+    },
+    {
+      "hits": 4,
+      "wall_ms": 459.8,
+      "providers": [
+        "saasframe"
+      ],
+      "ok": true,
+      "stop": "enough_relevant_refs_pattern",
+      "backend": "scrapling",
+      "query": "pricing page saas"
+    },
+    {
+      "hits": 4,
+      "wall_ms": 175.8,
+      "providers": [
+        "daisyui"
+      ],
+      "ok": true,
+      "stop": "",
+      "backend": "hybrid",
+      "query": "login form saas"
+    },
+    {
+      "hits": 4,
+      "wall_ms": 174.7,
+      "providers": [
+        "daisyui"
+      ],
+      "ok": true,
+      "stop": "",
+      "backend": "hybrid",
+      "query": "checkout form"
+    },
+    {
+      "hits": 4,
+      "wall_ms": 320.6,
+      "providers": [
+        "saasframe"
+      ],
+      "ok": true,
+      "stop": "enough_relevant_refs_pattern",
+      "backend": "hybrid",
+      "query": "pricing page saas"
+    }
+  ],
+  "rows": [
+    {
+      "engine": "ours",
+      "target": "saasframe_login",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 727.8,
+      "bytes": 119702,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "saasframe_login",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 105.5,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "saasframe_login",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 98.0,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "saasframe_login",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 40.2,
+      "bytes": 119702,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "saasframe_login",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 28.4,
+      "bytes": 119702,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "saasframe_login",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 107.7,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "saasframe_login",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 68.0,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "saasframe_login",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 35.9,
+      "bytes": 119702,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "saasframe_checkout",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 30.3,
+      "bytes": 119702,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "saasframe_checkout",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 118.4,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "saasframe_checkout",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 43.6,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "saasframe_checkout",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 35.1,
+      "bytes": 119702,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "saasframe_checkout",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 27.9,
+      "bytes": 119702,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "saasframe_checkout",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 91.8,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "saasframe_checkout",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 47.8,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "saasframe_checkout",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 30.2,
+      "bytes": 119702,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "navbar_gallery",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 304.0,
+      "bytes": 119993,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "navbar_gallery",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 76.7,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "navbar_gallery",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 82.7,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "navbar_gallery",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 32.1,
+      "bytes": 119993,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "navbar_gallery",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 30.9,
+      "bytes": 119993,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "navbar_gallery",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 82.8,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "navbar_gallery",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 36.7,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "navbar_gallery",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 35.1,
+      "bytes": 119993,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "footer_design",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 118.6,
+      "bytes": 39126,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "footer_design",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 84.5,
+      "bytes": 39126,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "footer_design",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 73.6,
+      "bytes": 39126,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "footer_design",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 27.2,
+      "bytes": 39126,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "footer_design",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 26.9,
+      "bytes": 39126,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "footer_design",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 69.5,
+      "bytes": 39126,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "footer_design",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 25.9,
+      "bytes": 39126,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "footer_design",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 26.7,
+      "bytes": 39126,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "onepagelove",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 1190.2,
+      "bytes": 55505,
+      "previews": 2,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "onepagelove",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 825.9,
+      "bytes": 55505,
+      "previews": 2,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "onepagelove",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 699.8,
+      "bytes": 55505,
+      "previews": 2,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "onepagelove",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 714.0,
+      "bytes": 55505,
+      "previews": 2,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "onepagelove",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 767.4,
+      "bytes": 55505,
+      "previews": 2,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "onepagelove",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 764.7,
+      "bytes": 55505,
+      "previews": 2,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "onepagelove",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 816.6,
+      "bytes": 55505,
+      "previews": 2,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "onepagelove",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 728.4,
+      "bytes": 55505,
+      "previews": 2,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "httpster",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 553.3,
+      "bytes": 20941,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "httpster",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 517.3,
+      "bytes": 20941,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "httpster",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 512.9,
+      "bytes": 20941,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "httpster",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 180.2,
+      "bytes": 20941,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "httpster",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 179.0,
+      "bytes": 20941,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "httpster",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 514.6,
+      "bytes": 20941,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "httpster",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 170.6,
+      "bytes": 20941,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "httpster",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 179.6,
+      "bytes": 20941,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "lapa",
+      "ok": false,
+      "status": 403,
+      "wall_ms": 166.5,
+      "bytes": 5836,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "lapa",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 941.3,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "lapa",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 978.7,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "lapa",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 319.1,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "lapa",
+      "ok": false,
+      "status": 403,
+      "wall_ms": 53.6,
+      "bytes": 5836,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "lapa",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 918.9,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "lapa",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 475.8,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "lapa",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 315.4,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "nicelydone_auth",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 3150.8,
+      "bytes": 119975,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "nicelydone_auth",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 3112.5,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "nicelydone_auth",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 1880.1,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "nicelydone_auth",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 3129.1,
+      "bytes": 119975,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "nicelydone_auth",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 1976.7,
+      "bytes": 119975,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "nicelydone_auth",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 1900.3,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "nicelydone_auth",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 2075.9,
+      "bytes": 120000,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "nicelydone_auth",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 3654.4,
+      "bytes": 119975,
+      "previews": 8,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "daisy_input",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 606.2,
+      "bytes": 1069,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "daisy_input",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 182.4,
+      "bytes": 1069,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "daisy_input",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 162.8,
+      "bytes": 1069,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "daisy_input",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 112.3,
+      "bytes": 1069,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "daisy_input",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 54.3,
+      "bytes": 1069,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "daisy_input",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 164.4,
+      "bytes": 1069,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "daisy_input",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 55.0,
+      "bytes": 1069,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "daisy_input",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 110.4,
+      "bytes": 1069,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "ddg_html",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 789.1,
+      "bytes": 32264,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "ddg_html",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 723.0,
+      "bytes": 31714,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "ddg_html",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 750.3,
+      "bytes": 31714,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "ddg_html",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 798.7,
+      "bytes": 31714,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "ddg_html",
+      "ok": true,
+      "status": 202,
+      "wall_ms": 82.7,
+      "bytes": 14246,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "ddg_html",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 741.3,
+      "bytes": 31714,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "ddg_html",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 775.2,
+      "bytes": 31714,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "ddg_html",
+      "ok": true,
+      "status": 202,
+      "wall_ms": 128.5,
+      "bytes": 14186,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "behance",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 962.8,
+      "bytes": 119924,
+      "previews": 1,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "behance",
+      "ok": false,
+      "status": 403,
+      "wall_ms": 32.2,
+      "bytes": 453,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "behance",
+      "ok": false,
+      "status": 403,
+      "wall_ms": 37.2,
+      "bytes": 453,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "behance",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 1008.6,
+      "bytes": 119924,
+      "previews": 1,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "behance",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 14.4,
+      "bytes": 119924,
+      "previews": 1,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "behance",
+      "ok": false,
+      "status": 403,
+      "wall_ms": 36.3,
+      "bytes": 453,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "behance",
+      "ok": false,
+      "status": 403,
+      "wall_ms": 10.7,
+      "bytes": 453,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "behance",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 27.2,
+      "bytes": 119924,
+      "previews": 1,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "landbook",
+      "ok": false,
+      "status": 403,
+      "wall_ms": 74.0,
+      "bytes": 5792,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "landbook",
+      "ok": false,
+      "status": 404,
+      "wall_ms": 550.4,
+      "bytes": 8108,
+      "previews": 1,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "landbook",
+      "ok": false,
+      "status": 404,
+      "wall_ms": 230.4,
+      "bytes": 8108,
+      "previews": 1,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "landbook",
+      "ok": false,
+      "status": 403,
+      "wall_ms": 263.5,
+      "bytes": 5792,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "ours",
+      "target": "landbook",
+      "ok": false,
+      "status": 403,
+      "wall_ms": 63.4,
+      "bytes": 5792,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_cold",
+      "target": "landbook",
+      "ok": false,
+      "status": 404,
+      "wall_ms": 251.1,
+      "bytes": 8108,
+      "previews": 1,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "scrapling_session",
+      "target": "landbook",
+      "ok": false,
+      "status": 404,
+      "wall_ms": 209.0,
+      "bytes": 8108,
+      "previews": 1,
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "hybrid",
+      "target": "landbook",
+      "ok": false,
+      "status": 403,
+      "wall_ms": 275.4,
+      "bytes": 5792,
+      "previews": 0,
+      "error": "",
+      "notes": []
+    }
+  ],
+  "methodology": {
+    "cold": "Fetcher.get \u2014 temporary session per request (docs: ~10x slower)",
+    "session": "process-wide FetcherSession (fair vs httpx pool)",
+    "hybrid": "httpx first; Scrapling session on 403/block",
+    "burst": "ThreadPool n=8 matches inspiration scout fan-out",
+    "async_burst": "async with FetcherSession + gather (Scrapling recommended)",
+    "retries": "Scrapling retries=1 retry_delay=0 (not default 3\u00d71s)"
+  }
+}

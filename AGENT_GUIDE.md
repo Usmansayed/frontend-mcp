@@ -1,8 +1,12 @@
 # Agent Guide
 
-Canonical playbooks ship inside the MCP package:
+**Primary contract (cutover):** always-on short spine + **`agent_summary.card`** + `perception://spine/{class}`.
 
-- **[src/navigation/mcp/AGENT_GUIDE.md](src/navigation/mcp/AGENT_GUIDE.md)** — `perception://agent-guide`
-- **[src/navigation/resolver_intelligence/docs/RESOLVER_AGENT_GUIDE.md](src/navigation/resolver_intelligence/docs/RESOLVER_AGENT_GUIDE.md)** — `perception://resolver-guide`
+Do **not** start from this long guide. Order:
 
-**Quick start for agents:** health → session_start → observe → resolve_* (not code_context) → edit code → verify.
+1. MCP instructions / Cursor rule (bootstrap + card)
+2. `perception://getting-started`
+3. `card.resource` → `perception://spine/{class}`
+4. Deep archive only if stuck: [src/navigation/mcp/AGENT_GUIDE.md](src/navigation/mcp/AGENT_GUIDE.md) (`perception://agent-guide`)
+
+Also: [resolver guide](src/navigation/resolver_intelligence/docs/RESOLVER_AGENT_GUIDE.md) — `perception://resolver-guide`

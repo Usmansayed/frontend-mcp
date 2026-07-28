@@ -148,6 +148,18 @@ def test_purpose_next_actions_routing() -> None:
 		purpose='inspiration', tool='perception_visual_feedback', envelope=_env(),
 		feedback={**base_fb, 'borrow': ['split hero']},
 	)
+	assert any(a['action'] == 'implement_from_borrow' for a in acts), acts
+
+	acts = build_purpose_next_actions(
+		purpose='inspiration', tool='perception_visual_feedback', envelope=_env(),
+		feedback={**base_fb, 'look_lock': {'composition': 'one hero'}},
+	)
+	assert any(a['action'] == 'implement_from_borrow' for a in acts), acts
+
+	acts = build_purpose_next_actions(
+		purpose='inspiration', tool='perception_visual_feedback', envelope=_env(),
+		feedback=dict(base_fb),
+	)
 	assert any(a['action'] == 'collect_inspiration' for a in acts), acts
 
 	acts = build_purpose_next_actions(
@@ -242,7 +254,7 @@ async def _handler_judgment_round_trip() -> None:
 		assert fb['purpose'] == 'inspiration'
 		assert fb['borrow'] == ['oversized display type']
 		actions = [a['action'] for a in data['next_actions']]
-		assert 'collect_inspiration' in actions, actions
+		assert 'implement_from_borrow' in actions, actions
 		# Judgment phase replaces the LOOK-phase schema prompt.
 		assert 'feedback_schema' not in data
 

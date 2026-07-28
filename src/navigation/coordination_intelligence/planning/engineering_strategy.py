@@ -127,6 +127,8 @@ class EngineeringStrategy:
     routes: list[dict[str, str]] = field(default_factory=list)
     ux_knowledge_hint: dict[str, Any] | None = None
     right_sizing: dict[str, Any] | None = None
+    intent: str = ""
+    verification_status: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -139,6 +141,8 @@ class EngineeringStrategy:
             "lifecycle_band": self.lifecycle_band,
             "summary": self.summary,
             "host_action": self.host_action,
+            "intent": self.intent,
+            "verification_status": self.verification_status,
             "what_matters_now": list(self.what_matters_now),
             "unresolved_decisions": list(self.unresolved_decisions),
             "risks_if_proceeding": list(self.risks_if_proceeding),
@@ -1294,6 +1298,7 @@ def compile_engineering_strategy(
         lifecycle_band=disc.get("lifecycle_band") or lifecycle_band(psm.situation.lifecycle_stage),
         summary=summary,
         host_action=host_action,
+        intent=_intent_text(psm),
         what_matters_now=priorities,
         unresolved_decisions=unresolved_dicts,
         risks_if_proceeding=risks,
@@ -1333,6 +1338,7 @@ def compile_engineering_strategy(
         routes=routes_summary(psm),
         ux_knowledge_hint=ux_hint,
         right_sizing=right_sizing,
+        verification_status=str(psm.episode.verification_status or ""),
     )
 
 
@@ -1488,6 +1494,10 @@ def promote_coordinator_visibility(
     card: dict[str, Any],
 ) -> dict[str, Any]:
     """Surface slim coordinator briefing where hosts already look (agent_summary)."""
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        build_agent_face_card,
+    )
+
     agent_summary = envelope.setdefault("agent_summary", {})
     agent_summary["coordinator"] = card
     host_action = card.get("host_action")
@@ -1496,4 +1506,44 @@ def promote_coordinator_visibility(
         agent_summary["recommended_next"] = host_action
     elif next_cap:
         agent_summary["recommended_next"] = f"Gather evidence: {next_cap}"
+
+    # Experimental simple face — primary field agents should read.
+    # Full coordinator / engineering_strategy remain for detail / control A/B.
+    strategy = (envelope.get("data") or {}).get("engineering_strategy") or {}
+    if not isinstance(strategy, dict) or not strategy:
+        # Fall back to compact projection if full strategy not yet attached.
+        compact = agent_summary.get("engineering_strategy")
+        strategy = compact if isinstance(compact, dict) else {}
+    face = build_agent_face_card(
+        episode_id=str(card.get("episode_id") or "unknown"),
+        strategy={
+            **strategy,
+            "intent": strategy.get("intent")
+            or strategy.get("summary")
+            or " ".join(str(x) for x in (strategy.get("what_matters_now") or [])),
+            "host_action": strategy.get("host_action") or card.get("host_action"),
+            "implementation_gate": strategy.get("implementation_gate")
+            or card.get("implementation_gate")
+            or card.get("gate"),
+            "episode_portfolio": strategy.get("episode_portfolio")
+            or {
+                "paid": [{"family": f} for f in (card.get("portfolio") or {}).get("paid") or []],
+                "unpaid": [
+                    {"family": f} for f in (card.get("portfolio") or {}).get("unpaid") or []
+                ],
+            },
+            "recommended_resource": strategy.get("recommended_resource")
+            or card.get("recommended_resource"),
+            "task_scope": strategy.get("task_scope"),
+            "surface_type": strategy.get("surface_type") or card.get("surface_type"),
+            "influence_level": strategy.get("influence_level") or card.get("influence_level"),
+        },
+        suggested_capability=card.get("suggested_capability"),
+    )
+    agent_summary["card"] = face
+    # Prefer card.next as recommended_next on the simplified face.
+    if face.get("next"):
+        agent_summary["recommended_next"] = str(face["next"])
+    if face.get("next_args"):
+        agent_summary["recommended_next_args"] = face["next_args"]
     return envelope

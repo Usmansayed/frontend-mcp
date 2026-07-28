@@ -1,13 +1,16 @@
-# Agent Guide — Programming the Host Agent
+# Agent Guide — Programming the Host Agent (ARCHIVE / L3)
 
 **Audience:** Cursor, Claude Code, Codex, or any MCP-connected coding agent.
 
-**Purpose:** Compatibility reference for older hosts. Do not load this entire guide by
-default. Read `perception://getting-started`, then the focused resource returned by
-`engineering_strategy.recommended_resource`.
+**Status:** Cut over to **`agent_summary.card`** face. Do **not** load this guide by default.
+Primary contract = always-on short spine + **`agent_summary.card`** + `perception://spine/{class}`.
+This file remains as deep archive / compatibility reference.
+
+**Purpose:** Compatibility reference for older hosts. Prefer `perception://getting-started`,
+then `card.resource`.
 
 **Production failure mode:** Skipping bootstrap and calling verify once at the end
-produces false-green UIs. Hosts must run health → session_start → strategy → evidence
+produces false-green UIs. Hosts must run health → session_start → read `card` → evidence
 before large UI code. The MCP server preamble (`instructions.py`) restates this.
 
 Focused methodology:
@@ -559,7 +562,7 @@ Guideline:
 
 **When:** User asks for landing page / dashboard / UI inspiration from Dribbble, Behance, gallery sites.
 
-**Read first:** MCP resource `perception://inspiration-guide` — per-site URLs, selectors, preview rules, anti-bot.
+**Read first:** `perception://guide/inspiration` — pick one `inspiration_level` from task context. Provider detail (optional): `perception://inspiration-guide`.
 
 **Mode: image-first.** Prefer CDN/preview image URLs → ephemeral compressed blobs for host vision. Do **not** open gallery sites in the shared browser unless image retrieval fails or interaction/animation inspection is required.
 

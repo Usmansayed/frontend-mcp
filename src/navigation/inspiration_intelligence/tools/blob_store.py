@@ -178,10 +178,69 @@ class InspirationBlobStore:
 				failed += 1
 		return {'materialized': materialized, 'failed': failed, 'session_id': session_id}
 
+	async def materialize_hits_async(
+		self,
+		session_id: str,
+		hits: list[dict[str, Any]],
+		*,
+		concurrency: int = 4,
+	) -> dict[str, Any]:
+		"""Parallel JPEG materialize (thread pool) after URL wins."""
+		import asyncio
+
+		sem = asyncio.Semaphore(max(1, concurrency))
+
+		async def _one(hit: dict[str, Any]) -> bool:
+			async with sem:
+				blob = await asyncio.to_thread(
+					self.materialize,
+					session_id,
+					preview_url=str(hit.get('preview_url') or ''),
+					page_url=str(hit.get('url') or ''),
+					provider_id=str(hit.get('provider_id') or ''),
+					candidate_id=str(hit.get('candidate_id') or ''),
+					title=str(hit.get('title') or ''),
+					screenshot_path=str(hit.get('screenshot_path') or ''),
+				)
+				if blob:
+					hit['inspiration_blob'] = blob
+					hit['blob_session_id'] = session_id
+					state = self._load_sessions()
+					exp = state.get(session_id, {}).get('expires_at', time.time() + self._ttl_s)
+					hit['blob_expires_at'] = datetime.fromtimestamp(exp, tz=timezone.utc).isoformat()
+					return True
+				return False
+
+		results = await asyncio.gather(*[_one(h) for h in hits])
+		materialized = sum(1 for ok in results if ok)
+		return {
+			'materialized': materialized,
+			'failed': len(hits) - materialized,
+			'session_id': session_id,
+			'blob_concurrency': concurrency,
+		}
+
 	def materialize_manifest(self, session_id: str, manifest_path: Path) -> dict[str, Any]:
 		data = json.loads(manifest_path.read_text(encoding='utf-8'))
 		hits: list[dict[str, Any]] = list(data.get('hits') or [])
 		summary = self.materialize_hits(session_id, hits)
+		data['hits'] = hits
+		data['blob_session_id'] = session_id
+		data['mode'] = 'urls_and_ephemeral_blobs'
+		data['blob_summary'] = summary
+		manifest_path.write_text(json.dumps(data, indent=2), encoding='utf-8')
+		return summary
+
+	async def materialize_manifest_async(
+		self,
+		session_id: str,
+		manifest_path: Path,
+		*,
+		concurrency: int = 4,
+	) -> dict[str, Any]:
+		data = json.loads(manifest_path.read_text(encoding='utf-8'))
+		hits: list[dict[str, Any]] = list(data.get('hits') or [])
+		summary = await self.materialize_hits_async(session_id, hits, concurrency=concurrency)
 		data['hits'] = hits
 		data['blob_session_id'] = session_id
 		data['mode'] = 'urls_and_ephemeral_blobs'
@@ -250,7 +309,7 @@ class InspirationBlobStore:
 				ctx = ssl.create_default_context(cafile=certifi.where())
 			except Exception:
 				ctx = None
-			with urllib.request.urlopen(req, timeout=45, context=ctx) as resp:
+			with urllib.request.urlopen(req, timeout=10, context=ctx) as resp:
 				data = resp.read()
 				ctype = (resp.headers.get('Content-Type') or '').lower()
 				# Reject HTML error pages returned as 200

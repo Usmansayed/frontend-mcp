@@ -55,7 +55,9 @@ from navigation.mcp.handlers import (
     handle_health,
     handle_inspiration_collect,
     handle_inspiration_discover,
+    handle_inspiration_pulse,
     handle_inspiration_session_end,
+    handle_inspiration_widen,
     handle_integrate_component,
     handle_navigate,
     handle_navigate_and_observe,
@@ -253,6 +255,12 @@ class DispatchRegistry:
         async def inspiration_collect(args: dict[str, Any]) -> dict[str, Any]:
             return await handle_inspiration_collect(args)
 
+        async def inspiration_pulse(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_inspiration_pulse(args)
+
+        async def inspiration_widen(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_inspiration_widen(args)
+
         async def inspiration_session_end(args: dict[str, Any]) -> dict[str, Any]:
             return await handle_inspiration_session_end(args)
 
@@ -416,6 +424,8 @@ class DispatchRegistry:
             "perception_integrate_component": integrate_component,
             "perception_inspiration_discover": inspiration_discover,
             "perception_inspiration_collect": inspiration_collect,
+            "perception_inspiration_pulse": inspiration_pulse,
+            "perception_inspiration_widen": inspiration_widen,
             "perception_inspiration_session_end": inspiration_session_end,
             "perception_resource_search": resource_search,
             "perception_resource_preview": resource_preview,

@@ -166,8 +166,20 @@ class ResilientPageFetcher:
 				result.degraded = degraded
 				return result
 
-		# Retry remaining URLs with browser-only if fast mode only tried one HTTP path
-		if is_fast_mode() and len(urls) > 1:
+		# Fast MCP path: skip Chromium, but Scrapling Stealthy for important WAF hosts
+		if is_fast_mode():
+			for url in urls[:1]:
+				stealthy = await self._try_stealthy(url, max_hits=max_hits, prior_degraded=degraded)
+				if stealthy is not None and stealthy.ok and stealthy.hits:
+					stealthy.degraded = degraded + list(stealthy.degraded)
+					return stealthy
+			return FetchAttemptResult(
+				ok=False,
+				degraded=degraded + ['resilient_fast_no_browser'],
+				error='fast_http_empty',
+			)
+
+		if len(urls) > 1:
 			for url in urls[1:2]:
 				result = await self._fetch_browser_only(url, max_hits=max_hits, attempt=1)
 				degraded.extend(result.degraded)
@@ -186,8 +198,8 @@ class ResilientPageFetcher:
 		cfg = self._config
 
 		if not cfg.browser_required:
-			self._tracker.wait_if_needed(cfg.provider_id, self._policy)
-			html, status, err = await asyncio.to_thread(http_get, url, timeout=15.0)
+			await self._tracker.await_if_needed(cfg.provider_id, self._policy)
+			html, status, err = await asyncio.to_thread(http_get, url, timeout=8.0)
 			if err:
 				degraded.append(f'http_error:{err}')
 			else:
@@ -209,6 +221,14 @@ class ResilientPageFetcher:
 					degraded.append('http_parse_empty')
 					return FetchAttemptResult(ok=False, url=url, html=html, degraded=degraded, error='parse_empty')
 
+			# Fast path: skip Chromium, but still recover important WAF hosts via Stealthy
+			if is_fast_mode():
+				degraded.append('resilient_fast_skip_browser')
+				stealthy = await self._try_stealthy(url, max_hits=max_hits, prior_degraded=degraded)
+				if stealthy is not None:
+					return stealthy
+				return FetchAttemptResult(ok=False, url=url, degraded=degraded, error='fast_no_browser')
+
 		return await self._fetch_browser_only(url, max_hits=max_hits, attempt=0, prior_degraded=degraded)
 
 	async def _fetch_browser_only(
@@ -224,7 +244,7 @@ class ResilientPageFetcher:
 		retries = 1 if is_fast_mode() else cfg.max_browser_retries
 
 		for retry in range(retries):
-			self._tracker.wait_if_needed(cfg.provider_id, self._policy)
+			await self._tracker.await_if_needed(cfg.provider_id, self._policy)
 			try:
 				async with InspirationBrowserSession(
 					provider_id=cfg.provider_id,
@@ -277,4 +297,45 @@ class ResilientPageFetcher:
 			except Exception as exc:
 				degraded.append(f'perception_browser_failed:{exc}')
 
+		# Tough WAF hosts: Scrapling Stealthy after our Chromium failed (slow, budgeted).
+		stealthy = await self._try_stealthy(url, max_hits=max_hits, prior_degraded=degraded)
+		if stealthy is not None:
+			return stealthy
+
 		return FetchAttemptResult(ok=False, url=url, degraded=degraded, error='browser_failed')
+
+	async def _try_stealthy(
+		self,
+		url: str,
+		*,
+		max_hits: int,
+		prior_degraded: list[str],
+	) -> FetchAttemptResult | None:
+		from navigation.inspiration_intelligence.browser.scrapling_route import (
+			fetch_html_important_recovery,
+			is_important_waf_host,
+		)
+
+		degraded = list(prior_degraded)
+		if not is_important_waf_host(url):
+			return None
+		html, _status, err, notes, tier = await fetch_html_important_recovery(
+			url, already_blocked=True
+		)
+		degraded.extend(notes)
+		if tier != 'scrapling_stealthy' or err or not html:
+			if err:
+				degraded.append(f'stealthy_error:{err}')
+			return None
+		hits = self._config.parse_html(html, url) if html else []
+		if not hits:
+			degraded.append('stealthy_parse_empty')
+			return None
+		return FetchAttemptResult(
+			ok=True,
+			html=html,
+			hits=hits[:max_hits],
+			fetch_tier='scrapling_stealthy',
+			url=url,
+			degraded=degraded,
+		)

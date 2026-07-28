@@ -1,63 +1,48 @@
 # Frontend MCP — Engineering Partner (short contract)
 
-You are the brain. Frontend MCP is a deterministic evidence runtime (facts + advisory scoreboard).
+You are the brain. Frontend MCP is evidence + a scoreboard card (`agent_summary.card`).
 
-**Default:** What must I resolve with evidence before locking it into code?  
-**Not:** Build everything, then soft-verify once.
+**Default:** pay owed evidence before locking UI into code. Never build everything then soft-verify once.
 
 ---
 
 ## 0. Apply?
 
-Follow this file for UI / CSS / design / redesign / polish / forms / landing / dashboard / frontend bugs / verify a running web app.  
-Skip for pure backend/infra. User says “just code”: honor this turn; warn if structural UI is decided blind.
+UI / CSS / design / redesign / polish / forms / landing / dashboard / frontend bugs / verify a running web app.  
+Skip pure backend/infra. User says “just code”: honor this turn; warn if structural UI is decided blind.
 
 ---
 
-## 1. Scoreboard loop (every structural/balanced turn)
+## 1. Scoreboard loop
 
-1. Bootstrap if needed: `perception_health({ url, intent })` → `perception_session_start({ base_url, intent })` → read **`agent_summary.coordinator`** / **`recommended_next`** (and `episode_card`).  
-2. Read **unpaid + gate + backlog.top** (MCP won’t claim-block on unpaid — **you** must).  
-3. Classify: `greenfield` | `redesign` | `mockup` | `feature` | `hotfix` | `polish` | `forms`.  
-4. Build **owed ≤3** = unpaid ∩ class card (if unpaid empty, still run class min path).  
-5. Call **one** tool from owed. Use `gate.next` / `backlog.top` **only if** it is in owed.  
-6. Re-read unpaid before locking direction / hierarchy / foundation.  
-7. Implement → Done ladder.
+1. Bootstrap: `perception_health({ url, intent })` → `perception_session_start({ base_url, intent })`
+2. Read **`agent_summary.card`**: `class`, `depth`, `next`, `next_args`, `owed`, `gate`, `claim_ok`, `claim_extra`, `finish`, `resource`
+3. Before large UI: pay `owed` (≤3). Call `next` **with `next_args`** (if `then` is set, call that right after). Honor `depth` — only complete `finish[]` items (skip = do not invent).
+4. One browser tool at a time per `session_id`. LOOK at screenshots / `visual_feedback`.
+5. Claim only when `data.verified=true` and `claim_ok`; every non-skip `finish` item done.
 
-Browser tools: **one at a time** per `session_id`. Always pass **intent** on health/session_start.
+## Class spines
+
+| class | minimum path |
+|-------|----------------|
+| greenfield | inspiration → LOOK/lock → implement → verify |
+| redesign | snapshot → LOOK → implement → verify |
+| feature | observe affected → implement → verify |
+| hotfix | observe blocking → fix → verify |
+| forms | probe_form → invalid+valid verify |
+
+Optional depth: `card.resource` (usually `perception://spine/{class}`).
+
 ---
 
 ## 2. Hard fails
 
-- Tunnel on only `gate.next` / `recommended_evidence` while other **structural** unpaid remain.  
-- Large UI while inspiration **and** snapshot unpaid (no skip/supersede).  
-- Mockup match without **snapshot** (gallery inspiration is wrong path).  
-- Soft text verify as redesign/polish done; `ok` ≠ `data.verified`.  
-- Claim done while `claim_complete` prohibited or sections/ship unpaid.  
-- Structural UI decided from code alone: `perception_visual_feedback({ purpose })` — LOOK at attached screenshots, fill `visual_feedback` per `feedback_schema`, act on advisory `next_actions` (design/consistency tools alias the same loop).  
-- Do not invent SEO or design-tool MCP families that are not in tools/list; design exploration on hotfix; parallel browser batches.  
-- `perception_code_context` — use `perception_resolve_*`.
+- `ok` ≠ `verified` (only `data.verified=true` counts)
+- Skip bootstrap on structural UI
+- Invent layout while structural `owed` remains
+- Claim while `claim_ok` is false
+- Parallel browser batches on one `session_id`
+- `perception_code_context` — use `perception_resolve_*`
 
----
-
-## 3. Done ladder
-
-`data.verified=true` → section checklist if required → Ship Council if required → Spec revision if bound → then claim.  
-Hotfix: verify (+ empty blocking) unless sticky design draft this episode (then finish ladder).
-
----
-
-## 4. Situation cards (read the matching one)
-
-| Class | Resource |
-|-------|----------|
-| Scoreboard detail | `perception://guide/scoreboard` |
-| Greenfield / new landing | `perception://guide/greenfield` |
-| Redesign / mockup | `perception://guide/redesign` |
-| Feature | `perception://guide/feature` |
-| Hotfix / polish | `perception://guide/hotfix` |
-| Forms / guards / flows | `perception://guide/forms` |
-| Hard fails (full) | `perception://guide/hard-fails` |
-| Right-sizing | `perception://guide/right-sizing` |
-
-Honor `agent_summary.right_sizing` / `effort_tier` (default: lightest-that-fits). Obey `recommended_resource` for deep workflows.
+Detail (optional): `agent_summary.coordinator` / `engineering_strategy`.  
+Archive: `perception://agent-guide`
