@@ -224,8 +224,12 @@ def classify_agent_face(strategy: dict[str, Any]) -> str:
 		)
 	):
 		return "redesign"
+	# Feature scope beats polish-tier defaults (right_sizing often stamps polish on mid features).
+	if scope in {"feature_incremental", "feature"} or (
+		re.search(r"\bfeature\b", resource) and "hotfix" not in blob and "polish" not in blob
+	):
+		return "feature"
 	# Polish/chrome before design_driven → greenfield (G3).
-	# Do NOT steal feature_incremental solely because right_sizing recommends polish.
 	polish_cues = (
 		"polish",
 		"tighten spacing",
@@ -261,10 +265,6 @@ def classify_agent_face(strategy: dict[str, Any]) -> str:
 		or re.search(r"\bfix\b", blob) is not None
 	):
 		return "hotfix"
-	if scope in {"feature_incremental", "feature"} or (
-		re.search(r"\bfeature\b", resource) and "hotfix" not in blob
-	):
-		return "feature"
 	if scope in {"design_driven", "system_setup"} or "design-workflow" in resource:
 		return "greenfield"
 	# Landing / new page cues before defaulting to influence
