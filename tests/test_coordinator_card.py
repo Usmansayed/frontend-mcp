@@ -229,6 +229,52 @@ def test_face_polish_not_greenfield_under_design_driven() -> None:
 
 
 @pytest.mark.unit
+def test_face_hotfix_cues_beat_stamped_feature_incremental() -> None:
+    """Intent 'fix overlapping…' must stay hotfix even if scope is feature_incremental."""
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        classify_agent_face,
+        build_agent_face_card,
+    )
+
+    strategy = {
+        "task_scope": "feature_incremental",
+        "intent": "fix overlapping mobile menu button",
+        "influence_level": "balanced",
+        "right_sizing": {"tier": "polish"},
+        "verification_status": "pending",
+        "implementation_gate": {"state": "ready", "prohibited_actions": ["claim_complete"]},
+        "episode_portfolio": {"paid": [], "unpaid": []},
+    }
+    assert classify_agent_face(strategy) == "hotfix"
+    face = build_agent_face_card(episode_id="ep_hf_stamp", strategy=strategy)
+    assert face["class"] == "hotfix"
+    assert face["resource"] == "perception://spine/hotfix"
+    assert face["next"] == "perception_navigate_and_observe"
+
+
+@pytest.mark.unit
+def test_face_feature_empty_owed_observes_before_verify() -> None:
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        build_agent_face_card,
+    )
+
+    face = build_agent_face_card(
+        episode_id="ep_feat_empty",
+        strategy={
+            "task_scope": "feature_incremental",
+            "intent": "Add a settings toggle to an existing page",
+            "influence_level": "balanced",
+            "verification_status": "pending",
+            "implementation_gate": {"state": "ready", "prohibited_actions": ["claim_complete"]},
+            "episode_portfolio": {"paid": [], "unpaid": []},
+        },
+    )
+    assert face["class"] == "feature"
+    assert face["next"] == "perception_navigate_and_observe"
+    assert face["claim_ok"] is False
+
+
+@pytest.mark.unit
 def test_face_feature_incremental_not_stolen_by_polish_tier() -> None:
     """Feature scope must stay feature even when right_sizing recommends polish."""
     from navigation.coordination_intelligence.planning.coordinator_card import (
