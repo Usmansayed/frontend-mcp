@@ -225,6 +225,7 @@ def classify_agent_face(strategy: dict[str, Any]) -> str:
 	):
 		return "redesign"
 	# Polish/chrome before design_driven → greenfield (G3).
+	# Do NOT steal feature_incremental solely because right_sizing recommends polish.
 	polish_cues = (
 		"polish",
 		"tighten spacing",
@@ -236,7 +237,9 @@ def classify_agent_face(strategy: dict[str, Any]) -> str:
 		"touch-up",
 		"visual polish",
 	)
-	if tier in {"polish", "touch_up"} or any(c in blob for c in polish_cues):
+	if any(c in blob for c in polish_cues) or (
+		tier in {"polish", "touch_up"} and scope in {"design_driven", "system_setup", ""}
+	):
 		return "hotfix"
 	hotfix_cues = (
 		"hotfix",
@@ -290,7 +293,8 @@ def _owed_from_portfolio(
 		]
 	# Forms class always owes probe until forms family is paid (portfolio often empty
 	# outside design-initiative scope — without this, gate steers to component).
-	if face_class == "forms":
+	# Once verify passed, do not re-inject (claim_ok + next=probe forever).
+	if face_class == "forms" and str(strategy.get("verification_status") or "").lower() != "passed":
 		paid = {
 			str(p.get("family"))
 			for p in (portfolio.get("paid") or [])
