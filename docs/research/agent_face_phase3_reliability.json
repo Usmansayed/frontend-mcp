@@ -1,0 +1,319 @@
+{
+  "suite": "agent_face_phase3_reliability",
+  "url": "http://127.0.0.1:18765",
+  "slos_ms": {
+    "perception_health": 5000,
+    "perception_session_start": 20000,
+    "perception_navigate_and_observe": 25000,
+    "perception_probe_form": 20000,
+    "perception_verify": 20000,
+    "perception_inspiration_collect": 60000,
+    "perception_select_component_foundation": 15000,
+    "perception_visual_feedback": 15000,
+    "path_forms": 120000,
+    "path_hotfix": 90000,
+    "path_feature": 90000,
+    "path_greenfield_light": 180000
+  },
+  "ok": true,
+  "passed": 6,
+  "total": 6,
+  "boards": [
+    {
+      "id": "path_forms",
+      "ok": true,
+      "notes": [],
+      "steps": [
+        {
+          "tool": "perception_health",
+          "ok": true,
+          "latency_ms": 1628,
+          "slo_ms": 5000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "forms",
+          "error": null
+        },
+        {
+          "tool": "perception_session_start",
+          "ok": true,
+          "latency_ms": 4147,
+          "slo_ms": 20000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "forms",
+          "error": null
+        },
+        {
+          "tool": "perception_probe_form",
+          "ok": true,
+          "latency_ms": 1351,
+          "slo_ms": 20000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "forms",
+          "error": null
+        },
+        {
+          "tool": "perception_verify",
+          "ok": true,
+          "latency_ms": 4,
+          "slo_ms": 20000,
+          "slo_ok": true,
+          "verified": true,
+          "card_class": "forms",
+          "error": null
+        },
+        {
+          "tool": "perception_verify",
+          "ok": true,
+          "latency_ms": 0,
+          "slo_ms": 20000,
+          "slo_ok": true,
+          "verified": true,
+          "card_class": "forms",
+          "error": null
+        }
+      ],
+      "wall_ms": 7132,
+      "error": null
+    },
+    {
+      "id": "path_hotfix",
+      "ok": true,
+      "notes": [],
+      "steps": [
+        {
+          "tool": "perception_health",
+          "ok": true,
+          "latency_ms": 11,
+          "slo_ms": 5000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "hotfix",
+          "error": null
+        },
+        {
+          "tool": "perception_session_start",
+          "ok": true,
+          "latency_ms": 3,
+          "slo_ms": 20000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "hotfix",
+          "error": null
+        },
+        {
+          "tool": "perception_navigate_and_observe",
+          "ok": true,
+          "latency_ms": 888,
+          "slo_ms": 25000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "hotfix",
+          "error": null
+        },
+        {
+          "tool": "perception_verify",
+          "ok": true,
+          "latency_ms": 1,
+          "slo_ms": 20000,
+          "slo_ok": true,
+          "verified": true,
+          "card_class": "hotfix",
+          "error": null
+        }
+      ],
+      "wall_ms": 905,
+      "error": null
+    },
+    {
+      "id": "path_feature",
+      "ok": true,
+      "notes": [],
+      "steps": [
+        {
+          "tool": "perception_health",
+          "ok": true,
+          "latency_ms": 7,
+          "slo_ms": 5000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "feature",
+          "error": null
+        },
+        {
+          "tool": "perception_session_start",
+          "ok": true,
+          "latency_ms": 3,
+          "slo_ms": 20000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "feature",
+          "error": null
+        },
+        {
+          "tool": "perception_navigate_and_observe",
+          "ok": true,
+          "latency_ms": 678,
+          "slo_ms": 25000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "feature",
+          "error": null
+        },
+        {
+          "tool": "perception_verify",
+          "ok": true,
+          "latency_ms": 1,
+          "slo_ms": 20000,
+          "slo_ok": true,
+          "verified": true,
+          "card_class": "feature",
+          "error": null
+        }
+      ],
+      "wall_ms": 690,
+      "error": null
+    },
+    {
+      "id": "inspiration_bounded",
+      "ok": true,
+      "notes": [],
+      "steps": [
+        {
+          "tool": "perception_health",
+          "ok": true,
+          "latency_ms": 31,
+          "slo_ms": 5000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "greenfield",
+          "error": null
+        },
+        {
+          "tool": "perception_session_start",
+          "ok": true,
+          "latency_ms": 3,
+          "slo_ms": 20000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "greenfield",
+          "error": null
+        },
+        {
+          "tool": "perception_inspiration_collect",
+          "ok": true,
+          "latency_ms": 1987,
+          "slo_ms": 60000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "greenfield",
+          "error": null
+        }
+      ],
+      "wall_ms": 2022,
+      "error": null
+    },
+    {
+      "id": "select_bounded",
+      "ok": true,
+      "notes": [],
+      "steps": [
+        {
+          "tool": "perception_session_start",
+          "ok": true,
+          "latency_ms": 3,
+          "slo_ms": 20000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "greenfield",
+          "error": null
+        },
+        {
+          "tool": "perception_select_component_foundation",
+          "ok": true,
+          "latency_ms": 1751,
+          "slo_ms": 15000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "greenfield",
+          "error": null
+        }
+      ],
+      "wall_ms": 1755,
+      "error": null
+    },
+    {
+      "id": "soak_sessions",
+      "ok": true,
+      "notes": [
+        "rounds=3"
+      ],
+      "steps": [
+        {
+          "tool": "perception_session_start",
+          "ok": true,
+          "latency_ms": 4,
+          "slo_ms": 20000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "hotfix",
+          "error": null
+        },
+        {
+          "tool": "perception_navigate_and_observe",
+          "ok": true,
+          "latency_ms": 660,
+          "slo_ms": 25000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "hotfix",
+          "error": null
+        },
+        {
+          "tool": "perception_session_start",
+          "ok": true,
+          "latency_ms": 3,
+          "slo_ms": 20000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "hotfix",
+          "error": null
+        },
+        {
+          "tool": "perception_navigate_and_observe",
+          "ok": true,
+          "latency_ms": 664,
+          "slo_ms": 25000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "hotfix",
+          "error": null
+        },
+        {
+          "tool": "perception_session_start",
+          "ok": true,
+          "latency_ms": 3,
+          "slo_ms": 20000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "hotfix",
+          "error": null
+        },
+        {
+          "tool": "perception_navigate_and_observe",
+          "ok": true,
+          "latency_ms": 668,
+          "slo_ms": 25000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "hotfix",
+          "error": null
+        }
+      ],
+      "wall_ms": 2005,
+      "error": null
+    }
+  ]
+}
