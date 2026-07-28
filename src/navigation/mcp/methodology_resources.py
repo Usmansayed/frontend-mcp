@@ -32,51 +32,101 @@ METHODOLOGY_RESOURCES: dict[str, tuple[str, str]] = {
         "Getting Started",
         """# Getting Started
 
-## Production rule
-If this is a UI / frontend / visual / redesign / polish / form / dashboard / landing /
-layout / CSS task and you have not called `perception_health` (and
-`perception_session_start` when reachable) with the **real user intent**, stop coding
-and bootstrap now. End-of-task MCP is how false-green UIs ship.
+## Rule
+UI / frontend / visual task → bootstrap **before** large code.
+Skip-bootstrap is a hard fail for structural UI.
 
-## Use when
-At the beginning of every applicable frontend task — before planning large UI code.
+## Order
+1. `perception_health({ url, intent })`
+2. `perception_session_start({ base_url, intent })` → save `session_id`
+3. Read **`agent_summary.card`** (`class`, `depth`, `next`, `next_args`, `owed`, `gate`, `claim_ok`, `claim_extra`, `finish`, `resource`)
+4. Call `card.next` with `card.next_args` (if `then` is set, call that next). Honor `depth` / `finish[]`.
+5. Optional depth: `resources/read` → `card.resource` (usually `perception://spine/{class}`)
+6. Pay `owed` → implement → clear non-skip `finish` → `data.verified=true` → claim only if `claim_ok`
 
-## Decisions to resolve
-Task scope, influence level, implementation_gate, and the first unresolved
-engineering decision.
+## Depth
+- `light` — observe/probe + verify (hotfix/forms)
+- `standard` — observe + LOOK + verify (feature)
+- `full` — inspiration/snapshot + LOOK + foundation + verify + sections/ship when listed in `finish`
 
-## Minimum evidence (mandatory order)
-1. `resources/read` → `perception://getting-started` (this page)
-2. `perception_health({ url, intent })` with the real task wording
-3. If reachable: `perception_session_start({ base_url, intent })` → save `session_id`
-   (`intent` is required for useful greenfield vs hotfix routing)
-4. Read **`agent_summary.coordinator`** and **`recommended_next`** first (slim briefing);
-   then `engineering_strategy` / `episode_card` for gate, unpaid, influence, resources
-5. `resources/read` the `recommended_resource`
-6. Gather only evidence that changes an unresolved decision; then implement
-7. After ACT: Done ladder in `perception://verification-guide`
-   (`data.verified=true` → section checklist if required → Ship Council if required)
+## Spines
+- `perception://spine/greenfield`
+- `perception://spine/redesign`
+- `perception://spine/feature`
+- `perception://spine/hotfix`
+- `perception://spine/forms`
 
-Situation cards (short): `perception://guide/scoreboard`, `greenfield`, `redesign`,
-`feature`, `hotfix`, `forms`, `hard-fails`, `right-sizing` — also see always-on agent rule.
-After bootstrap, read `agent_summary.right_sizing` (or `episode_card.right_sizing`): pick a
-tier (touch_up / polish / feature / initiative) by blast radius, not by ROI alone. Pass
-`effort_tier` to lock your judgment. Default is lightest-that-fits.
+Transport `ok=true` is not success. Verify needs `data.verified=true`.
+Archive playbooks: `perception://agent-guide` (L3 — do not load by default).
+""",
+    ),
+    "perception://spine/greenfield": (
+        "Spine: Greenfield",
+        """# Spine: Greenfield
 
-## Failure and fallback
-A completed tool call is not automatically usable evidence. Read `coordination_evidence`
-and `implementation_gate`; if evidence is failed or provisional, follow the returned
-`next_required_capability` instead of inventing the unresolved decision.
-Transport `ok=true` with `data.verified=false` is a verify **fail**.
+## Path
+1. `perception_inspiration_collect` (usable pack)
+2. `perception_visual_feedback` purpose=inspiration → lock look
+3. Implement
+4. Observe draft → VF purpose=design if needed
+5. `perception_verify` → `data.verified=true`
+6. Finish `card.claim_extra` if any, then claim
 
-## Implementation boundary
-When blocked, only inspect, gather evidence, or scaffold/start the runtime.
-Do not draft a full viewport while the structural gate is blocked.
-Claim-done follows the Done ladder — never from a single soft page verify.
+Read `agent_summary.card` every turn. Do not invent layout while `owed` is non-empty.
+""",
+    ),
+    "perception://spine/redesign": (
+        "Spine: Redesign",
+        """# Spine: Redesign / Mockup
 
-## Done condition
-The coordinator identifies the correct workflow resource and required capability;
-you have obeyed the gate; claim-done only after the Done ladder clears.
+## Path
+1. `perception_build_design_snapshot` (bind target / baseline)
+2. LOOK + `perception_visual_feedback` as needed
+3. Implement measured changes
+4. Remeasure if Spec bound; honor revision gate
+5. `perception_verify` → `data.verified=true`
+6. Finish `card.claim_extra` if any, then claim
+
+Gallery inspiration is the wrong first move for mockup match.
+""",
+    ),
+    "perception://spine/feature": (
+        "Spine: Feature",
+        """# Spine: Feature
+
+## Path
+1. Observe affected routes (`perception_navigate_and_observe` / `observe`)
+2. Implement smallest change that fits existing UI
+3. `perception_verify` → `data.verified=true`
+4. Claim if `claim_ok`
+
+Do not restart greenfield inspiration unless `card.owed` includes it.
+""",
+    ),
+    "perception://spine/hotfix": (
+        "Spine: Hotfix",
+        """# Spine: Hotfix / Polish
+
+## Path
+1. Observe blocking issue
+2. Smallest fix
+3. `perception_verify` → `data.verified=true`
+4. Claim if `claim_ok`
+
+Skip inspiration / foundation unless `card.owed` or sticky `claim_extra` says otherwise.
+""",
+    ),
+    "perception://spine/forms": (
+        "Spine: Forms",
+        """# Spine: Forms / Guards
+
+## Path
+1. `perception_probe_form` (unknown forms)
+2. Invalid path verify, then valid path verify
+3. Guards: `perception_probe_guards` / `perception_auth_gate` as needed
+4. Claim if `claim_ok` and `data.verified=true`
+
+Do not treat a new product UI as “just a form.”
 """,
     ),
     "perception://frontend-methodology": (

@@ -85,9 +85,15 @@ def list_resources(scans: ScanRegistry | None = None) -> list[dict[str, str]]:
 			'mimeType': 'text/markdown',
 		},
 		{
+			'uri': 'perception://guide/inspiration',
+			'name': 'INSPIRATION_LEVELS',
+			'description': 'Inspiration — pick light|standard|wide|max from task context (agent chooser)',
+			'mimeType': 'text/markdown',
+		},
+		{
 			'uri': 'perception://inspiration-guide',
 			'name': 'INSPIRATION_AGENT_GUIDE',
-			'description': 'Inspiration Intelligence — per-site navigation, preview URLs, anti-bot (read before inspiration tools)',
+			'description': 'Inspiration implementer detail — per-site navigation, preview URLs, anti-bot',
 			'mimeType': 'text/markdown',
 		},
 		{
@@ -166,6 +172,13 @@ def read_resource(uri: str, scans: ScanRegistry | None = None) -> tuple[str, str
 
 	if uri == 'perception://agent-guide':
 		return _cached_guide(uri, agent_guide_path(), 'AGENT_GUIDE.md')
+
+	if uri == 'perception://guide/inspiration':
+		return _cached_guide(
+			uri,
+			module_doc('inspiration_intelligence', 'docs', 'INSPIRATION_LEVELS.md'),
+			'INSPIRATION_LEVELS.md',
+		)
 
 	if uri == 'perception://inspiration-guide':
 		return _cached_guide(

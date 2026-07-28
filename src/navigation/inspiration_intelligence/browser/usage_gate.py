@@ -7,7 +7,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-_DEFAULT_COOLDOWN_S = 30  # 30s between full inspiration runs (single search stays fast)
+_DEFAULT_COOLDOWN_S = 8  # Short — frequent MCP inspiration is intentional for design loops
 _CACHE_PATH = Path(os.environ.get('INSPIRATION_USAGE_CACHE', '.cache/inspiration_usage.json'))
 
 

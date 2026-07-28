@@ -1,7 +1,7 @@
-"""Contract tests for production-facing MCP bootstrap surfaces.
+"""Contract tests for production-facing MCP bootstrap surfaces (card face).
 
-These catch regressions where agents skip MCP in real sessions because the
-preamble / getting-started / tool metadata stopped demanding bootstrap.
+These catch regressions where agents skip MCP because the preamble /
+getting-started / tool metadata stopped demanding bootstrap + card.
 """
 from __future__ import annotations
 
@@ -30,15 +30,16 @@ class _Types:
 
 
 REQUIRED_INSTRUCTION_PHRASES = (
-    "PRODUCTION FAILURE MODE",
-    "MANDATORY FIRST ACTIONS",
-    "perception://getting-started",
+    "agent_summary.card",
+    "next_args",
+    "depth",
+    "finish",
     "perception_health",
     "perception_session_start",
-    "implementation_gate",
     "data.verified=true",
-    "Do NOT write a full viewport",
-    "Skip-bootstrap is a hard fail",
+    "claim_ok",
+    "skip bootstrap",
+    "owed",
 )
 
 
@@ -46,20 +47,29 @@ REQUIRED_INSTRUCTION_PHRASES = (
 def test_mcp_instructions_demand_bootstrap_before_coding() -> None:
     text = MCP_INSTRUCTIONS
     for phrase in REQUIRED_INSTRUCTION_PHRASES:
-        assert phrase in text, f"MCP_INSTRUCTIONS missing: {phrase}"
+        assert phrase.lower() in text.lower(), f"MCP_INSTRUCTIONS missing: {phrase}"
 
 
 @pytest.mark.unit
-def test_getting_started_is_production_first() -> None:
+def test_getting_started_is_card_first() -> None:
     mime, text, is_blob = read_resource("perception://getting-started")
     assert mime == "text/markdown"
     assert is_blob is False
-    assert "Production rule" in text
+    assert "agent_summary.card" in text
     assert "perception_health" in text
     assert "perception_session_start" in text
-    assert "false-green" in text.lower() or "End-of-task MCP" in text
     assert "data.verified=true" in text
-    assert "Implementation boundary" in text
+    assert "perception://spine/" in text
+    assert "bootstrap" in text.lower() or "before" in text.lower()
+
+
+@pytest.mark.unit
+def test_spine_resources_exist() -> None:
+    for cls in ("greenfield", "redesign", "feature", "hotfix", "forms"):
+        mime, text, is_blob = read_resource(f"perception://spine/{cls}")
+        assert mime == "text/markdown"
+        assert is_blob is False
+        assert "perception_" in text
 
 
 @pytest.mark.unit

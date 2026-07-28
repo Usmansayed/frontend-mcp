@@ -52,17 +52,103 @@ def _ssl_context():
 		return ssl.create_default_context()
 
 
-def http_get(url: str, *, headers: dict[str, str] | None = None, timeout: float = 30.0) -> tuple[str, int | None, str | None]:
+def http_get(
+	url: str,
+	*,
+	headers: dict[str, str] | None = None,
+	timeout: float = 8.0,
+	max_bytes: int | None = None,
+) -> tuple[str, int | None, str | None]:
+	"""Fetch HTML. Default timeout 8s — fail fast for MCP inspiration collect.
+
+	max_bytes: when set, only read that many bytes (scout speed — enough for thumbs/meta).
+	Prefers shared httpx keep-alive pool; falls back to urllib opener.
+
+	HTTP backends (``INSPIRATION_HTTP_BACKEND``):
+	- default — httpx/urllib; on WAF allowlist + 403/block, one cheap Scrapling
+	  TLS retry (FetcherSession) — not Stealthy
+	- ``scrapling`` — Scrapling session only
+	- ``scrapling_fallback`` — same as default auto-retry, but on any host
+	Stealthy browser fallback is separate: ``stealthy_fallback.py`` (slow, allowlisted).
+	"""
+	import os
+
+	backend = (os.environ.get('INSPIRATION_HTTP_BACKEND') or '').strip().lower()
+	if backend == 'scrapling':
+		body, status, err = _http_get_scrapling(url, headers=headers, timeout=timeout, max_bytes=max_bytes)
+		if body or not err:
+			return body, status, err
+		# Fall through to httpx/urllib on total failure
+
+	body, status, err = _http_get_default(url, headers=headers, timeout=timeout, max_bytes=max_bytes)
+	want_tls = backend == 'scrapling_fallback' or _should_auto_scrapling_http(url, status, err, body)
+	if want_tls and _should_scrapling_retry(status, err, body):
+		b2, st2, e2 = _http_get_scrapling(url, headers=headers, timeout=timeout, max_bytes=max_bytes)
+		# Prefer Scrapling if it unlocks HTML; else keep original
+		if b2 and (st2 is None or st2 < 400):
+			return b2, st2, e2
+	return body, status, err
+
+
+def _should_auto_scrapling_http(
+	url: str,
+	status: int | None,
+	err: str | None,
+	body: str,
+) -> bool:
+	"""Cheap TLS impersonation only on known hard hosts (LAPA-class)."""
+	try:
+		from navigation.inspiration_intelligence.browser.scrapling_route import is_important_waf_host
+
+		return is_important_waf_host(url)
+	except Exception:
+		return False
+
+
+def _should_scrapling_retry(status: int | None, err: str | None, body: str) -> bool:
+	if status in (403, 429, 503, 202):
+		return True
+	if not body:
+		return bool(err) and status is None  # transport failure — optional retry
+	sig = detect_block_signal(body[:8000], status_code=status)
+	return sig in {'bot_challenge_detected', 'waf_stub_page'} or (
+		isinstance(sig, str) and sig.startswith('http_')
+	)
+
+
+def _http_get_default(
+	url: str,
+	*,
+	headers: dict[str, str] | None = None,
+	timeout: float = 8.0,
+	max_bytes: int | None = None,
+) -> tuple[str, int | None, str | None]:
 	hdr = browser_headers(_DEFAULT_UA)
 	if headers:
 		hdr.update(headers)
-	req = urllib.request.Request(url, headers=hdr)
 	try:
-		with urllib.request.urlopen(req, timeout=timeout, context=_ssl_context()) as resp:
-			body = resp.read().decode('utf-8', errors='replace')
-			return body, resp.status, None
+		from navigation.inspiration_intelligence.browser.http_pool import pool_get
+
+		pooled = pool_get(url, headers=hdr, timeout=timeout, max_bytes=max_bytes)
+		if pooled is not None:
+			body, status, err = pooled
+			# Empty body with error → try urllib once; success/partial HTML → return
+			if body or not err:
+				return body, status, err
+	except Exception:
+		pass
+	req = urllib.request.Request(url, headers=hdr)
+	opener = _shared_opener()
+	try:
+		with opener.open(req, timeout=timeout) as resp:
+			if max_bytes is not None and max_bytes > 0:
+				body = resp.read(max_bytes).decode('utf-8', errors='replace')
+			else:
+				body = resp.read().decode('utf-8', errors='replace')
+			return body, getattr(resp, 'status', None) or 200, None
 	except urllib.error.HTTPError as exc:
-		body = exc.read().decode('utf-8', errors='replace') if exc.fp else ''
+		raw = exc.read(max_bytes) if (max_bytes and exc.fp) else (exc.read() if exc.fp else b'')
+		body = raw.decode('utf-8', errors='replace') if isinstance(raw, (bytes, bytearray)) else ''
 		return body, exc.code, str(exc)
 	except Exception as exc:
 		msg = str(exc)
@@ -70,6 +156,61 @@ def http_get(url: str, *, headers: dict[str, str] | None = None, timeout: float 
 		if 'CERTIFICATE' in msg.upper() or 'SSL' in msg.upper():
 			return '', None, f'SSL:{msg}'
 		return '', None, msg
+
+
+def _http_get_scrapling(
+	url: str,
+	*,
+	headers: dict[str, str] | None = None,
+	timeout: float = 8.0,
+	max_bytes: int | None = None,
+) -> tuple[str, int | None, str | None]:
+	"""Scrapling FetcherSession backend (process-wide pool; research / env opt-in)."""
+	try:
+		from navigation.inspiration_intelligence.browser.scrapling_pool import session_get
+
+		pooled = session_get(url, headers=headers, timeout=timeout, max_bytes=max_bytes)
+		if pooled is not None:
+			return pooled
+	except Exception as exc:  # noqa: BLE001
+		return '', None, f'scrapling_pool:{exc}'
+	return '', None, 'scrapling_unavailable'
+
+_OPENER: urllib.request.OpenerDirector | None = None
+
+
+def _shared_opener() -> urllib.request.OpenerDirector:
+	"""Lazy shared opener with HTTPS handler — cheaper under concurrent scout fan-out."""
+	global _OPENER
+	if _OPENER is None:
+		_OPENER = urllib.request.build_opener(
+			urllib.request.HTTPSHandler(context=_ssl_context()),
+			urllib.request.HTTPHandler(),
+		)
+	return _OPENER
+
+
+def http_get_bytes(url: str, *, headers: dict[str, str] | None = None, timeout: float = 10.0) -> tuple[bytes | None, str | None]:
+	"""Fetch raw bytes (blobs). Default timeout 10s."""
+	hdr = browser_headers(_DEFAULT_UA)
+	if headers:
+		hdr.update(headers)
+	try:
+		from navigation.inspiration_intelligence.browser.http_pool import pool_get_bytes
+
+		pooled = pool_get_bytes(url, headers=hdr, timeout=timeout)
+		if pooled is not None:
+			data, err = pooled
+			if data is not None or not err:
+				return data, err
+	except Exception:
+		pass
+	req = urllib.request.Request(url, headers=hdr)
+	try:
+		with urllib.request.urlopen(req, timeout=timeout, context=_ssl_context()) as resp:
+			return resp.read(), None
+	except Exception as exc:
+		return None, str(exc)
 
 
 def extract_og_image(html: str) -> str:

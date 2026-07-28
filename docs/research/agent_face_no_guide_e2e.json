@@ -1,0 +1,74 @@
+{
+  "suite": "agent_face_no_guide_e2e",
+  "url": "http://127.0.0.1:18765",
+  "ok": true,
+  "passed": 1,
+  "total": 1,
+  "cases": [
+    {
+      "id": "forms",
+      "ok": true,
+      "expect_class": "forms",
+      "got_class": "forms",
+      "class_ok": true,
+      "card_present_rate": 1.0,
+      "followed_card_rate": 1.0,
+      "guides_read": 0,
+      "claim_ok_at_end": true,
+      "verified": true,
+      "finish_ok": true,
+      "steps": [
+        {
+          "i": 0,
+          "tool": "perception_health",
+          "ok": true,
+          "latency_ms": 1524,
+          "card_class": "forms",
+          "card_next": "perception_probe_form",
+          "card_gate": "maintenance",
+          "card_claim_ok": false,
+          "owed_families": [
+            "forms"
+          ],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 1,
+          "tool": "perception_session_start",
+          "ok": true,
+          "latency_ms": 2751,
+          "card_class": "forms",
+          "card_next": "perception_probe_form",
+          "card_gate": "blocked",
+          "card_claim_ok": false,
+          "owed_families": [
+            "forms"
+          ],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 2,
+          "tool": "perception_probe_form",
+          "ok": true,
+          "latency_ms": 1327,
+          "card_class": "forms",
+          "card_next": "perception_probe_form",
+          "card_gate": "maintenance",
+          "card_claim_ok": false,
+          "owed_families": [
+            "forms"
+          ],
+          "followed_card": true,
+          "error": null
+        }
+      ],
+      "notes": [
+        "verify_invalid=True",
+        "verify_valid=True"
+      ],
+      "error": null
+    }
+  ]
+}

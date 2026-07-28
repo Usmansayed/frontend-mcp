@@ -1,0 +1,202 @@
+{
+  "schema": "inspiration_sources_corpus.v1",
+  "description": "Curated inspiration acquisition sources for Inspiration Intelligence. Galleries + showcase/demo pages (screenshot for look/feel). NOT Component Intelligence install/search — agents may later copy-adapt from screenshots or optionally use components separately.",
+  "source": "google-resource-links.txt + MCP known providers",
+  "updated": "2026-07-27",
+  "admission": {
+    "include": [
+      "website/UI galleries with browseable examples",
+      "landing/dashboard/SaaS galleries",
+      "component/animation library SHOWCASE or demo pages (viewport screenshot)",
+      "design-system marketing/docs visual pages",
+      "flow libraries with public screens (when scrapable/screenshotable)"
+    ],
+    "exclude_from_inspiration_collect": [
+      "pure package registries / npm only",
+      "icon packs without UI composition (prefer Resource Intelligence)",
+      "font directories (prefer Resource Intelligence)",
+      "AI builder tools as generation engines (optional live_site only)"
+    ],
+    "tiers": {
+      "fast_http": "CDN/list HTML yields preview image URLs without Chromium",
+      "browser_gallery": "Needs headed/SPA extract or WAF",
+      "screenshot_demo": "Navigate a curated demo URL and viewport-capture",
+      "flow_library": "Screen/flow archives — prefer screenshot or licensed API later",
+      "research_only": "Useful human research; not default MCP cascade yet"
+    }
+  },
+  "categories": {
+    "ui_gallery": {
+      "intent_hints": ["landing", "marketing", "portfolio", "web design", "inspiration"],
+      "sources": [
+        {"id": "siteinspire", "url": "https://www.siteinspire.com", "title": "SiteInspire", "tier": "browser_gallery", "notes": "Already a provider; prefer broad/deep"},
+        {"id": "httpster", "url": "https://httpster.net", "title": "Httpster", "tier": "fast_http", "notes": "Already a fast provider"},
+        {"id": "minimal_gallery", "url": "https://minimal.gallery", "title": "Minimal Gallery", "tier": "browser_gallery", "candidate_provider": true},
+        {"id": "godly", "url": "https://godly.website", "title": "Godly", "tier": "browser_gallery", "notes": "Redirects recent.design; existing provider"},
+        {"id": "css_nectar", "url": "https://cssnectar.com", "title": "CSS Nectar", "tier": "browser_gallery", "candidate_provider": true},
+        {"id": "best_website_gallery", "url": "https://bestwebsite.gallery", "title": "Best Website Gallery", "tier": "browser_gallery", "candidate_provider": true},
+        {"id": "refero", "url": "https://refero.design", "title": "Refero", "tier": "flow_library", "notes": "Has MCP/API; prefer API later over scrape"},
+        {"id": "siiimple", "url": "https://siiimple.com", "title": "Siiimple", "tier": "browser_gallery", "candidate_provider": true},
+        {"id": "curated_design", "url": "https://www.curated.design", "title": "Curated Design", "tier": "browser_gallery", "candidate_provider": true},
+        {"id": "collect_ui", "url": "http://collectui.com", "title": "Collect UI", "tier": "browser_gallery", "candidate_provider": true},
+        {"id": "dribbble", "url": "https://dribbble.com", "title": "Dribbble", "tier": "browser_gallery", "notes": "Existing deep provider"},
+        {"id": "awwwards", "url": "https://www.awwwards.com", "title": "Awwwards", "tier": "browser_gallery", "notes": "Existing broad/deep provider"},
+        {"id": "behance", "url": "https://www.behance.net", "title": "Behance", "tier": "fast_http", "notes": "Existing fast provider"}
+      ]
+    },
+    "landing_gallery": {
+      "intent_hints": ["landing", "saas", "marketing", "homepage", "hero"],
+      "sources": [
+        {"id": "land_book", "url": "https://land-book.com", "title": "Land-book", "tier": "browser_gallery", "notes": "Pin-only today"},
+        {"id": "lapa", "url": "https://www.lapa.ninja", "title": "Lapa Ninja", "tier": "fast_http", "notes": "Existing fast provider"},
+        {"id": "landing_love", "url": "https://www.landing.love", "title": "Landing Love", "tier": "browser_gallery", "candidate_provider": true, "notes": "Motion-heavy landings — good screenshot targets"},
+        {"id": "onepagelove", "url": "https://onepagelove.com", "title": "One Page Love", "tier": "fast_http", "notes": "Existing fast provider"},
+        {"id": "saaspo", "url": "https://www.saaspo.com", "title": "Saaspo", "tier": "browser_gallery", "candidate_provider": true},
+        {"id": "dark_mode_design", "url": "https://www.darkmodedesign.com", "title": "Dark Mode Design", "tier": "browser_gallery", "candidate_provider": true},
+        {"id": "landingfolio", "url": "https://www.landingfolio.com", "title": "Landingfolio", "tier": "browser_gallery", "candidate_provider": true},
+        {"id": "saas_landing_page", "url": "https://saaslandingpage.com", "title": "SaaS Landing Page", "tier": "browser_gallery", "candidate_provider": true},
+        {"id": "landing_gallery", "url": "https://www.landing.gallery", "title": "Landing.Gallery", "tier": "browser_gallery", "candidate_provider": true},
+        {"id": "commerce_cream", "url": "https://commercecream.com", "title": "Commerce Cream", "tier": "browser_gallery", "candidate_provider": true}
+      ]
+    },
+    "dashboard_gallery": {
+      "intent_hints": ["dashboard", "admin", "saas", "analytics", "settings"],
+      "sources": [
+        {"id": "saas_interface", "url": "https://saasinterface.com", "title": "SaaS Interface", "tier": "browser_gallery", "candidate_provider": true},
+        {"id": "screenlane", "url": "https://screenlane.com", "title": "Screenlane", "tier": "flow_library", "candidate_provider": true},
+        {"id": "saasframe", "url": "https://www.saasframe.io", "title": "SaaSFrame", "tier": "flow_library", "candidate_provider": true},
+        {"id": "saasui", "url": "https://saasui.design", "title": "SaaSUI", "tier": "flow_library", "candidate_provider": true}
+      ]
+    },
+    "flow_library": {
+      "intent_hints": ["onboarding", "checkout", "auth", "user flow", "mobile"],
+      "sources": [
+        {"id": "mobbin", "url": "https://mobbin.com", "title": "Mobbin", "tier": "flow_library", "notes": "Paywall likely — screenshot sparingly / API later"},
+        {"id": "page_flows", "url": "https://pageflows.com", "title": "Page Flows", "tier": "flow_library", "notes": "Video-heavy; research_only until frame extract"},
+        {"id": "ui_sources", "url": "https://www.uisources.com", "title": "UI Sources", "tier": "flow_library"},
+        {"id": "uxarchive", "url": "https://uxarchive.com", "title": "UXArchive", "tier": "flow_library"},
+        {"id": "userflows", "url": "https://userflows.co", "title": "Userflows", "tier": "flow_library"},
+        {"id": "growth_design", "url": "https://growth.design", "title": "Growth.Design", "tier": "research_only", "notes": "Case studies — principles not gallery thumbs"}
+      ]
+    },
+    "component_showcase": {
+      "intent_hints": ["component", "ui kit", "blocks", "sections", "marketing components"],
+      "notes": "Inspiration visits DEMO/SHOWCASE pages and screenshots. Does NOT call Component Intelligence or install packages.",
+      "sources": [
+        {"id": "shadcn_ui", "url": "https://ui.shadcn.com", "title": "shadcn/ui", "tier": "screenshot_demo", "demo_urls": ["https://ui.shadcn.com", "https://ui.shadcn.com/examples/mail", "https://ui.shadcn.com/examples/dashboard"]},
+        {"id": "aceternity", "url": "https://ui.aceternity.com", "title": "Aceternity UI", "tier": "screenshot_demo", "demo_urls": ["https://ui.aceternity.com"]},
+        {"id": "magic_ui", "url": "https://magicui.design", "title": "Magic UI", "tier": "screenshot_demo", "demo_urls": ["https://magicui.design"]},
+        {"id": "tailwind_ui", "url": "https://tailwindui.com", "title": "Tailwind UI", "tier": "screenshot_demo", "notes": "Marketing/preview pages; respect paywall"},
+        {"id": "flowbite", "url": "https://flowbite.com", "title": "Flowbite", "tier": "screenshot_demo", "demo_urls": ["https://flowbite.com"]},
+        {"id": "daisyui", "url": "https://daisyui.com", "title": "daisyUI", "tier": "screenshot_demo", "demo_urls": ["https://daisyui.com"]},
+        {"id": "mantine", "url": "https://mantine.dev", "title": "Mantine", "tier": "screenshot_demo", "demo_urls": ["https://mantine.dev"]},
+        {"id": "chakra", "url": "https://chakra-ui.com", "title": "Chakra UI", "tier": "screenshot_demo", "demo_urls": ["https://chakra-ui.com"]},
+        {"id": "ant_design", "url": "https://ant.design", "title": "Ant Design", "tier": "screenshot_demo", "demo_urls": ["https://ant.design"]},
+        {"id": "radix", "url": "https://www.radix-ui.com", "title": "Radix UI", "tier": "screenshot_demo", "demo_urls": ["https://www.radix-ui.com"]},
+        {"id": "adminlte", "url": "https://adminlte.io", "title": "AdminLTE", "tier": "screenshot_demo", "demo_urls": ["https://adminlte.io"]},
+        {"id": "coreui", "url": "https://coreui.io", "title": "CoreUI", "tier": "screenshot_demo", "demo_urls": ["https://coreui.io"]},
+        {"id": "creative_tim", "url": "https://www.creative-tim.com", "title": "Creative Tim", "tier": "screenshot_demo"},
+        {"id": "tailgrids", "url": "https://tailgrids.com", "title": "Tailgrids", "tier": "screenshot_demo", "demo_urls": ["https://tailgrids.com"]}
+      ]
+    },
+    "motion_showcase": {
+      "intent_hints": ["animation", "motion", "micro-interaction", "scroll", "hero motion"],
+      "notes": "Screenshot demo/docs examples for motion look — not install Framer/GSAP via Component Intelligence.",
+      "sources": [
+        {"id": "landing_love_motion", "url": "https://www.landing.love", "title": "Landing Love", "tier": "screenshot_demo"},
+        {"id": "details_matter", "url": "https://detailsmatter.it", "title": "Details Matter", "tier": "research_only", "notes": "Video gallery"},
+        {"id": "codrops", "url": "https://tympanus.net/codrops/", "title": "Codrops", "tier": "browser_gallery", "candidate_provider": true},
+        {"id": "animista", "url": "https://animista.net", "title": "Animista", "tier": "screenshot_demo"},
+        {"id": "hover_css", "url": "https://ianlunn.github.io/Hover/", "title": "Hover.css", "tier": "screenshot_demo"},
+        {"id": "transitions_dev", "url": "https://transitions.dev", "title": "Transitions.dev", "tier": "screenshot_demo"},
+        {"id": "framer_motion", "url": "https://www.framer.com/motion/", "title": "Framer Motion", "tier": "screenshot_demo", "demo_urls": ["https://www.framer.com/motion/"]},
+        {"id": "gsap", "url": "https://gsap.com", "title": "GSAP", "tier": "screenshot_demo", "demo_urls": ["https://gsap.com"]},
+        {"id": "motion_one", "url": "https://motion.dev", "title": "Motion", "tier": "screenshot_demo"},
+        {"id": "lottiefiles", "url": "https://lottiefiles.com", "title": "LottieFiles", "tier": "screenshot_demo"},
+        {"id": "rive", "url": "https://rive.app", "title": "Rive", "tier": "screenshot_demo"},
+        {"id": "eyecandy", "url": "https://eyecandy.to", "title": "Eyecandy Motion", "tier": "research_only"},
+        {"id": "brands_in_motion", "url": "https://brandsinmotion.xyz", "title": "Brands in Motion", "tier": "research_only"}
+      ]
+    },
+    "design_system_live": {
+      "intent_hints": ["design system", "tokens", "enterprise", "docs ui"],
+      "sources": [
+        {"id": "material", "url": "https://m3.material.io", "title": "Material Design 3", "tier": "screenshot_demo"},
+        {"id": "apple_hig", "url": "https://developer.apple.com/design/", "title": "Apple HIG", "tier": "screenshot_demo"},
+        {"id": "atlassian", "url": "https://atlassian.design", "title": "Atlassian Design", "tier": "screenshot_demo"},
+        {"id": "polaris", "url": "https://polaris.shopify.com", "title": "Shopify Polaris", "tier": "screenshot_demo"},
+        {"id": "carbon", "url": "https://carbondesignsystem.com", "title": "IBM Carbon", "tier": "screenshot_demo"},
+        {"id": "slds", "url": "https://www.lightningdesignsystem.com", "title": "Salesforce SLDS", "tier": "screenshot_demo"},
+        {"id": "spectrum", "url": "https://spectrum.adobe.com", "title": "Adobe Spectrum", "tier": "screenshot_demo"},
+        {"id": "primer", "url": "https://primer.style", "title": "GitHub Primer", "tier": "screenshot_demo"},
+        {"id": "fluent", "url": "https://fluent2.microsoft.design", "title": "Microsoft Fluent 2", "tier": "screenshot_demo"},
+        {"id": "baseweb", "url": "https://baseweb.design", "title": "Uber Base Web", "tier": "screenshot_demo"}
+      ]
+    },
+    "mobile_gallery": {
+      "intent_hints": ["mobile", "ios", "android", "app ui"],
+      "sources": [
+        {"id": "scrnshts", "url": "https://scrnshts.club", "title": "Scrnshts", "tier": "browser_gallery"},
+        {"id": "pttrns", "url": "https://pttrns.com", "title": "Pttrns", "tier": "flow_library"},
+        {"id": "mobile_design_archive", "url": "https://mobile-design-archive.com", "title": "Mobile Design Archive", "tier": "browser_gallery"},
+        {"id": "handheld", "url": "https://handheld.design", "title": "Handheld Design", "tier": "browser_gallery"},
+        {"id": "screensdesign", "url": "https://screensdesign.com", "title": "ScreensDesign", "tier": "flow_library"},
+        {"id": "appshot", "url": "https://appshot.co", "title": "Appshot", "tier": "browser_gallery"}
+      ]
+    },
+    "experimental": {
+      "intent_hints": ["experimental", "brutalist", "webgl", "creative"],
+      "sources": [
+        {"id": "hover_states", "url": "https://hoverstat.es", "title": "Hover States", "tier": "browser_gallery"},
+        {"id": "whimsical_web", "url": "https://thewhimsicalweb.com", "title": "The Whimsical Web", "tier": "browser_gallery"},
+        {"id": "brutalist_websites", "url": "https://brutalistwebsites.com", "title": "Brutalist Websites", "tier": "browser_gallery"},
+        {"id": "browsing_mode", "url": "https://browsingmode.com", "title": "Browsing Mode", "tier": "browser_gallery"},
+        {"id": "chrome_experiments", "url": "https://experiments.withgoogle.com/chrome", "title": "Chrome Experiments", "tier": "research_only"},
+        {"id": "active_theory", "url": "https://activetheory.net", "title": "Active Theory", "tier": "screenshot_demo"},
+        {"id": "dogstudio", "url": "https://dogstudio.co", "title": "Dogstudio", "tier": "screenshot_demo"}
+      ]
+    },
+    "email_gallery": {
+      "intent_hints": ["email", "newsletter", "transactional"],
+      "sources": [
+        {"id": "really_good_emails", "url": "https://reallygoodemails.com", "title": "Really Good Emails", "tier": "browser_gallery"},
+        {"id": "email_love", "url": "https://email-love.com", "title": "Email Love", "tier": "browser_gallery"},
+        {"id": "inboxflows", "url": "https://inboxflows.com", "title": "Inboxflows", "tier": "flow_library"},
+        {"id": "milled", "url": "https://milled.com", "title": "Milled", "tier": "browser_gallery"},
+        {"id": "email_gallery", "url": "https://email-gallery.com", "title": "Email Gallery", "tier": "browser_gallery"}
+      ]
+    }
+  },
+  "planner_defaults": {
+    "fast": {
+      "categories": ["landing_gallery", "ui_gallery"],
+      "tiers_allowed": ["fast_http"],
+      "max_sources": 4,
+      "max_screenshot_demos": 0
+    },
+    "broad": {
+      "categories": ["landing_gallery", "ui_gallery", "dashboard_gallery", "component_showcase"],
+      "tiers_allowed": ["fast_http", "browser_gallery", "screenshot_demo"],
+      "max_sources": 8,
+      "max_screenshot_demos": 2
+    },
+    "deep": {
+      "categories": ["landing_gallery", "ui_gallery", "dashboard_gallery", "component_showcase", "motion_showcase", "flow_library", "experimental"],
+      "tiers_allowed": ["fast_http", "browser_gallery", "screenshot_demo", "flow_library"],
+      "max_sources": 12,
+      "max_screenshot_demos": 4
+    }
+  },
+  "next_provider_candidates": [
+    "minimal_gallery",
+    "landing_love",
+    "saaspo",
+    "landing_gallery",
+    "saas_interface",
+    "dark_mode_design",
+    "saas_landing_page",
+    "collect_ui",
+    "curated_design",
+    "siiimple"
+  ]
+}

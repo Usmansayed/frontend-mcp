@@ -228,6 +228,15 @@ def _capability_outcome(
                 1 for hit in hits
                 if isinstance(hit, dict) and bool(hit.get("inspiration_blob"))
             )
+            if usable_refs == 0:
+                usable_refs = sum(
+                    1
+                    for hit in hits
+                    if isinstance(hit, dict)
+                    and str(hit.get("preview_url") or hit.get("agent_view_url") or "").startswith(
+                        ("http", "file:")
+                    )
+                )
             eng = data.get("engineering_spec") or {}
             unresolved = list(
                 eng.get("unresolved_by_impact")
@@ -244,6 +253,8 @@ def _capability_outcome(
                 "minimum_required": 3,
                 "profiles_extracted": profiles,
                 "seed_unresolved_count": len(unresolved),
+                # Collect alone ≠ direction — look_lock/borrow still owed
+                "direction_locked": False,
                 "reference_bind_quality": (
                     (data.get("reference_bind") or {}).get("quality")
                     or (data.get("reference_bind") or {}).get("meta", {}).get("quality")
@@ -258,12 +269,20 @@ def _capability_outcome(
             judgment = str(fb.get("judgment") or "").strip().lower()
             evidence = data.get("visual_evidence")
             has_look = bool(evidence) or bool(data.get("feedback_schema"))
+            purpose = str(data.get("purpose") or fb.get("purpose") or "").strip().lower()
+            borrow = list(fb.get("borrow") or [])
+            look_lock = fb.get("look_lock")
+            look_locked = bool(borrow) or (
+                isinstance(look_lock, dict) and any(bool(v) for v in look_lock.values())
+            ) or (isinstance(look_lock, str) and bool(look_lock.strip()))
             quality = {
-                "purpose": data.get("purpose"),
+                "purpose": purpose or data.get("purpose"),
                 "judgment": judgment or None,
                 "has_look": has_look,
                 "next_actions_count": len(data.get("next_actions") or []),
                 "phase": "judgment" if judgment else ("look" if has_look else "unknown"),
+                "look_locked": look_locked if purpose == "inspiration" else None,
+                "borrow_count": len(borrow) if purpose == "inspiration" else None,
             }
             if judgment in ("ok", "needs_work", "unclear"):
                 status = "succeeded" if not blocking else "provisional"
@@ -414,6 +433,22 @@ def apply_envelope(
     attempts[cap] = int(attempts.get(cap, 0)) + 1
     capability_outcome = _capability_outcome(cap, envelope)
     psm.evidence.capability_ledger[cap] = capability_outcome
+
+    # Inspiration look-lock: VF purpose=inspiration with borrow/look_lock
+    # marks inspiration_workflow direction_locked so extract unpaid clears.
+    if str(envelope.get("tool") or "") == "perception_visual_feedback":
+        q = capability_outcome.get("quality") if isinstance(capability_outcome.get("quality"), dict) else {}
+        if q.get("purpose") == "inspiration" and q.get("look_locked"):
+            insp = psm.evidence.capability_ledger.get("inspiration_workflow")
+            if isinstance(insp, dict):
+                iq = dict(insp.get("quality") or {})
+                iq["direction_locked"] = True
+                iq["look_locked_via"] = "visual_feedback"
+                insp["quality"] = iq
+                if insp.get("status") == "provisional" and int(iq.get("usable_image_refs") or 0) >= 1:
+                    insp["status"] = "succeeded"
+                    insp["advancement_eligible"] = True
+                psm.evidence.capability_ledger["inspiration_workflow"] = insp
 
     # Persist usable foundation select for live Spec / catalog sync.
     if (

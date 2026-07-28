@@ -79,7 +79,7 @@ async def test_collect_stops_early_with_enough_previews() -> None:
     candidates = [
         InspirationCandidate(
             candidate_id=f"behance:{i}",
-            title=f"Dash {i}",
+            title=f"SaaS analytics dashboard UI {i}",
             source="behance",
             provider_id="behance",
             external_id=str(i),
@@ -115,7 +115,9 @@ async def test_collect_stops_early_with_enough_previews() -> None:
             "navigation.inspiration_intelligence.collect.InspirationBlobStore"
         ) as blob_cls:
             blob_cls.return_value.create_session.return_value = "insp_test"
-            blob_cls.return_value.materialize_hits.return_value = {"materialized": 0}
+            blob_cls.return_value.materialize_hits_async = AsyncMock(
+                return_value={"materialized": 0}
+            )
             manifest = await collect_inspiration_hits(
                 "saas analytics dashboard",
                 provider_ids=["behance", "awwwards", "land-book"],
@@ -123,11 +125,15 @@ async def test_collect_stops_early_with_enough_previews() -> None:
                 target_refs=5,
                 min_refs=3,
                 per_provider=8,
+                include_web_search=False,
+                use_multi_scout=False,
             )
 
     assert manifest["mode"].startswith("image_first")
     assert manifest["stopped_early"] is True
-    assert manifest["total_hits"] <= 5
+    # Soft-stop only — no hard ref cap (may keep more than target_refs)
+    assert manifest.get("ref_policy") == "soft_stop_only_no_hard_cap"
     assert manifest["image_ref_count"] >= 3
+    assert "collect_ms" in manifest
     land = (manifest.get("provider_summary") or {}).get("land-book")
     assert land is None or int(land.get("count") or 0) == 0

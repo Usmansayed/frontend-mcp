@@ -2,9 +2,9 @@ name: Test
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, coordination-sandbox, "exp/**"]
   pull_request:
-    branches: [main, master]
+    branches: [main, master, coordination-sandbox]
   schedule:
     # Nightly at 03:15 UTC — runs full T3 phase integration.
     - cron: "15 3 * * *"
@@ -50,6 +50,13 @@ jobs:
           PYTHONIOENCODING: "utf-8"
         run: |
           pytest -m "unit or golden" -v --timeout=60
+
+      - name: Agent face cutover contracts
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          pytest tests/test_coordinator_card.py tests/test_mcp_bootstrap_contract.py -v --timeout=60
 
   # T2 contract + T4 validation-form eval — needs sandbox on :18765.
   contract-and-eval:
@@ -126,6 +133,14 @@ jobs:
           SEO_SKIP_COMPANION_BOOTSTRAP: "1"
         continue-on-error: true
         run: python src/run_mcp_eval_validation_form.py --url http://127.0.0.1:18765 --headless
+
+      - name: Agent-face no-guide forms smoke
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+          SEO_SKIP_COMPANION_BOOTSTRAP: "1"
+        continue-on-error: true
+        run: python -u scripts/eval_agent_face_no_guide_e2e.py --cases forms --url http://127.0.0.1:18765
 
       - name: Upload contract artifacts
         if: always()

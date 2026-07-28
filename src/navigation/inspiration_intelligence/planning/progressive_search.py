@@ -1,14 +1,15 @@
 """Deterministic progressive inspiration search — quality over quantity.
 
-Target: 3–5 high-quality image references, stop as soon as enough evidence exists.
+Soft-stop when a usable image pack exists (latency). Not a hard ref quota —
+levels and target_refs only hint when hunting may stop early.
 """
 from __future__ import annotations
 
 import re
 from typing import Any
 
-# Soft target for host vision — enough to orient, not a gallery dump.
-TARGET_IMAGE_REFS = 5
+# Soft defaults when caller does not pass target/min (levels override in collect).
+TARGET_IMAGE_REFS = 8
 MIN_IMAGE_REFS = 3
 
 # Anti-bot-friendly HTTP/CDN sources — default MCP happy path (no Chromium).
@@ -18,7 +19,6 @@ FAST_HTTP_PROVIDER_ORDER: list[str] = [
     "lapa",
     "behance",
     "httpster",
-    "siteinspire",
 ]
 
 # Full cascade — browser-heavy galleries only after HTTP sources (or explicit provider_ids).
@@ -107,18 +107,57 @@ def has_enough_image_refs(
     target_refs: int = TARGET_IMAGE_REFS,
 ) -> bool:
     """True when we have enough HTTP/CDN (or local) image URLs for host vision."""
-    count = 0
-    for hit in hits:
-        preview = ""
-        if isinstance(hit, dict):
-            preview = str(hit.get("preview_url") or hit.get("inspiration_blob") or "")
-        else:
-            preview = str(getattr(hit, "preview_url", "") or getattr(hit, "inspiration_blob", "") or "")
-        if preview.startswith("http") or preview.startswith("file:") or preview.endswith((".jpg", ".jpeg", ".png", ".webp")):
-            count += 1
-        if count >= target_refs:
-            return True
+    count = image_ref_count(hits)
+    if count >= target_refs:
+        return True
     return count >= min_refs
+
+
+def count_relevant_image_refs(
+    hits: list[dict[str, Any]] | list[Any],
+    *,
+    query: str,
+    search_query: str = '',
+    min_score: float = 0.18,
+) -> int:
+    """Count refs that both have a preview and match the ask (anti false-green)."""
+    from navigation.inspiration_intelligence.query_flex import is_relevant_hit
+
+    n = 0
+    for hit in hits:
+        if isinstance(hit, dict):
+            preview = str(hit.get("preview_url") or "")
+            title = str(hit.get("title") or "")
+            url = str(hit.get("url") or "")
+        else:
+            preview = str(getattr(hit, "preview_url", "") or "")
+            title = str(getattr(hit, "title", "") or "")
+            url = str(getattr(hit, "url", "") or "")
+        if not (preview.startswith("http") or preview.startswith("file:")):
+            continue
+        if is_relevant_hit(
+            query, title=title, url=url, search_query=search_query, min_score=min_score
+        ):
+            n += 1
+    return n
+
+
+def has_enough_relevant_refs(
+    hits: list[dict[str, Any]] | list[Any],
+    *,
+    query: str,
+    search_query: str = '',
+    min_refs: int = MIN_IMAGE_REFS,
+    target_refs: int = TARGET_IMAGE_REFS,
+    min_score: float = 0.18,
+) -> bool:
+    """Soft-stop only when the pack is usable *for this query* — not any 3 random cards."""
+    n = count_relevant_image_refs(
+        hits, query=query, search_query=search_query, min_score=min_score
+    )
+    if n >= target_refs:
+        return True
+    return n >= min_refs
 
 
 def image_ref_count(hits: list[dict[str, Any]] | list[Any]) -> int:

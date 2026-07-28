@@ -58,6 +58,7 @@ class InspirationBrowserSession:
 		headless: bool | None = None,
 		session_cookie: str = '',
 		cookie_domain: str = '',
+		base_url: str = '',
 	) -> None:
 		self._provider_id = provider_id
 		self._policy = policy
@@ -65,6 +66,7 @@ class InspirationBrowserSession:
 		self._headless = False if headless is None else headless
 		self._session_cookie = session_cookie.strip()
 		self._cookie_domain = cookie_domain or f'.{provider_id}.com'
+		self._base_url = (base_url or '').strip()
 		self._runtime: PerceptionBrowserRuntime | None = None
 		self._last_screenshot_path: str | None = None
 
@@ -76,13 +78,14 @@ class InspirationBrowserSession:
 		await self.close()
 
 	async def start(self) -> None:
-		base = f'https://{self._provider_id}.com'
-		if self._provider_id == 'land-book':
-			base = 'https://land-book.com'
-		elif self._provider_id == 'onepagelove':
-			base = 'https://onepagelove.com'
-		elif self._provider_id == 'godly':
-			base = 'https://recent.design'
+		base = self._base_url or f'https://{self._provider_id}.com'
+		if not self._base_url:
+			if self._provider_id == 'land-book':
+				base = 'https://land-book.com'
+			elif self._provider_id == 'onepagelove':
+				base = 'https://onepagelove.com'
+			elif self._provider_id == 'godly':
+				base = 'https://recent.design'
 		self._runtime = PerceptionBrowserRuntime()
 		await self._runtime.start(base_url=base, headless=self._headless)
 		if self._session_cookie:
@@ -277,21 +280,87 @@ class InspirationBrowserSession:
 			)
 		return normalized, degraded
 
-	async def screenshot_url(self, url: str, *, wait_s: float | None = None) -> tuple[str, list[str]]:
+	async def screenshot_url(
+		self,
+		url: str,
+		*,
+		wait_s: float | None = None,
+		ready_timeout: float = 8.0,
+		focus_scope: str | None = None,
+		focus_query: str | None = None,
+	) -> tuple[str, list[str]]:
+		"""Navigate, reject WAF pages, then capture (never screenshot a challenge stub)."""
 		degraded: list[str] = []
+
+		from navigation.inspiration_intelligence.browser.host_cooldown import (
+			is_cooled,
+			mark_from_degraded,
+		)
+		from navigation.inspiration_intelligence.region_focus import (
+			REGION_CLIP_SCRIPT,
+			clip_from_script_result,
+			selectors_for_scope,
+			should_crop_scope,
+		)
+
+		if is_cooled(url):
+			return '', degraded + ['host_cooldown_skip']
+
 		runtime = self._runtime
 		if runtime is None:
 			return '', ['perception_session_not_started']
 
-		result = await runtime.navigate_and_observe(url, name=f'{self._provider_id}-capture')
+		want_crop = should_crop_scope(focus_scope)
+		result = await runtime.navigate_and_observe(
+			url,
+			name=f'{self._provider_id}-capture',
+			ready_timeout=ready_timeout,
+			screenshot=False,
+		)
 		degraded.extend(result.degraded)
 		if not result.ok:
 			return '', degraded + [f'perception_scan_failed:{result.error}']
 
+		try:
+			html = await runtime.execute_script(
+				'(document.documentElement && document.documentElement.outerHTML) '
+				'? document.documentElement.outerHTML.slice(0, 12000) : ""'
+			)
+			if isinstance(html, str) and html:
+				block = detect_block_signal(html)
+				if block:
+					deg = degraded + [f'perception_block:{block}', 'screenshot_skipped_blocked']
+					mark_from_degraded(url, deg)
+					return '', deg
+		except Exception as exc:  # noqa: BLE001
+			degraded.append(f'block_check_failed:{exc}')
+
 		if wait_s:
 			await asyncio.sleep(wait_s)
 
-		path = result.screenshot_path
+		clip = None
+		if want_crop:
+			import json
+
+			sels = list(selectors_for_scope(focus_scope, focus_query))
+			try:
+				script = (
+					f'(function(){{ const run = {REGION_CLIP_SCRIPT}; '
+					f'return run({json.dumps(sels)}); }})()'
+				)
+				raw = await runtime.execute_script(script)
+				clip = clip_from_script_result(raw)
+				if clip and isinstance(raw, dict) and raw.get('selector'):
+					degraded.append(f'region_crop:{raw.get("selector")}')
+			except Exception as exc:  # noqa: BLE001
+				degraded.append(f'region_crop_failed:{exc}')
+			if clip is None:
+				degraded.append('region_crop_miss')
+
+		path = await runtime._capture_screenshot(  # noqa: SLF001
+			name=f'{self._provider_id}-{"crop" if want_crop else "full"}',
+			clip=clip,
+		)
 		if path:
 			return path, degraded + ['capture_tier:perception_screenshot']
 		return '', degraded + ['perception_screenshot_missing']

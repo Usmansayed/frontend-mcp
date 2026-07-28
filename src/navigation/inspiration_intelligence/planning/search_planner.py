@@ -27,7 +27,6 @@ FAST_HTTP_PROVIDER_PRIORITY: list[str] = [
 	'lapa',
 	'behance',
 	'httpster',
-	'siteinspire',
 ]
 
 

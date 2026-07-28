@@ -62,11 +62,16 @@ PURPOSES: dict[str, dict[str, Any]] = {
 		'recommended_resource': 'perception://design-workflow',
 		'focus': (
 			'Judge visual hierarchy, first-viewport impact, density/spacing rhythm, '
-			'brand feel, and whether structure matches intent.'
+			'brand feel, and whether structure matches intent. If look_lock / primary_ref_ids '
+			'are bound from inspiration, compare the draft against those refs — do not invent '
+			'a third aesthetic.'
 		),
-		'extra_keys': ('hierarchy_issues',),
+		'extra_keys': ('hierarchy_issues', 'look_lock', 'primary_ref_ids', 'vs_inspiration'),
 		'extra_schema': {
 			'hierarchy_issues': "['hero has no focal point', 'CTAs compete'] — hierarchy-specific problems",
+			'look_lock': 'Optional borrow lock carried from purpose=inspiration',
+			'primary_ref_ids': 'Inspiration ref ids this draft should track',
+			'vs_inspiration': "['matches hero density', 'CTA weight drifted'] — compare draft to locked refs",
 		},
 	},
 	PURPOSE_CONSISTENCY: {
@@ -97,15 +102,21 @@ PURPOSES: dict[str, dict[str, Any]] = {
 	},
 	PURPOSE_INSPIRATION: {
 		'pack': PACK_FULL,
-		'recommended_resource': 'perception://inspiration-guide',
+		'recommended_resource': 'perception://guide/inspiration',
 		'focus': (
 			'Extract what to BORROW vs IGNORE from what you see: layout skeleton, type '
-			'scale, color mood, motion. Never copy wholesale; name the transferable idea.'
+			'scale, color mood, motion. Lock a look_lock so collect alone is not direction. '
+			'Never copy wholesale; name the transferable idea.'
 		),
-		'extra_keys': ('borrow', 'ignore'),
+		'extra_keys': ('borrow', 'ignore', 'look_lock', 'primary_ref_ids'),
 		'extra_schema': {
 			'borrow': "['split hero with product screenshot', 'oversized serif display'] — ideas to adopt",
 			'ignore': "['their pricing table', 'dark theme'] — explicitly not transferable",
+			'look_lock': (
+				"{composition, hierarchy, density, type_mood, chrome, motion} — "
+				"machine-usable direction after LOOK"
+			),
+			'primary_ref_ids': "['hit_0', 'hit_2'] — which collected refs anchor the look",
 		},
 	},
 	PURPOSE_HOTFIX: {
@@ -241,13 +252,33 @@ def build_purpose_next_actions(
 
 	if purpose == PURPOSE_INSPIRATION:
 		borrow = list(feedback.get('borrow') or [])
-		if borrow:
+		look_lock = feedback.get('look_lock')
+		has_lock = bool(borrow) or (
+			isinstance(look_lock, dict) and any(look_lock.values())
+		) or (isinstance(look_lock, str) and look_lock.strip())
+		if has_lock:
+			extra.append(
+				{
+					'action': 'implement_from_borrow',
+					'why': (
+						'Look locked (borrow/look_lock) — implement from those ideas; '
+						'do not invent a third aesthetic or re-collect by default.'
+					),
+					'tool': None,
+					'args_hint': {
+						'borrow': borrow[:5],
+						'look_lock': look_lock,
+						'primary_ref_ids': list(feedback.get('primary_ref_ids') or [])[:6],
+					},
+				}
+			)
+		else:
 			extra.append(
 				{
 					'action': 'collect_inspiration',
-					'why': 'Borrow list captured — collect measured references before locking direction.',
+					'why': 'No borrow/look_lock yet — collect measured refs, then LOOK again.',
 					'tool': 'perception_inspiration_collect',
-					'args_hint': {'queries': borrow[:3]},
+					'args_hint': {'inspiration_level': 'standard'},
 				}
 			)
 	elif purpose == PURPOSE_COMPONENT:
@@ -277,6 +308,30 @@ def build_purpose_next_actions(
 				'args_hint': {'session_id': session_id, 'baseline_scan_id': scan_id},
 			}
 		)
+	elif purpose == PURPOSE_DESIGN:
+		look_lock = feedback.get('look_lock')
+		primary_refs = list(feedback.get('primary_ref_ids') or [])
+		has_lock = bool(
+			(isinstance(look_lock, dict) and any(look_lock.values()))
+			or (isinstance(look_lock, str) and look_lock.strip())
+			or primary_refs
+		)
+		if has_lock:
+			extra.append(
+				{
+					'action': 'revise_vs_inspiration',
+					'why': (
+						'Design draft has a look_lock / primary_ref_ids — revise toward those '
+						'borrowed refs; fill vs_inspiration notes; do not invent a third look.'
+					),
+					'tool': None,
+					'args_hint': {
+						'look_lock': look_lock,
+						'primary_ref_ids': primary_refs[:6],
+						'vs_inspiration': list(feedback.get('vs_inspiration') or [])[:6],
+					},
+				}
+			)
 	elif purpose == PURPOSE_CONSISTENCY:
 		hints = list(feedback.get('standard_hints') or [])
 		for standard_id in hints[:3]:

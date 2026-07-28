@@ -1,0 +1,284 @@
+{
+  "verdict": "stealthy_more_reliable_than_our_chromium",
+  "summaries": {
+    "http_ours": {
+      "engine": "http_ours",
+      "targets_ok": 1,
+      "targets_total": 4,
+      "ok_rate": 0.25,
+      "p50_ms": 961.1,
+      "mean_ms": 961.1,
+      "mean_previews_ok": 1,
+      "failed": [
+        "landbook",
+        "lapa",
+        "dribbble"
+      ],
+      "unlocked_vs_http_ours": []
+    },
+    "http_scrapling": {
+      "engine": "http_scrapling",
+      "targets_ok": 2,
+      "targets_total": 4,
+      "ok_rate": 0.5,
+      "p50_ms": 891.2,
+      "mean_ms": 891.2,
+      "mean_previews_ok": 4.5,
+      "failed": [
+        "behance",
+        "dribbble"
+      ],
+      "unlocked_vs_http_ours": [
+        "landbook",
+        "lapa"
+      ]
+    },
+    "chromium_ours": {
+      "engine": "chromium_ours",
+      "targets_ok": 2,
+      "targets_total": 4,
+      "ok_rate": 0.5,
+      "p50_ms": 9581.0,
+      "mean_ms": 9581.0,
+      "mean_previews_ok": 4.5,
+      "failed": [
+        "landbook",
+        "lapa"
+      ],
+      "unlocked_vs_http_ours": [
+        "dribbble"
+      ]
+    },
+    "stealthy_cf": {
+      "engine": "stealthy_cf",
+      "targets_ok": 4,
+      "targets_total": 4,
+      "ok_rate": 1.0,
+      "p50_ms": 23841.8,
+      "mean_ms": 44832.8,
+      "mean_previews_ok": 3.25,
+      "failed": [],
+      "unlocked_vs_http_ours": [
+        "dribbble",
+        "landbook",
+        "lapa"
+      ]
+    }
+  },
+  "rows": [
+    {
+      "engine": "http_ours",
+      "target": "behance",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 961.1,
+      "bytes": 179924,
+      "previews": 1,
+      "block": "",
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "http_scrapling",
+      "target": "behance",
+      "ok": false,
+      "status": 403,
+      "wall_ms": 5053.0,
+      "bytes": 453,
+      "previews": 0,
+      "block": "http_403",
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "http_ours",
+      "target": "landbook",
+      "ok": false,
+      "status": 403,
+      "wall_ms": 69.6,
+      "bytes": 5681,
+      "previews": 0,
+      "block": "http_403",
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "http_scrapling",
+      "target": "landbook",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 877.9,
+      "bytes": 180000,
+      "previews": 1,
+      "block": "",
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "http_ours",
+      "target": "lapa",
+      "ok": false,
+      "status": 403,
+      "wall_ms": 184.9,
+      "bytes": 5836,
+      "previews": 0,
+      "block": "http_403",
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "http_scrapling",
+      "target": "lapa",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 904.6,
+      "bytes": 180000,
+      "previews": 8,
+      "block": "",
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "http_ours",
+      "target": "dribbble",
+      "ok": false,
+      "status": 202,
+      "wall_ms": 568.3,
+      "bytes": 2007,
+      "previews": 0,
+      "block": "http_202",
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "http_scrapling",
+      "target": "dribbble",
+      "ok": false,
+      "status": 202,
+      "wall_ms": 624.4,
+      "bytes": 2007,
+      "previews": 0,
+      "block": "http_202",
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "chromium_ours",
+      "target": "behance",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 13137.1,
+      "bytes": 180000,
+      "previews": 1,
+      "block": "",
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "chromium_ours",
+      "target": "landbook",
+      "ok": false,
+      "status": 200,
+      "wall_ms": 7185.5,
+      "bytes": 27377,
+      "previews": 0,
+      "block": "bot_challenge_detected",
+      "error": "",
+      "notes": [
+        "perception_block:bot_challenge_detected"
+      ]
+    },
+    {
+      "engine": "chromium_ours",
+      "target": "lapa",
+      "ok": false,
+      "status": 200,
+      "wall_ms": 4102.1,
+      "bytes": 5778,
+      "previews": 0,
+      "block": "bot_challenge_detected",
+      "error": "",
+      "notes": [
+        "perception_block:bot_challenge_detected"
+      ]
+    },
+    {
+      "engine": "chromium_ours",
+      "target": "dribbble",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 6025.0,
+      "bytes": 180000,
+      "previews": 8,
+      "block": "",
+      "error": "",
+      "notes": []
+    },
+    {
+      "engine": "stealthy_cf",
+      "target": "behance",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 127924.7,
+      "bytes": 180000,
+      "previews": 1,
+      "block": "",
+      "error": "",
+      "notes": [
+        "solve_cf=True",
+        "async_session_reuse"
+      ]
+    },
+    {
+      "engine": "stealthy_cf",
+      "target": "landbook",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 3723.0,
+      "bytes": 180000,
+      "previews": 3,
+      "block": "",
+      "error": "",
+      "notes": [
+        "solve_cf=True",
+        "async_session_reuse"
+      ]
+    },
+    {
+      "engine": "stealthy_cf",
+      "target": "lapa",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 38752.8,
+      "bytes": 180000,
+      "previews": 1,
+      "block": "",
+      "error": "",
+      "notes": [
+        "solve_cf=True",
+        "async_session_reuse"
+      ]
+    },
+    {
+      "engine": "stealthy_cf",
+      "target": "dribbble",
+      "ok": true,
+      "status": 200,
+      "wall_ms": 8930.8,
+      "bytes": 180000,
+      "previews": 8,
+      "block": "",
+      "error": "",
+      "notes": [
+        "solve_cf=True",
+        "async_session_reuse"
+      ]
+    }
+  ],
+  "methodology": {
+    "stealthy_cf": "AsyncStealthySession reused; solve_cloudflare=True; headless",
+    "chromium_ours": "InspirationBrowserSession headless + force_kill per URL",
+    "http_scrapling": "FetcherSession TLS only (not Stealthy)",
+    "note": "Sync StealthySession cannot run inside asyncio \u2014 use AsyncStealthySession"
+  }
+}

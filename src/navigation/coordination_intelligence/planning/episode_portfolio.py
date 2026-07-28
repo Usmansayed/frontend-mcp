@@ -118,6 +118,22 @@ def compile_episode_portfolio(
                         "design reference undecided",
                         "perception_inspiration_collect",
                     )
+                # Collect alone ≠ direction — owe LOOK + look_lock/borrow
+                insp_q = (
+                    (psm.evidence.capability_ledger or {}).get("inspiration_workflow") or {}
+                ).get("quality") or {}
+                vf_q = (
+                    (psm.evidence.capability_ledger or {}).get("visual_feedback") or {}
+                ).get("quality") or {}
+                look_paid = bool(insp_q.get("direction_locked")) or (
+                    vf_q.get("purpose") == "inspiration" and bool(vf_q.get("look_locked"))
+                )
+                if "inspiration" in paid_families and not look_paid:
+                    add_unpaid(
+                        "inspiration_extract",
+                        "refs collected — LOOK + look_lock/borrow before inventing UI",
+                        "perception_visual_feedback",
+                    )
                 if "snapshot" not in paid_families:
                     add_unpaid(
                         "snapshot",

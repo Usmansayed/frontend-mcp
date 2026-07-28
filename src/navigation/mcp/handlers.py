@@ -2074,6 +2074,7 @@ def _inspiration_top_hits(candidates: list[Any], *, limit: int = 8) -> list[dict
 
 async def handle_inspiration_discover(arguments: dict[str, Any]) -> dict[str, Any]:
     from navigation.inspiration_intelligence import InspirationDiscoveryRequest, InspirationIntelligenceService
+    from navigation.inspiration_intelligence.scout_cache import mint_discover_token
 
     query = str(arguments.get("query") or "").strip()
     if not query:
@@ -2100,13 +2101,42 @@ async def handle_inspiration_discover(arguments: dict[str, Any]) -> dict[str, An
             repo_root=repo_root,
         )
     )
+    # Scout cache: collect can reuse URLs without re-running the cascade.
+    scout_rows: list[dict[str, Any]] = []
+    for ranked in result.candidates:
+        cand = ranked.candidate
+        scout_rows.append(
+            {
+                "candidate_id": cand.candidate_id,
+                "title": cand.title,
+                "url": cand.url,
+                "preview_url": cand.preview_ref,
+                "preview_ref": cand.preview_ref,
+                "provider_id": cand.provider_id,
+                "external_id": cand.external_id,
+                "discovery_score": float(
+                    getattr(ranked, "overall_score", None) or cand.discovery_score or 0
+                ),
+                "source_kind": "gallery_image",
+            }
+        )
+    discover_token = mint_discover_token(
+        query=query,
+        candidates=scout_rows,
+        provider_ids=list(result.search_plan.provider_ids),
+    )
+    discovery_payload = result.to_dict()
+    discovery_payload["discover_token"] = discover_token
+    discovery_payload["mode"] = "scout_urls_only"
     ok = bool(result.candidates) or bool(result.degraded)
     blocking: list[str] = []
     if not result.candidates:
         blocking.append("no_inspiration_candidates")
     # Prefer collect when discover has weak/no previews — agents often stop at discover.
     advisory = [
-        "Read perception://inspiration-guide for per-site navigation and preview URL rules.",
+        "Discover is a concurrent scout (URLs only). Pass discover_token to perception_inspiration_collect to avoid double cascade.",
+        "Pick inspiration_level on collect — perception://guide/inspiration. "
+        "Implementer detail: perception://inspiration-guide.",
         "Prefer perception_inspiration_collect for image blobs agents can actually see.",
     ]
     if result.candidates and not any(
@@ -2119,12 +2149,14 @@ async def handle_inspiration_discover(arguments: dict[str, Any]) -> dict[str, An
         ok=ok,
         degraded=result.degraded,
         data={
-            "inspiration_discovery": result.to_dict(),
+            "inspiration_discovery": discovery_payload,
+            "discover_token": discover_token,
             "agent_summary": {
                 "query": query,
                 "total": len(result.candidates),
                 "providers": list(result.search_plan.provider_ids),
                 "top_hits": _inspiration_top_hits(result.candidates),
+                "discover_token": discover_token,
                 "blocking": blocking,
                 "advisory": advisory,
             },
@@ -2133,17 +2165,75 @@ async def handle_inspiration_discover(arguments: dict[str, Any]) -> dict[str, An
 
 
 async def handle_inspiration_collect(arguments: dict[str, Any]) -> dict[str, Any]:
+    return await _inspiration_collect_core(arguments, tool_name="perception_inspiration_collect")
+
+
+async def handle_inspiration_pulse(arguments: dict[str, Any]) -> dict[str, Any]:
+    """Fast visual pack — forces light effort, no live screenshots."""
+    args = dict(arguments or {})
+    args["inspiration_level"] = "light"
+    args["include_live_sites"] = False
+    args["max_web_screenshots"] = 0
+    args["allow_browser_screenshot"] = False
+    if args.get("include_web_search") is None:
+        args["include_web_search"] = True
+    return await _inspiration_collect_core(args, tool_name="perception_inspiration_pulse")
+
+
+async def handle_inspiration_widen(arguments: dict[str, Any]) -> dict[str, Any]:
+    """Escalate hunt one level (light→standard→wide→max). Reuses discover_token/blob session."""
+    from navigation.inspiration_intelligence.levels import next_inspiration_level
+
+    args = dict(arguments or {})
+    current = str(args.get("from_level") or args.get("inspiration_level") or "standard").strip()
+    args["inspiration_level"] = next_inspiration_level(current)
+    args.pop("from_level", None)
+    return await _inspiration_collect_core(args, tool_name="perception_inspiration_widen")
+
+
+async def _inspiration_collect_core(
+    arguments: dict[str, Any],
+    *,
+    tool_name: str = "perception_inspiration_collect",
+) -> dict[str, Any]:
     from navigation.inspiration_intelligence.collect import collect_inspiration_hits
 
     query = str(arguments.get("query") or "").strip()
     if not query:
-        return make_envelope("perception_inspiration_collect", ok=False, error="query required")
+        return make_envelope(tool_name, ok=False, error="query required")
 
     output_raw = str(arguments.get("output_dir") or "").strip()
     output_dir = Path(output_raw) if output_raw else None
     provider_ids = arguments.get("provider_ids")
     if provider_ids is not None and not isinstance(provider_ids, list):
         provider_ids = None
+
+    candidate_urls = arguments.get("candidate_urls")
+    if candidate_urls is not None and not isinstance(candidate_urls, list):
+        candidate_urls = None
+    discover_token = str(arguments.get("discover_token") or "").strip() or None
+    mode = str(arguments.get("mode") or "").strip() or None
+    inspiration_level = str(arguments.get("inspiration_level") or "").strip() or None
+    include_live_raw = arguments.get("include_live_sites")
+    include_live_sites: bool | None
+    if include_live_raw is None:
+        include_live_sites = None
+    else:
+        include_live_sites = bool(include_live_raw)
+    web_raw = arguments.get("include_web_search")
+    include_web_search: bool | None
+    if web_raw is None:
+        include_web_search = None
+    else:
+        include_web_search = bool(web_raw)
+    max_web_ss = arguments.get("max_web_screenshots")
+    max_web_screenshots = int(max_web_ss) if max_web_ss is not None else None
+    multi_raw = arguments.get("use_multi_scout")
+    use_multi_scout: bool | None
+    if multi_raw is None:
+        use_multi_scout = None
+    else:
+        use_multi_scout = bool(multi_raw)
 
     manifest = await collect_inspiration_hits(
         query,
@@ -2155,8 +2245,24 @@ async def handle_inspiration_collect(arguments: dict[str, Any]) -> dict[str, Any
         blob_session_id=arguments.get("blob_session_id"),
         write_per_hit_files=output_dir is not None,
         allow_browser_screenshot=bool(arguments.get("allow_browser_screenshot", False)),
-        target_refs=int(arguments.get("target_refs") or 5),
-        min_refs=int(arguments.get("min_refs") or 3),
+        target_refs=(
+            int(arguments["target_refs"])
+            if arguments.get("target_refs") is not None
+            else None
+        ),
+        min_refs=(
+            int(arguments["min_refs"])
+            if arguments.get("min_refs") is not None
+            else None
+        ),
+        mode=mode,
+        inspiration_level=inspiration_level,
+        candidate_urls=candidate_urls,
+        discover_token=discover_token,
+        include_live_sites=include_live_sites,
+        include_web_search=include_web_search,
+        max_web_screenshots=max_web_screenshots,
+        use_multi_scout=use_multi_scout,
     )
     hits = list(manifest.get("hits") or [])
     ok = bool(hits) or bool(manifest.get("provider_summary"))
@@ -2205,8 +2311,23 @@ async def handle_inspiration_collect(arguments: dict[str, Any]) -> dict[str, Any
             except Exception:
                 pass
 
+    level_used = str(manifest.get("inspiration_level") or inspiration_level or "standard")
+    advisory = [
+        "Prefer inspiration_blob / preview_url for host vision — original gallery images, not screenshots.",
+        "Pass discover_token or candidate_urls from discover to skip re-cascade (no double pay).",
+        "Soft-stop ends the hunt early for speed — not a hard ref quota.",
+        "engineering_spec is a seed Spec (soft priors). After draft, remeasure with perception_build_design_snapshot.",
+        "Call perception_inspiration_session_end when design work is complete.",
+        "Thin pack? Call perception_inspiration_widen (bumps level one step) or raise inspiration_level.",
+        "Quick spark? perception_inspiration_pulse (light, no live screenshots).",
+    ]
+    if tool_name == "perception_inspiration_widen":
+        advisory.insert(0, f"Widened hunt to inspiration_level={level_used}.")
+    if tool_name == "perception_inspiration_pulse":
+        advisory.insert(0, "Pulse pack (light). Widen if refs are thin or off-grain.")
+
     return make_envelope(
-        "perception_inspiration_collect",
+        tool_name,
         ok=ok,
         session_id=browser_session_id,
         data={
@@ -2215,6 +2336,8 @@ async def handle_inspiration_collect(arguments: dict[str, Any]) -> dict[str, Any
             "reference_bind": bind_meta,
             "agent_summary": {
                 "query": query,
+                "tool": tool_name,
+                "inspiration_level": level_used,
                 "total_hits": manifest.get("total_hits", 0),
                 "total_with_urls": manifest.get("total_with_urls", 0),
                 "blob_session_id": manifest.get("blob_session_id", ""),
@@ -2227,13 +2350,7 @@ async def handle_inspiration_collect(arguments: dict[str, Any]) -> dict[str, Any
                     else "Inspiration seed Spec bound — measure top agent_view_url into DesignSnapshot."
                 ),
                 "blocking": [] if hits else ["no_inspiration_hits"],
-                "advisory": [
-                    "Prefer inspiration_blob / preview_url for host vision — original gallery images, not screenshots.",
-                    "Collect stops at 3–5 high-quality refs (image_first). Reuse blob_session_id; do not re-search.",
-                    "Browser fallback only if image retrieval fails or you must inspect interaction/animation.",
-                    "engineering_spec is a seed Spec (soft priors). After draft, remeasure with perception_build_design_snapshot.",
-                    "Call perception_inspiration_session_end when design work is complete.",
-                ],
+                "advisory": advisory,
             },
         },
     )

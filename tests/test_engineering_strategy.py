@@ -93,7 +93,11 @@ def test_bootstrap_greenfield_dashboard_is_structurally_blocked(
     )
     assert strategy["influence_level"] == "structural"
     assert strategy["implementation_gate"]["state"] == "blocked"
-    assert strategy["recommended_resource"] == "perception://inspiration-guide"
+    assert strategy["recommended_resource"] in {
+        "perception://inspiration-guide",
+        "perception://guide/inspiration",
+        "perception://spine/greenfield",
+    }
 
 
 @pytest.mark.unit
@@ -114,7 +118,10 @@ def test_surface_engineering_strategy_on_agent_summary() -> None:
     assert compact["_full_strategy_path"] == "data.engineering_strategy"
     assert envelope["agent_summary"]["coordinator_headline"] == "Test headline"
     assert envelope["agent_summary"]["coordinator"]["host_action"] == "Run inspiration collect"
-    assert envelope["agent_summary"]["recommended_next"] == "Run inspiration collect"
+    face = envelope["agent_summary"]["card"]
+    assert face["schema"] == "agent_face_card.v1"
+    assert face["next"]
+    assert envelope["agent_summary"]["recommended_next"] == face["next"]
     assert envelope["data"]["coordinator"]["schema"] == "coordinator_card.v1"
 
 
