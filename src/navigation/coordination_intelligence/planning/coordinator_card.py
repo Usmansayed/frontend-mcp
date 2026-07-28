@@ -81,6 +81,8 @@ _CLASS_OWED_PRIORITY: dict[str, tuple[str, ...]] = {
 _CLASS_OWED_EXCLUDE: dict[str, frozenset[str]] = {
 	"forms": frozenset({"component", "inspiration", "snapshot", "residue", "inspiration_extract"}),
 	"hotfix": frozenset({"inspiration", "component", "snapshot", "residue", "inspiration_extract"}),
+	# Feature spine is observe→component→verify — never invent gallery inspiration.
+	"feature": frozenset({"inspiration", "inspiration_extract", "snapshot", "residue"}),
 }
 
 # Hard class next when owed is empty or only excluded families remain.
@@ -200,13 +202,42 @@ def classify_agent_face(strategy: dict[str, Any]) -> str:
 	matters = " ".join(str(x) for x in (strategy.get("what_matters_now") or [])).lower()
 	blob = f"{scope} {surface} {resource} {host} {intentish} {matters}"
 
+	rs = strategy.get("right_sizing") if isinstance(strategy.get("right_sizing"), dict) else {}
+	tier = str(
+		rs.get("tier")
+		or strategy.get("effort_tier")
+		or ""
+	).lower()
+
 	if (
 		re.search(r"\b(forms?|checkout|sign[\s-]?up|login|auth)\b", blob)
 		or scope in {"forms"}
 	):
 		return "forms"
-	if scope in {"redesign"} or "redesign" in blob or re.search(r"\bmockup\b", blob):
+	if (
+		scope in {"redesign"}
+		or "redesign" in blob
+		or re.search(r"\bmockup\b", blob)
+		or re.search(
+			r"\b(reference image|uploaded (design|image|mock)|figma|match (this |the )?(design|mockup|reference))\b",
+			blob,
+		)
+	):
 		return "redesign"
+	# Polish/chrome before design_driven → greenfield (G3).
+	polish_cues = (
+		"polish",
+		"tighten spacing",
+		"spacing only",
+		"navbar only",
+		"chrome only",
+		"tighten chrome",
+		"touch up",
+		"touch-up",
+		"visual polish",
+	)
+	if tier in {"polish", "touch_up"} or any(c in blob for c in polish_cues):
+		return "hotfix"
 	hotfix_cues = (
 		"hotfix",
 		"bugfix",
@@ -303,6 +334,8 @@ def _owed_from_portfolio(
 		if not family:
 			continue
 		tool = str(row.get("suggested") or _FAMILY_TOOL.get(family) or "").strip()
+		if tool == "perception_plan_component_search":
+			tool = "perception_select_component_foundation"
 		entry: dict[str, Any] = {"family": family, "tool": tool}
 		hint = _TOOL_NEXT_ARGS.get(tool)
 		if hint:
@@ -359,27 +392,8 @@ def _pick_class_next(
 	if "spec_revision" in extra:
 		return "perception_build_design_snapshot"
 
-	# Forms / hotfix: never fall through to component_search_plan from gate.
-	if spine and face_class in {"forms", "hotfix"}:
-		return spine
-
-	if suggested_capability:
-		mapped = _CAPABILITY_TOOL.get(str(suggested_capability), "")
-		if mapped == "perception_plan_component_search":
-			mapped = "perception_select_component_foundation"
-		if mapped:
-			return mapped
-
-	next_cap = str(gate.get("next_required_capability") or "")
-	mapped = _CAPABILITY_TOOL.get(next_cap, "")
-	if mapped == "perception_plan_component_search":
-		# After select paid, gate may still echo plan — climb verify instead.
-		return "perception_verify"
-	if mapped and face_class in {"forms", "hotfix"}:
-		return spine or mapped
-	if mapped:
-		return mapped
-	return spine or "perception_inspiration_collect"
+	# G1: verify passed + no claim_extra → episode complete; do not re-spine forever.
+	return ""
 
 
 def _apply_redesign_snapshot_bridge(
@@ -392,6 +406,12 @@ def _apply_redesign_snapshot_bridge(
 	"""If snapshot is next but live observe unpaid, observe first then resume snapshot."""
 	bridge: dict[str, Any] = {}
 	if face_class != "redesign":
+		return next_tool, bridge
+	# Post-verify remeasure (spec revision) — do not force observe-before-snapshot.
+	if (
+		str(strategy.get("verification_status") or "").lower() == "passed"
+		and next_tool == "perception_build_design_snapshot"
+	):
 		return next_tool, bridge
 	snapshot_owed = any(o.get("family") == "snapshot" for o in owed)
 	if next_tool != "perception_build_design_snapshot" and not snapshot_owed:
@@ -453,8 +473,11 @@ def _claim_extra(strategy: dict[str, Any], gate: dict[str, Any]) -> list[str]:
 
 
 def _claim_ok(strategy: dict[str, Any], gate: dict[str, Any], owed: list[dict[str, Any]]) -> bool:
-	"""Claim-done only when gate allows AND verify is paid."""
+	"""Claim-done only when gate allows AND verify is paid AND claim_extra cleared."""
 	if "claim_complete" in list(gate.get("prohibited_actions") or []):
+		return False
+	# G2: ship/sections/spec still listed → never claimable.
+	if _claim_extra(strategy, gate):
 		return False
 	owed_families = {str(r.get("family")) for r in owed}
 	if "verify" in owed_families or "sections" in owed_families or "design_review" in owed_families:
@@ -594,11 +617,21 @@ def _build_finish_checklist(
 			finish.append(_fam_status("observe", tool="perception_navigate_and_observe"))
 			finish.append(_fam_status("snapshot", tool="perception_build_design_snapshot"))
 			finish.append(_fam_status("visual_feedback", tool="perception_visual_feedback"))
+		elif face_class == "feature":
+			# Feature never invents gallery inspiration (G4).
+			finish.append(_fam_status("observe", tool="perception_navigate_and_observe"))
+			finish.append(_fam_status("visual_feedback", tool="perception_visual_feedback"))
+			if "component" in owed_families or "component" in paid:
+				finish.append(_fam_status("component", tool="perception_select_component_foundation"))
 		else:
 			finish.append(_fam_status("inspiration", tool="perception_inspiration_collect"))
 			finish.append(_fam_status("visual_feedback", tool="perception_visual_feedback"))
 			finish.append(_fam_status("observe", tool="perception_navigate_and_observe"))
-		if "component" in owed_families or "component" in paid or depth == "full":
+			if "component" in owed_families or "component" in paid or depth == "full":
+				finish.append(_fam_status("component", tool="perception_select_component_foundation"))
+		if face_class == "redesign" and (
+			"component" in owed_families or "component" in paid or depth == "full"
+		):
 			finish.append(_fam_status("component", tool="perception_select_component_foundation"))
 		finish.append(
 			_finish_item("verify", status="done" if verified else "todo", tool="perception_verify")
@@ -696,9 +729,9 @@ def build_agent_face_card(
 	}:
 		resource = spine
 
-	next_args = _next_args_for(next_tool, strategy, face_class)
+	next_args = _next_args_for(next_tool, strategy, face_class) if next_tool else {}
 	# Prefer owed[0].args when present (already class-tuned).
-	if owed and isinstance(owed[0].get("args"), dict) and owed[0].get("tool") == next_tool:
+	if next_tool and owed and isinstance(owed[0].get("args"), dict) and owed[0].get("tool") == next_tool:
 		merged = dict(owed[0]["args"])
 		merged.update({k: v for k, v in next_args.items() if k not in merged or str(merged[k]).startswith("<")})
 		# Intent-filled query wins over placeholder

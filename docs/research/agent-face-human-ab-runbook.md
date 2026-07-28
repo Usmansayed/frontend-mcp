@@ -1,12 +1,15 @@
-# Human A/B runbook — agent-face cutover
+# Human A/B runbook — Phase 2 obedience (dev49+)
 
-**Goal:** Confirm card-first face beats long-guide control in real Cursor chats before tagging a non-dev release.
+**Goal:** Confirm real Cursor agents follow `agent_summary.card` (bootstrap, next/next_args/finish, depth, verify before claim) without false-green.
+
+**Version:** `1.2.0.dev49`  
+**Prerequisite:** Phase 1 card board green — see `docs/research/coordination-perfection-phase1-2026-07-28.md`
 
 ## Setup
-1. Install: `pip install -e .` from this branch (`1.2.0.dev48+`)
-2. Ensure `~/.cursor/mcp.json` runs this install (`PYTHONPATH=.../src` or editable)
-3. **Reload MCP** in Cursor
-4. Sandbox: `cd sandbox && npm run dev` → `http://127.0.0.1:18765`
+1. `pip install -e .` from this branch
+2. Ensure Cursor MCP points at this install; **Reload MCP**
+3. Sandbox: `cd sandbox && npm run dev` → `http://127.0.0.1:18765`
+4. Fresh Agent chat per prompt (no reused context)
 
 ## Prompts (fresh chat each)
 
@@ -19,16 +22,32 @@
 | 5 | feature | Add a settings toggle to an existing page. Use Frontend MCP. |
 | 6 | polish | Tighten spacing on the navbar only. Use Frontend MCP. |
 
-## Score (1–5 each)
-- Bootstrap early (health→session before big UI)?
-- Follows `card.next` / `next_args` / `finish`?
-- Honors `depth` (no invented ship on hotfix)?
-- Verify before claim (`data.verified` + `claim_ok`)?
-- UI quality 1–5
-- False-green claim? (Y/N)
+## Score sheet (copy per run)
 
-## Pass bar
-Simple face wins on adherence + false-green without UI quality loss vs memory of old long-guide behavior.
+| # | Bootstrap early (1–5) | Follows card.next/args/finish (1–5) | Honors depth (1–5) | Verify before claim (1–5) | UI quality (1–5) | False-green? (Y/N) | Notes |
+|---|----------------------|-------------------------------------|--------------------|---------------------------|------------------|--------------------|-------|
+| 1 |  |  |  |  |  |  |  |
+| 2 |  |  |  |  |  |  |  |
+| 3 |  |  |  |  |  |  |  |
+| 4 |  |  |  |  |  |  |  |
+| 5 |  |  |  |  |  |  |  |
+| 6 |  |  |  |  |  |  |  |
 
-## Automated proxy already green
-`scripts/eval_agent_face_no_guide_e2e.py` BOARD PASS 4/4 — see `docs/research/agent-face-cutover-ab-2026-07-28.md`.
+**Pass bar:** mean adherence ≥4.0 across bootstrap/follow/depth/verify; **zero** false-green; UI quality not worse than memory of long-guide era.
+
+## Automated proxies (already run for Phase 2 start)
+
+| Check | Result |
+|-------|--------|
+| No-guide E2E | BOARD PASS 4/4 |
+| Discoverability | overall 0.95 — USABLE_WITH_GAPS (only fail: tool volume 73) |
+| Unit card board | 31 passed |
+
+## Watch specifically (dev49)
+
+- Empty `card.next` + `claim_ok` → agent **stops and claims** (does not re-call probe/observe)
+- Polish prompt → class hotfix / depth not full / no inspiration rabbit hole
+- Feature prompt → observe first, not inspiration gallery
+
+## Log results to
+`docs/research/coordination-perfection-phase2-human-ab-2026-07-28.md`

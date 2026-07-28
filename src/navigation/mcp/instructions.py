@@ -13,7 +13,7 @@ ALWAYS-ON SPINE (UI / CSS / design / forms / landing / dashboard / verify)
 1. Bootstrap: perception_health({url, intent}) → perception_session_start({base_url, intent})
 2. Read agent_summary.card — fields: class, depth, next, next_args, owed, gate, claim_ok, claim_extra, finish, resource
 3. Before large UI: pay card.owed (≤3). Honor card.depth (light|standard|full) — do not invent extra ceremony beyond finish[].
-4. Call card.next with card.next_args (fill placeholders from intent). If next_args.then is set, call that tool right after. One browser tool at a time per session_id.
+4. Call card.next with card.next_args (fill placeholders from intent). If next is empty and claim_ok, stop and claim. If next_args.then is set, call that tool right after. One browser tool at a time per session_id.
 5. LOOK at screenshots. Use perception_visual_feedback after structural UI / inspiration.
 6. Before claim done: data.verified=true AND claim_ok. Clear every finish[] item that is not status=skip.
 
