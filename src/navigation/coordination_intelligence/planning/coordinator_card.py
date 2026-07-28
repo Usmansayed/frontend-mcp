@@ -224,27 +224,7 @@ def classify_agent_face(strategy: dict[str, Any]) -> str:
 		)
 	):
 		return "redesign"
-	# Feature scope beats polish-tier defaults (right_sizing often stamps polish on mid features).
-	if scope in {"feature_incremental", "feature"} or (
-		re.search(r"\bfeature\b", resource) and "hotfix" not in blob and "polish" not in blob
-	):
-		return "feature"
-	# Polish/chrome before design_driven → greenfield (G3).
-	polish_cues = (
-		"polish",
-		"tighten spacing",
-		"spacing only",
-		"navbar only",
-		"chrome only",
-		"tighten chrome",
-		"touch up",
-		"touch-up",
-		"visual polish",
-	)
-	if any(c in blob for c in polish_cues) or (
-		tier in {"polish", "touch_up"} and scope in {"design_driven", "system_setup", ""}
-	):
-		return "hotfix"
+	# Surgical/hotfix cues beat stamped feature_incremental (lifecycle often mid/feature).
 	hotfix_cues = (
 		"hotfix",
 		"bugfix",
@@ -264,6 +244,27 @@ def classify_agent_face(strategy: dict[str, Any]) -> str:
 		or any(c in blob for c in hotfix_cues)
 		or re.search(r"\bfix\b", blob) is not None
 	):
+		return "hotfix"
+	# Polish/chrome text cues before greenfield; do not let polish-tier alone steal features.
+	polish_cues = (
+		"polish",
+		"tighten spacing",
+		"spacing only",
+		"navbar only",
+		"chrome only",
+		"tighten chrome",
+		"touch up",
+		"touch-up",
+		"visual polish",
+	)
+	if any(c in blob for c in polish_cues):
+		return "hotfix"
+	# Feature scope before polish-tier defaults on design_driven.
+	if scope in {"feature_incremental", "feature"} or (
+		re.search(r"\bfeature\b", resource) and "hotfix" not in blob and "polish" not in blob
+	):
+		return "feature"
+	if tier in {"polish", "touch_up"} and scope in {"design_driven", "system_setup", ""}:
 		return "hotfix"
 	if scope in {"design_driven", "system_setup"} or "design-workflow" in resource:
 		return "greenfield"
@@ -384,7 +385,8 @@ def _pick_class_next(
 		if face_class == "forms":
 			paid = _paid_families(strategy)
 			return "perception_verify" if "forms" in paid else "perception_probe_form"
-		if face_class == "hotfix":
+		if face_class in {"hotfix", "feature"}:
+			# Empty portfolio outside design initiative — still observe before verify.
 			return "perception_verify" if "observe" in _paid_families(strategy) else (
 				spine or "perception_navigate_and_observe"
 			)
