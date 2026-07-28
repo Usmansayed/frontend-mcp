@@ -10,10 +10,10 @@
       "id": "always_on_budget",
       "ok": true,
       "score": 1.0,
-      "detail": "instructions=191w rule=258w combined=449w (budget\u2264700)",
+      "detail": "instructions=220w rule=278w combined=498w (budget\u2264700)",
       "evidence": {
-        "instructions_words": 191,
-        "rule_words": 258
+        "instructions_words": 220,
+        "rule_words": 278
       }
     },
     {
@@ -186,15 +186,25 @@
             "owed": [
               {
                 "family": "inspiration",
-                "tool": "perception_inspiration_collect"
+                "tool": "perception_inspiration_collect",
+                "args": {
+                  "query": "<surface / brand direction from intent>",
+                  "inspiration_level": "light"
+                }
+              },
+              {
+                "family": "visual_feedback",
+                "tool": "perception_visual_feedback",
+                "args": {
+                  "purpose": "design"
+                }
               },
               {
                 "family": "snapshot",
-                "tool": "perception_build_design_snapshot"
-              },
-              {
-                "family": "component",
-                "tool": "perception_select_component_foundation"
+                "tool": "perception_build_design_snapshot",
+                "args": {
+                  "scan_id": "<from observe>"
+                }
               }
             ],
             "gate": "blocked",
@@ -206,25 +216,34 @@
             "label": "redesign",
             "ok": true,
             "class": "redesign",
-            "next": "perception_build_design_snapshot",
+            "next": "perception_navigate_and_observe",
             "owed": [
               {
                 "family": "snapshot",
-                "tool": "perception_build_design_snapshot"
-              },
-              {
-                "family": "component",
-                "tool": "perception_select_component_foundation"
+                "tool": "perception_build_design_snapshot",
+                "args": {
+                  "scan_id": "<from observe>"
+                }
               },
               {
                 "family": "visual_feedback",
-                "tool": "perception_visual_feedback"
+                "tool": "perception_visual_feedback",
+                "args": {
+                  "purpose": "design"
+                }
+              },
+              {
+                "family": "component",
+                "tool": "perception_select_component_foundation",
+                "args": {
+                  "query": "<component need from intent, e.g. 'primary CTA button'>"
+                }
               }
             ],
             "gate": "blocked",
             "claim_ok": false,
             "resource": "perception://spine/redesign",
-            "recommended_next": "perception_build_design_snapshot"
+            "recommended_next": "perception_navigate_and_observe"
           },
           {
             "label": "hotfix",
@@ -255,15 +274,25 @@
             "owed": [
               {
                 "family": "inspiration",
-                "tool": "perception_inspiration_collect"
+                "tool": "perception_inspiration_collect",
+                "args": {
+                  "query": "<surface / brand direction from intent>",
+                  "inspiration_level": "light"
+                }
+              },
+              {
+                "family": "visual_feedback",
+                "tool": "perception_visual_feedback",
+                "args": {
+                  "purpose": "design"
+                }
               },
               {
                 "family": "snapshot",
-                "tool": "perception_build_design_snapshot"
-              },
-              {
-                "family": "component",
-                "tool": "perception_select_component_foundation"
+                "tool": "perception_build_design_snapshot",
+                "args": {
+                  "scan_id": "<from observe>"
+                }
               }
             ],
             "gate": "blocked",
@@ -275,25 +304,34 @@
             "label": "redesign",
             "ok": true,
             "class": "redesign",
-            "next": "perception_build_design_snapshot",
+            "next": "perception_navigate_and_observe",
             "owed": [
               {
                 "family": "snapshot",
-                "tool": "perception_build_design_snapshot"
-              },
-              {
-                "family": "component",
-                "tool": "perception_select_component_foundation"
+                "tool": "perception_build_design_snapshot",
+                "args": {
+                  "scan_id": "<from observe>"
+                }
               },
               {
                 "family": "visual_feedback",
-                "tool": "perception_visual_feedback"
+                "tool": "perception_visual_feedback",
+                "args": {
+                  "purpose": "design"
+                }
+              },
+              {
+                "family": "component",
+                "tool": "perception_select_component_foundation",
+                "args": {
+                  "query": "<component need from intent, e.g. 'primary CTA button'>"
+                }
               }
             ],
             "gate": "blocked",
             "claim_ok": false,
             "resource": "perception://spine/redesign",
-            "recommended_next": "perception_build_design_snapshot"
+            "recommended_next": "perception_navigate_and_observe"
           },
           {
             "label": "hotfix",

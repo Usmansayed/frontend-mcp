@@ -1541,9 +1541,10 @@ def promote_coordinator_visibility(
         suggested_capability=card.get("suggested_capability"),
     )
     agent_summary["card"] = face
-    # Prefer card.next as recommended_next on the simplified face.
-    if face.get("next"):
-        agent_summary["recommended_next"] = str(face["next"])
+    # Prefer card.next as recommended_next (empty string = done / claim if claim_ok).
+    agent_summary["recommended_next"] = str(face.get("next") or "")
     if face.get("next_args"):
         agent_summary["recommended_next_args"] = face["next_args"]
+    elif "recommended_next_args" in agent_summary:
+        agent_summary.pop("recommended_next_args", None)
     return envelope

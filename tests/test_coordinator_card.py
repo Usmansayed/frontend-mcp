@@ -92,9 +92,291 @@ def test_promote_surfaces_agent_summary_card() -> None:
     promote_coordinator_visibility(envelope, card)
     face = envelope["agent_summary"]["card"]
     assert face["class"] == "hotfix"
-    assert face["next"] == "perception_navigate_and_observe"
+    assert face["next"] == ""
     assert face["claim_ok"] is True
     assert envelope["agent_summary"]["recommended_next"] == face["next"]
+
+
+@pytest.mark.unit
+def test_face_done_state_does_not_respine() -> None:
+    """G1: after verify + empty claim_extra, do not re-spine probe/observe forever."""
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        build_agent_face_card,
+    )
+
+    forms = build_agent_face_card(
+        episode_id="ep_done_forms",
+        strategy={
+            "task_scope": "forms",
+            "intent": "Verify /forms/validation",
+            "influence_level": "minimal",
+            "verification_status": "passed",
+            "implementation_gate": {"state": "ready", "prohibited_actions": []},
+            "episode_portfolio": {
+                "paid": [{"family": "forms"}, {"family": "verify"}],
+                "unpaid": [],
+            },
+            "recommended_resource": "perception://spine/forms",
+        },
+    )
+    assert forms["class"] == "forms"
+    assert forms["claim_ok"] is True
+    assert forms["claim_extra"] == []
+    assert forms["next"] == ""
+    assert forms["next"] != "perception_probe_form"
+
+    hotfix = build_agent_face_card(
+        episode_id="ep_done_hf",
+        strategy={
+            "task_scope": "hotfix",
+            "intent": "fix overlapping CTA",
+            "influence_level": "surgical",
+            "verification_status": "passed",
+            "implementation_gate": {"state": "ready", "prohibited_actions": []},
+            "episode_portfolio": {
+                "paid": [{"family": "observe"}, {"family": "verify"}],
+                "unpaid": [],
+            },
+            "recommended_resource": "perception://spine/hotfix",
+        },
+    )
+    assert hotfix["class"] == "hotfix"
+    assert hotfix["claim_ok"] is True
+    assert hotfix["next"] == ""
+    assert hotfix["next"] != "perception_navigate_and_observe"
+
+
+@pytest.mark.unit
+def test_face_claim_ok_false_when_claim_extra_even_if_gate_allows() -> None:
+    """G2: claim_extra alone must block claim_ok (gate may omit claim_complete)."""
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        build_agent_face_card,
+    )
+
+    face = build_agent_face_card(
+        episode_id="ep_ship_extra",
+        strategy={
+            "task_scope": "design_driven",
+            "intent": "Ship the landing page",
+            "influence_level": "structural",
+            "verification_status": "passed",
+            "implementation_gate": {
+                "state": "ready",
+                "prohibited_actions": [],
+                "ship_council_required": True,
+            },
+            "episode_portfolio": {
+                "paid": [{"family": "verify"}, {"family": "inspiration"}],
+                "unpaid": [],
+            },
+            "recommended_resource": "perception://spine/greenfield",
+        },
+    )
+    assert "ship_council" in face["claim_extra"]
+    assert face["claim_ok"] is False
+    assert face["next"] == "perception_design_review"
+    assert face["next_args"].get("mode") == "ship"
+
+
+@pytest.mark.unit
+def test_face_polish_not_greenfield_under_design_driven() -> None:
+    """G3: polish/chrome must not inherit greenfield full inspiration ladder."""
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        build_agent_face_card,
+        classify_agent_face,
+    )
+
+    strategy = {
+        "task_scope": "design_driven",
+        "intent": "Polish navbar spacing only — tighten chrome",
+        "influence_level": "structural",
+        "right_sizing": {"tier": "polish"},
+        "verification_status": "pending",
+        "implementation_gate": {
+            "state": "ready",
+            "prohibited_actions": ["claim_complete"],
+        },
+        "episode_portfolio": {
+            "paid": [],
+            "unpaid": [{"family": "observe", "suggested": "perception_navigate_and_observe"}],
+        },
+        "recommended_resource": "perception://design-workflow",
+    }
+    assert classify_agent_face(strategy) == "hotfix"
+    face = build_agent_face_card(episode_id="ep_polish", strategy=strategy)
+    assert face["class"] == "hotfix"
+    assert face["depth"] != "full"
+    assert face["resource"] == "perception://spine/hotfix"
+    finish_ids = {row["id"] for row in face["finish"]}
+    assert "inspiration" not in finish_ids or any(
+        row["id"] == "inspiration" and row["status"] == "skip" for row in face["finish"]
+    )
+
+
+@pytest.mark.unit
+def test_face_feature_skips_inspiration_owed() -> None:
+    """G5: feature class must observe first — not tunnel into inspiration."""
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        build_agent_face_card,
+    )
+
+    face = build_agent_face_card(
+        episode_id="ep_feat",
+        strategy={
+            "task_scope": "feature_incremental",
+            "intent": "Add a settings toggle to the existing page",
+            "influence_level": "balanced",
+            "verification_status": "pending",
+            "implementation_gate": {
+                "state": "ready",
+                "prohibited_actions": ["claim_complete"],
+            },
+            "episode_portfolio": {
+                "paid": [],
+                "unpaid": [
+                    {"family": "inspiration", "suggested": "perception_inspiration_collect"},
+                    {"family": "observe", "suggested": "perception_navigate_and_observe"},
+                    {"family": "verify", "suggested": "perception_verify"},
+                ],
+            },
+            "recommended_resource": "perception://guide/feature",
+        },
+    )
+    assert face["class"] == "feature"
+    assert face["next"] == "perception_navigate_and_observe"
+    assert face["owed"][0]["family"] != "inspiration"
+    assert face["resource"] == "perception://spine/feature"
+
+
+@pytest.mark.unit
+def test_face_section_checklist_next_after_verify() -> None:
+    """G7: section ceremony routes next to observe and blocks claim."""
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        build_agent_face_card,
+    )
+
+    face = build_agent_face_card(
+        episode_id="ep_sec",
+        strategy={
+            "task_scope": "design_driven",
+            "intent": "Landing page sections",
+            "influence_level": "structural",
+            "verification_status": "passed",
+            "implementation_gate": {
+                "state": "ready",
+                "prohibited_actions": [],
+                "section_checklist_required": True,
+            },
+            "episode_portfolio": {
+                "paid": [{"family": "verify"}],
+                "unpaid": [],
+            },
+        },
+    )
+    assert "section_checklist" in face["claim_extra"]
+    assert face["claim_ok"] is False
+    assert face["next"] == "perception_observe"
+
+
+@pytest.mark.unit
+def test_face_spec_revision_next_after_verify() -> None:
+    """G8: spec revision routes to snapshot and blocks claim."""
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        build_agent_face_card,
+    )
+
+    face = build_agent_face_card(
+        episode_id="ep_spec",
+        strategy={
+            "task_scope": "redesign",
+            "intent": "Match mockup after draft",
+            "influence_level": "structural",
+            "verification_status": "passed",
+            "spec_revision_gate": {"revision_required": True},
+            "implementation_gate": {"state": "ready", "prohibited_actions": []},
+            "episode_portfolio": {
+                "paid": [{"family": "verify"}, {"family": "snapshot"}],
+                "unpaid": [],
+            },
+        },
+    )
+    assert "spec_revision" in face["claim_extra"]
+    assert face["claim_ok"] is False
+    assert face["next"] == "perception_build_design_snapshot"
+
+
+@pytest.mark.unit
+def test_face_plan_component_suggested_remaps_to_select() -> None:
+    """G10: unpaid plan_component_search must surface as select with query."""
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        build_agent_face_card,
+    )
+
+    face = build_agent_face_card(
+        episode_id="ep_plan",
+        strategy={
+            "task_scope": "design_driven",
+            "intent": "Build pricing section foundation",
+            "influence_level": "structural",
+            "verification_status": "pending",
+            "implementation_gate": {
+                "state": "blocked",
+                "prohibited_actions": ["claim_complete"],
+            },
+            "episode_portfolio": {
+                "paid": [
+                    {"family": "inspiration"},
+                    {"family": "visual_feedback"},
+                    {"family": "snapshot"},
+                ],
+                "unpaid": [
+                    {
+                        "family": "component",
+                        "suggested": "perception_plan_component_search",
+                    }
+                ],
+            },
+        },
+    )
+    assert face["next"] == "perception_select_component_foundation"
+    assert "query" in (face.get("next_args") or {})
+    assert not str(face["next_args"]["query"]).startswith("<")
+
+
+@pytest.mark.unit
+def test_face_reference_image_classifies_redesign() -> None:
+    """G12: uploaded reference / figma cues → redesign, not greenfield inspiration."""
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        classify_agent_face,
+        build_agent_face_card,
+    )
+
+    strategy = {
+        "task_scope": "design_driven",
+        "intent": "Match this uploaded reference image to the hero",
+        "influence_level": "structural",
+        "verification_status": "pending",
+        "implementation_gate": {
+            "state": "blocked",
+            "prohibited_actions": ["claim_complete"],
+        },
+        "episode_portfolio": {
+            "paid": [],
+            "unpaid": [
+                {"family": "inspiration", "suggested": "perception_inspiration_collect"},
+                {"family": "snapshot", "suggested": "perception_build_design_snapshot"},
+                {"family": "observe", "suggested": "perception_navigate_and_observe"},
+            ],
+        },
+    }
+    assert classify_agent_face(strategy) == "redesign"
+    face = build_agent_face_card(episode_id="ep_ref", strategy=strategy)
+    assert face["class"] == "redesign"
+    assert face["next"] in {
+        "perception_navigate_and_observe",
+        "perception_build_design_snapshot",
+    }
+    assert face["next"] != "perception_inspiration_collect"
 
 
 @pytest.mark.unit

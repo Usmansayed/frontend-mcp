@@ -17,7 +17,7 @@ Skip pure backend/infra. User says “just code”: honor this turn; warn if str
 
 1. Bootstrap: `perception_health({ url, intent })` → `perception_session_start({ base_url, intent })`
 2. Read **`agent_summary.card`**: `class`, `depth`, `next`, `next_args`, `owed`, `gate`, `claim_ok`, `claim_extra`, `finish`, `resource`
-3. Before large UI: pay `owed` (≤3). Call `next` **with `next_args`** (if `then` is set, call that right after). Honor `depth` — only complete `finish[]` items (skip = do not invent).
+3. Before large UI: pay `owed` (≤3). Call `next` **with `next_args`** (if `then` is set, call that right after). If `next` is empty and `claim_ok`, stop and claim. Honor `depth` — only complete `finish[]` items (skip = do not invent).
 4. One browser tool at a time per `session_id`. LOOK at screenshots / `visual_feedback`.
 5. Claim only when `data.verified=true` and `claim_ok`; every non-skip `finish` item done.
 
