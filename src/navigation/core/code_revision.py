@@ -16,16 +16,18 @@ _PKG = "frontend-perception-engine"
 
 
 def _read_revision() -> str:
-	try:
-		return metadata.version(_PKG)
-	except Exception:
-		pass
+	# Prefer repo VERSION when running from a source checkout (PYTHONPATH=src).
+	# Installed dist-info often lags behind ship bumps until `pip install -e .`.
 	version_path = Path(__file__).resolve().parents[3] / "VERSION"
 	try:
 		text = version_path.read_text(encoding="utf-8").strip()
 		if text:
 			return text
 	except OSError:
+		pass
+	try:
+		return metadata.version(_PKG)
+	except Exception:
 		pass
 	return "0.0.0+unknown"
 
