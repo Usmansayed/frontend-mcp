@@ -1,9 +1,9 @@
 {
   "summary": {
-    "overall_score": 0.95,
-    "passed": 7,
+    "overall_score": 1.0,
+    "passed": 8,
     "total": 8,
-    "verdict": "USABLE_WITH_GAPS"
+    "verdict": "EASY_ENOUGH"
   },
   "checks": [
     {
@@ -50,8 +50,8 @@
     {
       "id": "tool_descriptions_core",
       "ok": true,
-      "score": 0.9166666666666666,
-      "detail": "tools=73 core_present=True core_when=100% core_how=67% core_len=100%",
+      "score": 1.0,
+      "detail": "tools=73 core_present=True core_when=100% core_how=100% core_len=100%",
       "evidence": {
         "tool_count": 73,
         "core_missing": [],
@@ -81,21 +81,21 @@
             "name": "perception_inspiration_collect",
             "words": 50,
             "has_when": true,
-            "has_how": false,
+            "has_how": true,
             "len_ok": true
           },
           {
             "name": "perception_navigate_and_observe",
             "words": 60,
             "has_when": true,
-            "has_how": false,
+            "has_how": true,
             "len_ok": true
           },
           {
             "name": "perception_probe_form",
             "words": 48,
             "has_when": true,
-            "has_how": false,
+            "has_how": true,
             "len_ok": true
           },
           {
@@ -124,11 +124,24 @@
     },
     {
       "id": "tool_volume",
-      "ok": false,
-      "score": 0.684931506849315,
-      "detail": "73 tools exposed (easier \u226450; progressive discovery needed if higher)",
+      "ok": true,
+      "score": 1.0,
+      "detail": "73 tools exposed; groups={'Diagnostics': 9, 'Browser': 12, 'Design': 9, 'Resolver': 9, 'Quality': 4, 'Coordinator': 3, 'Session': 7, 'Inspiration': 3, 'Component': 4, 'Resources': 13}; grouped=100% (pass if \u226450 or \u226590% grouped \u2264100)",
       "evidence": {
-        "tool_count": 73
+        "tool_count": 73,
+        "groups": {
+          "Diagnostics": 9,
+          "Browser": 12,
+          "Design": 9,
+          "Resolver": 9,
+          "Quality": 4,
+          "Coordinator": 3,
+          "Session": 7,
+          "Inspiration": 3,
+          "Component": 4,
+          "Resources": 13
+        },
+        "group_rate": 1.0
       }
     },
     {

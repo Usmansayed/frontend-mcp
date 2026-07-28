@@ -426,6 +426,34 @@ CASES = [
 			},
 		},
 	),
+	_row(
+		id="login_nav_landing_stays_greenfield",
+		intent="Build a new product landing with brand hero; login link only in the nav",
+		expect_class="greenfield",
+		forbid_next={"perception_probe_form"},
+		strategy_extra={"influence_level": "structural"},
+	),
+	_row(
+		id="auth_probe_stays_forms",
+		intent="Invalid then valid submit on the auth login form at /forms/login",
+		expect_class="forms",
+		expect_next="perception_probe_form",
+		strategy_extra={"influence_level": "balanced"},
+	),
+	_row(
+		id="claim_ok_after_verify_hotfix",
+		intent="Fix overlapping CTA — surgical CSS hotfix",
+		expect_class="hotfix",
+		expect_next="",
+		expect_claim_ok=True,
+		strategy_extra={
+			"task_scope": "hotfix",
+			"influence_level": "minimal",
+			"verification_status": "passed",
+			"implementation_gate": {"state": "maintenance", "prohibited_actions": []},
+			"episode_portfolio": {"paid": [{"family": "verify"}], "unpaid": []},
+		},
+	),
 ]
 
 

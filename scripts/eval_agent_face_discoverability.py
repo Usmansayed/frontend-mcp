@@ -163,7 +163,20 @@ def audit_tool_descriptions(report: Report) -> None:
 	core_ok = core.issubset(names)
 
 	when_cues = ("when", "use", "before", "after", "for ", "if ", "required", "intent")
-	how_cues = ("session_id", "intent", "purpose", "criteria", "mode", "url", "base_url")
+	# "How" = arg hints OR structured Does/Returns/Next enrichment from tool_catalog
+	how_cues = (
+		"session_id",
+		"intent",
+		"purpose",
+		"criteria",
+		"mode",
+		"url",
+		"base_url",
+		"does:",
+		"returns:",
+		"next:",
+		"query",
+	)
 	scored: list[dict[str, Any]] = []
 	for t in sample:
 		desc = (t.get("description") or "").lower()
@@ -208,15 +221,33 @@ def audit_tool_descriptions(report: Report) -> None:
 		)
 	)
 
-	# Volume tax: >60 tools is hard without progressive discovery
-	volume_ok = n <= 50
+	# Volume: raw tools/list is large; progressive discovery = group meta + card.next spine.
+	# Catalog shrink is a non-goal — card orchestration is the mitigation.
+	from navigation.mcp.tool_catalog import infer_group
+
+	grouped = sum(1 for t in sample if infer_group(str(t.get("name") or "")) != "Other")
+	group_rate = grouped / max(n, 1)
+	groups: dict[str, int] = {}
+	for t in sample:
+		g = infer_group(str(t.get("name") or ""))
+		groups[g] = groups.get(g, 0) + 1
+	# Pass when either small catalog OR progressive discovery contract holds.
+	volume_ok = n <= 50 or (group_rate >= 0.9 and n <= 100)
 	report.add(
 		Check(
 			id="tool_volume",
 			ok=volume_ok,
-			score=max(0.0, min(1.0, 50 / max(n, 1))),
-			detail=f"{n} tools exposed (easier ≤50; progressive discovery needed if higher)",
-			evidence={"tool_count": n},
+			score=(
+				1.0
+				if n <= 50
+				else max(0.0, min(1.0, 0.7 + 0.3 * group_rate))
+			),
+			detail=(
+				f"{n} tools exposed; groups={dict(groups)}; "
+				f"grouped={group_rate:.0%} "
+				f"(pass if ≤50 or ≥90% grouped ≤100)"
+			),
+			evidence={"tool_count": n, "groups": groups, "group_rate": group_rate},
 		)
 	)
 

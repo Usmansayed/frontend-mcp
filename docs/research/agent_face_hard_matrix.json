@@ -1,7 +1,7 @@
 {
   "ok": true,
-  "passed": 23,
-  "total": 23,
+  "passed": 26,
+  "total": 26,
   "rows": [
     {
       "id": "fix_vs_feature_stamp",
@@ -449,6 +449,65 @@
       "next": "perception_navigate_and_observe",
       "owed": [],
       "claim_ok": false,
+      "depth": "light",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true
+      },
+      "note": null,
+      "classify": "hotfix"
+    },
+    {
+      "id": "login_nav_landing_stays_greenfield",
+      "passed": true,
+      "class": "greenfield",
+      "next": "perception_verify",
+      "owed": [],
+      "claim_ok": false,
+      "depth": "full",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true
+      },
+      "note": null,
+      "classify": "greenfield"
+    },
+    {
+      "id": "auth_probe_stays_forms",
+      "passed": true,
+      "class": "forms",
+      "next": "perception_probe_form",
+      "owed": [
+        "forms"
+      ],
+      "claim_ok": false,
+      "depth": "light",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true
+      },
+      "note": null,
+      "classify": "forms"
+    },
+    {
+      "id": "claim_ok_after_verify_hotfix",
+      "passed": true,
+      "class": "hotfix",
+      "next": "",
+      "owed": [],
+      "claim_ok": true,
       "depth": "light",
       "checks": {
         "class": true,
