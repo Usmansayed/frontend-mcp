@@ -3,9 +3,32 @@
 Health compares this to importlib package metadata. When an agent installs a new
 wheel without restarting the MCP process, package_version updates (disk) while
 CODE_REVISION stays on the old loaded module → version_skew=true.
+
+Prefer reading VERSION / package metadata so ship bumps stay in lockstep.
 """
 
 from __future__ import annotations
 
-# Bump in lockstep with pyproject.toml [project].version on every publish.
-CODE_REVISION = "1.2.0.dev47"
+from importlib import metadata
+from pathlib import Path
+
+_PKG = "frontend-perception-engine"
+
+
+def _read_revision() -> str:
+	try:
+		return metadata.version(_PKG)
+	except Exception:
+		pass
+	version_path = Path(__file__).resolve().parents[3] / "VERSION"
+	try:
+		text = version_path.read_text(encoding="utf-8").strip()
+		if text:
+			return text
+	except OSError:
+		pass
+	return "0.0.0+unknown"
+
+
+# Resolved once at import — restart MCP after version bumps so this refreshes.
+CODE_REVISION = _read_revision()
