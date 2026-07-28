@@ -229,6 +229,133 @@ def test_face_polish_not_greenfield_under_design_driven() -> None:
 
 
 @pytest.mark.unit
+def test_face_host_action_polish_does_not_steal_feature() -> None:
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        classify_agent_face,
+    )
+
+    assert (
+        classify_agent_face(
+            {
+                "task_scope": "feature_incremental",
+                "influence_level": "balanced",
+                "intent": "Add a pricing feature to the existing checkout page",
+                "host_action": "RIGHT-SIZE POLISH: pay browser_observe, visual_feedback, browser_verify.",
+                "summary": "Verification outcome is unresolved. Scope=feature_incremental.",
+            }
+        )
+        == "feature"
+    )
+
+
+@pytest.mark.unit
+def test_face_feature_survives_debug_scope_after_observe() -> None:
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        classify_agent_face,
+    )
+
+    assert (
+        classify_agent_face(
+            {
+                "task_scope": "debug",
+                "influence_level": "maintenance",
+                "intent": "Add a settings toggle to an existing page — incremental feature",
+                "summary": "Observed homepage",
+                "host_action": "Gather observe evidence",
+            }
+        )
+        == "feature"
+    )
+
+
+@pytest.mark.unit
+def test_face_feature_intent_without_stamp() -> None:
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        classify_agent_face,
+    )
+
+    assert (
+        classify_agent_face(
+            {
+                "intent": "Add a pricing feature to the existing checkout page",
+            }
+        )
+        == "feature"
+    )
+
+
+@pytest.mark.unit
+def test_face_redesign_checkout_not_forms() -> None:
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        classify_agent_face,
+    )
+
+    assert (
+        classify_agent_face(
+            {
+                "task_scope": "redesign",
+                "intent": "Redesign the checkout layout to match the mockup — measured redesign",
+                "influence_level": "structural",
+            }
+        )
+        == "redesign"
+    )
+
+
+@pytest.mark.unit
+def test_face_landing_signup_stays_greenfield() -> None:
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        classify_agent_face,
+    )
+
+    assert (
+        classify_agent_face(
+            {
+                "intent": "Build a new SaaS landing page with strong brand hero and email signup in the footer",
+                "influence_level": "structural",
+            }
+        )
+        == "greenfield"
+    )
+
+
+@pytest.mark.unit
+def test_face_checkout_feature_not_forms() -> None:
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        classify_agent_face,
+    )
+
+    assert (
+        classify_agent_face(
+            {
+                "task_scope": "feature_incremental",
+                "intent": "Add a pricing feature to the existing checkout page",
+                "influence_level": "balanced",
+            }
+        )
+        == "feature"
+    )
+
+
+@pytest.mark.unit
+def test_face_fix_checkout_copy_not_forms() -> None:
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        classify_agent_face,
+    )
+
+    assert (
+        classify_agent_face(
+            {
+                "task_scope": "feature_incremental",
+                "intent": "Add a feature to fix checkout copy on the existing page",
+                "influence_level": "balanced",
+            }
+        )
+        == "hotfix"
+    )
+
+
+@pytest.mark.unit
 def test_face_hotfix_cues_beat_stamped_feature_incremental() -> None:
     """Intent 'fix overlapping…' must stay hotfix even if scope is feature_incremental."""
     from navigation.coordination_intelligence.planning.coordinator_card import (

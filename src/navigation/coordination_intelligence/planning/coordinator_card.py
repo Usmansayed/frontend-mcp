@@ -192,15 +192,14 @@ def classify_agent_face(strategy: dict[str, Any]) -> str:
 	scope = str(strategy.get("task_scope") or "").lower()
 	surface = str(strategy.get("surface_type") or "").lower()
 	resource = str(strategy.get("recommended_resource") or "").lower()
-	host = str(strategy.get("host_action") or "").lower()
-	# Include raw intent / summary so "fix overlapping…" classifies as hotfix
-	# even when lifecycle stamps a design-ish scope.
+	# Intent / summary only for cue matching — never host_action.
+	# Advisory strings like "RIGHT-SIZE POLISH" must not reclassify a feature episode.
 	intentish = " ".join(
 		str(strategy.get(k) or "")
 		for k in ("intent", "summary", "user_intent", "original_intent")
 	).lower()
 	matters = " ".join(str(x) for x in (strategy.get("what_matters_now") or [])).lower()
-	blob = f"{scope} {surface} {resource} {host} {intentish} {matters}"
+	blob = f"{scope} {surface} {resource} {intentish} {matters}"
 
 	rs = strategy.get("right_sizing") if isinstance(strategy.get("right_sizing"), dict) else {}
 	tier = str(
@@ -209,11 +208,15 @@ def classify_agent_face(strategy: dict[str, Any]) -> str:
 		or ""
 	).lower()
 
-	if (
-		re.search(r"\b(forms?|checkout|sign[\s-]?up|login|auth)\b", blob)
-		or scope in {"forms"}
+	if scope in {"forms"}:
+		return "forms"
+	# Hard forms path: explicit form routes / probe language.
+	if re.search(r"/forms/", blob) or re.search(
+		r"\b(validation form|probe[_ ]?form|invalid then valid|invalid[\s-]?submit)\b",
+		blob,
 	):
 		return "forms"
+	# Redesign before soft forms keywords ("checkout redesign" must stay redesign).
 	if (
 		scope in {"redesign"}
 		or "redesign" in blob
@@ -224,7 +227,33 @@ def classify_agent_face(strategy: dict[str, Any]) -> str:
 		)
 	):
 		return "redesign"
+	# Soft forms keywords — do not steal landing/hero greenfield, stamped features, or surgical fixes.
+	if re.search(r"\b(forms?|checkout|sign[\s-]?up|login|auth)\b", blob):
+		landingish = re.search(r"\b(landing|greenfield|hero|brand)\b", blob)
+		featureish = scope in {"feature_incremental", "feature"} or re.search(
+			r"\b(add|new)\b.{0,40}\bfeature\b|\bfeature\b.{0,40}\b(existing|page|toggle)\b",
+			blob,
+		)
+		fixish = (
+			scope in {"hotfix", "surgical", "debug"}
+			or re.search(r"\bfix\b", blob) is not None
+			or any(
+				c in blob
+				for c in (
+					"overlapping",
+					"bugfix",
+					"css bug",
+					"layout bug",
+					"typo",
+					"regression",
+				)
+			)
+		)
+		if not (landingish or featureish or fixish):
+			return "forms"
 	# Surgical/hotfix cues beat stamped feature_incremental (lifecycle often mid/feature).
+	# Do NOT treat bare scope=debug as hotfix when intent is clearly an incremental feature —
+	# observe often bumps cluster.debug.* and would otherwise flip the face mid-episode.
 	hotfix_cues = (
 		"hotfix",
 		"bugfix",
@@ -238,12 +267,12 @@ def classify_agent_face(strategy: dict[str, Any]) -> str:
 		"fix overlapping",
 		"fix broken",
 	)
-	if (
-		scope in {"hotfix", "surgical", "debug"}
-		or "bugfix" in resource
+	hotfix_from_intent = (
+		"bugfix" in resource
 		or any(c in blob for c in hotfix_cues)
 		or re.search(r"\bfix\b", blob) is not None
-	):
+	)
+	if scope in {"hotfix", "surgical"} or hotfix_from_intent:
 		return "hotfix"
 	# Polish/chrome text cues before greenfield; do not let polish-tier alone steal features.
 	polish_cues = (
@@ -259,11 +288,21 @@ def classify_agent_face(strategy: dict[str, Any]) -> str:
 	)
 	if any(c in blob for c in polish_cues):
 		return "hotfix"
-	# Feature scope before polish-tier defaults on design_driven.
-	if scope in {"feature_incremental", "feature"} or (
-		re.search(r"\bfeature\b", resource) and "hotfix" not in blob and "polish" not in blob
+	# Feature scope / intent language before polish-tier defaults and before debug→hotfix.
+	feature_from_intent = re.search(
+		r"\b(add|new)\b.{0,48}\b(feature|toggle)\b"
+		r"|\bincremental feature\b"
+		r"|\bfeature\b.{0,40}\b(existing|page|toggle)\b",
+		blob,
+	)
+	if (
+		scope in {"feature_incremental", "feature"}
+		or feature_from_intent
+		or (re.search(r"\bfeature\b", resource) and "hotfix" not in blob and "polish" not in blob)
 	):
 		return "feature"
+	if scope in {"debug"}:
+		return "hotfix"
 	if tier in {"polish", "touch_up"} and scope in {"design_driven", "system_setup", ""}:
 		return "hotfix"
 	if scope in {"design_driven", "system_setup"} or "design-workflow" in resource:

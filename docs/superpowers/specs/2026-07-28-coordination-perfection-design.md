@@ -37,6 +37,8 @@ Automate what we can (discoverability harness); remainder is live Cursor.
 
 ## Phase 3 — End-to-end reliability
 
+**Status:** PASS (2026-07-28) — `scripts/eval_agent_face_phase3_reliability.py` BOARD 6/6; evidence `docs/research/coordination-perfection-phase3-2026-07-28.md`.
+
 **Pass bar:** Session boards finish with `data.verified=true`, no false-green, inspiration/select timeouts bounded; latency SLO documented and met on BOARD classes.
 
 ## Done ladder for the program

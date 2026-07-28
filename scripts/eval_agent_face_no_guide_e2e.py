@@ -89,6 +89,46 @@ CASES: list[CaseSpec] = [
 		max_steps=8,
 		finish="structural_verify",
 	),
+	CaseSpec(
+		id="feature",
+		intent="Add a settings toggle to an existing page — incremental feature",
+		expect_class="feature",
+		route="/",
+		max_steps=6,
+		finish="verify_text",
+	),
+	CaseSpec(
+		id="polish",
+		intent="Tighten spacing on the navbar only — visual polish chrome",
+		expect_class="hotfix",
+		route="/",
+		max_steps=6,
+		finish="verify_text",
+	),
+	CaseSpec(
+		id="hotfix_stamped_feature",
+		intent="Fix overlapping CTA button layout bug on the homepage — surgical CSS hotfix (feature_incremental stamp should lose)",
+		expect_class="hotfix",
+		route="/",
+		max_steps=6,
+		finish="verify_text",
+	),
+	CaseSpec(
+		id="landing_signup_not_forms",
+		intent="Build a new SaaS landing page with strong brand hero and email signup in the footer",
+		expect_class="greenfield",
+		route="/",
+		max_steps=8,
+		finish="structural_verify",
+	),
+	CaseSpec(
+		id="checkout_feature_not_forms",
+		intent="Add a pricing feature to the existing checkout page",
+		expect_class="feature",
+		route="/",
+		max_steps=6,
+		finish="verify_text",
+	),
 ]
 
 

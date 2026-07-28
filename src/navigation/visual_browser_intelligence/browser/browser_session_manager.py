@@ -143,13 +143,16 @@ class BrowserSessionManager:
                     pages = browser.get_pages
                     result = pages() if callable(pages) else pages
                     if asyncio.iscoroutine(result):
+                        result.close()
                         owned_pages = -1  # async; use tabs sync path below
                     elif result is not None:
                         owned_pages = len(list(result))
                 if owned_pages <= 0 and hasattr(browser, "get_tabs"):
                     tabs = browser.get_tabs
                     result = tabs() if callable(tabs) else tabs
-                    if not asyncio.iscoroutine(result) and result is not None:
+                    if asyncio.iscoroutine(result):
+                        result.close()
+                    elif result is not None:
                         owned_pages = len(list(result))
             except Exception:
                 owned_pages = 0
