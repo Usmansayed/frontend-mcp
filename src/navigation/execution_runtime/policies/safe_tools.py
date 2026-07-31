@@ -48,6 +48,7 @@ _MUTATING_TOOLS = frozenset({
     "perception_integrate_component",
     "perception_inspiration_collect",
     "perception_resource_search",
+    "perception_creative_assets",
     "perception_build_design_snapshot",
     "perception_design_graph_refresh",
     "perception_state_save",

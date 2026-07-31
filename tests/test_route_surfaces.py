@@ -151,3 +151,26 @@ def test_apply_envelope_execute_actions_upserts_route() -> None:
     )
     assert psm.episode.active_route_path == "/settings/profile"
     assert active_route_surface(psm) == "settings_form"
+
+
+@pytest.mark.unit
+def test_apply_envelope_bare_navigate_updates_active_route() -> None:
+    """Run 6b bug H: perception_navigate must move active_route even without observe."""
+    from navigation.coordination_intelligence.artifacts.loader import load_runtime_artifacts
+    from navigation.coordination_intelligence.psm.normalize import apply_envelope
+
+    psm = ProjectSituationModel()
+    bundle = load_runtime_artifacts()
+    upsert_route_surface(psm, "http://127.0.0.1:3001/about/", family="observe")
+    assert psm.episode.active_route_path == "/about"
+    apply_envelope(
+        psm,
+        {
+            "tool": "perception_navigate",
+            "ok": True,
+            "url": "http://127.0.0.1:3001/work/",
+            "data": {"preflight": {"ok": True}},
+        },
+        bundle,
+    )
+    assert psm.episode.active_route_path == "/work"

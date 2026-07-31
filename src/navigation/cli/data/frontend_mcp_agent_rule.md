@@ -2,7 +2,7 @@
 
 You are the brain. Frontend MCP is evidence + a scoreboard card (`agent_summary.card`).
 
-**Default:** pay owed evidence before locking UI into code. Never build everything then soft-verify once.
+**Default:** Evidence Pack Loop — band **heavy** for normal UI. Pay entire `owed` / `pack.critical` before locking UI. Never build everything then soft-verify once.
 
 ---
 
@@ -16,20 +16,29 @@ Skip pure backend/infra. User says “just code”: honor this turn; warn if str
 ## 1. Scoreboard loop
 
 1. Bootstrap: `perception_health({ url, intent })` → `perception_session_start({ base_url, intent })`
-2. Read **`agent_summary.card`**: `class`, `depth`, `next`, `next_args`, `owed`, `gate`, `claim_ok`, `claim_extra`, `finish`, `resource`
-3. Before large UI: pay `owed` (≤3). Call `next` **with `next_args`** (if `then` is set, call that right after). If `next` is empty and `claim_ok`, stop and claim. Honor `depth` — only complete `finish[]` items (skip = do not invent).
+2. Read **`agent_summary.card`**: `class`, `evidence_band`, `pack`, `implement_blocked`, `depth`, `next`, `next_args`, `owed`, `gate`, `claim_ok`, `claim_extra`, `finish`, `resource`
+3. Before large UI: pay entire `owed` / `pack.critical` (integrated loop — not one silo). While `implement_blocked`, gather evidence only. Call `next` **with `next_args`** (if `then` is set, call that right after). If `next` is empty and `claim_ok`, stop and claim. Honor `depth` — only complete `finish[]` items (skip = do not invent).
 4. One browser tool at a time per `session_id`. LOOK at screenshots / `visual_feedback`.
 5. Claim only when `data.verified=true` and `claim_ok`; every non-skip `finish` item done.
 
-## Class spines
+## Bands
 
-| class | minimum path |
-|-------|----------------|
-| greenfield | inspiration → LOOK/lock → implement → verify |
-| redesign | snapshot → LOOK → implement → verify |
-| feature | observe affected → implement → verify |
-| hotfix | observe blocking → fix → verify |
-| forms | probe_form → invalid+valid verify |
+| band | when |
+|------|------|
+| `light` | hotfix / forms / explicit surgical |
+| `medium` | explicit polish/chrome |
+| `heavy` | **default** normal UI |
+| `very_heavy` | greenfield / redesign / sticky design |
+
+## Class packs
+
+| class | pack (heavy / very_heavy) |
+|-------|---------------------------|
+| greenfield | inspiration → LOOK/lock → component → observe → verify |
+| redesign | observe → snapshot → LOOK → component? → verify |
+| feature | observe → component? → LOOK → verify |
+| hotfix | observe → verify (no inspiration) |
+| forms | probe → invalid+valid verify (no inspiration) |
 
 Optional depth: `card.resource` (usually `perception://spine/{class}`).
 
@@ -39,8 +48,9 @@ Optional depth: `card.resource` (usually `perception://spine/{class}`).
 
 - `ok` ≠ `verified` (only `data.verified=true` counts)
 - Skip bootstrap on structural UI
-- Invent layout while structural `owed` remains
+- Invent layout while `implement_blocked` or pack.critical unpaid
 - Claim while `claim_ok` is false
+- Tunnel to one silo while other pack families remain
 - Parallel browser batches on one `session_id`
 - `perception_code_context` — use `perception_resolve_*`
 

@@ -27,7 +27,7 @@
         {
           "tool": "perception_health",
           "ok": true,
-          "latency_ms": 1719,
+          "latency_ms": 3437,
           "slo_ms": 5000,
           "slo_ok": true,
           "verified": null,
@@ -37,7 +37,7 @@
         {
           "tool": "perception_session_start",
           "ok": true,
-          "latency_ms": 3393,
+          "latency_ms": 7051,
           "slo_ms": 20000,
           "slo_ok": true,
           "verified": null,
@@ -47,7 +47,7 @@
         {
           "tool": "perception_probe_form",
           "ok": true,
-          "latency_ms": 1340,
+          "latency_ms": 1693,
           "slo_ms": 20000,
           "slo_ok": true,
           "verified": null,
@@ -57,7 +57,7 @@
         {
           "tool": "perception_verify",
           "ok": true,
-          "latency_ms": 3,
+          "latency_ms": 4,
           "slo_ms": 20000,
           "slo_ok": true,
           "verified": true,
@@ -75,7 +75,7 @@
           "error": null
         }
       ],
-      "wall_ms": 6458,
+      "wall_ms": 12188,
       "error": null
     },
     {
@@ -86,7 +86,7 @@
         {
           "tool": "perception_health",
           "ok": true,
-          "latency_ms": 10,
+          "latency_ms": 34,
           "slo_ms": 5000,
           "slo_ok": true,
           "verified": null,
@@ -106,7 +106,7 @@
         {
           "tool": "perception_navigate_and_observe",
           "ok": true,
-          "latency_ms": 913,
+          "latency_ms": 1283,
           "slo_ms": 25000,
           "slo_ok": true,
           "verified": null,
@@ -124,7 +124,7 @@
           "error": null
         }
       ],
-      "wall_ms": 931,
+      "wall_ms": 1326,
       "error": null
     },
     {
@@ -135,7 +135,7 @@
         {
           "tool": "perception_health",
           "ok": true,
-          "latency_ms": 7,
+          "latency_ms": 31,
           "slo_ms": 5000,
           "slo_ok": true,
           "verified": null,
@@ -145,7 +145,7 @@
         {
           "tool": "perception_session_start",
           "ok": true,
-          "latency_ms": 4,
+          "latency_ms": 6,
           "slo_ms": 20000,
           "slo_ok": true,
           "verified": null,
@@ -155,7 +155,7 @@
         {
           "tool": "perception_navigate_and_observe",
           "ok": true,
-          "latency_ms": 810,
+          "latency_ms": 1124,
           "slo_ms": 25000,
           "slo_ok": true,
           "verified": null,
@@ -165,7 +165,7 @@
         {
           "tool": "perception_verify",
           "ok": true,
-          "latency_ms": 1,
+          "latency_ms": 2,
           "slo_ms": 20000,
           "slo_ok": true,
           "verified": true,
@@ -173,7 +173,7 @@
           "error": null
         }
       ],
-      "wall_ms": 824,
+      "wall_ms": 1164,
       "error": null
     },
     {
@@ -184,7 +184,7 @@
         {
           "tool": "perception_health",
           "ok": true,
-          "latency_ms": 8,
+          "latency_ms": 18,
           "slo_ms": 5000,
           "slo_ok": true,
           "verified": null,
@@ -204,7 +204,7 @@
         {
           "tool": "perception_inspiration_collect",
           "ok": true,
-          "latency_ms": 1278,
+          "latency_ms": 2966,
           "slo_ms": 60000,
           "slo_ok": true,
           "verified": null,
@@ -212,7 +212,7 @@
           "error": null
         }
       ],
-      "wall_ms": 1290,
+      "wall_ms": 2988,
       "error": null
     },
     {
@@ -223,7 +223,7 @@
         {
           "tool": "perception_session_start",
           "ok": true,
-          "latency_ms": 6,
+          "latency_ms": 12,
           "slo_ms": 20000,
           "slo_ok": true,
           "verified": null,
@@ -233,7 +233,7 @@
         {
           "tool": "perception_select_component_foundation",
           "ok": true,
-          "latency_ms": 1175,
+          "latency_ms": 3836,
           "slo_ms": 15000,
           "slo_ok": true,
           "verified": null,
@@ -241,7 +241,7 @@
           "error": null
         }
       ],
-      "wall_ms": 1182,
+      "wall_ms": 3849,
       "error": null
     },
     {
@@ -251,6 +251,26 @@
         "rounds=3"
       ],
       "steps": [
+        {
+          "tool": "perception_session_start",
+          "ok": true,
+          "latency_ms": 7,
+          "slo_ms": 20000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "hotfix",
+          "error": null
+        },
+        {
+          "tool": "perception_navigate_and_observe",
+          "ok": true,
+          "latency_ms": 1054,
+          "slo_ms": 25000,
+          "slo_ok": true,
+          "verified": null,
+          "card_class": "hotfix",
+          "error": null
+        },
         {
           "tool": "perception_session_start",
           "ok": true,
@@ -264,7 +284,7 @@
         {
           "tool": "perception_navigate_and_observe",
           "ok": true,
-          "latency_ms": 892,
+          "latency_ms": 1045,
           "slo_ms": 25000,
           "slo_ok": true,
           "verified": null,
@@ -274,7 +294,7 @@
         {
           "tool": "perception_session_start",
           "ok": true,
-          "latency_ms": 5,
+          "latency_ms": 4,
           "slo_ms": 20000,
           "slo_ok": true,
           "verified": null,
@@ -284,27 +304,7 @@
         {
           "tool": "perception_navigate_and_observe",
           "ok": true,
-          "latency_ms": 806,
-          "slo_ms": 25000,
-          "slo_ok": true,
-          "verified": null,
-          "card_class": "hotfix",
-          "error": null
-        },
-        {
-          "tool": "perception_session_start",
-          "ok": true,
-          "latency_ms": 8,
-          "slo_ms": 20000,
-          "slo_ok": true,
-          "verified": null,
-          "card_class": "hotfix",
-          "error": null
-        },
-        {
-          "tool": "perception_navigate_and_observe",
-          "ok": true,
-          "latency_ms": 788,
+          "latency_ms": 1005,
           "slo_ms": 25000,
           "slo_ok": true,
           "verified": null,
@@ -312,7 +312,7 @@
           "error": null
         }
       ],
-      "wall_ms": 2507,
+      "wall_ms": 3124,
       "error": null
     }
   ]

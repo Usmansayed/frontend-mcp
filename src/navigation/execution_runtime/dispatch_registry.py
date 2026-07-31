@@ -79,6 +79,7 @@ from navigation.mcp.handlers import (
     handle_resource_photo_search,
     handle_resource_preview,
     handle_resource_search,
+    handle_creative_assets,
     handle_resource_session_end,
     handle_search_components,
     handle_select_component_foundation,
@@ -267,6 +268,9 @@ class DispatchRegistry:
         async def resource_search(args: dict[str, Any]) -> dict[str, Any]:
             return await handle_resource_search(args)
 
+        async def creative_assets(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_creative_assets(args)
+
         async def resource_preview(args: dict[str, Any]) -> dict[str, Any]:
             return await handle_resource_preview(args)
 
@@ -428,6 +432,7 @@ class DispatchRegistry:
             "perception_inspiration_widen": inspiration_widen,
             "perception_inspiration_session_end": inspiration_session_end,
             "perception_resource_search": resource_search,
+            "perception_creative_assets": creative_assets,
             "perception_resource_preview": resource_preview,
             "perception_resource_session_end": resource_session_end,
             "perception_resource_icon_search": resource_icon_search,

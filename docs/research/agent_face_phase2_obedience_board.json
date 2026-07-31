@@ -10,7 +10,8 @@
       "depth": "light",
       "next": "perception_probe_form",
       "owed": [
-        "forms"
+        "forms",
+        "verify"
       ],
       "claim_ok": false,
       "checks": {
@@ -27,7 +28,10 @@
       "class": "hotfix",
       "depth": "light",
       "next": "perception_navigate_and_observe",
-      "owed": [],
+      "owed": [
+        "observe",
+        "verify"
+      ],
       "claim_ok": false,
       "checks": {
         "class": true,
@@ -46,7 +50,7 @@
       "owed": [
         "inspiration",
         "visual_feedback",
-        "observe"
+        "component"
       ],
       "claim_ok": false,
       "checks": {
@@ -64,8 +68,8 @@
       "depth": "full",
       "next": "perception_navigate_and_observe",
       "owed": [
-        "snapshot",
         "observe",
+        "snapshot",
         "visual_feedback"
       ],
       "claim_ok": false,
@@ -85,6 +89,7 @@
       "next": "perception_navigate_and_observe",
       "owed": [
         "observe",
+        "visual_feedback",
         "verify"
       ],
       "claim_ok": false,
@@ -102,7 +107,10 @@
       "class": "hotfix",
       "depth": "standard",
       "next": "perception_navigate_and_observe",
-      "owed": [],
+      "owed": [
+        "observe",
+        "verify"
+      ],
       "claim_ok": false,
       "checks": {
         "class": true,

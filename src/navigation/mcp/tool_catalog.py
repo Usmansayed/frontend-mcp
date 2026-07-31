@@ -176,7 +176,7 @@ def infer_group(name: str) -> str:
         return "Component"
     if name.startswith("perception_design_") or name.startswith("perception_consistency_") or name == "perception_build_design_snapshot":
         return "Design"
-    if name.startswith("perception_resource_"):
+    if name.startswith("perception_resource_") or name == "perception_creative_assets":
         return "Resources"
     if name.startswith("perception_inspiration_"):
         return "Inspiration"

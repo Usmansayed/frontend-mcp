@@ -291,7 +291,17 @@ bindings:
   - check_resource_license
   - bridge_resource_to_ui
   tools:
+  - tool: perception_creative_assets
   - tool: perception_resource_search
+  - tool: perception_resource_preview
+  - tool: perception_resource_icon_search
+  - tool: perception_resource_font_search
+  - tool: perception_resource_logo_search
+  - tool: perception_resource_photo_search
+  - tool: perception_resource_avatar_search
+  - tool: perception_resource_illustration_search
+  - tool: perception_resource_pattern_search
+  - tool: perception_resource_animation_search
   - tool: perception_resource_license_check
   - tool: perception_resource_observe_bridge
   - tool: perception_resource_session_end

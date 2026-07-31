@@ -81,6 +81,243 @@ def _screenshot_options(arguments: dict[str, Any]) -> tuple[bool, str, str | Non
 	return True, mode, str(selector) if selector else None, annotate
 
 
+def _resolve_observe_pack(
+	arguments: dict[str, Any],
+	*,
+	session_id: str | None = None,
+) -> str:
+	"""screenshot_pack for observe: auto|design|viewport|full|section|none.
+
+	auto → design for greenfield/redesign/mockup sessions; viewport for hotfix/forms.
+	"""
+	from navigation.visual_browser_intelligence.visual.design_evidence_policy import (
+		PACK_AUTO,
+		PACK_DESIGN,
+		PACK_FULL,
+		PACK_NONE,
+		PACK_SECTION,
+		PACK_VIEWPORT,
+		VALID_PACKS,
+	)
+
+	if arguments.get('no_images') or arguments.get('include_screenshot') is False:
+		return PACK_NONE
+	if _detail_mode(arguments) == 'metadata_only':
+		return PACK_NONE
+	raw = str(arguments.get('screenshot_pack') or PACK_AUTO).strip().lower()
+	if raw not in VALID_PACKS:
+		raw = PACK_AUTO
+	if raw != PACK_AUTO:
+		return raw
+	focus = arguments.get('focus_sections')
+	if isinstance(focus, list) and focus:
+		return PACK_SECTION
+	if bool(arguments.get('multi_view')):
+		return PACK_DESIGN
+	mode = str(arguments.get('screenshot_mode') or 'viewport').strip().lower()
+	if mode == 'full':
+		return PACK_FULL
+	face = _observe_session_face_class(session_id, arguments)
+	if face in {'greenfield', 'redesign', 'mockup'}:
+		return PACK_DESIGN
+	return PACK_VIEWPORT
+
+
+def _observe_session_face_class(
+	session_id: str | None,
+	arguments: dict[str, Any],
+) -> str | None:
+	"""Best-effort face class for observe auto-pack upgrades."""
+	explicit = str(arguments.get('face_class') or '').strip().lower()
+	if explicit:
+		return explicit
+	sid = str(session_id or arguments.get('session_id') or '').strip()
+	if not sid:
+		return None
+	try:
+		from navigation.coordination_intelligence.planning.coordinator_card import (
+			classify_agent_face,
+		)
+		from navigation.engineering_knowledge.reference_binding import resolve_psm_for_session
+
+		psm = resolve_psm_for_session(sid)
+		if psm is None:
+			return None
+		intent = ' '.join(
+			str(getattr(f, 'intent', '') or '')
+			for f in (getattr(psm.episode, 'intent_stack', None) or [])
+		)
+		strategy = getattr(psm.briefing, 'engineering_strategy', None) or {}
+		if not isinstance(strategy, dict):
+			strategy = {}
+		blob = {
+			'task_scope': strategy.get('task_scope'),
+			'surface_type': strategy.get('surface_type')
+			or getattr(psm.episode, 'surface_type', None),
+			'intent': intent or strategy.get('intent') or strategy.get('user_intent'),
+			'user_intent': intent or strategy.get('user_intent'),
+			'influence_level': strategy.get('influence_level'),
+			'episode_portfolio': strategy.get('episode_portfolio'),
+			'recommended_resource': strategy.get('recommended_resource'),
+			'policy_id': strategy.get('policy_id'),
+		}
+		return classify_agent_face(blob)
+	except Exception:
+		return None
+
+
+async def _observe_capture_pack_paths(
+	rec: Any,
+	*,
+	arguments: dict[str, Any],
+	snapshots: Any,
+	scan_id: str,
+	name: str,
+) -> tuple[list[tuple[str, str]], list[str], str]:
+	"""Multi-view pack when screenshot_pack requests design/full/section."""
+	from navigation.visual_browser_intelligence.visual.design_evidence_policy import (
+		PACK_DESIGN,
+		PACK_ELEMENT,
+		PACK_FULL,
+		PACK_NONE,
+		PACK_SECTION,
+		PACK_VIEWPORT,
+	)
+	from navigation.visual_browser_intelligence.visual.live_regions import probe_layout_regions
+	from navigation.visual_browser_intelligence.visual.visual_capture import (
+		capture_design_evidence,
+	)
+
+	session_id = str(getattr(rec, 'session_id', '') or arguments.get('session_id') or '')
+	pack = _resolve_observe_pack(arguments, session_id=session_id)
+	if pack == PACK_NONE:
+		return [], [], pack
+	# Legacy single-shot only when auto resolved to viewport (hotfix/forms / no face).
+	raw_pack = str(arguments.get('screenshot_pack') or 'auto').strip().lower()
+	if pack == PACK_VIEWPORT and raw_pack in {'', 'auto', 'viewport'}:
+		return [], [], pack
+
+	selector = str(arguments.get('screenshot_selector') or '').strip() or None
+	try:
+		max_sections = int(arguments.get('max_sections', 5))
+	except (TypeError, ValueError):
+		max_sections = 5
+	focus = arguments.get('focus_sections') or []
+	prefer = [str(x) for x in focus] if isinstance(focus, list) else []
+
+	want_viewport = pack in {PACK_DESIGN, PACK_VIEWPORT}
+	want_full = pack in {PACK_DESIGN, PACK_FULL, PACK_SECTION}
+	want_sections = pack in {PACK_DESIGN, PACK_SECTION}
+	want_element = pack == PACK_ELEMENT or bool(selector)
+
+	regions: list[dict[str, Any]] = []
+	try:
+		snap_id = str(arguments.get('snapshot_id') or '').strip()
+		rec_snap = snapshots.get(snap_id) if snap_id and snapshots is not None else None
+		if rec_snap is None and scan_id and snapshots is not None:
+			getter = getattr(snapshots, 'get_by_scan', None)
+			if callable(getter):
+				rec_snap = getter(scan_id)
+		if rec_snap is not None:
+			raw_snap = getattr(rec_snap, 'snapshot', None)
+			if isinstance(raw_snap, dict):
+				regions = list((raw_snap.get('layout') or {}).get('regions') or [])
+			elif raw_snap is not None and hasattr(raw_snap, 'layout'):
+				layout = getattr(raw_snap, 'layout', None)
+				regions = list(getattr(layout, 'regions', None) or [])
+	except Exception:
+		regions = []
+	if want_sections and not regions:
+		regions = await probe_layout_regions(rec.browser)
+
+	paths, degraded = await capture_design_evidence(
+		rec.browser,
+		rec.artifacts_dir / 'images',
+		name,
+		regions=regions,
+		selector=selector,
+		max_sections=max_sections,
+		annotate=bool(arguments.get('annotate_screenshot', True)),
+		want_viewport=want_viewport,
+		want_full=want_full,
+		want_sections=want_sections and bool(regions),
+		want_element=want_element,
+		prefer_sections=prefer,
+	)
+	if want_sections and not regions:
+		degraded = list(degraded) + ['section_regions_unavailable']
+	return paths, degraded, pack
+
+
+async def _finalize_observe_envelope_visuals(
+	envelope: dict[str, Any],
+	*,
+	rec: Any,
+	arguments: dict[str, Any],
+	snapshots: Any,
+	scan_id: str,
+	include_shot: bool,
+	detail: str,
+	obs_dict: dict[str, Any],
+) -> dict[str, Any]:
+	"""Attach single-shot or multi-view pack images; stamp screenshot_pack on data."""
+	from navigation.visual_browser_intelligence.visual.visual_response import (
+		attach_observation_visuals,
+		attach_visual_paths,
+	)
+
+	data = envelope.setdefault('data', {})
+	if not isinstance(data, dict):
+		data = {}
+		envelope['data'] = data
+	section_id = arguments.get('section_id')
+	if section_id not in (None, ''):
+		data['section_id'] = str(section_id)
+
+	if detail == 'metadata_only' or not include_shot:
+		data.setdefault('screenshot_pack', 'none')
+		return envelope
+
+	try:
+		pack_paths, pack_degraded, pack = await _observe_capture_pack_paths(
+			rec,
+			arguments=arguments,
+			snapshots=snapshots,
+			scan_id=scan_id,
+			name=rec.next_capture_name('observe-pack'),
+		)
+	except Exception:
+		pack_paths, pack_degraded, pack = [], ['observe_pack_failed'], 'viewport'
+
+	if pack_degraded:
+		envelope['degraded'] = list(
+			dict.fromkeys(list(envelope.get('degraded') or []) + list(pack_degraded))
+		)
+	data['screenshot_pack'] = pack
+	if 'section_regions_unavailable' in (pack_degraded or []):
+		note = (
+			'Section crops skipped — page has no usable header/main/section/footer '
+			'landmarks. Viewport/full still attach when the pack requests them.'
+		)
+		data['pack_note'] = note
+		summ0 = data.get('agent_summary')
+		if isinstance(summ0, dict):
+			adv = summ0.setdefault('advisory', [])
+			if isinstance(adv, list) and note not in adv:
+				adv.append(note)
+	if pack_paths:
+		attach_visual_paths(envelope, pack_paths)
+		data['visual_evidence'] = [
+			{'label': label, 'path': path} for label, path in pack_paths
+		]
+		summ = data.get('agent_summary')
+		if isinstance(summ, dict):
+			summ['screenshot_pack'] = pack
+			summ['visual_evidence'] = [label for label, _ in pack_paths]
+		return envelope
+	return attach_observation_visuals(envelope, obs_dict)
+
+
 def _visual_data_block(scan_id: str, obs_dict: dict[str, Any]) -> dict[str, Any]:
 	return {
 		'visual': {
@@ -253,6 +490,22 @@ async def handle_session_end(store: SessionStore, arguments: dict[str, Any]) -> 
     session_id = str(arguments.get("session_id") or "")
     if not session_id:
         return make_envelope("perception_session_end", ok=False, error="session_id required")
+    try:
+        from navigation.coordination_intelligence.planning.episode_prefetch import (
+            cancel_episode_prefetch,
+        )
+
+        cancel_episode_prefetch(session_id=session_id)
+    except Exception:
+        pass
+    try:
+        from navigation.coordination_intelligence.planning.inspiration_pulse_loop import (
+            cancel_inspiration_pulse,
+        )
+
+        cancel_inspiration_pulse(session_id=session_id)
+    except Exception:
+        pass
     ended = await store.end(session_id)
     if ended:
         try:
@@ -379,9 +632,16 @@ async def handle_navigate_and_observe(
             "measured_catalog": measured if measured.get("measured") else None,
         },
     )
-    if include_shot and detail != "metadata_only":
-        return attach_observation_visuals(envelope, obs_dict)
-    return envelope
+    return await _finalize_observe_envelope_visuals(
+        envelope,
+        rec=rec,
+        arguments=arguments,
+        snapshots=snapshots,
+        scan_id=scan_rec.scan_id,
+        include_shot=include_shot,
+        detail=detail,
+        obs_dict=obs_dict,
+    )
 
 
 async def handle_verify(
@@ -712,9 +972,16 @@ async def handle_observe(
             "measured_catalog": measured if measured.get("measured") else None,
         },
     )
-    if include_shot and detail != "metadata_only":
-        return attach_observation_visuals(envelope, obs_dict)
-    return envelope
+    return await _finalize_observe_envelope_visuals(
+        envelope,
+        rec=rec,
+        arguments=arguments,
+        snapshots=snapshots,
+        scan_id=scan_rec.scan_id,
+        include_shot=include_shot,
+        detail=detail,
+        obs_dict=obs_dict,
+    )
 
 
 async def handle_execute_actions(
@@ -2092,6 +2359,56 @@ async def handle_inspiration_discover(arguments: dict[str, Any]) -> dict[str, An
         except Exception:
             pass
 
+    # Reuse episode HTTP prefetch / continuous pulse when query matches (no double scout).
+    try:
+        from navigation.coordination_intelligence.planning.episode_prefetch import (
+            peek_inspiration_prefetch,
+        )
+
+        cached = peek_inspiration_prefetch(session_id=session_id, query=query)
+    except Exception:
+        cached = None
+    if not cached or not cached.get("discover_token"):
+        try:
+            from navigation.coordination_intelligence.planning.inspiration_pulse_loop import (
+                peek_pulse_discover_token,
+            )
+
+            cached = peek_pulse_discover_token(session_id=session_id, query=query)
+        except Exception:
+            cached = None
+    if cached and cached.get("discover_token"):
+        candidates = list(cached.get("candidates") or [])
+        discover_token = str(cached["discover_token"])
+        src = str(cached.get("source") or "episode_prefetch")
+        advisory = [
+            f"Reused {src} discover_token (HTTP scout already warm).",
+            "Pass discover_token to perception_inspiration_collect to avoid double cascade.",
+        ]
+        return make_envelope(
+            "perception_inspiration_discover",
+            ok=bool(candidates),
+            degraded=[f"{src}_hit"],
+            data={
+                "inspiration_discovery": {
+                    "discover_token": discover_token,
+                    "mode": "scout_urls_only",
+                    "prefetch": True,
+                    "candidates": candidates,
+                },
+                "discover_token": discover_token,
+                "agent_summary": {
+                    "query": query,
+                    "total": int(cached.get("candidate_count") or len(candidates)),
+                    "providers": list(cached.get("providers") or []),
+                    "discover_token": discover_token,
+                    "prefetch": True,
+                    "blocking": [] if candidates else ["no_inspiration_candidates"],
+                    "advisory": advisory,
+                },
+            },
+        )
+
     service = InspirationIntelligenceService()
     result = await service.discover(
         InspirationDiscoveryRequest(
@@ -2169,8 +2486,79 @@ async def handle_inspiration_collect(arguments: dict[str, Any]) -> dict[str, Any
 
 
 async def handle_inspiration_pulse(arguments: dict[str, Any]) -> dict[str, Any]:
-    """Fast visual pack — forces light effort, no live screenshots."""
+    """Fast visual pack — prefer continuous pulse ring; optional refresh wave.
+
+    Default: return latest background HTTP thumbs (no browser). Pass refresh=true
+    to force one more light collect wave (still no live screenshots).
+    """
     args = dict(arguments or {})
+    refresh = bool(args.get("refresh") or args.get("force_collect"))
+    session_id = str(args.get("session_id") or "").strip() or None
+    episode_id = str(args.get("episode_id") or "").strip() or None
+    query = str(args.get("query") or "").strip()
+
+    if not refresh:
+        try:
+            from navigation.coordination_intelligence.planning.inspiration_pulse_loop import (
+                get_pulse_snapshot,
+                get_pulse_snapshot_for_session,
+                peek_pulse_discover_token,
+                schedule_inspiration_pulse,
+            )
+
+            snap = get_pulse_snapshot(episode_id) if episode_id else None
+            if snap is None and session_id:
+                snap = get_pulse_snapshot_for_session(session_id)
+            # Lazy-start pulse if host calls pulse before card had a chance.
+            if (snap is None or int(snap.get("thumb_count") or 0) == 0) and query:
+                face = str(args.get("face_class") or "greenfield")
+                band = str(args.get("evidence_band") or "heavy")
+                eid = episode_id or f"pulse_{session_id or 'anon'}"
+                schedule_inspiration_pulse(
+                    episode_id=eid,
+                    session_id=session_id,
+                    query=query,
+                    face_class=face,
+                    evidence_band=band,
+                    repo_root=str(args.get("repo_root") or ""),
+                    project_id=str(args.get("project_id") or "default"),
+                )
+                # Brief yield for first wave
+                import asyncio
+
+                await asyncio.sleep(0.05)
+                snap = get_pulse_snapshot(eid) or get_pulse_snapshot_for_session(session_id)
+            if snap and int(snap.get("thumb_count") or 0) > 0:
+                peeked = peek_pulse_discover_token(
+                    episode_id=snap.get("episode_id"),
+                    session_id=session_id,
+                    query=query or None,
+                )
+                return make_envelope(
+                    "perception_inspiration_pulse",
+                    ok=True,
+                    session_id=session_id,
+                    degraded=["inspiration_pulse_ring"],
+                    data={
+                        "inspiration_pulse": snap,
+                        "discover_token": (peeked or {}).get("discover_token")
+                        or snap.get("discover_token"),
+                        "blob_session_id": snap.get("blob_session_id"),
+                        "hits": list(snap.get("thumbs") or []),
+                        "agent_summary": {
+                            "advisory": [
+                                "Continuous inspiration pulse ring (HTTP parallel). "
+                                "LOOK thumbs → perception_visual_feedback purpose=inspiration "
+                                "with primary_ref_ids + borrow[{ref_id,section,idea}]. "
+                                "Pass refresh=true for an extra light collect wave."
+                            ],
+                            "card_hint": "inspiration_pulse",
+                        },
+                    },
+                )
+        except Exception:
+            pass
+
     args["inspiration_level"] = "light"
     args["include_live_sites"] = False
     args["max_web_screenshots"] = 0
@@ -2212,6 +2600,36 @@ async def _inspiration_collect_core(
     if candidate_urls is not None and not isinstance(candidate_urls, list):
         candidate_urls = None
     discover_token = str(arguments.get("discover_token") or "").strip() or None
+    browser_session_id_early = str(arguments.get("session_id") or "").strip() or None
+    # Prefer episode prefetch scout when agent skipped discover.
+    if not discover_token and not candidate_urls:
+        try:
+            from navigation.coordination_intelligence.planning.episode_prefetch import (
+                peek_inspiration_prefetch,
+            )
+
+            cached = peek_inspiration_prefetch(
+                session_id=browser_session_id_early,
+                query=query,
+            )
+            if cached and cached.get("discover_token"):
+                discover_token = str(cached["discover_token"])
+        except Exception:
+            pass
+    if not discover_token and browser_session_id_early:
+        try:
+            from navigation.coordination_intelligence.planning.inspiration_pulse_loop import (
+                peek_pulse_discover_token,
+            )
+
+            cached = peek_pulse_discover_token(
+                session_id=browser_session_id_early,
+                query=query,
+            )
+            if cached and cached.get("discover_token"):
+                discover_token = str(cached["discover_token"])
+        except Exception:
+            pass
     mode = str(arguments.get("mode") or "").strip() or None
     inspiration_level = str(arguments.get("inspiration_level") or "").strip() or None
     include_live_raw = arguments.get("include_live_sites")
@@ -2326,33 +2744,57 @@ async def _inspiration_collect_core(
     if tool_name == "perception_inspiration_pulse":
         advisory.insert(0, "Pulse pack (light). Widen if refs are thin or off-grain.")
 
+    creative_kit = None
+    try:
+        from navigation.coordination_intelligence.planning.episode_prefetch import (
+            peek_creative_kit,
+        )
+
+        creative_kit = peek_creative_kit(session_id=browser_session_id)
+        if creative_kit:
+            advisory.append(
+                "creative_kit attached from episode prefetch — "
+                "or call perception_creative_assets for a fresh search."
+            )
+    except Exception:
+        creative_kit = None
+
+    data_out: dict[str, Any] = {
+        "inspiration_collection": manifest,
+        "engineering_spec": eng_spec,
+        "reference_bind": bind_meta,
+        "agent_summary": {
+            "query": query,
+            "tool": tool_name,
+            "inspiration_level": level_used,
+            "total_hits": manifest.get("total_hits", 0),
+            "total_with_urls": manifest.get("total_with_urls", 0),
+            "blob_session_id": manifest.get("blob_session_id", ""),
+            "top_hits": hits[:8],
+            "unresolved_engineering_decisions": eng_spec.get("unresolved_by_impact", [])[:8],
+            "reference_bound": bool(bind_meta and bind_meta.get("bound")),
+            "coordinator_headline": (
+                (eng_spec.get("unresolved_by_impact") or [{}])[0].get("why")
+                if eng_spec.get("unresolved_by_impact")
+                else "Inspiration seed Spec bound — measure top agent_view_url into DesignSnapshot."
+            ),
+            "blocking": [] if hits else ["no_inspiration_hits"],
+            "advisory": advisory,
+        },
+    }
+    if creative_kit:
+        data_out["creative_kit"] = creative_kit
+        data_out["agent_summary"]["creative_kit"] = {
+            "asset_count": creative_kit.get("asset_count"),
+            "tool": creative_kit.get("tool") or "perception_creative_assets",
+            "source": "episode_prefetch",
+        }
+
     return make_envelope(
         tool_name,
         ok=ok,
         session_id=browser_session_id,
-        data={
-            "inspiration_collection": manifest,
-            "engineering_spec": eng_spec,
-            "reference_bind": bind_meta,
-            "agent_summary": {
-                "query": query,
-                "tool": tool_name,
-                "inspiration_level": level_used,
-                "total_hits": manifest.get("total_hits", 0),
-                "total_with_urls": manifest.get("total_with_urls", 0),
-                "blob_session_id": manifest.get("blob_session_id", ""),
-                "top_hits": hits[:8],
-                "unresolved_engineering_decisions": eng_spec.get("unresolved_by_impact", [])[:8],
-                "reference_bound": bool(bind_meta and bind_meta.get("bound")),
-                "coordinator_headline": (
-                    (eng_spec.get("unresolved_by_impact") or [{}])[0].get("why")
-                    if eng_spec.get("unresolved_by_impact")
-                    else "Inspiration seed Spec bound — measure top agent_view_url into DesignSnapshot."
-                ),
-                "blocking": [] if hits else ["no_inspiration_hits"],
-                "advisory": advisory,
-            },
-        },
+        data=data_out,
     )
 
 
@@ -2482,6 +2924,24 @@ async def handle_resource_search(arguments: dict[str, Any]) -> dict[str, Any]:
     service = ResourceIntelligenceService()
     result = await service.search(request)
     return _resource_search_envelope("perception_resource_search", result, request.query)
+
+
+async def handle_creative_assets(arguments: dict[str, Any]) -> dict[str, Any]:
+    """One creative-assets gateway — alias of resource_search with stable tool name."""
+    envelope = await handle_resource_search(arguments)
+    envelope = dict(envelope)
+    envelope["tool"] = "perception_creative_assets"
+    data = envelope.get("data")
+    if isinstance(data, dict):
+        summary = data.get("agent_summary")
+        if isinstance(summary, dict):
+            advisory = list(summary.get("advisory") or [])
+            note = "Gateway: perception_creative_assets (== perception_resource_search)."
+            if note not in advisory:
+                advisory.insert(0, note)
+            summary["advisory"] = advisory
+            summary["gateway"] = "perception_creative_assets"
+    return envelope
 
 
 async def _resource_search_shortcut(

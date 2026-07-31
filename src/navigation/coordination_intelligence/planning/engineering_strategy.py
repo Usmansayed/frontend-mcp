@@ -403,15 +403,49 @@ _DECISION_RULES: list[dict[str, Any]] = [
 ]
 
 
+def _agent_face_for_decisions(psm: ProjectSituationModel, disc: dict[str, str]) -> str:
+	"""Classify face for decision deferral — keep forms off structural foundations."""
+	try:
+		from navigation.coordination_intelligence.planning.coordinator_card import (
+			classify_agent_face,
+		)
+
+		intent = _intent_text(psm)
+		return classify_agent_face(
+			{
+				"task_scope": disc.get("task_scope"),
+				"surface_type": disc.get("surface_type")
+				or getattr(psm.episode, "surface_type", None),
+				"intent": intent,
+				"user_intent": intent,
+			}
+		)
+	except Exception:
+		return ""
+
+
+_FORMS_SKIP_DECISIONS = frozenset(
+	{
+		"component_foundation",
+		"design_reference",
+		"design_system_posture",
+	}
+)
+
+
 def _collect_unresolved(
     psm: ProjectSituationModel,
     disc: dict[str, str],
 ) -> list[UnresolvedDecision]:
     scope = disc["task_scope"]
+    face = _agent_face_for_decisions(psm, disc)
     out: list[UnresolvedDecision] = []
     for rule in _DECISION_RULES:
         defer_scopes = rule.get("defer_when_scope") or ()
         if scope in defer_scopes:
+            continue
+        # Forms face: probe/verify path — do not raise foundation/inspiration gates.
+        if face == "forms" and str(rule.get("decision_id") or "") in _FORMS_SKIP_DECISIONS:
             continue
         applies: AppliesFn = rule["applies"]
         if not applies(disc, psm):
@@ -1518,9 +1552,14 @@ def promote_coordinator_visibility(
         episode_id=str(card.get("episode_id") or "unknown"),
         strategy={
             **strategy,
+            # NEVER fall back to summary / what_matters_now for classify cues.
+            # Those strings often contain "observe, fix, verify" or "polish" and
+            # poisoned structural episodes into hotfix (Run 6c A/J).
             "intent": strategy.get("intent")
-            or strategy.get("summary")
-            or " ".join(str(x) for x in (strategy.get("what_matters_now") or [])),
+            or strategy.get("user_intent")
+            or strategy.get("original_intent")
+            or "",
+            "policy_id": strategy.get("policy_id"),
             "host_action": strategy.get("host_action") or card.get("host_action"),
             "implementation_gate": strategy.get("implementation_gate")
             or card.get("implementation_gate")

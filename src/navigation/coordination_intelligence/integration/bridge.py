@@ -122,7 +122,139 @@ class CoordinatorBridge:
             args,
             envelope,
         )
+        if tool_name == "perception_session_start" and enriched.get("ok"):
+            self._maybe_schedule_prefetch(
+                episode_id=episode_id,
+                session_id=session_id or enriched.get("session_id"),
+                args=args,
+                envelope=enriched,
+            )
+        elif tool_name == "perception_session_end":
+            self._cancel_prefetch(
+                episode_id=episode_id,
+                session_id=session_id or args.get("session_id"),
+            )
         return enriched
+
+    def _maybe_schedule_prefetch(
+        self,
+        *,
+        episode_id: str,
+        session_id: str | None,
+        args: dict[str, Any],
+        envelope: dict[str, Any],
+    ) -> None:
+        """Fire HTTP prefetch for unpaid heavy-band families (never browser)."""
+        try:
+            from navigation.coordination_intelligence.planning.episode_prefetch import (
+                schedule_episode_prefetch,
+            )
+
+            strategy = (envelope.get("data") or {}).get("engineering_strategy") or {}
+            if not isinstance(strategy, dict):
+                strategy = {}
+            face = (envelope.get("agent_summary") or {}).get("card") or {}
+            face_class = str(face.get("class") or "")
+            evidence_band = str(face.get("evidence_band") or "")
+            pack = face.get("pack") if isinstance(face.get("pack"), dict) else {}
+            remaining = list(pack.get("remaining") or [])
+            intent = str(
+                args.get("intent")
+                or strategy.get("intent")
+                or strategy.get("user_intent")
+                or ""
+            ).strip()
+            if not intent:
+                return
+            if not face_class:
+                # Fallback from task_scope discriminators
+                scope = str(strategy.get("task_scope") or "").lower()
+                if scope in {"design_driven", "greenfield"}:
+                    face_class = "greenfield"
+                elif scope == "redesign":
+                    face_class = "redesign"
+                elif scope in {"hotfix", "debug"}:
+                    face_class = "hotfix"
+                else:
+                    face_class = "feature"
+            if not evidence_band:
+                if face_class in {"greenfield", "redesign"}:
+                    evidence_band = "very_heavy"
+                elif face_class in {"hotfix", "forms"}:
+                    evidence_band = "light"
+                else:
+                    evidence_band = "heavy"
+            snap = schedule_episode_prefetch(
+                episode_id=episode_id,
+                session_id=str(session_id) if session_id else None,
+                query=intent,
+                face_class=face_class,
+                evidence_band=evidence_band,
+                pack_remaining=remaining,
+                repo_root=str(args.get("repo_root") or ""),
+                project_id=str(args.get("project_id") or "default"),
+            )
+            pulse_snap = None
+            try:
+                from navigation.coordination_intelligence.planning.inspiration_pulse_loop import (
+                    schedule_inspiration_pulse,
+                )
+
+                pulse_snap = schedule_inspiration_pulse(
+                    episode_id=episode_id,
+                    session_id=str(session_id) if session_id else None,
+                    query=intent,
+                    face_class=face_class,
+                    evidence_band=evidence_band,
+                    repo_root=str(args.get("repo_root") or ""),
+                    project_id=str(args.get("project_id") or "default"),
+                )
+            except Exception:
+                pulse_snap = None
+            if snap or pulse_snap:
+                # Attach pending prefetch / continuous pulse onto the face for this turn.
+                summary = envelope.setdefault("agent_summary", {})
+                card = summary.get("card")
+                if isinstance(card, dict):
+                    if snap:
+                        card["prefetch"] = snap
+                        card["can_parallel"] = list(
+                            dict.fromkeys(
+                                list(snap.get("can_parallel") or []) + ["inspiration"]
+                            )
+                        )
+                    if pulse_snap:
+                        card["inspiration_pulse"] = pulse_snap
+                        card["can_parallel"] = list(
+                            dict.fromkeys(
+                                list(card.get("can_parallel") or []) + ["inspiration"]
+                            )
+                        )
+        except Exception:
+            pass
+
+    @staticmethod
+    def _cancel_prefetch(
+        *,
+        episode_id: str | None,
+        session_id: str | None,
+    ) -> None:
+        try:
+            from navigation.coordination_intelligence.planning.episode_prefetch import (
+                cancel_episode_prefetch,
+            )
+
+            cancel_episode_prefetch(episode_id, session_id=session_id)
+        except Exception:
+            pass
+        try:
+            from navigation.coordination_intelligence.planning.inspiration_pulse_loop import (
+                cancel_inspiration_pulse,
+            )
+
+            cancel_inspiration_pulse(episode_id, session_id=session_id)
+        except Exception:
+            pass
 
     def _ensure_session_episode(
         self,

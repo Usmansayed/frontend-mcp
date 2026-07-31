@@ -1,19 +1,32 @@
 # Resource Agent Guide — Creative Asset Playbooks
 
-**Audience:** MCP host agents using `perception_resource_*` tools.
+**Audience:** MCP host agents using `perception_creative_assets` / `perception_resource_*` tools.
 
 **Read at session start when finding icons, fonts, avatars, or stock assets:** MCP resource `perception://resource-guide`
 
 This guide mirrors **Inspiration Intelligence** — URL-first discovery, optional ephemeral vision blobs, explicit session cleanup.
+
+**One gateway:** Prefer `perception_creative_assets` (alias of `perception_resource_search`). Category tools (`*_icon_search`, …) are shortcuts only.
+
+**Use often on greenfield/redesign** for core atmosphere — not optional decoration:
+- **Fonts** (`font`) — display + body pairing  
+- **Backgrounds / patterns** (`pattern`) — subtle textures, not flat fill  
+- **Color / gradients** (`gradient`) — palette planes  
+- **Graphics / illustrations** (`illustration`) — hero/empty-state art  
+- **Motion** (`animation`) — micro-interactions / Lottie  
+- **Icons** (`icon`) — consistent icon family  
+
+Heavy+ episodes prefetch a multi-category `creative_kit` and may list `resources?` on the pack (advisory owed, not claim-critical). Read `card.creative_kit` / call the gateway before locking chrome.
 
 ---
 
 ## 0. Workflow (every resource task)
 
 ```text
-1. perception_resource_search   → ranked assets inside your icon family (URLs + npm import hints)
+1. perception_creative_assets   → ranked assets (pass categories for fonts/patterns/gradients/…)
+   (alias: perception_resource_search)
 2. perception_resource_preview  → blobs ONLY when family miss + reference image (not for in-family icons)
-3. Use access_url / suggested_import for icons in family
+3. Use access_url / suggested_import for icons in family; npm/CDN URLs for fonts & graphics
 4. perception_resource_session_end → delete blobs when done
 ```
 

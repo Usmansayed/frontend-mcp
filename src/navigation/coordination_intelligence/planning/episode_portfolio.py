@@ -16,6 +16,10 @@ CAPABILITY_FAMILY: dict[str, str] = {
     "component_search_plan": "component",
     "design_review": "design_review",
     "resource_workflow": "resources",
+    "design_consistency_audit": "consistency",
+    "design_consistency_assess": "consistency",
+    "design_consistency_review": "consistency",
+    "chrome_fidelity": "fidelity",
     "resolver_route": "resolve",
     "resolver_component": "resolve",
     "form_probe": "forms",
@@ -103,7 +107,7 @@ def compile_episode_portfolio(
             stronger = paid_families & {"snapshot"}
             snapshot_first = prefer_snapshot_first(scope) and not snapshot_reference_paid(psm)
             if snapshot_first:
-                # Redesign path: snapshot owes first; leave inspiration off unpaid
+                # Redesign path: snapshot owes first; leave inspiration *acquire* off unpaid
                 # so gate.next / scoreboard don't tunnel into galleries.
                 if "snapshot" not in paid_families:
                     add_unpaid(
@@ -111,14 +115,7 @@ def compile_episode_portfolio(
                         "redesign — measure / bind Design Snapshot before gallery",
                         "perception_build_design_snapshot",
                     )
-            else:
-                if not stronger and "inspiration" not in paid_families:
-                    add_unpaid(
-                        "inspiration",
-                        "design reference undecided",
-                        "perception_inspiration_collect",
-                    )
-                # Collect alone ≠ direction — owe LOOK + look_lock/borrow
+                # But if a pack was already collected, digest is still owed (LOOK many refs).
                 insp_q = (
                     (psm.evidence.capability_ledger or {}).get("inspiration_workflow") or {}
                 ).get("quality") or {}
@@ -131,7 +128,30 @@ def compile_episode_portfolio(
                 if "inspiration" in paid_families and not look_paid:
                     add_unpaid(
                         "inspiration_extract",
-                        "refs collected — LOOK + look_lock/borrow before inventing UI",
+                        "refs collected — LOOK ≥3–5 blobs + structured borrow/primary_ref_ids before inventing UI",
+                        "perception_visual_feedback",
+                    )
+            else:
+                if not stronger and "inspiration" not in paid_families:
+                    add_unpaid(
+                        "inspiration",
+                        "design reference undecided",
+                        "perception_inspiration_collect",
+                    )
+                # Collect alone ≠ direction — owe LOOK + structured look_lock/borrow
+                insp_q = (
+                    (psm.evidence.capability_ledger or {}).get("inspiration_workflow") or {}
+                ).get("quality") or {}
+                vf_q = (
+                    (psm.evidence.capability_ledger or {}).get("visual_feedback") or {}
+                ).get("quality") or {}
+                look_paid = bool(insp_q.get("direction_locked")) or (
+                    vf_q.get("purpose") == "inspiration" and bool(vf_q.get("look_locked"))
+                )
+                if "inspiration" in paid_families and not look_paid:
+                    add_unpaid(
+                        "inspiration_extract",
+                        "refs collected — LOOK ≥3–5 blobs + structured borrow/primary_ref_ids before inventing UI",
                         "perception_visual_feedback",
                     )
                 if "snapshot" not in paid_families:
@@ -163,6 +183,23 @@ def compile_episode_portfolio(
             add_unpaid("verify", "verification not passed", "perception_verify")
         if did == "layout_shell" and "observe" not in paid_families:
             add_unpaid("observe", "live layout not observed", "perception_navigate_and_observe")
+
+    # Collect without digest: always owe extract even if design_reference already closed.
+    insp_q = (
+        (psm.evidence.capability_ledger or {}).get("inspiration_workflow") or {}
+    ).get("quality") or {}
+    vf_q = (
+        (psm.evidence.capability_ledger or {}).get("visual_feedback") or {}
+    ).get("quality") or {}
+    look_paid = bool(insp_q.get("direction_locked")) or (
+        vf_q.get("purpose") == "inspiration" and bool(vf_q.get("look_locked"))
+    )
+    if "inspiration" in paid_families and not look_paid:
+        add_unpaid(
+            "inspiration_extract",
+            "refs collected — LOOK ≥3–5 blobs + structured borrow/primary_ref_ids before inventing UI",
+            "perception_visual_feedback",
+        )
 
     gate = implementation_gate or {}
     if gate.get("section_checklist_required"):
@@ -198,6 +235,17 @@ def compile_episode_portfolio(
             "dashboard",
         )
     )
+    design_copy = any(
+        token in scope_l
+        for token in (
+            "design_driven",
+            "redesign",
+            "greenfield",
+            "mockup",
+            "landing",
+            "dashboard",
+        )
+    )
     if structural_look or gate.get("state") in ("blocked", "provisional"):
         if (
             "visual_feedback" not in paid_families
@@ -207,6 +255,45 @@ def compile_episode_portfolio(
             add_unpaid(
                 "visual_feedback",
                 "LOOK not paid — perception_visual_feedback before locking structural UI",
+                "perception_visual_feedback",
+            )
+        # Creative assets — claim-critical on design heavy packs (pack.critical).
+        if "resources" not in paid_families and design_copy:
+            add_unpaid(
+                "resources",
+                "creative assets unpaid — perception_creative_assets (fonts/patterns/gradients/motion/graphics); APPLY them, do not only call",
+                "perception_creative_assets",
+            )
+        # Consistency intelligence — audit after design_graph_refresh if needed.
+        if "consistency" not in paid_families and design_copy:
+            add_unpaid(
+                "consistency",
+                "consistency unpaid — perception_design_graph_refresh then perception_consistency_audit (parallel-safe with resources)",
+                "perception_consistency_audit",
+            )
+        # Chrome fidelity 80–90% vs locked refs — paid only when VF stamps fidelity_locked.
+        fidelity_paid = "fidelity" in paid_families
+        if not fidelity_paid:
+            vf_q = (
+                (psm.evidence.capability_ledger or {}).get("visual_feedback") or {}
+            ).get("quality") or {}
+            fid_q = (
+                (psm.evidence.capability_ledger or {}).get("chrome_fidelity") or {}
+            ).get("quality") or {}
+            fidelity_paid = bool(vf_q.get("fidelity_locked") or fid_q.get("fidelity_locked"))
+            if fidelity_paid:
+                paid.append(
+                    {
+                        "family": "fidelity",
+                        "capability_id": "chrome_fidelity",
+                        "status": "succeeded",
+                    }
+                )
+                paid_families.add("fidelity")
+        if design_copy and not fidelity_paid:
+            add_unpaid(
+                "fidelity",
+                "chrome fidelity unpaid — LOOK refs + live UI; fill chrome_fidelity zones (nav|aside|main|composer) at 80–90% copy",
                 "perception_visual_feedback",
             )
 

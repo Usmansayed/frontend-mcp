@@ -248,6 +248,27 @@ class InspirationBlobStore:
 		manifest_path.write_text(json.dumps(data, indent=2), encoding='utf-8')
 		return summary
 
+	def list_blob_paths(
+		self,
+		session_id: str,
+		*,
+		limit: int = 8,
+	) -> list[tuple[str, str]]:
+		"""Return (label, absolute_path) for session blobs that still exist on disk."""
+		self.cleanup_expired()
+		state = self._load_sessions()
+		meta = state.get(session_id) or {}
+		out: list[tuple[str, str]] = []
+		for row in list(meta.get('blobs') or [])[: max(1, int(limit))]:
+			if not isinstance(row, dict):
+				continue
+			path = str(row.get('blob_path') or '').strip()
+			if not path or not Path(path).is_file():
+				continue
+			cid = str(row.get('candidate_id') or 'ref').strip() or 'ref'
+			out.append((f'inspiration:{cid[:48]}', path))
+		return out
+
 	def end_session(self, session_id: str) -> int:
 		"""Delete all blobs for a session (call when agent work is done)."""
 		state = self._load_sessions()

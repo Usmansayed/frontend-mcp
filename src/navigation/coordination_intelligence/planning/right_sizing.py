@@ -1,8 +1,9 @@
 """AI-centric effort right-sizing — agent decides, MCP recommends.
 
-Default: lightest-that-fits. Heavy Done-ladder gates (ship / residue / full-page
-section checklist) only *block* claim-done on initiative tier. Lower tiers keep
-the same measurements available as advisory.
+Evidence Pack Loop: agent-facing bands light|medium|heavy|very_heavy map onto
+internal tiers. Default for normal UI is heavy (feature), not polish.
+Ship / residue / full-page section checklist only *block* claim-done on
+initiative (very_heavy). Hotfix/forms stay light.
 """
 from __future__ import annotations
 
@@ -11,8 +12,18 @@ from typing import Any
 from navigation.coordination_intelligence.models import ProjectSituationModel, _utc_now
 
 EFFORT_TIERS = ("touch_up", "polish", "feature", "initiative")
+EVIDENCE_BANDS = ("light", "medium", "heavy", "very_heavy")
 EFFORT_KEY = "effort_tier"
 RIGHT_SIZING_RESOURCE = "perception://guide/right-sizing"
+
+# Agent-facing band ↔ internal tier
+_BAND_TO_TIER: dict[str, str] = {
+	"light": "touch_up",
+	"medium": "polish",
+	"heavy": "feature",
+	"very_heavy": "initiative",
+}
+_TIER_TO_BAND: dict[str, str] = {v: k for k, v in _BAND_TO_TIER.items()}
 
 # What each tier pays / skips (agent-facing contract).
 _TIER_CONTRACT: dict[str, dict[str, Any]] = {
@@ -89,9 +100,31 @@ def normalize_effort_tier(raw: Any) -> str | None:
         "greenfield": "initiative",
         "redesign": "initiative",
         "structural": "initiative",
+        # Evidence Pack Loop bands
+        "light": "touch_up",
+        "medium": "polish",
+        "heavy": "feature",
+        "very_heavy": "initiative",
+        "veryheavy": "initiative",
     }
     text = aliases.get(text, text)
     return text if text in EFFORT_TIERS else None
+
+
+def tier_to_evidence_band(tier: str | None) -> str:
+	"""Map internal effort tier → agent-facing evidence_band."""
+	t = normalize_effort_tier(tier) or "feature"
+	return _TIER_TO_BAND.get(t, "heavy")
+
+
+def evidence_band_to_tier(band: str | None) -> str | None:
+	"""Map agent-facing evidence_band → internal tier (or None if unknown)."""
+	if band is None:
+		return None
+	text = str(band).strip().lower().replace("-", "_").replace(" ", "_")
+	if text in _BAND_TO_TIER:
+		return _BAND_TO_TIER[text]
+	return normalize_effort_tier(text)
 
 
 def get_declared_effort_tier(psm: ProjectSituationModel) -> str | None:
@@ -140,12 +173,16 @@ def recommend_effort_tier(
     influence_level: str | None = None,
 ) -> dict[str, Any]:
     """Lightest-that-fits recommendation (advisory). Agent may override via effort_tier."""
+    import re
+
     from navigation.coordination_intelligence.planning.situation_policy import sticky_design_scope
 
     scope = str(task_scope or "")
     sticky = sticky_design_scope(psm)
     if sticky in ("design_driven", "redesign", "system_setup"):
         scope = sticky
+
+    intent_blob = " ".join(f.intent for f in (psm.episode.intent_stack or [])).lower()
 
     if scope in ("design_driven", "redesign", "system_setup"):
         tier = "initiative"
@@ -154,28 +191,34 @@ def recommend_effort_tier(
         tier = "touch_up"
         why = f"task_scope={scope} — hard verify is enough."
     elif scope == "feature_incremental":
-        # Default light for incremental work: polish, not ship/residue ceremony.
-        # Agent upgrades to feature/initiative when blast radius is larger.
-        band = str(getattr(psm.situation, "lifecycle_stage", "") or "")
-        early = band in ("S01_intent", "S02_discovery", "S03_design", "S04_architecture")
-        foundation = psm.evidence.capability_ledger.get("component_select") or {}
-        foundation_unpaid = foundation.get("status") not in ("succeeded", "provisional")
-        if early and foundation_unpaid and influence_level == "structural":
+        # Evidence Pack Loop: normal UI defaults to heavy (feature), not polish.
+        if re.search(
+            r"\b(add|new)\b.{0,48}\b(section|block|testimonials?|pricing|module)\b",
+            intent_blob,
+        ):
             tier = "feature"
-            why = "early feature with unpaid foundation — pay observe + foundation?, not ship."
-        else:
+            why = "add/new section|block on existing page — evidence_band=heavy."
+        elif re.search(
+            r"\b(polish|tighten spacing|spacing only|navbar only|chrome only|touch[\s-]?up)\b",
+            intent_blob,
+        ):
             tier = "polish"
+            why = "explicit chrome/polish cues — evidence_band=medium."
+        else:
+            tier = "feature"
             why = (
-                "incremental / chrome-scale default (lightest-that-fits). "
-                "Upgrade effort_tier if blast radius is a new block or full page."
+                "incremental UI default evidence_band=heavy (observe+VF+verify+component?). "
+                "Pass effort_tier=touch_up|light for surgical; initiative|very_heavy for full ladder."
             )
     else:
-        tier = "polish"
-        why = "unknown scope — default polish (lightest-that-fits)."
+        tier = "feature"
+        why = "unknown scope — default evidence_band=heavy (not light)."
 
     contract = _TIER_CONTRACT[tier]
+    band = tier_to_evidence_band(tier)
     return {
         "tier": tier,
+        "evidence_band": band,
         "source": "recommended",
         "why": why,
         "pay": list(contract["pay"]),
@@ -205,9 +248,12 @@ def resolve_effort_tier(
             source = str(raw["source"])
         return {
             "tier": declared,
+            "evidence_band": tier_to_evidence_band(declared),
             "source": source,
             "declared": True,
             "recommended_tier": recommended["tier"],
+            "recommended_band": recommended.get("evidence_band")
+            or tier_to_evidence_band(recommended["tier"]),
             "why": (
                 f"Agent set effort_tier={declared}"
                 + (
@@ -225,6 +271,8 @@ def resolve_effort_tier(
         **recommended,
         "declared": False,
         "recommended_tier": recommended["tier"],
+        "recommended_band": recommended.get("evidence_band")
+        or tier_to_evidence_band(recommended["tier"]),
     }
 
 
@@ -250,18 +298,23 @@ def build_right_sizing_card(
     """Compact card for agent_summary / episode_card."""
     resolved = resolve_effort_tier(psm, strategy)
     tier = str(resolved["tier"])
+    band = str(resolved.get("evidence_band") or tier_to_evidence_band(tier))
     return {
         "tier": tier,
+        "evidence_band": band,
         "declared": bool(resolved.get("declared")),
         "source": resolved.get("source"),
         "recommended_tier": resolved.get("recommended_tier") or tier,
+        "recommended_band": resolved.get("recommended_band")
+        or tier_to_evidence_band(str(resolved.get("recommended_tier") or tier)),
         "why": resolved.get("why"),
         "pay": list(resolved.get("pay") or []),
         "skip": list(resolved.get("skip") or []),
         "summary": resolved.get("summary"),
         "resource": RIGHT_SIZING_RESOURCE,
         "override_hint": (
-            "Pass effort_tier=touch_up|polish|feature|initiative on session_start / "
+            "Pass effort_tier=light|medium|heavy|very_heavy "
+            "(or touch_up|polish|feature|initiative) on session_start / "
             "visual_feedback / verify to lock your judgment."
         ),
     }

@@ -229,6 +229,66 @@ class ToolExecutor:
         except asyncio.CancelledError:
             return self._cancelled_result(tool, corr, attempt, idem_key)
 
+        from navigation.execution_runtime.policies.browser_flight import (
+            BrowserFlightRejected,
+            BrowserFlightTimeout,
+            attach_flight_metadata,
+            browser_flight,
+            busy_envelope,
+        )
+
+        session_hint = args.get("session_id")
+        session_hint_s = str(session_hint).strip() if session_hint else None
+
+        try:
+            async with browser_flight(tool=tool, session_id=session_hint_s) as hold:
+                result = await self._execute_tool_locked(
+                    tool,
+                    args,
+                    attempt=attempt,
+                    corr=corr,
+                    idem_key=idem_key,
+                    allow_repeat=allow_repeat,
+                    safe_registry=safe_registry,
+                    idempotency_store=idempotency_store,
+                    trace=trace,
+                    metrics=metrics,
+                )
+                if hold is not None:
+                    attach_flight_metadata(result.envelope, hold)
+                return result
+        except BrowserFlightTimeout as exc:
+            envelope = busy_envelope(
+                tool,
+                error=str(exc),
+                holder_tool=exc.holder_tool,
+                wait_s=exc.wait_s,
+                session_id=session_hint_s,
+            )
+            return self._busy_result(tool, corr, attempt, idem_key, envelope, session_hint_s)
+        except BrowserFlightRejected as exc:
+            envelope = busy_envelope(
+                tool,
+                error=str(exc),
+                holder_tool=exc.holder_tool,
+                session_id=session_hint_s,
+            )
+            return self._busy_result(tool, corr, attempt, idem_key, envelope, session_hint_s)
+
+    async def _execute_tool_locked(
+        self,
+        tool: str,
+        args: dict[str, Any],
+        *,
+        attempt: int,
+        corr: str,
+        idem_key: str,
+        allow_repeat: bool,
+        safe_registry: Any,
+        idempotency_store: Any,
+        trace: Any,
+        metrics: Any,
+    ) -> ExecutionResult:
         current_attempt = attempt
         max_attempts = self._policies.retry.max_attempts_for(tool, safe_registry)
         if not safe_registry.allows_retry(tool, allow_repeat=allow_repeat):
@@ -379,6 +439,62 @@ class ToolExecutor:
             return result
 
         return last_result or self._cancelled_result(tool, corr, current_attempt, idem_key)
+
+    def _busy_result(
+        self,
+        tool: str,
+        correlation_id: str,
+        attempt: int,
+        idempotency_key: str,
+        envelope: dict[str, Any],
+        session_id: str | None,
+    ) -> ExecutionResult:
+        corr, trace, metrics = self._policies.ensure_observability()
+        execution_id = _new_execution_id()
+        metadata = ExecutionMetadata(
+            execution_id=execution_id,
+            correlation_id=correlation_id,
+            tool=tool,
+            attempt=attempt,
+            latency_ms=0,
+            failure_class=FailureClass.TRANSIENT.value,
+            idempotency_key=idempotency_key,
+        )
+        attach_execution_metadata(envelope, metadata)
+        trace.record(
+            ExecutionTraceEvent(
+                event="browser_flight_busy",
+                tool=tool,
+                execution_id=execution_id,
+                correlation_id=correlation_id,
+                attempt=attempt,
+                failure_class=FailureClass.TRANSIENT.value,
+            )
+        )
+        metrics.record(ok=False, latency_ms=0)
+        record = ExecutionRecord(
+            execution_id=execution_id,
+            tool=tool,
+            ok=False,
+            latency_ms=0,
+            correlation_id=correlation_id,
+            error=envelope.get("error"),
+            session_id=session_id,
+            attempt=attempt,
+            failure_class=FailureClass.TRANSIENT.value,
+            idempotency_key=idempotency_key,
+        )
+        self._ledger.append(record)
+        return ExecutionResult(
+            execution_id=execution_id,
+            tool=tool,
+            envelope=envelope,
+            latency_ms=0,
+            attempt=attempt,
+            correlation_id=correlation_id,
+            failure_class=FailureClass.TRANSIENT.value,
+            record=record,
+        )
 
     def _cancelled_result(
         self,

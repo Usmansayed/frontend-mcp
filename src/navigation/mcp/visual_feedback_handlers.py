@@ -24,6 +24,41 @@ from navigation.visual_browser_intelligence.visual.visual_response import attach
 TOOL_VISUAL_FEEDBACK = 'perception_visual_feedback'
 
 
+def _inspiration_blob_attachments(arguments: dict[str, Any]) -> list[tuple[str, str]]:
+	"""Attach up to N collected inspiration blobs so LOOK digests refs, not mood memory."""
+	sid = str(
+		arguments.get('blob_session_id')
+		or arguments.get('inspiration_session_id')
+		or ''
+	).strip()
+	try:
+		limit = int(arguments.get('max_inspiration_blobs', 8))
+	except (TypeError, ValueError):
+		limit = 8
+	limit = max(1, min(limit, 12))
+	try:
+		from navigation.inspiration_intelligence.tools.blob_store import InspirationBlobStore
+
+		store = InspirationBlobStore()
+		if not sid:
+			# Newest session with blobs
+			sessions = store.list_sessions()
+			sessions = sorted(
+				sessions,
+				key=lambda r: float(r.get('expires_at') or 0),
+				reverse=True,
+			)
+			for row in sessions:
+				if int(row.get('blob_count') or 0) > 0:
+					sid = str(row.get('session_id') or '')
+					break
+		if not sid:
+			return []
+		return store.list_blob_paths(sid, limit=limit)
+	except Exception:
+		return []
+
+
 def _stored_screenshot_ref(
 	scans: ScanRegistry,
 	scan_id: str,
@@ -161,6 +196,30 @@ def _apply_feedback(
 	)
 	envelope['data']['visual_feedback'] = feedback
 	envelope['data']['next_actions'] = next_actions
+	if purpose == 'inspiration':
+		from navigation.coordination_intelligence.planning.inspiration_look_lock import (
+			evaluate_inspiration_look_lock,
+		)
+
+		usable = envelope['data'].get('usable_image_refs')
+		lock = evaluate_inspiration_look_lock(
+			feedback,
+			usable_image_refs=int(usable) if usable is not None else None,
+			evidence_band=envelope['data'].get('evidence_band'),
+		)
+		envelope['data']['inspiration_look_lock'] = lock
+		if not lock.get('look_locked'):
+			envelope['data'].setdefault('degraded', [])
+			# Keep transport ok — unpaid extract is the hard gate.
+			summ0 = envelope['data'].setdefault('agent_summary', {})
+			if isinstance(summ0, dict):
+				adv0 = summ0.setdefault('advisory', [])
+				if isinstance(adv0, list):
+					adv0.append(
+						'INSPIRATION LOOK LOCK INCOMPLETE: '
+						+ '; '.join(str(r) for r in (lock.get('reasons') or [])[:3])
+					)
+					adv0.append(str(lock.get('hint') or ''))
 	summ = envelope['data'].setdefault('agent_summary', {})
 	if isinstance(summ, dict):
 		summ['visual_feedback'] = feedback
@@ -245,6 +304,11 @@ async def run_visual_feedback(
 			live_ok=not snapshot_id_only,
 			pack_kwargs=pack_kwargs,
 		)
+		# Inspiration LOOK: also attach collected blobs so host digests refs, not only live page.
+		if purpose == 'inspiration':
+			blob_paths = _inspiration_blob_attachments(arguments)
+			if blob_paths:
+				paths = list(paths) + blob_paths
 		if paths:
 			attach_visual_paths(envelope, paths)
 			data['visual_evidence'] = [
@@ -262,6 +326,14 @@ async def run_visual_feedback(
 						+ ', '.join(label for label, _ in paths)
 						+ '). LOOK at the images and drive changes from appearance, not code alone.'
 					)
+					if purpose == 'inspiration' and any(
+						str(lbl).startswith('inspiration:') for lbl, _ in paths
+					):
+						adv.append(
+							'INSPIRATION DIGEST: LOOK each inspiration:* blob. '
+							'Fill primary_ref_ids (≥3, ≥5 very_heavy) + borrow[{ref_id, section, idea}] '
+							'— soft mood without ref ids will NOT lock direction.'
+						)
 
 		if feedback:
 			_apply_feedback(envelope, purpose=purpose, tool=tool, feedback=feedback)

@@ -65,6 +65,30 @@ def test_hotfix_minimal_influence(bundle: RuntimeArtifactBundle) -> None:
 
 
 @pytest.mark.unit
+def test_forms_intent_skips_component_foundation_gate(bundle: RuntimeArtifactBundle) -> None:
+    """Forms face must not raise structural component_foundation on session strategy."""
+    svc = CoordinationIntelligenceService(bundle=bundle)
+    psm = svc.episode_start(
+        session_id="sess_forms_gate",
+        intent="Fix checkout form validation and guards",
+        lifecycle_stage="S03_design",
+        project_maturity="M1",
+    )
+    strategy = psm.briefing.engineering_strategy
+    assert strategy is not None
+    decision_ids = {d["decision_id"] for d in strategy["unresolved_decisions"]}
+    assert "component_foundation" not in decision_ids
+    assert "design_reference" not in decision_ids
+    gate = strategy.get("implementation_gate") or {}
+    assert gate.get("next_required_capability") not in {
+        "component_search_plan",
+        "component_select",
+        "inspiration_workflow",
+        "design_snapshot",
+    }
+
+
+@pytest.mark.unit
 def test_surgical_minimal_influence(bundle: RuntimeArtifactBundle) -> None:
     svc = CoordinationIntelligenceService(bundle=bundle)
     psm = svc.episode_start(

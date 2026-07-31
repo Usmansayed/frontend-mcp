@@ -57,11 +57,20 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                     },
                     "effort_tier": {
                         "type": "string",
-                        "enum": ["touch_up", "polish", "feature", "initiative"],
+                        "enum": [
+                            "touch_up",
+                            "polish",
+                            "feature",
+                            "initiative",
+                            "light",
+                            "medium",
+                            "heavy",
+                            "very_heavy",
+                        ],
                         "description": (
                             "Optional agent right-sizing lock (see perception://guide/right-sizing). "
-                            "polish = observe+visual_feedback+verify; initiative = full ladder. "
-                            "Default when omitted: lightest-that-fits."
+                            "Bands light|medium|heavy|very_heavy map to touch_up|polish|feature|initiative. "
+                            "Default when omitted: heavy for normal UI (light for hotfix/forms)."
                         ),
                     },
                     "repo_root": {
@@ -108,7 +117,8 @@ def perception_tools(mcp_types: Any) -> list[Any]:
             description=(
                 "Playbook: OBSERVE phase (AGENT_GUIDE §0, §2–§3). Navigate and return DOM, a11y, "
                 "dev insights, visual_insights, and INLINE annotated screenshots in the tool response. "
-                "Images are attached automatically — do not skip looking at them. Save scan_id for diff."
+                "Images are attached automatically — do not skip looking at them. Save scan_id for diff. "
+                "Use screenshot_pack=design for viewport+full+section crops in one call (layout/sections/verify)."
             ),
             inputSchema={
                 "type": "object",
@@ -129,6 +139,35 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                     "screenshot_selector": {
                         "type": "string",
                         "description": "CSS selector when screenshot_mode=element",
+                    },
+                    "screenshot_pack": {
+                        "type": "string",
+                        "enum": ["auto", "design", "viewport", "full", "section", "none"],
+                        "default": "auto",
+                        "description": (
+                            "auto=design for greenfield/redesign/mockup sessions, else single viewport. "
+                            "design=viewport+full+section crops in one call. "
+                            "Prefer design during card.phase layout|sections|verify."
+                        ),
+                    },
+                    "multi_view": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "When true with screenshot_pack=auto, same as screenshot_pack=design.",
+                    },
+                    "focus_sections": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Prefer these section roles/labels for crops (e.g. header, hero, footer).",
+                    },
+                    "max_sections": {
+                        "type": "integer",
+                        "default": 5,
+                        "description": "Max section crops when pack includes sections.",
+                    },
+                    "section_id": {
+                        "type": "string",
+                        "description": "Optional section checklist id stamped on data for agent tracking.",
                     },
                     "annotate_screenshot": {
                         "type": "boolean",
@@ -166,7 +205,8 @@ def perception_tools(mcp_types: Any) -> list[Any]:
             name="perception_observe",
             description=(
                 "Playbook: OBSERVE current page (AGENT_GUIDE §2). Snapshot with INLINE annotated screenshots. "
-                "Use after in-page actions. visual_insights includes layout issues (overflow, overlaps)."
+                "Use after in-page actions. visual_insights includes layout issues (overflow, overlaps). "
+                "screenshot_pack=design returns multi-view evidence in one call."
             ),
             inputSchema={
                 "type": "object",
@@ -179,6 +219,27 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                         "default": "viewport",
                     },
                     "screenshot_selector": {"type": "string"},
+                    "screenshot_pack": {
+                        "type": "string",
+                        "enum": ["auto", "design", "viewport", "full", "section", "none"],
+                        "default": "auto",
+                        "description": (
+                            "auto=design for greenfield/redesign/mockup sessions, else single viewport. "
+                            "design=viewport+full+section crops in one call."
+                        ),
+                    },
+                    "multi_view": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "When true with screenshot_pack=auto, same as screenshot_pack=design.",
+                    },
+                    "focus_sections": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Prefer these section roles/labels for crops.",
+                    },
+                    "max_sections": {"type": "integer", "default": 5},
+                    "section_id": {"type": "string"},
                     "annotate_screenshot": {"type": "boolean", "default": True},
                     "detail": {
                         "type": "string",
@@ -1028,9 +1089,11 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_inspiration_pulse",
             description=(
-                "Fast inspiration spark — same as collect with inspiration_level=light, "
-                "no live screenshots. Use for quick visual direction; call "
-                "perception_inspiration_widen if the pack is thin. "
+                "Continuous parallel inspiration — returns the background HTTP pulse ring "
+                "(thumbs + discover_token) without blocking the primary browser. "
+                "At session_start (greenfield/redesign), MCP keeps scouting the internet in "
+                "parallel waves. Pass refresh=true for an extra light collect wave. "
+                "LOOK thumbs then perception_visual_feedback purpose=inspiration. "
                 "See perception://guide/inspiration."
             ),
             inputSchema={
@@ -1038,8 +1101,14 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                 "properties": {
                     "query": {"type": "string", "description": "Inspiration search query"},
                     "session_id": {"type": "string"},
+                    "episode_id": {"type": "string"},
                     "blob_session_id": {"type": "string"},
                     "discover_token": {"type": "string"},
+                    "refresh": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "Force one extra light collect wave instead of reading the pulse ring",
+                    },
                     "bind_as_reference": {"type": "boolean", "default": True},
                     "include_web_search": {"type": "boolean", "default": True},
                 },
@@ -1105,9 +1174,10 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_resource_search",
             description=(
-                "Resource Intelligence. Search commercial-safe creative assets. Icons use a consistent "
-                "icon family (Lucide, Heroicons, etc.) by default — URLs + npm imports, no blobs. "
-                "Read perception://resource-guide before calling."
+                "Creative-assets gateway (Resource Intelligence). One call for commercial-safe "
+                "icons/fonts/photos/etc. Category shortcuts (*_icon_search, …) are aliases. "
+                "Prefer perception_creative_assets (same API). Icons use a consistent icon family "
+                "by default — URLs + npm imports, no blobs. Read perception://resource-guide."
             ),
             inputSchema={
                 "type": "object",
@@ -1145,6 +1215,38 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                         "default": False,
                         "description": "Save icon_family to .cache/resource_icon_family.json",
                     },
+                    "commercial_required": {"type": "boolean", "default": True},
+                    "attribution_ok": {"type": "boolean", "default": True},
+                    "prefer_svg": {"type": "boolean", "default": True},
+                },
+                "required": ["query"],
+            },
+        ),
+        T(
+            name="perception_creative_assets",
+            description=(
+                "One creative-assets gateway (alias of perception_resource_search). "
+                "Search commercial-safe icons/fonts/photos/illustrations in one call. "
+                "Category tools remain shortcuts. Read perception://resource-guide."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "e.g. 'settings gear icon' or 'minimal user avatar'",
+                    },
+                    "max_results": {"type": "integer", "default": 12},
+                    "categories": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Optional category filter: icon, avatar, font, photo, ...",
+                    },
+                    "provider_preference": {"type": "string"},
+                    "icon_family": {"type": "string"},
+                    "icon_family_strict": {"type": "boolean", "default": True},
+                    "allow_family_fallback": {"type": "boolean", "default": True},
+                    "persist_icon_family": {"type": "boolean", "default": False},
                     "commercial_required": {"type": "boolean", "default": True},
                     "attribution_ok": {"type": "boolean", "default": True},
                     "prefer_svg": {"type": "boolean", "default": True},

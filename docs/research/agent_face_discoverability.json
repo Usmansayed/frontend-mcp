@@ -10,10 +10,10 @@
       "id": "always_on_budget",
       "ok": true,
       "score": 1.0,
-      "detail": "instructions=220w rule=278w combined=498w (budget\u2264700)",
+      "detail": "instructions=220w rule=326w combined=546w (budget\u2264700)",
       "evidence": {
         "instructions_words": 220,
-        "rule_words": 278
+        "rule_words": 326
       }
     },
     {

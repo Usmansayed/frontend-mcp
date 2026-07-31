@@ -271,10 +271,30 @@ def _capability_outcome(
             has_look = bool(evidence) or bool(data.get("feedback_schema"))
             purpose = str(data.get("purpose") or fb.get("purpose") or "").strip().lower()
             borrow = list(fb.get("borrow") or [])
-            look_lock = fb.get("look_lock")
-            look_locked = bool(borrow) or (
-                isinstance(look_lock, dict) and any(bool(v) for v in look_lock.values())
-            ) or (isinstance(look_lock, str) and bool(look_lock.strip()))
+            look_locked = False
+            look_lock_eval: dict[str, Any] = {}
+            fidelity_eval: dict[str, Any] = {}
+            fidelity_locked = False
+            if purpose == "inspiration":
+                from navigation.coordination_intelligence.planning.inspiration_look_lock import (
+                    evaluate_inspiration_look_lock,
+                )
+
+                look_lock_eval = evaluate_inspiration_look_lock(
+                    fb,
+                    usable_image_refs=data.get("usable_image_refs"),
+                    evidence_band=data.get("evidence_band"),
+                )
+                look_locked = bool(look_lock_eval.get("look_locked"))
+            if purpose in {"design", "consistency", "polish"} or (
+                purpose == "" and (fb.get("chrome_fidelity") or fb.get("fidelity_zones"))
+            ):
+                from navigation.coordination_intelligence.planning.chrome_fidelity import (
+                    evaluate_chrome_fidelity,
+                )
+
+                fidelity_eval = evaluate_chrome_fidelity(fb)
+                fidelity_locked = bool(fidelity_eval.get("fidelity_locked"))
             quality = {
                 "purpose": purpose or data.get("purpose"),
                 "judgment": judgment or None,
@@ -283,6 +303,21 @@ def _capability_outcome(
                 "phase": "judgment" if judgment else ("look" if has_look else "unknown"),
                 "look_locked": look_locked if purpose == "inspiration" else None,
                 "borrow_count": len(borrow) if purpose == "inspiration" else None,
+                "primary_ref_count": look_lock_eval.get("primary_ref_count")
+                if purpose == "inspiration"
+                else None,
+                "look_lock_reasons": look_lock_eval.get("reasons")
+                if purpose == "inspiration" and not look_locked
+                else None,
+                "look_lock_hint": look_lock_eval.get("hint")
+                if purpose == "inspiration"
+                else None,
+                "fidelity_locked": fidelity_locked if fidelity_eval else None,
+                "mean_fidelity": fidelity_eval.get("mean_fidelity") if fidelity_eval else None,
+                "fidelity_reasons": fidelity_eval.get("reasons")
+                if fidelity_eval and not fidelity_locked
+                else None,
+                "fidelity_hint": fidelity_eval.get("hint") if fidelity_eval else None,
             }
             if judgment in ("ok", "needs_work", "unclear"):
                 status = "succeeded" if not blocking else "provisional"
@@ -425,6 +460,17 @@ def apply_envelope(
     capability_id: str | None = None,
 ) -> str | None:
     """Mutate PSM from a normalized MCP envelope. Returns resolved capability_id."""
+    tool = str(envelope.get("tool") or "")
+    data_early = envelope.get("data") or {}
+    url_early = envelope.get("url") or data_early.get("url") or psm.artifacts.website_url
+    # Bare navigate often has no capability mapping — still advance active_route.
+    if tool == "perception_navigate" and envelope.get("ok") and url_early:
+        from navigation.coordination_intelligence.planning.route_surfaces import (
+            upsert_route_surface,
+        )
+
+        upsert_route_surface(psm, str(url_early), family=None)
+
     cap = infer_capability_from_envelope(bundle, envelope, capability_hint=capability_id)
     if not cap:
         return None
@@ -434,21 +480,101 @@ def apply_envelope(
     capability_outcome = _capability_outcome(cap, envelope)
     psm.evidence.capability_ledger[cap] = capability_outcome
 
-    # Inspiration look-lock: VF purpose=inspiration with borrow/look_lock
-    # marks inspiration_workflow direction_locked so extract unpaid clears.
+    # Inspiration look-lock: VF purpose=inspiration with *structured* multi-ref
+    # LOOK marks inspiration_workflow direction_locked so extract unpaid clears.
     if str(envelope.get("tool") or "") == "perception_visual_feedback":
         q = capability_outcome.get("quality") if isinstance(capability_outcome.get("quality"), dict) else {}
-        if q.get("purpose") == "inspiration" and q.get("look_locked"):
+        if q.get("purpose") == "inspiration":
+            from navigation.coordination_intelligence.planning.inspiration_look_lock import (
+                evaluate_inspiration_look_lock,
+            )
+
+            fb = data_early.get("visual_feedback") if isinstance(data_early.get("visual_feedback"), dict) else {}
+            # Prefer envelope data if handlers already stamped feedback under data
+            if not fb:
+                fb = (envelope.get("data") or {}).get("visual_feedback") or {}
             insp = psm.evidence.capability_ledger.get("inspiration_workflow")
+            usable = None
+            band = None
             if isinstance(insp, dict):
+                iq0 = insp.get("quality") if isinstance(insp.get("quality"), dict) else {}
+                usable = iq0.get("usable_image_refs")
+            # Re-evaluate with collect's usable count (stricter when many blobs).
+            look_lock_eval = evaluate_inspiration_look_lock(
+                fb if isinstance(fb, dict) else {},
+                usable_image_refs=int(usable) if usable is not None else None,
+                evidence_band=band,
+            )
+            look_locked = bool(look_lock_eval.get("look_locked"))
+            q = dict(q)
+            q["look_locked"] = look_locked
+            q["primary_ref_count"] = look_lock_eval.get("primary_ref_count")
+            q["look_lock_reasons"] = (
+                look_lock_eval.get("reasons") if not look_locked else None
+            )
+            q["look_lock_hint"] = look_lock_eval.get("hint")
+            capability_outcome["quality"] = q
+            psm.evidence.capability_ledger[cap] = capability_outcome
+            if look_locked and isinstance(insp, dict):
                 iq = dict(insp.get("quality") or {})
                 iq["direction_locked"] = True
                 iq["look_locked_via"] = "visual_feedback"
+                iq["primary_ref_ids"] = list(look_lock_eval.get("primary_ref_ids") or [])
+                iq["primary_ref_count"] = look_lock_eval.get("primary_ref_count")
                 insp["quality"] = iq
                 if insp.get("status") == "provisional" and int(iq.get("usable_image_refs") or 0) >= 1:
                     insp["status"] = "succeeded"
                     insp["advancement_eligible"] = True
                 psm.evidence.capability_ledger["inspiration_workflow"] = insp
+                try:
+                    from navigation.coordination_intelligence.planning.inspiration_pulse_loop import (
+                        mark_pulse_look_locked,
+                    )
+
+                    mark_pulse_look_locked(
+                        episode_id=getattr(psm, "episode_id", None),
+                        session_id=getattr(psm.artifacts, "session_id", None),
+                        locked=True,
+                    )
+                except Exception:
+                    pass
+            elif isinstance(insp, dict) and not look_locked:
+                iq = dict(insp.get("quality") or {})
+                iq["direction_locked"] = False
+                iq["look_lock_reasons"] = list(look_lock_eval.get("reasons") or [])
+                insp["quality"] = iq
+                psm.evidence.capability_ledger["inspiration_workflow"] = insp
+
+        # Chrome fidelity lock (purpose=design): 80–90% copy attestation vs refs.
+        if q.get("purpose") in {"design", "consistency", "polish"} or (
+            (data_early.get("visual_feedback") or {}).get("chrome_fidelity")
+            if isinstance(data_early.get("visual_feedback"), dict)
+            else False
+        ):
+            from navigation.coordination_intelligence.planning.chrome_fidelity import (
+                evaluate_chrome_fidelity,
+            )
+
+            fb = data_early.get("visual_feedback") if isinstance(data_early.get("visual_feedback"), dict) else {}
+            if not fb:
+                fb = (envelope.get("data") or {}).get("visual_feedback") or {}
+            fidelity_eval = evaluate_chrome_fidelity(fb if isinstance(fb, dict) else {})
+            fidelity_locked = bool(fidelity_eval.get("fidelity_locked"))
+            q = dict(q)
+            q["fidelity_locked"] = fidelity_locked
+            q["mean_fidelity"] = fidelity_eval.get("mean_fidelity")
+            q["fidelity_reasons"] = (
+                fidelity_eval.get("reasons") if not fidelity_locked else None
+            )
+            q["fidelity_hint"] = fidelity_eval.get("hint")
+            capability_outcome["quality"] = q
+            psm.evidence.capability_ledger[cap] = capability_outcome
+            psm.evidence.capability_ledger["chrome_fidelity"] = {
+                "status": "succeeded" if fidelity_locked else "provisional",
+                "advancement_eligible": fidelity_locked,
+                "quality": fidelity_eval,
+                "capability_id": "chrome_fidelity",
+            }
 
     # Persist usable foundation select for live Spec / catalog sync.
     if (
@@ -502,7 +628,14 @@ def apply_envelope(
         family = "observe"
     elif cap == "design_snapshot" or tool == "perception_build_design_snapshot":
         family = "snapshot"
-    if url and family:
+    if url and (
+        family
+        or tool in (
+            "perception_navigate",
+            "perception_navigate_and_observe",
+            "perception_observe",
+        )
+    ):
         from navigation.coordination_intelligence.planning.route_surfaces import (
             upsert_route_surface,
         )

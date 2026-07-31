@@ -30,6 +30,8 @@ def _row(
 	expect_claim_ok: bool | None = None,
 	forbid_owed: set[str] | None = None,
 	require_owed0: str | None = None,
+	expect_band: str | None = None,
+	expect_implement_blocked: bool | None = None,
 	strategy_extra: dict | None = None,
 ) -> dict:
 	return {
@@ -41,6 +43,8 @@ def _row(
 		"expect_claim_ok": expect_claim_ok,
 		"forbid_owed": forbid_owed or set(),
 		"require_owed0": require_owed0,
+		"expect_band": expect_band,
+		"expect_implement_blocked": expect_implement_blocked,
 		"strategy_extra": strategy_extra or {},
 	}
 
@@ -454,6 +458,339 @@ CASES = [
 			"episode_portfolio": {"paid": [{"family": "verify"}], "unpaid": []},
 		},
 	),
+	# --- Run 6 hardcore P0 regressions ---
+	_row(
+		id="run6_advisory_fix_prose_greenfield",
+		intent="structural hardcore coordination review",
+		expect_class="greenfield",
+		expect_next="perception_inspiration_collect",
+		require_owed0="inspiration",
+		forbid_owed=set(),  # inspiration must be present — checked via require_owed0
+		strategy_extra={
+			"task_scope": "design_driven",
+			"influence_level": "structural",
+			"summary": "Keep MCP lightweight: observe, fix, verify.",
+			"what_matters_now": ["Minimize scope; observe, fix, verify, ship"],
+			"right_sizing": {"tier": "initiative"},
+			"policy_id": "design.greenfield.no_refs.early",
+			"implementation_gate": {
+				"state": "blocked",
+				"next_required_capability": "inspiration_workflow",
+				"prohibited_actions": ["claim_complete"],
+				"section_checklist_required": False,
+			},
+			"episode_portfolio": {
+				"paid": [],
+				"unpaid": [
+					{"family": "inspiration", "suggested": "perception_inspiration_collect"},
+					{"family": "snapshot", "suggested": "perception_build_design_snapshot"},
+					{"family": "component", "suggested": "perception_select_component_foundation"},
+					{"family": "visual_feedback", "suggested": "perception_visual_feedback"},
+				],
+			},
+		},
+	),
+	_row(
+		id="run6_contact_form_validation",
+		intent="Wire up the contact form validation",
+		expect_class="forms",
+		expect_next="perception_probe_form",
+		forbid_owed={"inspiration", "component"},
+		strategy_extra={
+			"task_scope": "feature_incremental",
+			"influence_level": "balanced",
+			"right_sizing": {"tier": "polish"},
+		},
+	),
+	_row(
+		id="run6_finish_section_skip_when_not_required",
+		intent="Build brand new SaaS marketing landing from scratch",
+		expect_class="greenfield",
+		expect_next="",
+		expect_claim_ok=True,
+		strategy_extra={
+			"task_scope": "design_driven",
+			"influence_level": "structural",
+			"right_sizing": {"tier": "initiative"},
+			"verification_status": "passed",
+			"implementation_gate": {
+				"state": "ready",
+				"prohibited_actions": [],
+				"section_checklist_required": False,
+				"ship_council_required": False,
+			},
+			"episode_portfolio": {
+				"paid": [
+					{"family": "inspiration"},
+					{"family": "verify"},
+					{"family": "visual_feedback"},
+				],
+				"unpaid": [],
+			},
+		},
+	),
+	_row(
+		id="run6b_greenfield_policy_not_hotfix",
+		intent="structural hardcore coordination review",
+		expect_class="greenfield",
+		expect_next="perception_inspiration_collect",
+		require_owed0="inspiration",
+		strategy_extra={
+			"task_scope": "design_driven",
+			"influence_level": "structural",
+			"policy_id": "design.greenfield.no_refs.early",
+			"right_sizing": {"tier": "initiative"},
+			"implementation_gate": {
+				"state": "blocked",
+				"next_required_capability": "inspiration_workflow",
+				"prohibited_actions": ["claim_complete"],
+			},
+			"episode_portfolio": {
+				"paid": [],
+				"unpaid": [
+					{"family": "inspiration", "suggested": "perception_inspiration_collect"},
+					{"family": "snapshot", "suggested": "perception_build_design_snapshot"},
+					{"family": "component", "suggested": "perception_select_component_foundation"},
+					{"family": "visual_feedback", "suggested": "perception_visual_feedback"},
+				],
+			},
+		},
+	),
+	_row(
+		id="pack_greenfield_band_very_heavy_blocks_implement",
+		intent="Build a new branded landing page from scratch",
+		expect_class="greenfield",
+		expect_next="perception_inspiration_collect",
+		require_owed0="inspiration",
+		expect_claim_ok=False,
+		expect_band="very_heavy",
+		expect_implement_blocked=True,
+		strategy_extra={
+			"task_scope": "design_driven",
+			"influence_level": "structural",
+			"policy_id": "design.greenfield.no_refs.early",
+			"implementation_gate": {
+				"state": "blocked",
+				"next_required_capability": "inspiration_workflow",
+				"prohibited_actions": ["claim_complete"],
+			},
+			"episode_portfolio": {
+				"paid": [],
+				"unpaid": [
+					{"family": "inspiration", "suggested": "perception_inspiration_collect"},
+					{"family": "component", "suggested": "perception_select_component_foundation"},
+					{"family": "verify", "suggested": "perception_verify"},
+				],
+			},
+		},
+	),
+	_row(
+		id="pack_hotfix_band_light_no_inspiration",
+		intent="Fix overlapping mobile menu button",
+		expect_class="hotfix",
+		expect_next="perception_navigate_and_observe",
+		forbid_owed={"inspiration", "component", "snapshot"},
+		expect_band="light",
+		expect_implement_blocked=False,
+		strategy_extra={
+			"task_scope": "hotfix",
+			"influence_level": "surgical",
+			"right_sizing": {"tier": "touch_up"},
+		},
+	),
+	_row(
+		id="pack_feature_heavy_no_gallery_inspiration",
+		intent="Add a settings toggle to an existing page",
+		expect_class="feature",
+		expect_next="perception_navigate_and_observe",
+		forbid_owed={"inspiration"},
+		expect_band="heavy",
+		expect_implement_blocked=False,
+		strategy_extra={
+			"task_scope": "feature_incremental",
+			"influence_level": "balanced",
+			"right_sizing": {"tier": "feature"},
+		},
+	),
+	_row(
+		id="run6b_owed_prefers_gate_component",
+		intent="structural hardcore coordination review",
+		expect_class="greenfield",
+		expect_next="perception_select_component_foundation",
+		require_owed0="component",
+		strategy_extra={
+			"task_scope": "design_driven",
+			"influence_level": "structural",
+			"policy_id": "design.greenfield.with_refs.early",
+			"right_sizing": {"tier": "initiative"},
+			"implementation_gate": {
+				"state": "blocked",
+				"next_required_capability": "component_search_plan",
+				"prohibited_actions": ["claim_complete"],
+			},
+			"episode_portfolio": {
+				"paid": [{"family": "inspiration"}],
+				"unpaid": [
+					{"family": "component", "suggested": "perception_plan_component_search"},
+					{"family": "visual_feedback", "suggested": "perception_visual_feedback"},
+					{"family": "observe", "suggested": "perception_navigate_and_observe"},
+				],
+			},
+		},
+	),
+	# --- Hard pack H-series (≥1.2.0.dev57) ---
+	_row(
+		id="h02_hotfix_scope_on_new_landing",
+		intent="Build a new product marketing site with distinctive brand from scratch",
+		expect_class="greenfield",
+		expect_band="very_heavy",
+		require_owed0="inspiration",
+		strategy_extra={
+			"task_scope": "hotfix",
+			"influence_level": "surgical",
+			"policy_id": "hotfix.light.surgical",
+		},
+	),
+	_row(
+		id="h11_inspiration_unpaid_beats_component_gate",
+		intent="Ship a new product landing with brand-first hero",
+		expect_class="greenfield",
+		expect_next="perception_inspiration_collect",
+		require_owed0="inspiration",
+		expect_implement_blocked=True,
+		expect_claim_ok=False,
+		strategy_extra={
+			"task_scope": "design_driven",
+			"influence_level": "structural",
+			"policy_id": "design.greenfield.no_refs.early",
+			"implementation_gate": {
+				"state": "blocked",
+				"next_required_capability": "component_search_plan",
+				"prohibited_actions": ["claim_complete"],
+			},
+			"episode_portfolio": {
+				"paid": [],
+				"unpaid": [
+					{"family": "component", "suggested": "perception_plan_component_search"},
+					{"family": "inspiration", "suggested": "perception_inspiration_collect"},
+					{"family": "visual_feedback", "suggested": "perception_visual_feedback"},
+				],
+			},
+		},
+	),
+	_row(
+		id="h18_improve_existing_page_feature",
+		intent="Improve the existing marketing page hierarchy and CTA copy",
+		expect_class="feature",
+		expect_band="heavy",
+		forbid_owed={"inspiration"},
+		strategy_extra={
+			"task_scope": "feature_incremental",
+			"influence_level": "balanced",
+			"policy_id": "design.greenfield.no_refs.early",
+		},
+	),
+	_row(
+		id="h20_restyle_match_brand_redesign",
+		intent="Restyle the settings surface to match the new brand system",
+		expect_class="redesign",
+		expect_band="very_heavy",
+		forbid_next={"perception_inspiration_collect"},
+		expect_implement_blocked=True,
+		strategy_extra={
+			"task_scope": "design_driven",
+			"influence_level": "structural",
+			"policy_id": "design.greenfield.no_refs.early",
+			"episode_portfolio": {
+				"paid": [],
+				"unpaid": [
+					{"family": "snapshot", "suggested": "perception_build_design_snapshot"},
+					{"family": "observe", "suggested": "perception_navigate_and_observe"},
+					{"family": "inspiration", "suggested": "perception_inspiration_collect"},
+				],
+			},
+		},
+	),
+	_row(
+		id="h21_forms_done_stale_probe_unpaid",
+		intent="Verify /forms/validation invalid then valid submit",
+		expect_class="forms",
+		expect_next="",
+		expect_claim_ok=True,
+		forbid_next={"perception_probe_form"},
+		expect_band="light",
+		strategy_extra={
+			"task_scope": "forms",
+			"influence_level": "minimal",
+			"verification_status": "passed",
+			"implementation_gate": {
+				"state": "ready",
+				"prohibited_actions": ["claim_complete"],
+			},
+			"episode_portfolio": {
+				"paid": [{"family": "forms"}, {"family": "verify"}],
+				"unpaid": [{"family": "forms", "suggested": "perception_probe_form"}],
+			},
+		},
+	),
+	_row(
+		id="h03_structural_gate_on_css_overlap",
+		intent="Fix overlapping CTA on the homepage — surgical CSS",
+		expect_class="hotfix",
+		expect_band="light",
+		forbid_owed={"inspiration", "component", "snapshot"},
+		expect_next="perception_navigate_and_observe",
+		strategy_extra={
+			"task_scope": "design_driven",
+			"influence_level": "structural",
+			"policy_id": "design.greenfield.no_refs.early",
+			"implementation_gate": {
+				"state": "blocked",
+				"next_required_capability": "inspiration_workflow",
+				"prohibited_actions": ["claim_complete"],
+			},
+			"episode_portfolio": {
+				"paid": [],
+				"unpaid": [
+					{"family": "inspiration", "suggested": "perception_inspiration_collect"},
+				],
+			},
+		},
+	),
+	_row(
+		id="h16_debug_stamp_additive_heavy",
+		intent="Add a share button to the existing article toolbar",
+		expect_class="feature",
+		expect_band="heavy",
+		forbid_owed={"inspiration"},
+		expect_next="perception_navigate_and_observe",
+		strategy_extra={
+			"task_scope": "debug",
+			"influence_level": "surgical",
+			"right_sizing": {"tier": "touch_up", "declared": False},
+			"policy_id": "hotfix.light.surgical",
+		},
+	),
+	_row(
+		id="h12_feature_gallery_poison_portfolio",
+		intent="Add a testimonials carousel to the existing homepage",
+		expect_class="feature",
+		expect_band="heavy",
+		forbid_owed={"inspiration"},
+		expect_next="perception_navigate_and_observe",
+		strategy_extra={
+			"task_scope": "feature_incremental",
+			"influence_level": "balanced",
+			"policy_id": "design.greenfield.no_refs.early",
+			"episode_portfolio": {
+				"paid": [],
+				"unpaid": [
+					{"family": "inspiration", "suggested": "perception_inspiration_collect"},
+					{"family": "observe", "suggested": "perception_navigate_and_observe"},
+				],
+			},
+		},
+	),
 ]
 
 
@@ -500,6 +837,19 @@ def _run_one(case: dict) -> dict:
 		checks["owed0"] = bool(owed_fams) and owed_fams[0] == case["require_owed0"]
 	else:
 		checks["owed0"] = True
+	if case.get("expect_band"):
+		checks["band"] = face.get("evidence_band") == case["expect_band"]
+	else:
+		checks["band"] = True
+	if case.get("expect_implement_blocked") is not None:
+		checks["implement_blocked"] = face.get("implement_blocked") is case["expect_implement_blocked"]
+	else:
+		checks["implement_blocked"] = True
+
+	if case["id"] == "run6_finish_section_skip_when_not_required":
+		by_id = {row["id"]: row for row in face.get("finish") or []}
+		checks["finish_section_skip"] = by_id.get("section_checklist", {}).get("status") == "skip"
+		checks["finish_ship_skip"] = by_id.get("ship_council", {}).get("status") == "skip"
 
 	# Soft note for landing+signup (document current behavior)
 	note = None

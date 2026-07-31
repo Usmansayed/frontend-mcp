@@ -39,13 +39,19 @@ Skip-bootstrap is a hard fail for structural UI.
 ## Order
 1. `perception_health({ url, intent })`
 2. `perception_session_start({ base_url, intent })` → save `session_id`
-3. Read **`agent_summary.card`** (`class`, `depth`, `next`, `next_args`, `owed`, `gate`, `claim_ok`, `claim_extra`, `finish`, `resource`)
+3. Read **`agent_summary.card`** (`class`, `depth`, `evidence_band`, `pack`, `implement_blocked`, `next`, `next_args`, `owed`, `gate`, `claim_ok`, `claim_extra`, `finish`, `resource`)
 4. Call `card.next` with `card.next_args` (if `then` is set, call that next). Honor `depth` / `finish[]`.
 5. Optional depth: `resources/read` → `card.resource` (usually `perception://spine/{class}`)
-6. Pay `owed` → implement → clear non-skip `finish` → `data.verified=true` → claim only if `claim_ok`
+6. Pay entire `owed` / `pack.critical` → implement only when not `implement_blocked` → clear non-skip `finish` → `data.verified=true` → claim only if `claim_ok`
 
 ## Operator doc
 Repo guide: `docs/AGENT_FACE_COORDINATION.md` (boards + hard fails + card contract).
+
+## Evidence band (default heavy for normal UI)
+- `light` — hotfix/forms / surgical
+- `medium` — explicit polish/chrome
+- `heavy` — **default** observe + LOOK + verify (+ component if unpaid)
+- `very_heavy` — greenfield/redesign full ladder (+ ship/sections when gate arms)
 
 ## Depth
 - `light` — observe/probe + verify (hotfix/forms)
@@ -67,28 +73,34 @@ Archive playbooks: `perception://agent-guide` (L3 — do not load by default).
         "Spine: Greenfield",
         """# Spine: Greenfield
 
+Evidence band: `very_heavy`. Pay `card.pack` (integrated loop — not one silo).
+
 ## Path
 1. `perception_inspiration_collect` (usable pack)
 2. `perception_visual_feedback` purpose=inspiration → lock look
-3. Implement
-4. Observe draft → VF purpose=design if needed
-5. `perception_verify` → `data.verified=true`
-6. Finish `card.claim_extra` if any, then claim
+3. `perception_select_component_foundation` when in `owed` / pack
+4. Implement only when `implement_blocked=false`
+5. Observe draft → VF purpose=design if needed
+6. `perception_verify` → `data.verified=true`
+7. Finish `card.claim_extra` if any, then claim when `claim_ok`
 
-Read `agent_summary.card` every turn. Do not invent layout while `owed` is non-empty.
+Read `agent_summary.card` every turn. Do not invent layout while pack.critical unpaid.
 """,
     ),
     "perception://spine/redesign": (
         "Spine: Redesign",
         """# Spine: Redesign / Mockup
 
+Evidence band: `very_heavy`. Pay `card.pack` (observe → snapshot → LOOK → verify).
+
 ## Path
-1. `perception_build_design_snapshot` (bind target / baseline)
+1. Observe live if unpaid, then `perception_build_design_snapshot` (bind target / baseline)
 2. LOOK + `perception_visual_feedback` as needed
-3. Implement measured changes
-4. Remeasure if Spec bound; honor revision gate
-5. `perception_verify` → `data.verified=true`
-6. Finish `card.claim_extra` if any, then claim
+3. Component foundation only if in `owed`
+4. Implement measured changes when not `implement_blocked`
+5. Remeasure if Spec bound; honor revision gate
+6. `perception_verify` → `data.verified=true`
+7. Finish `card.claim_extra` if any, then claim when `claim_ok`
 
 Gallery inspiration is the wrong first move for mockup match.
 """,
@@ -97,31 +109,38 @@ Gallery inspiration is the wrong first move for mockup match.
         "Spine: Feature",
         """# Spine: Feature
 
+Evidence band: `heavy` by default (not light). Pack: observe → component? → LOOK → verify.
+
 ## Path
 1. Observe affected routes (`perception_navigate_and_observe` / `observe`)
-2. Implement smallest change that fits existing UI
-3. `perception_verify` → `data.verified=true`
-4. Claim if `claim_ok`
+2. Select component foundation when `owed` includes component
+3. LOOK via `perception_visual_feedback` when owed
+4. Implement smallest change that fits existing UI
+5. `perception_verify` → `data.verified=true`
+6. Claim if `claim_ok`
 
 Do not restart greenfield inspiration unless `card.owed` includes it.
+Pass `effort_tier=light` only for true surgical CSS-bugs.
 """,
     ),
     "perception://spine/hotfix": (
         "Spine: Hotfix",
         """# Spine: Hotfix / Polish
 
+Evidence band: `light`. Skip inspiration / foundation unless `card.owed` or sticky `claim_extra` says otherwise.
+
 ## Path
 1. Observe blocking issue
 2. Smallest fix
 3. `perception_verify` → `data.verified=true`
 4. Claim if `claim_ok`
-
-Skip inspiration / foundation unless `card.owed` or sticky `claim_extra` says otherwise.
 """,
     ),
     "perception://spine/forms": (
         "Spine: Forms",
         """# Spine: Forms / Guards
+
+Evidence band: `light`. No gallery inspiration.
 
 ## Path
 1. `perception_probe_form` (unknown forms)
@@ -344,8 +363,11 @@ How much evidence this change deserves. Ask three LOOK questions:
 | `feature` | new block in an existing shell | + foundation if unpaid; section for that block | inspiration unless new visual language |
 | `initiative` | new page / redesign / rebrand | full ladder | nothing |
 
-Default when you do not declare: **lightest-that-fits** (usually `polish` for incremental work).
-Lock your judgment: pass `effort_tier` on `session_start` / `visual_feedback` / `verify`.
+Default when you do not declare: **heavy** (`feature`) for normal incremental UI.
+Use `light` / `touch_up` only for surgical hotfix/forms; `medium` / `polish` for explicit chrome cues;
+`very_heavy` / `initiative` for greenfield/redesign. See Evidence Pack Loop on `agent_summary.card`
+(`evidence_band`, `pack`, `implement_blocked`).
+Lock your judgment: pass `effort_tier` (or band alias) on `session_start` / `visual_feedback` / `verify`.
 
 ## Failure and fallback
 Do not confuse **ROI** (navbar is always visible) with **blast radius** (chrome-only CSS).

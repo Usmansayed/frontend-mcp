@@ -62,16 +62,28 @@ PURPOSES: dict[str, dict[str, Any]] = {
 		'recommended_resource': 'perception://design-workflow',
 		'focus': (
 			'Judge visual hierarchy, first-viewport impact, density/spacing rhythm, '
-			'brand feel, and whether structure matches intent. If look_lock / primary_ref_ids '
-			'are bound from inspiration, compare the draft against those refs — do not invent '
-			'a third aesthetic.'
+			'brand feel, and whether chrome matches locked inspiration at 80–90% copy. '
+			'Score chrome_fidelity per zone (nav|aside|main|composer). Soft "looks fine" '
+			'without zone scores is INVALID. Taste tweaks OK; inventing a third aesthetic is not.'
 		),
-		'extra_keys': ('hierarchy_issues', 'look_lock', 'primary_ref_ids', 'vs_inspiration'),
+		'extra_keys': (
+			'hierarchy_issues',
+			'look_lock',
+			'primary_ref_ids',
+			'vs_inspiration',
+			'chrome_fidelity',
+			'fidelity_zones',
+		),
 		'extra_schema': {
 			'hierarchy_issues': "['hero has no focal point', 'CTAs compete'] — hierarchy-specific problems",
 			'look_lock': 'Optional borrow lock carried from purpose=inspiration',
 			'primary_ref_ids': 'Inspiration ref ids this draft should track',
 			'vs_inspiration': "['matches hero density', 'CTA weight drifted'] — compare draft to locked refs",
+			'chrome_fidelity': (
+				"[{zone:'nav'|'aside'|'main'|'composer', fidelity:80-95, ref_id, notes:tweak}] "
+				"— required for claim on greenfield/redesign heavy+. Mean ≥80, each zone ≥75."
+			),
+			'fidelity_zones': 'Alias of chrome_fidelity',
 		},
 	},
 	PURPOSE_CONSISTENCY: {
@@ -104,19 +116,28 @@ PURPOSES: dict[str, dict[str, Any]] = {
 		'pack': PACK_FULL,
 		'recommended_resource': 'perception://guide/inspiration',
 		'focus': (
-			'Extract what to BORROW vs IGNORE from what you see: layout skeleton, type '
-			'scale, color mood, motion. Lock a look_lock so collect alone is not direction. '
-			'Never copy wholesale; name the transferable idea.'
+			'Digest MANY attached inspiration blobs (not 1–2). For each liked region '
+			'(sidebar, header, composer, message row, empty state): name the ref_id and '
+			'what to COPY with tweaks. Soft mood words alone are invalid. '
+			'Fill primary_ref_ids (≥3, ≥5 on very_heavy) + borrow[{ref_id, section, idea}]. '
+			'Never invent chrome from memory while blobs sit unread.'
 		),
-		'extra_keys': ('borrow', 'ignore', 'look_lock', 'primary_ref_ids'),
+		'extra_keys': ('borrow', 'ignore', 'look_lock', 'primary_ref_ids', 'looked_ref_ids'),
 		'extra_schema': {
-			'borrow': "['split hero with product screenshot', 'oversized serif display'] — ideas to adopt",
-			'ignore': "['their pricing table', 'dark theme'] — explicitly not transferable",
+			'borrow': (
+				"[{ref_id, section, idea}] e.g. "
+				"{ref_id:'web_og:maze.co:0', section:'sidebar', idea:'compact history + strong New chat'} "
+				"— concrete section copies with tweaks; mood-only strings rejected"
+			),
+			'ignore': "['their pricing table', 'food photography'] — explicitly not transferable",
 			'look_lock': (
 				"{composition, hierarchy, density, type_mood, chrome, motion} — "
-				"machine-usable direction after LOOK"
+				"machine-usable direction AFTER multi-ref LOOK"
 			),
-			'primary_ref_ids': "['hit_0', 'hit_2'] — which collected refs anchor the look",
+			'primary_ref_ids': (
+				"['hit_0','hit_2','hit_5'] — ≥3 (≥5 very_heavy) distinct collected refs you actually LOOK'd"
+			),
+			'looked_ref_ids': 'Alias of primary_ref_ids if you prefer that key',
 		},
 	},
 	PURPOSE_HOTFIX: {
@@ -243,6 +264,35 @@ def build_purpose_next_actions(
 	"""Base actions from the shared policy, then purpose-specific routing."""
 	actions = build_visual_next_actions(tool=tool, envelope=envelope, feedback=feedback)
 	if feedback.get('judgment') == 'ok':
+		# Even on ok — refuse soft pass when chrome fidelity not attested.
+		if purpose == PURPOSE_DESIGN:
+			from navigation.coordination_intelligence.planning.chrome_fidelity import (
+				evaluate_chrome_fidelity,
+			)
+
+			fid = evaluate_chrome_fidelity(feedback)
+			if not fid.get('fidelity_locked'):
+				return [
+					{
+						'action': 'attest_chrome_fidelity',
+						'why': fid.get('hint')
+						or (
+							'judgment=ok rejected for claim — fill chrome_fidelity '
+							'(nav|aside|main|composer) at 80–90% copy vs primary_ref_ids'
+						),
+						'tool': 'perception_visual_feedback',
+						'args_hint': {
+							'purpose': 'design',
+							'chrome_fidelity': [
+								{'zone': 'nav', 'fidelity': 85, 'ref_id': '<primary_ref>'},
+								{'zone': 'aside', 'fidelity': 85, 'ref_id': '<primary_ref>'},
+								{'zone': 'main', 'fidelity': 85, 'ref_id': '<primary_ref>'},
+								{'zone': 'composer', 'fidelity': 85, 'ref_id': '<primary_ref>'},
+							],
+							'reasons': list(fid.get('reasons') or [])[:4],
+						},
+					}
+				] + list(actions or [])
 		return actions
 
 	data = envelope.get('data') if isinstance(envelope.get('data'), dict) else {}
@@ -316,19 +366,39 @@ def build_purpose_next_actions(
 			or (isinstance(look_lock, str) and look_lock.strip())
 			or primary_refs
 		)
+		from navigation.coordination_intelligence.planning.chrome_fidelity import (
+			evaluate_chrome_fidelity,
+		)
+
+		fid = evaluate_chrome_fidelity(feedback)
+		if not fid.get('fidelity_locked'):
+			extra.append(
+				{
+					'action': 'attest_chrome_fidelity',
+					'why': fid.get('hint')
+					or 'Score chrome zones vs refs (80–90% copy) before claiming design done.',
+					'tool': None,
+					'args_hint': {
+						'chrome_fidelity': 'nav|aside|main|composer with fidelity + ref_id',
+						'reasons': list(fid.get('reasons') or [])[:4],
+					},
+				}
+			)
 		if has_lock:
 			extra.append(
 				{
 					'action': 'revise_vs_inspiration',
 					'why': (
 						'Design draft has a look_lock / primary_ref_ids — revise toward those '
-						'borrowed refs; fill vs_inspiration notes; do not invent a third look.'
+						'borrowed refs at ~80–90% visual copy; fill vs_inspiration + chrome_fidelity; '
+						'do not invent a third look.'
 					),
 					'tool': None,
 					'args_hint': {
 						'look_lock': look_lock,
 						'primary_ref_ids': primary_refs[:6],
 						'vs_inspiration': list(feedback.get('vs_inspiration') or [])[:6],
+						'chrome_fidelity': list(feedback.get('chrome_fidelity') or [])[:4],
 					},
 				}
 			)

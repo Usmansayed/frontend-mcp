@@ -1,4 +1,4 @@
-"""AI-centric right-sizing — lightest-that-fits for chrome polish."""
+"""AI-centric right-sizing — Evidence Pack Loop bands (default heavy for normal UI)."""
 from __future__ import annotations
 
 import sys
@@ -44,16 +44,17 @@ def _navbar_psm(*, verified: bool = True) -> ProjectSituationModel:
 
 
 @pytest.mark.unit
-def test_navbar_polish_recommends_polish_not_initiative() -> None:
+def test_navbar_incremental_defaults_to_heavy_not_initiative() -> None:
     psm = _navbar_psm()
     rec = recommend_effort_tier(psm, task_scope="feature_incremental", influence_level="balanced")
-    assert rec["tier"] == "polish"
+    assert rec["tier"] == "feature"
+    assert rec["evidence_band"] == "heavy"
     assert "inspiration_workflow" in rec["skip"]
-    assert "ship_council" in rec["skip"]
+    assert "ship_council" in rec.get("skip", []) or "full_greenfield_ladder" in rec["skip"]
 
 
 @pytest.mark.unit
-def test_navbar_polish_does_not_arm_ship_or_initiative() -> None:
+def test_navbar_heavy_does_not_arm_ship_or_initiative() -> None:
     psm = _navbar_psm()
     strategy = {"task_scope": "feature_incremental", "influence_level": "balanced"}
     assert design_scope_applies(psm, strategy) is False
@@ -69,13 +70,12 @@ def test_navbar_polish_does_not_arm_ship_or_initiative() -> None:
     assert gate.get("section_checklist_required") is not True
     assert gate.get("residue_scan_required") is not True
     assert "claim_complete" not in (gate.get("prohibited_actions") or [])
-    assert gate.get("right_sizing", {}).get("tier") == "polish"
-    assert gate.get("ship_council_advisory") is True
+    assert gate.get("right_sizing", {}).get("tier") == "feature"
     assert resource == RIGHT_SIZING_RESOURCE
 
 
 @pytest.mark.unit
-def test_agent_can_upgrade_polish_to_initiative() -> None:
+def test_agent_can_upgrade_heavy_to_initiative() -> None:
     psm = _navbar_psm()
     set_effort_tier(psm, "initiative", source="agent")
     strategy = {"task_scope": "feature_incremental", "influence_level": "balanced"}
@@ -105,6 +105,7 @@ def test_design_driven_still_recommends_initiative() -> None:
     psm.episode.verification_status = "passed"
     rec = recommend_effort_tier(psm, task_scope="design_driven", influence_level="structural")
     assert rec["tier"] == "initiative"
+    assert rec["evidence_band"] == "very_heavy"
     assert episode_needs_ship_council(
         psm,
         {"task_scope": "design_driven", "influence_level": "structural"},
@@ -130,13 +131,12 @@ def test_strategy_surfaces_right_sizing_on_agent_summary() -> None:
     psm = _navbar_psm(verified=False)
     catalog = load_runtime_artifacts().situation_policy_catalog
     strategy = compile_engineering_strategy(psm, catalog).to_dict()
-    assert strategy.get("right_sizing", {}).get("tier") == "polish"
-    assert "RIGHT-SIZE" in (strategy.get("host_action") or "")
+    assert strategy.get("right_sizing", {}).get("tier") == "feature"
+    assert strategy.get("right_sizing", {}).get("evidence_band") == "heavy"
 
     envelope: dict = {"ok": True, "data": {}}
     surface_engineering_strategy(envelope, strategy, episode_id="ep_test")
-    assert envelope["agent_summary"]["right_sizing"]["tier"] == "polish"
-    assert any("right_sizing=polish" in a for a in envelope["agent_summary"].get("advisory") or [])
+    assert envelope["agent_summary"]["right_sizing"]["tier"] == "feature"
 
 
 @pytest.mark.unit
@@ -158,3 +158,4 @@ def test_build_right_sizing_card_override_hint() -> None:
     )
     assert card["resource"] == RIGHT_SIZING_RESOURCE
     assert "effort_tier" in card["override_hint"]
+    assert card.get("evidence_band") == "heavy"
