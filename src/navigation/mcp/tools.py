@@ -14,10 +14,11 @@ def perception_tools(mcp_types: Any) -> list[Any]:
         T(
             name="perception_health",
             description=(
-                "Does: checks runtime reachability and bootstraps Engineering Strategy from intent. "
+                "Does: checks runtime reachability, bootstraps Engineering Strategy from intent, "
+                "and returns data.doctor (env checks + copy-paste fix_commands). "
                 "Use when: FIRST call of any UI/frontend/visual task — before planning or coding a full viewport. "
-                "Returns: reachability plus recommended_resource and implementation_gate. "
-                "Next: read recommended_resource; session_start if reachable; never skip to end-of-task verify."
+                "Returns: reachability, doctor, recommended_resource / implementation_gate. "
+                "Next: fix doctor.fix_commands if critical; session_start if reachable; never skip to end-of-task verify."
             ),
             inputSchema={
                 "type": "object",
@@ -30,6 +31,35 @@ def perception_tools(mcp_types: Any) -> list[Any]:
                             "useful coordinator bootstrap — without intent, greenfield vs "
                             "hotfix routing is weak."
                         ),
+                    },
+                    "repo_root": {
+                        "type": "string",
+                        "description": "Optional app repo root for doctor.repo_root check",
+                    },
+                },
+            },
+        ),
+        T(
+            name="perception_step",
+            description=(
+                "Tier-0 spine: executes agent_summary.card.next with card.next_args in one call. "
+                "Use when: you would otherwise hunt tools — prefer this over inventing a nearby tool. "
+                "Pass session_id (and overrides for placeholders). dry_run=true only resolves next. "
+                "While implement_blocked, mutation tools are hard-refused — perception_step pays owed evidence."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "session_id": {"type": "string"},
+                    "episode_id": {"type": "string"},
+                    "dry_run": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "If true, only resolve card.next — do not execute",
+                    },
+                    "override_tool": {
+                        "type": "string",
+                        "description": "Rare: force a specific tool instead of card.next",
                     },
                 },
             },

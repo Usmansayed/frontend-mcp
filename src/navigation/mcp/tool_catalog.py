@@ -22,6 +22,7 @@ GROUP_ORDER: dict[str, int] = {
 # Explicit overrides (others inferred by rules below)
 _TOOL_GROUP: dict[str, str] = {
     "perception_health": "Session",
+    "perception_step": "Session",
     "perception_session_start": "Session",
     "perception_session_end": "Session",
     "perception_state_save": "Session",
@@ -37,16 +38,22 @@ _TOOL_GROUP: dict[str, str] = {
 # Per-tool workflow lines (what / when / before / next) — concise MCP best practice
 _WORKFLOW: dict[str, dict[str, str]] = {
     "perception_health": {
-        "what": "Ping dev server; confirm MCP envelope.",
+        "what": "Ping app URL; doctor env checks + fix_commands; bootstrap strategy.",
         "when": "First call every task.",
         "before": "—",
-        "next": "perception_session_start",
+        "next": "perception_session_start (or perception_step after session)",
+    },
+    "perception_step": {
+        "what": "Run card.next with card.next_args (Tier-0 spine).",
+        "when": "Every turn after session — prefer over inventing tools.",
+        "before": "perception_session_start",
+        "next": "read card; perception_step again until claim_ok",
     },
     "perception_session_start": {
         "what": "Launch browser session.",
         "when": "After health OK.",
         "before": "perception_health",
-        "next": "perception_navigate_and_observe",
+        "next": "perception_step or perception_navigate_and_observe",
     },
     "perception_session_end": {
         "what": "Close browser; release resources.",

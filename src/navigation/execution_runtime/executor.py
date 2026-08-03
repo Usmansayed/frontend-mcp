@@ -229,6 +229,63 @@ class ToolExecutor:
         except asyncio.CancelledError:
             return self._cancelled_result(tool, corr, attempt, idem_key)
 
+        # P0: hard refuse mutation tools while card.implement_blocked.
+        if tool != "perception_step":
+            try:
+                from navigation.execution_runtime.policies.implement_hard_gate import (
+                    blocked_envelope,
+                    evaluate_implement_hard_gate,
+                )
+
+                gate = evaluate_implement_hard_gate(tool, args)
+                if gate is not None:
+                    envelope = blocked_envelope(tool, gate)
+                    metadata = ExecutionMetadata(
+                        execution_id=_new_execution_id(),
+                        correlation_id=corr,
+                        tool=tool,
+                        attempt=attempt,
+                        latency_ms=0,
+                        replayed=False,
+                        idempotency_key=idem_key,
+                    )
+                    attach_execution_metadata(envelope, metadata)
+                    record = ExecutionRecord(
+                        execution_id=metadata.execution_id,
+                        tool=tool,
+                        ok=False,
+                        latency_ms=0,
+                        correlation_id=corr,
+                        attempt=attempt,
+                        replayed=False,
+                        idempotency_key=idem_key,
+                        error=str(envelope.get("error") or "implement_blocked"),
+                    )
+                    self._ledger.append(record)
+                    metrics.record(ok=False, latency_ms=0, replayed=False)
+                    return ExecutionResult(
+                        execution_id=metadata.execution_id,
+                        tool=tool,
+                        envelope=envelope,
+                        latency_ms=0,
+                        attempt=attempt,
+                        correlation_id=corr,
+                        replayed=False,
+                        record=record,
+                    )
+            except Exception:
+                logger.debug("implement_hard_gate check failed; allowing tool", exc_info=True)
+
+        # P0: perception_step → dispatch card.next (Tier-0 spine).
+        if tool == "perception_step":
+            return await self._execute_perception_step(
+                args,
+                attempt=attempt,
+                corr=corr,
+                idem_key=idem_key,
+                allow_repeat=allow_repeat,
+            )
+
         from navigation.execution_runtime.policies.browser_flight import (
             BrowserFlightRejected,
             BrowserFlightTimeout,
@@ -274,6 +331,157 @@ class ToolExecutor:
                 session_id=session_hint_s,
             )
             return self._busy_result(tool, corr, attempt, idem_key, envelope, session_hint_s)
+
+    async def _execute_perception_step(
+        self,
+        args: dict[str, Any],
+        *,
+        attempt: int,
+        corr: str,
+        idem_key: str,
+        allow_repeat: bool,
+    ) -> ExecutionResult:
+        """Tier-0: resolve card.next and execute that tool once."""
+        from navigation.coordination_intelligence.integration.bridge import (
+            process_tool_envelope,
+        )
+        from navigation.execution_runtime.policies.perception_step import (
+            resolve_step_target,
+            step_done_envelope,
+            step_error_envelope,
+        )
+
+        if args.get("_perception_step_depth"):
+            envelope = step_error_envelope(error="perception_step nested depth exceeded")
+            return self._meta_result(
+                "perception_step", envelope, corr, attempt, idem_key, ok=False
+            )
+
+        if args.get("dry_run"):
+            target = resolve_step_target(args)
+            envelope = {
+                "contract_version": "1.0",
+                "tool": "perception_step",
+                "ok": target.get("status") != "error",
+                "error": target.get("error"),
+                "data": {
+                    "step": target,
+                    "agent_summary": {
+                        "card": target.get("card"),
+                        "recommended_next": (target.get("tool") or ""),
+                        "recommended_next_args": target.get("args") or {},
+                    },
+                },
+            }
+            envelope = process_tool_envelope("perception_step", args, envelope)
+            return self._meta_result(
+                "perception_step",
+                envelope,
+                corr,
+                attempt,
+                idem_key,
+                ok=bool(envelope.get("ok")),
+            )
+
+        target = resolve_step_target(args)
+        status = str(target.get("status") or "")
+        if status == "error":
+            envelope = step_error_envelope(
+                error=str(target.get("error") or "perception_step failed"),
+                card=target.get("card") if isinstance(target.get("card"), dict) else None,
+            )
+            envelope = process_tool_envelope("perception_step", args, envelope)
+            return self._meta_result(
+                "perception_step", envelope, corr, attempt, idem_key, ok=False
+            )
+        if status == "done":
+            envelope = step_done_envelope(
+                card=target.get("card") or {},
+                hint=str(target.get("hint") or "done"),
+                claim_ok=bool(target.get("claim_ok")),
+            )
+            envelope = process_tool_envelope("perception_step", args, envelope)
+            return self._meta_result(
+                "perception_step", envelope, corr, attempt, idem_key, ok=True
+            )
+
+        next_tool = str(target.get("tool") or "")
+        next_args = dict(target.get("args") or {})
+        if next_tool == "perception_step":
+            envelope = step_error_envelope(
+                error="refusing to dispatch perception_step onto itself",
+                card=target.get("card") if isinstance(target.get("card"), dict) else None,
+            )
+            return self._meta_result(
+                "perception_step", envelope, corr, attempt, idem_key, ok=False
+            )
+        depth = int(args.get("_perception_step_depth") or 0) + 1
+        next_args["_perception_step_depth"] = depth
+        result = await self.execute_tool(
+            next_tool,
+            next_args,
+            attempt=attempt,
+            correlation_id=corr,
+            allow_repeat=allow_repeat,
+        )
+        # Annotate that step dispatched this tool
+        env = result.envelope if isinstance(result.envelope, dict) else {}
+        data = env.setdefault("data", {})
+        data["step"] = {
+            "status": "dispatched",
+            "from": "perception_step",
+            "tool": next_tool,
+            "then": target.get("then"),
+            "card_snapshot": {
+                "class": (target.get("card") or {}).get("class"),
+                "implement_blocked": (target.get("card") or {}).get("implement_blocked"),
+                "next": next_tool,
+            },
+        }
+        return result
+
+    def _meta_result(
+        self,
+        tool: str,
+        envelope: dict[str, Any],
+        corr: str,
+        attempt: int,
+        idem_key: str,
+        *,
+        ok: bool,
+    ) -> ExecutionResult:
+        metadata = ExecutionMetadata(
+            execution_id=_new_execution_id(),
+            correlation_id=corr,
+            tool=tool,
+            attempt=attempt,
+            latency_ms=0,
+            replayed=False,
+            idempotency_key=idem_key,
+        )
+        attach_execution_metadata(envelope, metadata)
+        record = ExecutionRecord(
+            execution_id=metadata.execution_id,
+            tool=tool,
+            ok=ok,
+            latency_ms=0,
+            correlation_id=corr,
+            attempt=attempt,
+            replayed=False,
+            idempotency_key=idem_key,
+            error=None if ok else str(envelope.get("error") or "error"),
+        )
+        self._ledger.append(record)
+        return ExecutionResult(
+            execution_id=metadata.execution_id,
+            tool=tool,
+            envelope=envelope,
+            latency_ms=0,
+            attempt=attempt,
+            correlation_id=corr,
+            replayed=False,
+            record=record,
+        )
 
     async def _execute_tool_locked(
         self,

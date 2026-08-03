@@ -376,6 +376,51 @@ async def _ensure_session(
         )
 
 
+async def handle_step(arguments: dict[str, Any]) -> dict[str, Any]:
+    """Resolve card.next — ToolExecutor special-cases real dispatch.
+
+    Direct handler calls return the resolved target (same as dry_run).
+    """
+    from navigation.execution_runtime.policies.perception_step import (
+        resolve_step_target,
+        step_done_envelope,
+        step_error_envelope,
+    )
+
+    args = dict(arguments or {})
+    target = resolve_step_target(args)
+    status = str(target.get("status") or "")
+    if status == "error":
+        return step_error_envelope(
+            error=str(target.get("error") or "perception_step failed"),
+            card=target.get("card") if isinstance(target.get("card"), dict) else None,
+        )
+    if status == "done":
+        return step_done_envelope(
+            card=target.get("card") or {},
+            hint=str(target.get("hint") or "done"),
+            claim_ok=bool(target.get("claim_ok")),
+        )
+    return {
+        "contract_version": "1.0",
+        "tool": "perception_step",
+        "ok": True,
+        "error": None,
+        "data": {
+            "step": target,
+            "agent_summary": {
+                "card": target.get("card"),
+                "recommended_next": target.get("tool") or "",
+                "recommended_next_args": target.get("args") or {},
+                "advisory": [
+                    "Resolved next tool — MCP ToolExecutor dispatches it on perception_step."
+                ],
+            },
+        },
+        "degraded": ["perception_step_resolve_only"],
+    }
+
+
 async def handle_health(arguments: dict[str, Any]) -> dict[str, Any]:
     from importlib.metadata import PackageNotFoundError, version
 
@@ -422,8 +467,22 @@ async def handle_health(arguments: dict[str, Any]) -> dict[str, Any]:
         recommended = None
 
     from navigation.core.process_identity import process_identity_dict, version_skew_report
+    from navigation.mcp.health_doctor import build_health_doctor
 
     skew = version_skew_report(package_ver)
+    doctor = build_health_doctor(
+        url=url,
+        reachable=reachable,
+        status=status,
+        error=error,
+        browser_runtime_available=browser_available,
+        browser_manager=browser_manager if isinstance(browser_manager, dict) else {},
+        package_version=package_ver,
+        version_skew=bool(skew.get("version_skew")),
+        restart_required=bool(skew.get("restart_required")),
+        restart_hint=str(skew.get("restart_hint") or "") or None,
+        repo_root_arg=str(arguments.get("repo_root") or "") or None,
+    )
     return make_envelope(
         "perception_health",
         ok=reachable,
@@ -444,6 +503,7 @@ async def handle_health(arguments: dict[str, Any]) -> dict[str, Any]:
             "restart_hint": skew.get("restart_hint"),
             "browser_runtime_available": browser_available,
             "browser_manager": browser_manager,
+            "doctor": doctor,
             "recommended_next_tool": recommended,
             **process_identity_dict(),
         },

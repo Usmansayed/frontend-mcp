@@ -53,6 +53,7 @@ from navigation.mcp.handlers import (
     handle_framework_docs,
     handle_full_diagnosis,
     handle_health,
+    handle_step,
     handle_inspiration_collect,
     handle_inspiration_discover,
     handle_inspiration_pulse,
@@ -120,6 +121,9 @@ class DispatchRegistry:
     ) -> DispatchRegistry:
         async def health(args: dict[str, Any]) -> dict[str, Any]:
             return await handle_health(args)
+
+        async def step(args: dict[str, Any]) -> dict[str, Any]:
+            return await handle_step(args)
 
         async def session_start(args: dict[str, Any]) -> dict[str, Any]:
             return await handle_session_start(store, args)
@@ -383,6 +387,7 @@ class DispatchRegistry:
 
         handlers: dict[str, HandlerFn] = {
             "perception_health": health,
+            "perception_step": step,
             "perception_session_start": session_start,
             "perception_session_end": session_end,
             "perception_navigate": navigate,

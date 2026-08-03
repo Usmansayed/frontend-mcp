@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 # Read-only / observe / query tools — safe to retry and deduplicate by default.
 _SAFE_TOOLS = frozenset({
     "perception_health",
+    "perception_step",
     "perception_observe",
     "perception_navigate_and_observe",
     "perception_navigate",
