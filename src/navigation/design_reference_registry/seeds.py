@@ -98,7 +98,7 @@ _REFERENCE_FIXTURES: dict[str, dict] = {
 		'css_variables': {'--primary': '#5e6ad2', '--spacing-4': '16px'},
 	},
 	'sandbox_login': {
-		'url': 'http://localhost:5173/login',
+		'url': 'http://127.0.0.1:18765/login',
 		'elements': [
 			{'tag': 'h1', 'selector': 'h1', 'text': 'Sign in', 'classes': [],
 			 'style': {'fontSize': '22px', 'fontFamily': 'system-ui', 'color': 'rgb(17, 24, 39)'}},

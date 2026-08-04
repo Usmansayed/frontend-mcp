@@ -1,0 +1,85 @@
+id: exp024_meridian_route_aware_ship
+intent: redesign Meridian SaaS analytics dashboard and workspace settings
+lifecycle_stage: S03_design
+project_maturity: M1
+expect_after_start:
+  surface_type: mixed
+feeds:
+  - tool: perception_navigate_and_observe
+    ok: true
+    data:
+      url: http://localhost:5173/dashboard
+      scan_id: scan_dash_024
+      agent_summary: {blocking: []}
+  - tool: perception_build_design_snapshot
+    ok: true
+    data:
+      snapshot_id: snap_dash_024
+      url: http://localhost:5173/dashboard
+      layout:
+        regions:
+          - {role: aside}
+          - {role: main}
+          - {role: section, label: kpi}
+          - {role: section, label: kpi}
+    expect:
+      surface_type: mixed
+      path:episode_card.active_route: /dashboard
+  - tool: perception_navigate_and_observe
+    ok: true
+    data:
+      url: http://localhost:5173/settings
+      scan_id: scan_set_024
+      agent_summary: {blocking: []}
+  - tool: perception_build_design_snapshot
+    ok: true
+    data:
+      snapshot_id: snap_set_024
+      url: http://localhost:5173/settings
+      layout:
+        viewport: {width: 1280, height: 720}
+        regions:
+          - {role: sidebar}
+          - {role: main, label: settings}
+          - {role: form}
+    expect:
+      surface_type: mixed
+      path:episode_card.active_route: /settings
+  - op: run_ship
+    snapshot:
+      url: http://localhost:5173/settings
+      layout:
+        viewport: {width: 1280, height: 720}
+        regions:
+          - {role: sidebar}
+          - {role: main, label: settings, rect: {x: 220, y: 0, w: 1060, h: 720}}
+          - {role: form}
+        interactive_boxes:
+          - {x: 0, y: 0, w: 10, h: 10}
+          - {x: 1, y: 0, w: 10, h: 10}
+          - {x: 2, y: 0, w: 10, h: 10}
+          - {x: 3, y: 0, w: 10, h: 10}
+          - {x: 4, y: 0, w: 10, h: 10}
+          - {x: 5, y: 0, w: 10, h: 10}
+          - {x: 6, y: 0, w: 10, h: 10}
+          - {x: 7, y: 0, w: 10, h: 10}
+          - {x: 8, y: 0, w: 10, h: 10}
+          - {x: 9, y: 0, w: 10, h: 10}
+          - {x: 10, y: 0, w: 10, h: 10}
+          - {x: 11, y: 0, w: 10, h: 10}
+          - {x: 12, y: 0, w: 10, h: 10}
+          - {x: 13, y: 0, w: 10, h: 10}
+          - {x: 14, y: 0, w: 10, h: 10}
+          - {x: 15, y: 0, w: 10, h: 10}
+          - {x: 16, y: 0, w: 10, h: 10}
+          - {x: 17, y: 0, w: 10, h: 10}
+          - {x: 18, y: 0, w: 10, h: 10}
+          - {x: 19, y: 0, w: 10, h: 10}
+      hierarchy:
+        prominence_scores: [0.5, 0.5, 0.5, 0.5]
+    expect:
+      ship_signals_absent: [equal_weight_kpi_cluster]
+expect:
+  surface_type: mixed
+  path:episode_card.active_route: /settings
+  ship_signals_absent: [equal_weight_kpi_cluster]

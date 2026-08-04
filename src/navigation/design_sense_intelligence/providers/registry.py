@@ -9,6 +9,7 @@ from .microsoft_review.workflow import MicrosoftReviewWorkflowProvider
 from .open_design.adapter import OpenDesignProvider
 from .protocol import DesignSenseProvider
 from .uicrit.methodology import UICritMethodologyProvider
+from .ux_knowledge.adapter import UxKnowledgeProvider
 
 
 def objective_providers() -> list[DesignSenseProvider]:
@@ -17,12 +18,13 @@ def objective_providers() -> list[DesignSenseProvider]:
 
 
 def subjective_providers() -> list[DesignSenseProvider]:
-	"""Interpretive: Open Design, UICrit, Microsoft workflow, knowledge, Crit/Rams."""
+	"""Interpretive: Open Design, UICrit, Microsoft, static knowledge, UX KB, Crit/Rams."""
 	return [
 		OpenDesignProvider(),
 		MicrosoftReviewWorkflowProvider(),
 		UICritMethodologyProvider(),
 		KnowledgeProvider(),
+		UxKnowledgeProvider(),
 		CritRamsMethodologyProvider(),
 	]
 

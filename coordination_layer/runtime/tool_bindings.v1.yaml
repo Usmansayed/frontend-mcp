@@ -159,6 +159,14 @@ bindings:
   - tool: perception_state_list
     arg_template:
       session_id: $artifacts.session_id
+- tools_ref: visual_feedback
+  capability: visual_feedback
+  semantic_actions:
+  - look_and_judge_ui
+  tools:
+  - tool: perception_visual_feedback
+    arg_template:
+      session_id: $artifacts.session_id
 - tools_ref: design_snapshot
   capability: design_snapshot
   semantic_actions:
@@ -244,38 +252,28 @@ bindings:
       session_id: $artifacts.session_id
 - tools_ref: seo_readiness
   capability: seo_readiness
-  semantic_actions:
-  - confirm_seo_readiness
-  tools:
-  - tool: perception_seo_status
-  - tool: perception_seo_connect
-    when: connect_requested
+  mvp_excluded: true
+  note: Not in active MCP surface
+  semantic_actions: []
+  tools: []
 - tools_ref: seo_evidence_collect
   capability: seo_evidence_collect
-  semantic_actions:
-  - collect_seo_evidence
-  tools:
-  - tool: perception_seo_audit
-    arg_template:
-      repo_root: $artifacts.repo_root
-      scan_id: $artifacts.scan_id
-      mode: $step.mode
+  mvp_excluded: true
+  note: Not in active MCP surface
+  semantic_actions: []
+  tools: []
 - tools_ref: seo_graph_query
   capability: seo_graph_query
-  semantic_actions:
-  - query_seo_audit_diff
-  tools:
-  - tool: perception_seo_query
-    arg_template:
-      query: $step.query
+  mvp_excluded: true
+  note: Not in active MCP surface
+  semantic_actions: []
+  tools: []
 - tools_ref: seo_recommendation_verify
   capability: seo_recommendation_verify
-  semantic_actions:
-  - verify_seo_recommendation
-  tools:
-  - tool: perception_seo_verify
-    arg_template:
-      recommendation_id: $step.recommendation_id
+  mvp_excluded: true
+  note: Not in active MCP surface
+  semantic_actions: []
+  tools: []
 - tools_ref: inspiration_workflow
   capability: inspiration_workflow
   semantic_actions:
@@ -299,12 +297,10 @@ bindings:
   - tool: perception_resource_session_end
 - tools_ref: figma_integration
   capability: figma_integration
-  semantic_actions:
-  - connect_figma
-  - load_figma_context
-  tools:
-  - tool: perception_figma_connect
-  - tool: perception_figma_context
+  mvp_excluded: true
+  note: Not in active MCP surface
+  semantic_actions: []
+  tools: []
 - tools_ref: component_search_plan
   capability: component_search_plan
   semantic_actions:

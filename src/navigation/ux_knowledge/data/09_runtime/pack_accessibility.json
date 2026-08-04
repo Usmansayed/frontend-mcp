@@ -1,0 +1,220 @@
+{
+  "pack_id": "pack_accessibility",
+  "title": "Accessibility Engineering Playbook",
+  "target_surfaces": [
+    "perception://verification-guide",
+    "perception://ship-council",
+    "hotfix",
+    "polish"
+  ],
+  "retrieval_keys": {
+    "surface_type": [
+      "all"
+    ],
+    "user_flow": [
+      "general",
+      "forms",
+      "navigation"
+    ],
+    "psychology_category": [
+      "motor_ergonomics",
+      "a11y_absolute"
+    ],
+    "problem": [
+      "accessibility",
+      "a11y",
+      "contrast",
+      "focus",
+      "target size",
+      "keyboard"
+    ],
+    "phase": [
+      "hotfix",
+      "polish"
+    ]
+  },
+  "playbook_id": "pb_accessibility",
+  "pattern_refs": [
+    "pat_12_step_color_scale",
+    "pat_accessible_color_tokens",
+    "pat_adaptive_faceted_navigation",
+    "pat_advanced_settings_accordion",
+    "pat_ai_legible_context_layer",
+    "pat_ai_legible_design_system_context",
+    "pat_aria_describedby_hints",
+    "pat_aria_describedby_instructions",
+    "pat_aria_live_status_announcer",
+    "pat_auto_save_draft",
+    "pat_bmap_cta_block",
+    "pat_bmap_cta_design"
+  ],
+  "related_principle_ids": [
+    "UX_HCI_STEER_011",
+    "UX_A11Y_TARG_004",
+    "UX_A11Y_CONT_005",
+    "UX_HCI_TOUCHTARGETS_001",
+    "UX_A11Y_FOCUS_011",
+    "UX_HCI_KLM_008"
+  ],
+  "claim_stubs": [
+    {
+      "claim_id": "UX_HCI_FITTS_001",
+      "name": "Fitts's Law (Shannon Formulation)",
+      "engineering_meaning": "Movement time to a target increases with Index of Difficulty ID = log2(A/W + 1), where A is amplitude (distance) and W is target width; MT = a + b·ID.",
+      "how_to_detect_violations": "Estimate A from resting cursor/thumb zones and W of primary CTAs; flag frequent actions with high ID or targets below WCAG floor.",
+      "when_to_apply": "CTA placement, toolbars, menus, drag targets on pointer UIs.",
+      "when_not_to_apply": "Pure keyboard flows; voice; intentionally high-friction destructive controls.",
+      "confidence": 1.0,
+      "source_ids": [
+        "url_pilot_fitts_yorku",
+        "src_fitts_law_yorku",
+        "src_w3c_wcag22_target_size",
+        "url_motor_fitts_csfieldguide",
+        "url_motor_lmu_fitts_steering_pdf",
+        "url_motor_lmu_hci_models_pdf",
+        "url_extra_nng_fitts"
+      ],
+      "full_card_path": "kb://cards/UX_HCI_FITTS_001"
+    },
+    {
+      "claim_id": "UX_A11Y_FOCUS_011",
+      "name": "Focus Not Obscured (Minimum)",
+      "engineering_meaning": "When a component receives keyboard focus, it must not be entirely hidden by author-created content.",
+      "how_to_detect_violations": "Tab through the page with sticky chrome present; fail if focused element is completely covered.",
+      "when_to_apply": "All interactive components, especially with sticky UI chrome.",
+      "when_not_to_apply": "User-opened content (e.g., modal) dismissible without advancing focus, per WCAG nuance.",
+      "confidence": 1.0,
+      "source_ids": [
+        "src_w3c_wcag22_overview"
+      ],
+      "full_card_path": "kb://cards/UX_A11Y_FOCUS_011"
+    },
+    {
+      "claim_id": "UX_HCI_TOUCHTARGETS_001",
+      "name": "Minimum Touch Target Size",
+      "engineering_meaning": "Interactive elements on touchscreens must have a minimum physical rendered size of 1cm x 1cm (0.4in x 0.4in) or adhere to standard design system sizing tokens (e.g., 44px/48px) to ensure accurate selection and prevent accidental taps.",
+      "how_to_detect_violations": "Measure the physical rendered dimensions or inspect CSS for standard sizing tokens on interactive elements. Verify that both height and width meet the minimum threshold (e.g., 1cm or 44px/48px) and are not hardcoded to smaller, non-compliant pixel values.",
+      "when_to_apply": "Apply to all interactive elements (buttons, links, icons) on touchscreen interfaces, or when adopting a token-based design system for consistent hit areas.",
+      "when_not_to_apply": "Do not apply to non-interactive, purely decorative elements, or strictly to mouse-driven desktop interfaces. Do not limit to the minimum size when the context involves movement or specific audiences (e.g., children, seniors) requiring even larger targets.",
+      "confidence": 1.0,
+      "source_ids": [
+        "url_extra_nng_touch",
+        "url_slds_touch"
+      ],
+      "full_card_path": "kb://cards/UX_HCI_TOUCHTARGETS_001"
+    },
+    {
+      "claim_id": "UX_A11Y_TARG_004",
+      "name": "WCAG 2.2 Target Size (Minimum)",
+      "engineering_meaning": "Pointer targets must be at least 24×24 CSS pixels, or satisfy the spacing exception with a 24 CSS-pixel diameter circle that does not intersect other targets.",
+      "how_to_detect_violations": "Measure CSS bounding boxes. If width or height < 24px, test whether a 24px-diameter circle centered on the box intersects any other target.",
+      "when_to_apply": "All pointer-activated controls (mouse, touch, pen), including icon-only buttons.",
+      "when_not_to_apply": "Inline text links constrained by line-height; unmodified user-agent controls; equivalent larger control available; essential/legal presentation exceptions per WCAG.",
+      "confidence": 1.0,
+      "source_ids": [
+        "src_w3c_wcag22_target_size"
+      ],
+      "full_card_path": "kb://cards/UX_A11Y_TARG_004"
+    },
+    {
+      "claim_id": "UX_A11Y_CONT_005",
+      "name": "WCAG Contrast (Minimum)",
+      "engineering_meaning": "Text and images of text must maintain at least 4.5:1 contrast against the background; large text at least 3:1.",
+      "how_to_detect_violations": "Automated contrast checkers (axe, WAVE, WebAIM) plus sampling computed styles on text over images/gradients.",
+      "when_to_apply": "All meaningful text and images of text, including form labels and error copy.",
+      "when_not_to_apply": "Decorative text, inactive/disabled components, incidental logotypes as allowed by WCAG.",
+      "confidence": 1.0,
+      "source_ids": [
+        "src_webaim_wcag_checklist",
+        "src_ibm_carbon",
+        "url_a11y_webaim_checklist"
+      ],
+      "full_card_path": "kb://cards/UX_A11Y_CONT_005"
+    },
+    {
+      "claim_id": "UX_HCI_STEER_011",
+      "name": "Steering Law (Accot-Zhai)",
+      "engineering_meaning": "The time required to navigate a constrained 2D path is proportional to the length of the path divided by its width. For a straight tunnel, T = a + b(A/W), where A is length and W is width.",
+      "how_to_detect_violations": "Identify UI elements requiring continuous path navigation (e.g., nested hover menus). Measure the path length (A) and width (W). High A/W ratios indicate usability bottlenecks.",
+      "when_to_apply": "Designing hierarchical cascading menus, sliders, scrollbars, drag-and-drop interactions, and drawing tools.",
+      "when_not_to_apply": "Simple point-and-click tasks without path constraints (use Fitts's Law instead), or keyboard-only navigation.",
+      "confidence": 0.95,
+      "source_ids": [
+        "src_steering_law_wikipedia"
+      ],
+      "full_card_path": "kb://cards/UX_HCI_STEER_011"
+    },
+    {
+      "claim_id": "UX_HCI_KLM_008",
+      "name": "Keystroke-Level Model (KLM) Time Prediction",
+      "engineering_meaning": "Task execution time can be estimated by summing the times of physical-motor operators (Keystroking, Pointing, Homing, Drawing), mental preparation (M), and system response (R).",
+      "how_to_detect_violations": "Map out a frequent user task and sum the KLM operators. If the predicted time exceeds business requirements, the workflow is too complex and requires simplification.",
+      "when_to_apply": "Optimizing high-frequency, repetitive tasks in keyboard and mouse interfaces.",
+      "when_not_to_apply": "Touch interfaces (use TLM instead), highly exploratory tasks, or tasks dominated by complex problem-solving rather than interaction.",
+      "confidence": 0.9,
+      "source_ids": [
+        "src_goms_wikipedia",
+        "url_goms_foundations_hci"
+      ],
+      "full_card_path": "kb://cards/UX_HCI_KLM_008"
+    }
+  ],
+  "conflict_pairs": [
+    {
+      "a": "ap_implementing_a_fixed_top",
+      "b": "UX_A11Y_FOCUS_011",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_placing_16x16px_social_m",
+      "b": "UX_A11Y_TARG_004",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_using_low_contrast_light",
+      "b": "UX_A11Y_CONT_005",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_small_tightly_packed_ico",
+      "b": "UX_HCI_FITTS_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_adding_a_2px_non_clickab",
+      "b": "UX_HCI_FITTS_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_requiring_a_mouse_click_",
+      "b": "UX_HCI_KLM_008",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_deeply_nested_narrow_css",
+      "b": "UX_HCI_STEER_011",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_using_small_inline_icon_",
+      "b": "UX_A11Y_TARG_004",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_using_light_gray_text_e_",
+      "b": "UX_A11Y_CONT_005",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_placing_a_small_submit_b",
+      "b": "UX_HCI_FITTS_001",
+      "decision_hint": "anti-pattern"
+    }
+  ],
+  "budgets": {
+    "max_claim_stubs": 20,
+    "max_rationale_tokens": 2500
+  },
+  "created_at": "2026-07-21",
+  "notes": "Graph-slice pack — deterministic retrieval, no embeddings."
+}

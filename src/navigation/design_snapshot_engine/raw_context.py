@@ -10,8 +10,9 @@ _COLLECT_ELEMENTS_JS = r"""(() => {
   const MAX = 500;
   const selectors = [
     'h1','h2','h3','h4','h5','h6','p','span','a','button','input','select','textarea','label',
-    'nav','header','footer','main','section','article','form','[role="button"]','[role="link"]',
-    '.card','.primary','.field','.grid','.row',
+    'nav','aside','header','footer','main','section','article','form',
+    '[role="button"]','[role="link"]','[role="navigation"]','[role="complementary"]',
+    '.card','.primary','.field','.grid','.row','[class*="sidebar"]','[class*="side-nav"]',
   ];
   const seen = new Set();
   const elements = [];
@@ -66,6 +67,10 @@ _COLLECT_ELEMENTS_JS = r"""(() => {
           animation: style.animation,
           animationDuration: style.animationDuration,
           display: style.display,
+          position: style.position,
+          top: style.top,
+          left: style.left,
+          zIndex: style.zIndex,
           gridTemplateColumns: style.gridTemplateColumns,
           columnGap: style.columnGap,
           rowGap: style.rowGap,

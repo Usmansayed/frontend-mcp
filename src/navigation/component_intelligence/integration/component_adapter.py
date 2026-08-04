@@ -14,8 +14,12 @@ def adapt_component(
 ) -> list[AdaptationPatch]:
 	_ = repo_root
 	patches: list[AdaptationPatch] = []
+	if selection.chosen is None:
+		return patches
 	files = installed_files or [f'components/{selection.chosen.name}.tsx']
 	g = selection.guidance
+	if g is None:
+		return patches
 
 	for mod in g.consistency.all_adjustments():
 		for file_path in files:

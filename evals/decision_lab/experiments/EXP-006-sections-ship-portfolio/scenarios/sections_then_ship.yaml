@@ -1,0 +1,44 @@
+id: exp006_sections_then_ship
+intent: redesign Meridian analytics dashboard
+lifecycle_stage: S03_design
+project_maturity: M1
+feeds:
+  - tool: perception_build_design_snapshot
+    ok: true
+    data:
+      snapshot_id: snap_sec
+      layout:
+        regions:
+          - {role: aside}
+          - {role: main}
+          - {role: header}
+  - tool: perception_select_component_foundation
+    ok: true
+    data:
+      selected: {id: shadcn}
+      coordination_evidence: {status: succeeded, advancement_eligible: true}
+  - tool: perception_verify
+    ok: true
+    data: {verified: true, reasons: []}
+  - op: seed_sections
+    regions:
+      - {role: aside, rect: {w: 1, h: 1}}
+      - {role: main, rect: {w: 1, h: 1}}
+      - {role: header, rect: {w: 1, h: 1}}
+    expect:
+      section_checklist_required: true
+      host_theme: SECTION CHECKLIST
+      portfolio_unpaid_contains: [sections]
+      next_capability: browser_verify
+  - op: complete_sections
+    expect:
+      section_checklist_required: false
+      ship_council_required: true
+      host_theme: SHIP GATE
+      next_capability: design_review
+      portfolio_unpaid_contains: [design_review]
+expect:
+  ship_council_required: true
+  host_theme: SHIP GATE
+  portfolio_unpaid_contains: [design_review]
+  prohibited_contains: [claim_complete]

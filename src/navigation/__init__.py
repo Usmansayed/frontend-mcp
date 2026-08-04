@@ -13,10 +13,10 @@ __all__ = [
 	'frontend_quality_intelligence',
 	'design_sense_intelligence',
 	'consistency_intelligence',
-	'figma_intelligence',
+	# figma_intelligence — MVP excluded (parked/MVP_EXCLUDE_FIGMA.md)
 	'inspiration_intelligence',
 	'resource_intelligence',
-	'seo_intelligence',
+	# seo_intelligence — MVP excluded (parked/MVP_EXCLUDE_SEO.md)
 	'mcp',
 	'cli',
 ]

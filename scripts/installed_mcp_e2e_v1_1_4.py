@@ -176,10 +176,8 @@ def main() -> int:
         for uri in (
             "perception://agent-guide",
             "perception://resolver-guide",
-            "perception://seo-guide",
             "perception://inspiration-guide",
             "perception://resource-guide",
-            "perception://figma-guide",
         ):
             ms, res = read_resource(proc, req, uri)
             req += 1
@@ -248,24 +246,7 @@ def main() -> int:
         hygiene = (env.get("data") or {}).get("session_hygiene") or {}
         record(report["results"], "perception_probe_guards", ms, env, restored=hygiene.get("restored"))
 
-        ms, env = call(proc, req, "perception_seo_status", {})
-        req += 1
-        record(report["results"], "perception_seo_status", ms, env)
-
-        if scan_id:
-            ms, env = call(proc, req, "perception_seo_audit_start", {
-                "website_url": URL,
-                "scan_id": scan_id,
-                "repo_root": REPO,
-            }, timeout_s=30.0)
-            req += 1
-            seo_data = env.get("data") or {}
-            record(report["results"], "perception_seo_audit_start_dev", ms, env,
-                   instant=seo_data.get("instant"),
-                   status=seo_data.get("status"),
-                   has_audit=bool(seo_data.get("seo_audit")))
-        else:
-            report["results"].append({"tool": "perception_seo_audit_start_dev", "ok": False, "error": "no scan_id"})
+        # SEO Intelligence tools are MVP-excluded — not exercised here.
 
         ms, env = call(proc, req, "perception_flow_describe", {"flow_id": "validation-form"})
         req += 1
@@ -277,17 +258,27 @@ def main() -> int:
 
         for r in report["results"]:
             if r.get("ok") is not True and r.get("tool") != "perception_resolve_api_endpoint":
-                if r.get("tool") == "perception_seo_audit_start_dev" and r.get("status") in ("completed", "partial"):
-                    continue
                 report["ok"] = False
 
         for res in report["resources"]:
             if not res.get("ok"):
                 report["ok"] = False
 
-        if server_ver != "1.1.4":
-            report["version_mismatch"] = server_ver
+        # Accept current package version (legacy E2E pinned 1.1.4).
+        try:
+            import importlib.metadata as md
+
+            expected_ver = md.version("frontend-mcp")
+        except Exception:
+            expected_ver = server_ver
+        if server_ver != expected_ver:
+            report["version_mismatch"] = {
+                "server": server_ver,
+                "expected": expected_ver,
+            }
             report["ok"] = False
+        else:
+            report.pop("version_mismatch", None)
 
     finally:
         proc.terminate()

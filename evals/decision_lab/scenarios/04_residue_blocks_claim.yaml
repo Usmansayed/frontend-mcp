@@ -1,0 +1,21 @@
+id: residue_blocks_claim
+intent: build a new SaaS analytics dashboard
+lifecycle_stage: S03_design
+project_maturity: M1
+feeds:
+  - op: set_retry
+    key: residue_scan
+    value:
+      required: true
+      completed: false
+      at: lab
+    expect:
+      residue_scan_required: true
+      next_capability: design_snapshot
+      prohibited_contains:
+        - claim_complete
+expect:
+  residue_scan_required: true
+  prohibited_contains:
+    - claim_complete
+  gate.state: blocked

@@ -1,0 +1,22 @@
+[project]
+name = "frontend-mcp-guide-lab"
+version = "0.1.0.dev0"
+description = "DEV-ONLY Guide Lab MCP — large vs clean guide experiment. Not production frontend-mcp."
+requires-python = ">=3.10"
+dependencies = [
+  "frontend-perception-engine==1.2.0.dev19",
+  "mcp>=1.0.0",
+  "pyyaml>=6.0.0",
+]
+
+[project.scripts]
+frontend-mcp-guide-lab = "navigation.guide_lab.mcp_server:main"
+guide-lab-run = "navigation.guide_lab.runner:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["frontend_mcp_guide_lab*"]

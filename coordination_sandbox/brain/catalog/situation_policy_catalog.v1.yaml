@@ -1,0 +1,343 @@
+schema_version: '1.0'
+description: 'R12 Situation Policy Catalog — compile-time distilled engineering policies.
+  Derived from the 150-state research corpus. Never matches leaf state IDs at runtime.
+  Drives Engineering Investment, EQG priors, allow/forbid, and STOP bias.
+
+  '
+cost_classes:
+  environment_probe: 1
+  browser_session_manage: 2
+  framework_profile: 2
+  browser_observe: 3
+  browser_act: 3
+  browser_verify: 1
+  browser_diff: 2
+  form_probe: 3
+  route_guards_probe: 3
+  auth_gate: 1
+  flow_describe: 1
+  session_state_manage: 2
+  design_snapshot: 5
+  design_review: 6
+  design_graph_manage: 3
+  design_consistency_audit: 5
+  design_consistency_assess: 2
+  design_knowledge_query: 1
+  quality_audit: 6
+  runtime_diagnosis: 5
+  seo_readiness: 2
+  seo_evidence_collect: 10
+  seo_graph_query: 2
+  seo_recommendation_verify: 4
+  inspiration_workflow: 8
+  resource_workflow: 5
+  figma_integration: 4
+  component_search_plan: 2
+  component_search: 4
+  component_select: 5
+  component_integrate: 4
+  codebase_context: 2
+roi_threshold_by_saturation:
+  none: 0.35
+  soft: 0.55
+  hard: 0.9
+lifecycle_bands:
+  early:
+  - S01_intent
+  - S02_discovery
+  - S03_design
+  - S04_architecture
+  mid:
+  - S05_implementation
+  - S06_integration
+  - S07_verification
+  late:
+  - S08_quality
+  - S09_consistency
+  - S10_release
+  production:
+  - S11_production
+  - S12_evolution
+  - Sxx_any
+policies:
+- policy_id: feature.mid.balanced
+  match:
+    task_scope:
+    - feature_incremental
+    - new_feature
+    lifecycle_band:
+    - mid
+  priority: 10
+  investment:
+    B_base: 16
+    visual_impact_ceiling: V3
+    allow_heavy: []
+    forbid_or_defer:
+    - inspiration_workflow
+  eqg_priors:
+    browser_observe: 7
+    browser_verify: 9
+    form_probe: 8
+    design_review: 4
+    inspiration_workflow: 1
+    component_select: 5
+  stop_bias: verify_passed_sufficient
+- policy_id: surgical.low
+  match:
+    task_scope:
+    - surgical
+  priority: 100
+  investment:
+    B_base: 8
+    visual_impact_ceiling: V1
+    allow_heavy: []
+    forbid_or_defer:
+    - inspiration_workflow
+    - design_review
+    - design_consistency_audit
+    - seo_evidence_collect
+    - resource_workflow
+  eqg_priors:
+    browser_observe: 7
+    browser_verify: 9
+    inspiration_workflow: 0
+    design_review: 0
+  stop_bias: verify_passed_sufficient
+- policy_id: debug.signal
+  match:
+    task_scope:
+    - debug
+  priority: 90
+  investment:
+    B_base: 12
+    visual_impact_ceiling: V2
+    allow_heavy: []
+    forbid_or_defer:
+    - inspiration_workflow
+    - seo_evidence_collect
+  eqg_priors:
+    browser_observe: 9
+    runtime_diagnosis: 8
+    browser_verify: 8
+    design_review: 2
+    inspiration_workflow: 0
+  stop_bias: verify_passed_sufficient
+- policy_id: hotfix.production
+  match:
+    task_scope:
+    - hotfix
+    lifecycle_band:
+    - production
+    - late
+  priority: 95
+  investment:
+    B_base: 10
+    visual_impact_ceiling: V2
+    allow_heavy: []
+    forbid_or_defer:
+    - inspiration_workflow
+    - design_review
+    - design_consistency_audit
+    - seo_evidence_collect
+    - resource_workflow
+    - component_select
+  eqg_priors:
+    browser_observe: 9
+    browser_verify: 9
+    browser_diff: 7
+    inspiration_workflow: 0
+  stop_bias: verify_passed_sufficient
+- policy_id: design.greenfield.no_refs.early
+  match:
+    task_scope:
+    - design_driven
+    - redesign
+    lifecycle_band:
+    - early
+    - mid
+    design_reference_posture:
+    - none
+    - agreed_no_refs
+    maturity_band:
+    - greenfield
+    - growing
+  priority: 80
+  investment:
+    B_base: 36
+    visual_impact_ceiling: V4
+    allow_heavy:
+    - inspiration_workflow
+    - component_select
+    - design_review
+    forbid_or_defer:
+    - seo_evidence_collect
+  eqg_priors:
+    inspiration_workflow: 9
+    component_select: 8
+    design_graph_manage: 6
+    design_review: 3
+    browser_observe: 6
+    browser_verify: 7
+    seo_evidence_collect: 1
+  stop_bias: after_orient_then_implement
+- policy_id: design.greenfield.with_refs.early
+  match:
+    task_scope:
+    - design_driven
+    - redesign
+    lifecycle_band:
+    - early
+    - mid
+    design_reference_posture:
+    - inspiration
+    - agreed_with_refs
+  priority: 85
+  investment:
+    B_base: 28
+    visual_impact_ceiling: V4
+    allow_heavy:
+    - component_select
+    - design_review
+    - resource_workflow
+    forbid_or_defer:
+    - inspiration_workflow
+    - seo_evidence_collect
+  eqg_priors:
+    inspiration_workflow: 1
+    component_select: 8
+    resource_workflow: 6
+    design_review: 3
+    browser_verify: 7
+  stop_bias: after_orient_then_implement
+- policy_id: design.figma.early
+  match:
+    task_scope:
+    - design_driven
+    - redesign
+    design_reference_posture:
+    - figma
+  priority: 88
+  investment:
+    B_base: 30
+    visual_impact_ceiling: V4
+    allow_heavy:
+    - figma_integration
+    - component_select
+    - design_review
+    forbid_or_defer:
+    - inspiration_workflow
+  eqg_priors:
+    figma_integration: 9
+    inspiration_workflow: 0
+    component_select: 8
+    design_review: 7
+    browser_verify: 7
+  stop_bias: after_orient_then_implement
+- policy_id: system_setup.foundations
+  match:
+    task_scope:
+    - system_setup
+  priority: 70
+  investment:
+    B_base: 28
+    visual_impact_ceiling: V4
+    allow_heavy:
+    - component_select
+    - design_graph_manage
+    forbid_or_defer:
+    - seo_evidence_collect
+  eqg_priors:
+    component_select: 9
+    design_graph_manage: 8
+    design_knowledge_query: 7
+    inspiration_workflow: 4
+    browser_verify: 6
+  stop_bias: foundations_selected
+- policy_id: design.critique.after_paint
+  match:
+    task_scope:
+    - design_driven
+    - redesign
+    - feature_incremental
+    lifecycle_band:
+    - mid
+    design_reference_posture:
+    - inspiration
+    - agreed_with_refs
+    - figma
+    - prose
+  priority: 40
+  investment:
+    B_base: 20
+    visual_impact_ceiling: V3
+    allow_heavy:
+    - design_review
+    - design_snapshot
+    forbid_or_defer: []
+  eqg_priors:
+    design_snapshot: 7
+    design_review: 8
+    design_consistency_audit: 5
+    inspiration_workflow: 2
+    browser_verify: 8
+  stop_bias: verify_passed_sufficient
+- policy_id: quality.late.roi
+  match:
+    lifecycle_band:
+    - late
+    task_scope:
+    - feature_incremental
+    - design_driven
+    - redesign
+  priority: 50
+  investment:
+    B_base: 14
+    visual_impact_ceiling: V2
+    allow_heavy:
+    - design_consistency_audit
+    - quality_audit
+    forbid_or_defer:
+    - inspiration_workflow
+  eqg_priors:
+    design_consistency_audit: 6
+    quality_audit: 5
+    seo_readiness: 5
+    design_review: 3
+    inspiration_workflow: 0
+    browser_verify: 8
+  stop_bias: roi_strict
+- policy_id: production.suppress_design
+  match:
+    lifecycle_band:
+    - production
+  priority: 60
+  investment:
+    B_base: 10
+    visual_impact_ceiling: V2
+    allow_heavy: []
+    forbid_or_defer:
+    - inspiration_workflow
+    - design_review
+    - resource_workflow
+    - seo_evidence_collect
+  eqg_priors:
+    browser_observe: 9
+    browser_verify: 9
+    browser_diff: 7
+    inspiration_workflow: 0
+    design_review: 1
+  stop_bias: verify_passed_sufficient
+- policy_id: default.fallback
+  match: {}
+  priority: 1
+  investment:
+    B_base: 14
+    visual_impact_ceiling: V3
+    allow_heavy: []
+    forbid_or_defer: []
+  eqg_priors:
+    browser_observe: 7
+    browser_verify: 8
+    design_review: 4
+    inspiration_workflow: 3
+  stop_bias: verify_passed_sufficient

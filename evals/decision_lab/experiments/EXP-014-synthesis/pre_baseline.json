@@ -1,0 +1,414 @@
+{
+  "pack_id": "baseline",
+  "passed": true,
+  "pass_count": 16,
+  "total": 16,
+  "scenarios": [
+    {
+      "id": "structural_dashboard_start",
+      "passed": true,
+      "failures": [],
+      "steps": [
+        {
+          "index": 0,
+          "op": "start",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 1,
+          "op": "perception_inspiration_collect",
+          "ok": true,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "id": "settings_surface",
+      "passed": true,
+      "failures": [],
+      "steps": [
+        {
+          "index": 0,
+          "op": "start",
+          "ok": true,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "id": "hotfix_surgical_path",
+      "passed": true,
+      "failures": [],
+      "steps": [
+        {
+          "index": 0,
+          "op": "start",
+          "ok": true,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "id": "residue_blocks_claim",
+      "passed": true,
+      "failures": [],
+      "steps": [
+        {
+          "index": 1,
+          "op": "set_retry",
+          "ok": true,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "id": "evidence_skip_valid_reason",
+      "passed": true,
+      "failures": [],
+      "steps": [
+        {
+          "index": 1,
+          "op": "set_retry",
+          "ok": true,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "id": "auth_surface",
+      "passed": true,
+      "failures": [],
+      "steps": [
+        {
+          "index": 0,
+          "op": "start",
+          "ok": true,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "id": "exp001_ship_host_aligns_after_verify",
+      "passed": true,
+      "failures": [],
+      "steps": [
+        {
+          "index": 1,
+          "op": "perception_inspiration_collect",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 2,
+          "op": "perception_build_design_snapshot",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 3,
+          "op": "perception_select_component_foundation",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 4,
+          "op": "perception_verify",
+          "ok": true,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "id": "exp002_one_voice_after_observe",
+      "passed": true,
+      "failures": [],
+      "steps": [
+        {
+          "index": 1,
+          "op": "perception_navigate_and_observe",
+          "ok": true,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "id": "exp004_snapshot_clears_design_reference",
+      "passed": true,
+      "failures": [],
+      "steps": [
+        {
+          "index": 1,
+          "op": "perception_build_design_snapshot",
+          "ok": true,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "id": "exp005_meridian_multiroute",
+      "passed": true,
+      "failures": [],
+      "steps": [
+        {
+          "index": 0,
+          "op": "start",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 1,
+          "op": "perception_navigate_and_observe",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 2,
+          "op": "perception_build_design_snapshot",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 3,
+          "op": "perception_select_component_foundation",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 4,
+          "op": "perception_navigate_and_observe",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 5,
+          "op": "set_surface_type",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 6,
+          "op": "perception_build_design_snapshot",
+          "ok": true,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "id": "exp006_sections_then_ship",
+      "passed": true,
+      "failures": [],
+      "steps": [
+        {
+          "index": 1,
+          "op": "perception_build_design_snapshot",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 2,
+          "op": "perception_select_component_foundation",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 3,
+          "op": "perception_verify",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 4,
+          "op": "seed_sections",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 5,
+          "op": "complete_sections",
+          "ok": true,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "id": "exp007_confidence_after_paid_families",
+      "passed": true,
+      "failures": [],
+      "steps": [
+        {
+          "index": 1,
+          "op": "perception_navigate_and_observe",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 2,
+          "op": "perception_build_design_snapshot",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 3,
+          "op": "perception_select_component_foundation",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 4,
+          "op": "perception_verify",
+          "ok": true,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "id": "exp008_ship_residue_claim",
+      "passed": true,
+      "failures": [],
+      "steps": [
+        {
+          "index": 1,
+          "op": "perception_navigate_and_observe",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 2,
+          "op": "perception_build_design_snapshot",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 3,
+          "op": "perception_select_component_foundation",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 4,
+          "op": "perception_verify",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 5,
+          "op": "seed_sections",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 6,
+          "op": "complete_sections",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 7,
+          "op": "run_ship",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 8,
+          "op": "perception_build_design_snapshot",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 9,
+          "op": "run_ship",
+          "ok": true,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "id": "exp009_codebase_does_not_block_claim",
+      "passed": true,
+      "failures": [],
+      "steps": [
+        {
+          "index": 1,
+          "op": "perception_navigate_and_observe",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 2,
+          "op": "perception_build_design_snapshot",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 3,
+          "op": "perception_select_component_foundation",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 4,
+          "op": "perception_verify",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 5,
+          "op": "seed_sections",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 6,
+          "op": "complete_sections",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 7,
+          "op": "set_retry",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 8,
+          "op": "run_ship",
+          "ok": true,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "id": "exp010_component_status_alias",
+      "passed": true,
+      "failures": [],
+      "steps": [
+        {
+          "index": 1,
+          "op": "perception_build_design_snapshot",
+          "ok": true,
+          "failures": []
+        },
+        {
+          "index": 2,
+          "op": "perception_select_component_foundation",
+          "ok": true,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "id": "exp013_host_lists_unpaid_portfolio",
+      "passed": true,
+      "failures": [],
+      "steps": [
+        {
+          "index": 0,
+          "op": "start",
+          "ok": true,
+          "failures": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,25 +1,24 @@
 # Inspiration Agent Guide — Provider Playbooks
 
-**Audience:** MCP host agents using `perception_inspiration_*` tools.
+**Agents first:** read `perception://guide/inspiration` — pick **one** `inspiration_level` (`light` | `standard` | `wide` | `max`) from task context and pass it on collect. No other ceremony.
 
-**Read at session start when gathering UI inspiration:** MCP resource `perception://inspiration-guide`
-
-This guide encodes **how each gallery site is navigated**, **how preview URLs are obtained**, and **what fails in production**. The Python module implements these rules — follow the tools, not ad-hoc scraping.
+This file is **implementer detail** (per-site navigation, preview URLs, anti-bot). The MCP already encodes these rules — follow tools, not ad-hoc scraping.
 
 ---
 
 ## 0. Workflow (every inspiration task)
 
 ```text
-1. perception_inspiration_discover   → ranked candidates (fast, URLs + scores)
-2. perception_inspiration_collect    → URLs + ephemeral vision blobs (when you need images)
-3. Use agent_view_url for live pages; inspiration_blob for vision
-4. perception_inspiration_session_end → delete blobs when design work is done
+1. Look at task → pick inspiration_level (see perception://guide/inspiration)
+2. perception_inspiration_collect({ query, inspiration_level })  ← preferred one-shot
+3. Optional: discover first → pass discover_token to collect (no double pay)
+4. LOOK at blobs → visual_feedback(purpose=inspiration)
+5. perception_inspiration_session_end when done
 ```
 
 **URL-first:** Prefer `agent_view_url` (live page). Use `inspiration_blob` only for quick visual reference — blobs expire (~24h) and are deleted on session end.
 
-**Provider priority (early stop):** Dribbble → Behance → One Page Love → Awwwards → SiteInspire → Godly → Land-book
+**Default path:** registered HTTP galleries (One Page Love → Behance). Corpus multi-scout concurrency is set by the level you picked — do not open dozens of galleries in the shared browser yourself.
 
 ---
 
@@ -68,7 +67,7 @@ INSPIRATION_HEADLESS=false
 | HTTP | **Works** |
 | Preview CDN | `assets.onepagelove.com/cdn-cgi/image/width=...,quality=...` |
 
-**Critical:** CDN URLs contain commas inside `cdn-cgi/image/` params — never split srcset on commas blindly. Medium blob tier uses `width=480`, `quality=75`.
+**Critical:** CDN URLs contain commas inside `cdn-cgi/image/` params — never split srcset on commas blindly. Medium blob tier uses `width=640`, `quality=82` (JPEG materialize defaults ~1120px / q82).
 
 **Filter:** Require screenshot asset near card; skip nav links (`/about`, etc.).
 

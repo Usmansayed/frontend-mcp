@@ -50,8 +50,14 @@ _ROUTER_CANDIDATE_REL = (
 def _discover_layout(repo_root: Path) -> RepoLayoutHints:
     src = repo_root / "src"
     app = repo_root / "app"
+    src_app = src / "app"
     src_dir = src if src.is_dir() else None
-    app_dir = app if app.is_dir() else None
+    if app.is_dir():
+        app_dir = app
+    elif src_app.is_dir():
+        app_dir = src_app
+    else:
+        app_dir = None
 
     candidates: list[Path] = []
     for rel in _ROUTER_CANDIDATE_REL:

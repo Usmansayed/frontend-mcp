@@ -19,6 +19,14 @@ _CATEGORY_HINTS: dict[ResourceCategory, tuple[str, ...]] = {
 	ResourceCategory.THREE_D: ('3d', 'three-d', 'three d'),
 }
 
+# Filler tokens that hurt literal provider search (Iconify, etc.).
+_STOPWORDS = frozenset({
+	'a', 'an', 'the', 'for', 'with', 'and', 'or', 'of', 'to', 'in', 'on', 'at',
+	'dark', 'light', 'mode', 'theme', 'style', 'ui', 'app', 'button', 'outline',
+	'filled', 'solid', 'line', 'modern', 'minimal', 'simple', 'nice', 'good',
+	'best', 'new', 'small', 'large', 'big', 'tiny',
+})
+
 
 @dataclass(slots=True)
 class ResourceIntent:
@@ -40,5 +48,16 @@ def parse_intent(query: str) -> ResourceIntent:
 		for hint in hints:
 			keywords = keywords.replace(hint, ' ')
 			keywords = keywords.replace(hint.title(), ' ')
+	tokens = [t for t in keywords.lower().split() if t and t not in _STOPWORDS]
+	# Prefer concrete nouns: shortest non-stopword often matches provider catalogs better
+	# ("moon dark mode icon" → "moon").
+	if tokens:
+		keywords = ' '.join(tokens)
+		# For icons, lead with the shortest content token (usually the symbol name).
+		if category == ResourceCategory.ICON:
+			primary = sorted(tokens, key=len)[0]
+			keywords = primary if primary else keywords
+	else:
+		keywords = text
 	keywords = ' '.join(keywords.split()) or text
 	return ResourceIntent(raw_query=text, category=category, keywords=keywords)

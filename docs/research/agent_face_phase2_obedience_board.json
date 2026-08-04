@@ -1,0 +1,124 @@
+{
+  "ok": true,
+  "passed": 6,
+  "total": 6,
+  "rows": [
+    {
+      "id": "forms",
+      "passed": true,
+      "class": "forms",
+      "depth": "light",
+      "next": "perception_probe_form",
+      "owed": [
+        "forms",
+        "verify"
+      ],
+      "claim_ok": false,
+      "checks": {
+        "class": true,
+        "next": true,
+        "depth": true,
+        "no_inspiration": true,
+        "claim_blocked": true
+      }
+    },
+    {
+      "id": "hotfix",
+      "passed": true,
+      "class": "hotfix",
+      "depth": "light",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "verify"
+      ],
+      "claim_ok": false,
+      "checks": {
+        "class": true,
+        "next": true,
+        "depth": true,
+        "no_inspiration": true,
+        "claim_blocked": true
+      }
+    },
+    {
+      "id": "greenfield",
+      "passed": true,
+      "class": "greenfield",
+      "depth": "full",
+      "next": "perception_inspiration_collect",
+      "owed": [
+        "inspiration",
+        "visual_feedback",
+        "component"
+      ],
+      "claim_ok": false,
+      "checks": {
+        "class": true,
+        "next": true,
+        "depth": true,
+        "no_inspiration": true,
+        "claim_blocked": true
+      }
+    },
+    {
+      "id": "redesign",
+      "passed": true,
+      "class": "redesign",
+      "depth": "full",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "snapshot",
+        "visual_feedback"
+      ],
+      "claim_ok": false,
+      "checks": {
+        "class": true,
+        "next": true,
+        "depth": true,
+        "no_inspiration": true,
+        "claim_blocked": true
+      }
+    },
+    {
+      "id": "feature",
+      "passed": true,
+      "class": "feature",
+      "depth": "standard",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "visual_feedback",
+        "verify"
+      ],
+      "claim_ok": false,
+      "checks": {
+        "class": true,
+        "next": true,
+        "depth": true,
+        "no_inspiration": true,
+        "claim_blocked": true
+      }
+    },
+    {
+      "id": "polish",
+      "passed": true,
+      "class": "hotfix",
+      "depth": "standard",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "verify"
+      ],
+      "claim_ok": false,
+      "checks": {
+        "class": true,
+        "next": true,
+        "depth": true,
+        "no_inspiration": true,
+        "claim_blocked": true
+      }
+    }
+  ]
+}

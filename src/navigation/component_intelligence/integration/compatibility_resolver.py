@@ -18,8 +18,11 @@ def resolve_compatibility(
 	blockers: list[str] = []
 	config_patches: list[dict] = []
 
-	if not selection.guidance.framework.compatible:
-		blockers.extend(selection.guidance.framework.issues or ['framework_incompatible'])
+	if not selection.guidance or not selection.guidance.framework.compatible:
+		if selection.guidance:
+			blockers.extend(selection.guidance.framework.issues or ['framework_incompatible'])
+		else:
+			degraded.append('guidance_missing')
 
 	tailwind_v4 = (repo_root / 'tailwind.config.ts').is_file() and _file_mentions(
 		repo_root / 'package.json', 'tailwindcss', '4.'
@@ -28,16 +31,20 @@ def resolve_compatibility(
 		resolutions.append('tailwind_v4_class_mapping_may_be_required')
 		adaptations.append('map_legacy_tailwind_utilities_if_needed')
 
-	if 'lucide-react' in selection.guidance.codebase.existing_libraries:
+	existing_libs = (
+		selection.guidance.codebase.existing_libraries if selection.guidance else {}
+	)
+	if 'lucide-react' in existing_libs:
 		adaptations.append('swap_icon_imports_to_lucide-react')
 	elif documentation.icons:
 		resolutions.append(f'install_icon_library:{documentation.icons[0]}')
 
-	if 'framer-motion' in selection.guidance.codebase.existing_libraries:
+	if 'framer-motion' in existing_libs:
 		adaptations.append('prefer_framer_motion_for_animations')
 
-	for mod in selection.guidance.consistency.all_adjustments():
-		adaptations.append(f'{mod.category}:{mod.description}')
+	if selection.guidance:
+		for mod in selection.guidance.consistency.all_adjustments():
+			adaptations.append(f'{mod.category}:{mod.description}')
 
 	if (repo_root / 'components.json').is_file():
 		resolutions.append('align_imports_with_components_json_aliases')

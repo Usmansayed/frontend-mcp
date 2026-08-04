@@ -71,10 +71,23 @@ def _build_planned_queries(
 
 	# Pass 1 — primary intent queries.
 	add(parsed.raw, 1.0, 1, 'primary')
+	raw_lower = (parsed.raw or '').lower()
+	_GENERIC_COMPS = frozenset({'button', 'input', 'card', 'menu'})
+	# Chrome tokens pull aceternity hero+navbar packs at rel 1.0 (Test 12).
+	_CHROME_COMPS = frozenset({'navbar', 'nav', 'header', 'footer', 'sidebar', 'navigation'})
 	for comp in component_types[:3]:
-		add(comp, 0.95, 1, 'primary')
+		# Bare generic/chrome tokens inflate unrelated registry hits when page context exists.
+		if page_context and comp in _GENERIC_COMPS and comp not in raw_lower:
+			add(comp, 0.4, 3, 'broad')
+		elif page_context and comp in _CHROME_COMPS and comp not in raw_lower:
+			add(comp, 0.42, 3, 'broad')
+		else:
+			add(comp, 0.95, 1, 'primary')
 	for ctx in page_context[:2]:
 		add(f'{ctx} {component_types[0]}' if component_types else ctx, 0.9, 1, 'primary')
+		if not component_types:
+			add(f'{ctx} hero', 0.88, 1, 'primary')
+			add(f'{ctx} section', 0.85, 1, 'primary')
 	for style in styles[:3]:
 		if component_types:
 			add(f'{style} {component_types[0]}', 0.88, 1, 'primary')
@@ -150,9 +163,14 @@ def _infer_component_types(parsed: ParsedQuery) -> list[str]:
 	]
 	text = ' '.join(parts).lower()
 	inferred: list[str] = []
-	for key in ('navbar', 'header', 'navigation', 'pricing', 'login', 'sidebar', 'hero', 'footer', 'button'):
+	# Do not infer bare "button" from ambient text — it over-matches registry descriptions.
+	for key in ('navbar', 'header', 'navigation', 'pricing', 'login', 'sidebar', 'hero', 'footer'):
 		if key in text:
 			inferred.append('navbar' if key in ('header', 'navigation') else key)
+	if not inferred and any(
+		c in ('portfolio', 'about', 'landing page', 'marketing') for c in parsed.page_context
+	):
+		inferred.append('hero')
 	return _unique(inferred)
 
 

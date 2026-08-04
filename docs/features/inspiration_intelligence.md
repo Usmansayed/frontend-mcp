@@ -8,7 +8,7 @@ Public design inspiration orchestration for agents building UI.
 - Expand queries via Community Intelligence (semantic search planning)
 - Rank, select, and capture screenshots for Design Snapshot / Reference Registry
 
-**Not in scope:** User Figma files, variables, or Community duplication — see [figma_intelligence.md](./figma_intelligence.md).
+**Not in scope:** Private design-file sync or community duplication pipelines. Use public gallery inspiration + measured Design Snapshots for reference.
 
 ## Provider strategy
 

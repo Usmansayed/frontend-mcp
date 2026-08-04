@@ -135,10 +135,19 @@ class DribbbleProvider:
 		candidate: InspirationCandidate,
 		*,
 		intent: InspirationIntent,
+		allow_browser_screenshot: bool = False,
 	) -> InspirationCaptureResult:
 		_ = intent
+		import os
+
 		degraded: list[str] = []
 		screenshot_refs: list[str] = []
+		env_allow = os.environ.get('INSPIRATION_ALLOW_BROWSER_SCREENSHOT', '').strip().lower() in {
+			'1',
+			'true',
+			'yes',
+		}
+		use_browser_ss = allow_browser_screenshot or env_allow
 
 		if candidate.preview_ref:
 			screenshot_refs.append(candidate.preview_ref)
@@ -151,12 +160,15 @@ class DribbbleProvider:
 				screenshot_refs.append(preview)
 				degraded.append('capture_tier:og_image')
 
-		if not screenshot_refs and candidate.url and not is_fast_mode():
+		# Image-first: skip browser screenshot unless explicitly allowed.
+		if not screenshot_refs and candidate.url and use_browser_ss and not is_fast_mode():
 			img, ss_deg = await self._browser_screenshot(candidate.url)
 			degraded.extend(ss_deg)
 			if img:
 				screenshot_refs.append(img)
 				degraded.append('capture_tier:browser_screenshot')
+		elif not screenshot_refs and candidate.url and not use_browser_ss:
+			degraded.append('capture_browser_screenshot_skipped:image_first')
 
 		return InspirationCaptureResult(
 			candidate_id=candidate.candidate_id,
@@ -167,15 +179,18 @@ class DribbbleProvider:
 		)
 
 	async def health(self) -> dict[str, Any]:
+		from navigation.inspiration_intelligence.browser.scrapling_route import recovery_status
+
 		return {
 			'provider_id': self.provider_id,
 			'status': 'ok',
-			'fetch_tiers': ['http_probe', 'perception_browser', 'og_image'],
+			'fetch_tiers': ['http_probe', 'perception_browser', 'scrapling_stealthy', 'og_image'],
 			'headless': False,
 			'perception_runtime': True,
 			'has_session_cookie': bool(self._session_cookie),
 			'fast_mode': is_fast_mode(),
-			'note': 'HTTP returns 202 WAF stub — browser required for search',
+			'note': 'HTTP often 202 WAF; Chromium first; Scrapling Stealthy if ours fails (important host)',
+			'scrapling_recovery': recovery_status(),
 		}
 
 	async def _discover_query(self, query: str, *, max_results: int) -> tuple[list[dict[str, str]], list[str]]:
@@ -184,7 +199,7 @@ class DribbbleProvider:
 		url = DRIBBBLE_NAVIGATION.search_url(slug)
 
 		# Tier 1: HTTP probe (fast when it works — usually WAF 202 on Dribbble)
-		self._tracker.wait_if_needed(self.provider_id, self._policy)
+		await self._tracker.await_if_needed(self.provider_id, self._policy)
 		html = ''
 		status: int | None = None
 		try:
@@ -208,12 +223,12 @@ class DribbbleProvider:
 		except Exception as exc:
 			degraded.append(f'dribbble_http_failed:{exc}')
 
-		# Tier 2: Browser — required for Dribbble search (WAF blocks plain HTTP)
+		# Tier 2: our Perception Chromium (default browser path)
 		if self._fetch_html is not None:
 			degraded.append(f'dribbble_parse_empty:{slug}')
 			return [], degraded
 
-		self._tracker.wait_if_needed(self.provider_id, self._policy)
+		await self._tracker.await_if_needed(self.provider_id, self._policy)
 		try:
 			async with InspirationBrowserSession(
 				provider_id='dribbble',
@@ -234,8 +249,53 @@ class DribbbleProvider:
 		except Exception as exc:
 			degraded.append(f'dribbble_browser_failed:{exc}')
 
+		# Tier 3: Scrapling Stealthy — only when ours failed on this WAF host (slow, budgeted)
+		stealthy_hits, stealthy_deg = await self._stealthy_search(url, max_results=max_results)
+		degraded.extend(stealthy_deg)
+		if stealthy_hits:
+			return stealthy_hits, degraded
+
 		degraded.append(f'dribbble_parse_empty:{slug}')
 		return [], degraded
+
+	async def _stealthy_search(
+		self,
+		url: str,
+		*,
+		max_results: int,
+	) -> tuple[list[dict[str, str]], list[str]]:
+		from navigation.inspiration_intelligence.browser.scrapling_route import (
+			fetch_html_important_recovery,
+		)
+
+		degraded: list[str] = []
+		html, status, err, notes, tier = await fetch_html_important_recovery(
+			url, already_blocked=True
+		)
+		degraded.extend(notes)
+		if tier != 'scrapling_stealthy' or err or not html:
+			degraded.append(f'dribbble_stealthy_failed:{err or "ineligible"}')
+			return [], degraded
+		if _http_is_waf_stub(html, status):
+			degraded.append(f'dribbble_stealthy_waf:{status or "stub"}')
+			return [], degraded
+		parsed = parse_search_html(html)
+		if not parsed:
+			degraded.append('dribbble_stealthy_parse_empty')
+			return [], degraded
+		hits = [
+			{
+				'shot_id': h.shot_id,
+				'title': h.title,
+				'url': h.url,
+				'preview_url': h.preview_url,
+				'fetch_tier': 'scrapling_stealthy',
+				'preview_kind': 'teaser' if h.preview_url else 'anonymous',
+			}
+			for h in parsed
+		]
+		degraded.append('dribbble_stealthy_fallback')
+		return hits[:max_results], degraded
 
 	async def _resolve_preview(self, shot_id: str, url: str) -> tuple[str, str, list[str]]:
 		detail_url = url or DRIBBBLE_NAVIGATION.detail_url(shot_id)
@@ -265,7 +325,7 @@ class DribbbleProvider:
 				headless=self._headless,
 				session_cookie=self._session_cookie,
 			) as session:
-				self._tracker.wait_if_needed(self.provider_id, self._policy)
+				await self._tracker.await_if_needed(self.provider_id, self._policy)
 				return await session.screenshot_url(url)
 		except Exception as exc:
 			return '', [f'browser_screenshot_failed:{exc}']

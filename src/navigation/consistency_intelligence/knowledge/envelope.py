@@ -166,6 +166,15 @@ class KnowledgeResponse:
 				f"{stats.get('standard_count', 0)} standards, "
 				f"{stats.get('component_count', 0)} components."
 			)
+		if self.query.query_id == 'ux.retrieve':
+			ret = self.answer.get('retrieval') or {}
+			pb = ret.get('matched_playbook') or {}
+			return (
+				f"UX KB {pb.get('title') or 'retrieval'}: "
+				f"{len(ret.get('decisions') or [])} decisions, "
+				f"{len(ret.get('patterns') or [])} patterns, "
+				f"{len(ret.get('principles') or [])} principles."
+			)
 		return f"Knowledge query {self.query.query_id} completed (confidence={self.confidence:.2f})."
 
 

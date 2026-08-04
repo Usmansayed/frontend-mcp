@@ -1,0 +1,223 @@
+async def handle_figma_status(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.figma_intelligence import FigmaIntelligenceService
+
+    service = FigmaIntelligenceService()
+    status = service.status()
+    health = await service.health()
+    connected = bool(status.get("connected"))
+    if connected:
+        advisory = [
+            "Figma connected. Use perception_figma_context for normalized design context.",
+            "Read perception://figma-guide for frame/selection workflow.",
+        ]
+    else:
+        advisory = [
+            "Figma not connected (expected until PAT). Not an MCP engine failure.",
+            "Optional: perception_figma_connect with a Figma personal access token.",
+            "Skip Figma tools for this episode unless the user asks to connect.",
+        ]
+    return make_envelope(
+        "perception_figma_status",
+        ok=True,
+        data={
+            "figma_status": status,
+            "health": health,
+            "agent_summary": {
+                "connected": connected,
+                "phase": status.get("phase"),
+                "env_setup_required": not connected,
+                "advisory": advisory,
+            },
+        },
+        degraded=list(health.get("degraded") or []),
+    )
+
+
+async def handle_figma_connect(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.figma_intelligence import FigmaIntelligenceService
+
+    service = FigmaIntelligenceService()
+    action = str(arguments.get("action") or "connect").strip().lower()
+    pat = str(arguments.get("pat") or arguments.get("figma_pat") or arguments.get("token") or "").strip()
+    account_hint = str(arguments.get("account_hint") or "").strip()
+
+    if action in {"status", "check"}:
+        conn = service.connection_status()
+        return make_envelope(
+            "perception_figma_connect",
+            ok=True,
+            data={
+                "connection": conn,
+                "agent_summary": {
+                    "connected": conn.get("connected"),
+                    "advisory": [
+                        "Provide pat from Figma → Settings → Security → Personal access tokens.",
+                        "User should only connect once unless token is invalid.",
+                    ],
+                },
+            },
+        )
+
+    if action in {"disconnect", "clear"}:
+        result = service.disconnect()
+        return make_envelope(
+            "perception_figma_connect",
+            ok=True,
+            data={"connection": result, "agent_summary": {"connected": False}},
+        )
+
+    if not pat:
+        return make_envelope(
+            "perception_figma_connect",
+            ok=False,
+            error="pat required — ask user for Figma Personal Access Token",
+            data={
+                "agent_summary": {
+                    "advisory": [
+                        "Prompt user: create PAT at Figma Settings → Security.",
+                        "Retry perception_figma_connect with pat parameter.",
+                    ],
+                },
+            },
+        )
+
+    try:
+        result = await service.connect(pat, account_hint=account_hint)
+    except Exception as exc:
+        return make_envelope("perception_figma_connect", ok=False, error=str(exc))
+
+    return make_envelope(
+        "perception_figma_connect",
+        ok=True,
+        data={
+            "connection": result,
+            "agent_summary": {
+                "connected": True,
+                "advisory": ["Token stored locally. Use perception_figma_context next."],
+            },
+        },
+    )
+
+
+async def handle_figma_context(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.figma_intelligence import FigmaIntelligenceService
+
+    service = FigmaIntelligenceService()
+    refresh = bool(arguments.get("refresh", False))
+    file_key = str(arguments.get("file_key") or "").strip()
+    file_url = str(arguments.get("file_url") or arguments.get("url") or "").strip()
+    page_id = str(arguments.get("page_id") or arguments.get("active_page_id") or "").strip()
+    frame_id = str(arguments.get("frame_id") or arguments.get("active_frame_id") or "").strip()
+    file_name = str(arguments.get("file_name") or "").strip()
+    selection = arguments.get("selection_node_ids") or arguments.get("node_ids") or []
+
+    if file_key or file_url:
+        service.set_active_file(file_key=file_key, file_url=file_url, file_name=file_name)
+    if page_id:
+        service.set_active_page(page_id)
+    if frame_id:
+        service.set_active_frame(frame_id)
+    if selection:
+        service.set_selection([str(n) for n in selection if n])
+
+    if not service.connection_status().get("connected"):
+        return make_envelope(
+            "perception_figma_context",
+            ok=False,
+            error="figma_not_connected",
+            data={
+                "agent_summary": {
+                    "advisory": ["Run perception_figma_connect with user PAT first."],
+                },
+            },
+        )
+
+    context = await service.get_context(refresh=refresh)
+    payload = context.to_dict()
+    advisory = []
+    if context.degraded:
+        advisory.append(f"degraded:{','.join(context.degraded[:5])}")
+    if context.file is None:
+        advisory.append("Set file_url or file_key to load a Figma file.")
+
+    from navigation.engineering_knowledge import compile_figma_seed_spec
+
+    seed_ctx = {
+        "file_key": context.file.file_key if context.file else None,
+        "tokens": {
+            (t.get("name") or t.get("id") or str(i)): (t.get("value") or t.get("color") or t)
+            for i, t in enumerate(list(context.tokens or [])[:40])
+            if isinstance(t, dict) or True
+        },
+        "fonts": [],
+        "frames": [],
+    }
+    # Normalize tokens list → dict when tokens are objects
+    token_map: dict = {}
+    for t in list(context.tokens or [])[:40]:
+        if isinstance(t, dict):
+            name = str(t.get("name") or t.get("id") or "")
+            val = t.get("value") or t.get("color") or t.get("hex")
+            if name and val is not None:
+                token_map[name] = val
+                low = name.lower()
+                if "primary" in low or "accent" in low or "brand" in low:
+                    token_map["primary"] = val
+        elif isinstance(t, str):
+            token_map[t] = t
+    seed_ctx["tokens"] = token_map
+    eng_spec_obj = compile_figma_seed_spec(seed_ctx)
+    eng_spec = eng_spec_obj.to_dict()
+    advisory.append(
+        "engineering_spec is a Figma seed Spec — verify with live DesignSnapshot after implementation."
+    )
+
+    from navigation.engineering_knowledge.reference_binding import (
+        bind_reference_spec,
+        resolve_psm_for_session,
+    )
+
+    browser_session_id = str(arguments.get("session_id") or "").strip() or None
+    bind_as_reference = bool(arguments.get("bind_as_reference", False))
+    bind_meta = None
+    if bind_as_reference:
+        psm = resolve_psm_for_session(browser_session_id)
+        bind_meta = bind_reference_spec(
+            eng_spec_obj,
+            session_id=browser_session_id,
+            psm=psm,
+            source="figma_seed",
+            note="Figma seed Spec — harden via live DesignSnapshot after implementation",
+        )
+        if psm is not None:
+            try:
+                from navigation.coordination_intelligence.integration.bridge import (
+                    get_coordinator_bridge,
+                )
+
+                get_coordinator_bridge().service.runtime.save(psm)
+            except Exception:
+                pass
+        advisory.append("Figma seed Spec bound as reference for SpecDiff gate.")
+
+    return make_envelope(
+        "perception_figma_context",
+        ok=True,
+        session_id=browser_session_id,
+        data={
+            "figma_context": payload,
+            "engineering_spec": eng_spec,
+            "reference_bind": bind_meta,
+            "agent_summary": {
+                "connected": context.connected,
+                "file_key": context.file.file_key if context.file else None,
+                "component_count": len(context.components),
+                "token_count": len(context.tokens),
+                "cache_hit": bool((context.cache or {}).get("hit")),
+                "unresolved_engineering_decisions": eng_spec.get("unresolved_by_impact", [])[:8],
+                "reference_bound": bool(bind_meta and bind_meta.get("bound")),
+                "advisory": advisory,
+            },
+        },
+        degraded=list(context.degraded),
+    )

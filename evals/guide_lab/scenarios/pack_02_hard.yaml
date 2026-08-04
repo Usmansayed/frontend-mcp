@@ -1,0 +1,330 @@
+# Guide Lab HARD pack — adversarial / conflicting signals (EXP-026)
+# Designed to stress tunnel vision, class traps, and claim-done mistakes.
+
+- id: H01
+  class: mockup
+  ask: "Match this Figma-like screenshot; gate screams inspiration"
+  unpaid: [inspiration, snapshot, component, observe, verify]
+  gate: {state: blocked, next_required_capability: inspiration_workflow}
+  backlog_top: inspiration
+  recommended_evidence: inspiration_workflow
+  gold:
+    owed: [snapshot, observe, verify]
+    owed_or: [[snapshot, observe, component], [snapshot, observe, verify]]
+    owed_mode: covers
+    first_family: snapshot
+    must_not: [inspiration]
+    require_multi_owed: true
+
+- id: H02
+  class: polish
+  ask: "Just bump border-radius 2px"
+  unpaid: [inspiration, snapshot, component, observe, verify, design_review, seo]
+  gate: {state: blocked, next_required_capability: inspiration_workflow}
+  backlog_top: inspiration
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [inspiration, component, seo]
+    require_multi_owed: false
+
+- id: H03
+  class: greenfield
+  ask: "New landing; recommended_evidence is verify while reference unpaid"
+  unpaid: [inspiration, component]
+  gate: {state: provisional, next_required_capability: browser_verify}
+  backlog_top: verify
+  recommended_evidence: browser_verify
+  gold:
+    owed: [inspiration, component]
+    owed_mode: covers
+    first_family: inspiration
+    first_mode: reference_family
+    must_not: [seo]
+    require_multi_owed: true
+
+- id: H04
+  class: redesign
+  ask: "Full visual overhaul; next is ship while snapshot unpaid"
+  unpaid: [snapshot, design_review, verify]
+  gate: {state: ready, next_required_capability: design_review}
+  backlog_top: design_review
+  gold:
+    owed: [snapshot, design_review]
+    owed_or: [[snapshot, verify, design_review]]
+    owed_mode: covers
+    first_family: snapshot
+    must_not: []
+    require_multi_owed: true
+
+- id: H05
+  class: hotfix
+  ask: "Button click handler wrong — surgical fix"
+  unpaid: [observe, verify, inspiration, snapshot, component, design_review]
+  gate: {state: blocked, next_required_capability: design_snapshot}
+  backlog_top: snapshot
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [inspiration, snapshot, component]
+    require_multi_owed: false
+
+- id: H06
+  class: feature
+  ask: "Tiny copy change on /pricing; unpaid lists seo + inspiration"
+  unpaid: [seo, inspiration, observe, verify]
+  gate: {state: ready, next_required_capability: browser_observe}
+  backlog_top: seo
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [seo, inspiration]
+    require_multi_owed: false
+
+- id: H07
+  class: mockup
+  ask: "User uploaded mockup; inspiration already failed/timeout"
+  unpaid: [inspiration, snapshot, verify]
+  gate: {state: blocked, next_required_capability: inspiration_workflow}
+  backlog_top: inspiration
+  gold:
+    owed: [snapshot, verify]
+    owed_mode: covers
+    first_family: snapshot
+    must_not: [inspiration]
+    require_multi_owed: true
+
+- id: H08
+  class: redesign
+  ask: "Direction still open — no mockup, no snapshot unpaid yet, only inspiration"
+  unpaid: [inspiration, observe, verify]
+  gate: {state: blocked, next_required_capability: browser_observe}
+  backlog_top: observe
+  gold:
+    owed: [inspiration, observe, verify]
+    owed_mode: covers
+    first_family: inspiration
+    first_family_or: [inspiration, observe]
+    must_not: [seo]
+    require_multi_owed: true
+
+- id: H09
+  class: greenfield
+  ask: "Reference paid; only foundation + verify unpaid"
+  unpaid: [component, verify]
+  gate: {state: provisional, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [component, verify]
+    owed_mode: covers
+    first_family: component
+    first_family_or: [component, verify]
+    must_not: [seo]
+    require_multi_owed: true
+
+- id: H10
+  class: polish
+  ask: "Opacity looks unchanged — overlay wash suspected"
+  unpaid: [observe, verify, snapshot]
+  gate: {state: ready, next_required_capability: design_snapshot}
+  backlog_top: snapshot
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [snapshot]
+    require_multi_owed: false
+
+- id: H11
+  class: feature
+  ask: "Find who owns the BillingCard then verify"
+  unpaid: [resolve, observe, verify, component]
+  gate: {state: provisional, next_required_capability: component_select}
+  backlog_top: component
+  gold:
+    owed: [resolve, observe, verify]
+    owed_mode: covers
+    first_family: resolve
+    first_family_or: [resolve, observe]
+    must_not: [inspiration]
+    require_multi_owed: true
+
+- id: H12
+  class: mockup
+  ask: "Claim done after soft text verify; snapshot+ship unpaid"
+  unpaid: [snapshot, design_review]
+  gate: {state: ready, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [snapshot, design_review]
+    owed_mode: covers
+    first_family: snapshot
+    must_not: []
+    require_multi_owed: true
+
+- id: H13
+  class: hotfix
+  ask: "Wrong product on :5173; fix CSS on :5174"
+  unpaid: [observe, verify, seo]
+  gate: {state: ready, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [seo]
+    require_multi_owed: false
+
+- id: H14
+  class: redesign
+  ask: "Sections checklist unpaid with snapshot unpaid"
+  unpaid: [snapshot, sections, verify]
+  gate: {state: provisional, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [snapshot, verify]
+    owed_or: [[snapshot, sections, verify]]
+    owed_mode: covers
+    first_family: snapshot
+    must_not: []
+    require_multi_owed: true
+
+- id: H15
+  class: greenfield
+  ask: "Everything unpaid including seo — do not spam"
+  unpaid: [inspiration, snapshot, component, observe, verify, seo, design_review]
+  gate: {state: blocked, next_required_capability: inspiration_workflow}
+  backlog_top: inspiration
+  gold:
+    owed: [inspiration, component, observe]
+    owed_or: [[snapshot, component, observe], [inspiration, component, verify]]
+    owed_mode: covers
+    first_family: inspiration
+    first_mode: reference_family
+    must_not: [seo]
+    require_multi_owed: true
+
+- id: H16
+  class: feature
+  ask: "Gate next is design_review on a small feature — skip ship"
+  unpaid: [observe, verify, design_review]
+  gate: {state: ready, next_required_capability: design_review}
+  backlog_top: design_review
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [design_review]
+    require_multi_owed: false
+
+- id: H17
+  class: redesign
+  ask: "Spec already bound (snapshot paid); unpaid verify + ship"
+  unpaid: [verify, design_review]
+  gate: {state: ready, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [verify, design_review]
+    owed_mode: covers
+    first_family: verify
+    first_family_or: [verify, design_review]
+    must_not: [inspiration]
+    require_multi_owed: true
+
+- id: H18
+  class: polish
+  ask: "Micro blur tweak; foundation gate blocked"
+  unpaid: [component, observe, verify]
+  gate: {state: blocked, next_required_capability: component_select}
+  backlog_top: component
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [component]
+    require_multi_owed: false
+
+- id: H19
+  class: mockup
+  ask: "Backlog top is observe; snapshot still the structural debt"
+  unpaid: [snapshot, observe, verify]
+  gate: {state: provisional, next_required_capability: browser_observe}
+  backlog_top: observe
+  gold:
+    owed: [snapshot, observe, verify]
+    owed_mode: covers
+    first_family: snapshot
+    must_not: [inspiration]
+    require_multi_owed: true
+
+- id: H20
+  class: greenfield
+  ask: "Conflicting: top=component, next=observe, unpaid includes inspiration"
+  unpaid: [inspiration, component, observe]
+  gate: {state: blocked, next_required_capability: browser_observe}
+  backlog_top: component
+  gold:
+    owed: [inspiration, component, observe]
+    owed_mode: covers
+    first_family: inspiration
+    first_mode: reference_family
+    must_not: [seo]
+    require_multi_owed: true
+
+- id: H21
+  class: hotfix
+  ask: "Diff after failed verify — still observe/verify loop"
+  unpaid: [observe, verify]
+  gate: {state: ready, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [inspiration, component]
+    require_multi_owed: false
+
+- id: H22
+  class: redesign
+  ask: "Inspiration unpaid but snapshot also unpaid — pick measured path"
+  unpaid: [inspiration, snapshot, component]
+  gate: {state: blocked, next_required_capability: inspiration_workflow}
+  backlog_top: inspiration
+  gold:
+    owed: [snapshot, component]
+    owed_or: [[snapshot, observe, component]]
+    owed_mode: covers
+    first_family: snapshot
+    must_not: []
+    require_multi_owed: true
+
+- id: H23
+  class: feature
+  ask: "Only seo unpaid — skip; nothing structural"
+  unpaid: [seo]
+  gate: {state: ready, next_required_capability: browser_observe}
+  backlog_top: seo
+  gold:
+    owed: []
+    owed_or: [[]]
+    owed_mode: covers
+    first_family: observe
+    first_family_or: [observe, verify]
+    must_not: [seo]
+    require_multi_owed: false
+
+- id: H24
+  class: mockup
+  ask: "Triple conflict: next=verify, top=inspiration, unpaid=snapshot+ship"
+  unpaid: [inspiration, snapshot, design_review]
+  gate: {state: provisional, next_required_capability: browser_verify}
+  backlog_top: inspiration
+  gold:
+    owed: [snapshot, design_review]
+    owed_mode: covers
+    first_family: snapshot
+    must_not: [inspiration]
+    require_multi_owed: true

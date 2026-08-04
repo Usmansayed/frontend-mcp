@@ -43,7 +43,7 @@ FIXTURE = {
 }
 
 
-async def test_design_review_from_snapshot_id() -> None:
+async def _design_review_from_snapshot_id() -> None:
 	engine = DesignSnapshotEngine()
 	snapshot = engine.capture_from_fixture(FIXTURE)
 	snapshots = SnapshotRegistry()
@@ -62,7 +62,7 @@ async def test_design_review_from_snapshot_id() -> None:
 	assert data.get('consensus_removed_duplicates', 0) >= 0
 
 
-async def test_consistency_review_from_snapshot_id() -> None:
+async def _consistency_review_from_snapshot_id() -> None:
 	engine = DesignSnapshotEngine()
 	snapshot = engine.capture_from_fixture(FIXTURE)
 	snapshots = SnapshotRegistry()
@@ -78,7 +78,7 @@ async def test_consistency_review_from_snapshot_id() -> None:
 	assert 'summary' in result['data']
 
 
-async def test_build_snapshot_returns_existing() -> None:
+async def _build_snapshot_returns_existing() -> None:
 	engine = DesignSnapshotEngine()
 	snapshot = engine.capture_from_fixture(FIXTURE)
 	snapshots = SnapshotRegistry()
@@ -94,10 +94,22 @@ async def test_build_snapshot_returns_existing() -> None:
 	assert result['data']['snapshot_id'] == rec.snapshot_id
 
 
+def test_design_review_from_snapshot_id() -> None:
+	asyncio.run(_design_review_from_snapshot_id())
+
+
+def test_consistency_review_from_snapshot_id() -> None:
+	asyncio.run(_consistency_review_from_snapshot_id())
+
+
+def test_build_snapshot_returns_existing() -> None:
+	asyncio.run(_build_snapshot_returns_existing())
+
+
 def main() -> int:
-	asyncio.run(test_design_review_from_snapshot_id())
-	asyncio.run(test_consistency_review_from_snapshot_id())
-	asyncio.run(test_build_snapshot_returns_existing())
+	test_design_review_from_snapshot_id()
+	test_consistency_review_from_snapshot_id()
+	test_build_snapshot_returns_existing()
 	print('design mcp handlers: PASS')
 	return 0
 

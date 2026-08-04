@@ -3,7 +3,7 @@
 **Goal:** Prove a fresh agent session can complete frontend form work using **AGENT_GUIDE §4** only — the MCP must not suggest next steps.
 
 **Prerequisites:**
-- Sandbox dev server: `cd sandbox && npm run dev` (default `http://localhost:5173`)
+- Sandbox dev server: `cd sandbox && npm run dev` (default `http://127.0.0.1:18765`)
 - Frontend Perception MCP connected (see `MCP_PLAN.md` §5.1)
 
 ---

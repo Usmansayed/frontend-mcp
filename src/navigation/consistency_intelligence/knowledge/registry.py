@@ -40,6 +40,14 @@ QUERY_CATALOG: tuple[QuerySpec, ...] = (
 	QuerySpec('exceptions.list', 'All project exceptions', 'exceptions'),
 	QuerySpec('graph.summary', 'High-level project design language overview', 'graph'),
 	QuerySpec('graph.diff', 'Diff graph vs prior version', 'graph', ('other_version',)),
+	# UX Knowledge Brain (ForOpenCode — frozen contract v1)
+	QuerySpec(
+		'ux.retrieve',
+		'Deterministic UX playbook/pattern/principle retrieval from ForOpenCode KB',
+		'ux_knowledge',
+		('intent', 'surface_type', 'phase', 'task', 'ui_component', 'user_flow', 'product_type', 'problem'),
+		phase=2,
+	),
 )
 
 QUERY_BY_ID = {q.query_id: q for q in QUERY_CATALOG}

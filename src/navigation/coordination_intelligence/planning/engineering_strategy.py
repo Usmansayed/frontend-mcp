@@ -1,0 +1,1589 @@
+"""Engineering Strategy — decision-centric coordinator output (deterministic, no LLM)."""
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any, Callable
+
+from navigation.coordination_intelligence.models import ProjectSituationModel, posture_meets_min
+from navigation.coordination_intelligence.planning.effort_allocator import evaluate_allocation
+from navigation.coordination_intelligence.planning.situation_policy import (
+    derive_discriminators,
+    lifecycle_band,
+    match_policy,
+)
+
+INFLUENCE_LEVELS = ("structural", "balanced", "minimal", "maintenance")
+
+ENGINEERING_PHASES = (
+    "design_orientation",
+    "architecture",
+    "implementation",
+    "verification",
+    "quality",
+    "polish",
+    "hotfix_remediation",
+    "maintenance",
+)
+
+AppliesFn = Callable[[dict[str, str], ProjectSituationModel], bool]
+
+_MARKETING_NA_DECISIONS = frozenset(
+    {
+        "layout.sidebar_width_px",
+        "nav.pattern",  # often top-nav; leave partial via archetype instead
+    }
+)
+
+
+def _soften_bootstrap_spec_for_surface(spec: Any, surface: str) -> Any:
+    """Mark dashboard-only decisions N/A on marketing/portfolio empty catalogs."""
+    from navigation.engineering_knowledge.models import FrontendEngineeringSpec
+
+    if not isinstance(spec, FrontendEngineeringSpec):
+        return spec
+    if surface not in ("marketing", "unknown", ""):
+        return spec
+    for did, dec in spec.decisions.items():
+        if did == "layout.sidebar_width_px":
+            dec.status = "not_applicable"
+            dec.importance = "low"
+            dec.confidence = 0.85
+            dec.why = "Marketing/portfolio surface — sidebar width not applicable."
+            dec.why_code = "na.marketing_surface"
+        elif did == "layout.archetype" and dec.status == "unresolved":
+            dec.status = "partial"
+            dec.value = "marketing_landing"
+            dec.confidence = 0.55
+            dec.why = "Surface classified marketing/portfolio — archetype prior (partial)."
+            dec.why_code = "prior.marketing_surface"
+            dec.evidence = ["surface_type"]
+        elif did == "nav.pattern" and dec.status == "unresolved":
+            dec.status = "partial"
+            dec.value = "top"
+            dec.confidence = 0.5
+            dec.why = "Marketing surfaces typically use top navigation (partial prior)."
+            dec.why_code = "prior.marketing_top_nav"
+            dec.evidence = ["surface_type"]
+            dec.importance = "high"
+    return spec
+
+
+@dataclass
+class UnresolvedDecision:
+    decision_id: str
+    title: str
+    why_it_matters: str
+    evidence_domain: str
+    posture: str
+    priority: int
+    resolving_capabilities: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "decision_id": self.decision_id,
+            "title": self.title,
+            "why_it_matters": self.why_it_matters,
+            "evidence_domain": self.evidence_domain,
+            "posture": self.posture,
+            "priority": self.priority,
+            "resolving_capabilities": list(self.resolving_capabilities),
+        }
+
+
+@dataclass
+class EngineeringStrategy:
+    influence_level: str
+    influence_score: float
+    engineering_phase: str
+    policy_id: str
+    task_scope: str
+    lifecycle_stage: str
+    lifecycle_band: str
+    summary: str
+    host_action: str
+    what_matters_now: list[str]
+    unresolved_decisions: list[dict[str, Any]]
+    risks_if_proceeding: list[str]
+    defer_until_later: list[str]
+    effort_guidance: str
+    stop_conditions: list[str]
+    investment: dict[str, Any] | None = None
+    recommended_evidence: dict[str, Any] | None = None
+    playbook_id: str | None = None
+    active_step_id: str | None = None
+    engineering_spec: dict[str, Any] | None = None
+    implementation_gate: dict[str, Any] | None = None
+    evidence_plan: list[dict[str, Any]] = field(default_factory=list)
+    recommended_resource: str | None = None
+    required_resources: list[str] = field(default_factory=list)
+    ship_council_hint: dict[str, Any] | None = None
+    surface_type: str = "unknown"
+    episode_backlog: dict[str, Any] | None = None
+    initiative: dict[str, Any] | None = None
+    episode_confidence: dict[str, Any] | None = None
+    episode_portfolio: dict[str, Any] | None = None
+    evidence_quality_alerts: list[str] = field(default_factory=list)
+    active_route: str | None = None
+    routes: list[dict[str, str]] = field(default_factory=list)
+    ux_knowledge_hint: dict[str, Any] | None = None
+    right_sizing: dict[str, Any] | None = None
+    intent: str = ""
+    verification_status: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "influence_level": self.influence_level,
+            "influence_score": self.influence_score,
+            "engineering_phase": self.engineering_phase,
+            "policy_id": self.policy_id,
+            "task_scope": self.task_scope,
+            "lifecycle_stage": self.lifecycle_stage,
+            "lifecycle_band": self.lifecycle_band,
+            "summary": self.summary,
+            "host_action": self.host_action,
+            "intent": self.intent,
+            "verification_status": self.verification_status,
+            "what_matters_now": list(self.what_matters_now),
+            "unresolved_decisions": list(self.unresolved_decisions),
+            "risks_if_proceeding": list(self.risks_if_proceeding),
+            "defer_until_later": list(self.defer_until_later),
+            "effort_guidance": self.effort_guidance,
+            "stop_conditions": list(self.stop_conditions),
+            "investment": dict(self.investment) if self.investment else None,
+            "recommended_evidence": (
+                dict(self.recommended_evidence) if self.recommended_evidence else None
+            ),
+            "playbook_id": self.playbook_id,
+            "active_step_id": self.active_step_id,
+            "engineering_spec": dict(self.engineering_spec) if self.engineering_spec else None,
+            "implementation_gate": (
+                dict(self.implementation_gate) if self.implementation_gate else None
+            ),
+            "evidence_plan": list(self.evidence_plan),
+            "recommended_resource": self.recommended_resource,
+            "required_resources": list(self.required_resources),
+            "ship_council_hint": (
+                dict(self.ship_council_hint) if self.ship_council_hint else None
+            ),
+            "surface_type": self.surface_type,
+            "episode_backlog": dict(self.episode_backlog) if self.episode_backlog else None,
+            "initiative": dict(self.initiative) if self.initiative else None,
+            "episode_confidence": (
+                dict(self.episode_confidence) if self.episode_confidence else None
+            ),
+            "episode_portfolio": (
+                dict(self.episode_portfolio) if self.episode_portfolio else None
+            ),
+            "evidence_quality_alerts": list(self.evidence_quality_alerts),
+            "active_route": self.active_route,
+            "routes": list(self.routes),
+            "ux_knowledge_hint": (
+                dict(self.ux_knowledge_hint) if self.ux_knowledge_hint else None
+            ),
+            "right_sizing": dict(self.right_sizing) if self.right_sizing else None,
+        }
+
+
+def _intent_text(psm: ProjectSituationModel) -> str:
+    return " ".join(f.intent for f in psm.episode.intent_stack).lower()
+
+
+def _domain_posture(psm: ProjectSituationModel, domain: str) -> str:
+    state = psm.evidence.domains.get(domain)
+    return state.posture if state else "unknown"
+
+
+def _applies_design_reference(disc: dict[str, str], psm: ProjectSituationModel) -> bool:
+    if disc["task_scope"] not in ("design_driven", "redesign"):
+        return False
+    return disc["design_reference_posture"] in ("none", "agreed_no_refs")
+
+
+def _applies_foundation(disc: dict[str, str], psm: ProjectSituationModel) -> bool:
+    if disc["task_scope"] not in ("design_driven", "redesign", "system_setup", "feature_incremental"):
+        return False
+    if disc["task_scope"] == "feature_incremental" and disc["lifecycle_band"] != "early":
+        return False
+    return disc["foundation_posture"] == "unknown"
+
+
+def _applies_design_system(disc: dict[str, str], psm: ProjectSituationModel) -> bool:
+    if disc["system_posture"] != "no_ds":
+        return False
+    return disc["task_scope"] in ("design_driven", "redesign", "system_setup") or (
+        disc["maturity_band"] == "greenfield" and disc["lifecycle_band"] == "early"
+    )
+
+
+def _applies_ui_baseline(disc: dict[str, str], psm: ProjectSituationModel) -> bool:
+    if disc["task_scope"] in ("hotfix", "surgical", "debug"):
+        return False
+    ui = _domain_posture(psm, "ui_runtime")
+    return not posture_meets_min(ui, "partial")
+
+
+def _applies_codebase_context(disc: dict[str, str], psm: ProjectSituationModel) -> bool:
+    if disc["task_scope"] in ("hotfix",):
+        return False
+    code = _domain_posture(psm, "codebase")
+    if posture_meets_min(code, "partial"):
+        return False
+    # Visual design episodes should not block claim-done on missing repo_root alone.
+    if disc["task_scope"] in ("design_driven", "redesign", "system_setup"):
+        intent = _intent_text(psm)
+        needs_code = any(
+            k in intent
+            for k in (
+                "route",
+                "component owner",
+                "codebase",
+                "repo",
+                "which file",
+                "where is the",
+                "resolve_component",
+                "resolve_route",
+            )
+        )
+        if not needs_code:
+            return False
+    return not getattr(psm.artifacts, "repo_root", None) and disc["task_scope"] != "surgical"
+
+
+def _applies_seo(disc: dict[str, str], psm: ProjectSituationModel) -> bool:
+    # SEO Intelligence is parked for MVP — never demand seo_baseline / seo_readiness.
+    # See parked/MVP_EXCLUDE_SEO.md. Lighthouse perception_audit_seo is separate and optional.
+    return False
+    # Restore when lifting SEO:
+    # intent = _intent_text(psm)
+    # if not any(k in intent for k in ("seo", "lighthouse", "cwv", "meta tag", "search ranking")):
+    #     return False
+    # return not posture_meets_min(_domain_posture(psm, "seo"), "partial")
+
+
+def _applies_accessibility(disc: dict[str, str], psm: ProjectSituationModel) -> bool:
+    intent = _intent_text(psm)
+    if not any(k in intent for k in ("accessibility", "a11y", "wcag", "screen reader")):
+        return False
+    quality = _domain_posture(psm, "quality")
+    return not posture_meets_min(quality, "partial")
+
+
+def _applies_verification(disc: dict[str, str], psm: ProjectSituationModel) -> bool:
+    if disc["task_scope"] in ("hotfix", "debug", "surgical"):
+        return psm.episode.verification_status != "passed"
+    return (
+        psm.episode.verification_status != "passed"
+        and disc["lifecycle_band"] in ("mid", "late", "production")
+        and posture_meets_min(_domain_posture(psm, "ui_runtime"), "partial")
+    )
+
+
+_DECISION_RULES: list[dict[str, Any]] = [
+    {
+        "decision_id": "design_reference",
+        "title": "Design reference and information hierarchy",
+        "why_it_matters": (
+            "Visual hierarchy, layout rhythm, and reference direction determine component "
+            "structure, spacing tokens, and implementation order. Coding before this is "
+            "settled creates expensive rework."
+        ),
+        "evidence_domain": "design_source",
+        "posture_field": "design_reference_posture",
+        "priority": 10,
+        "structural": True,
+        "applies": _applies_design_reference,
+        "resolving_capabilities": ["inspiration_workflow", "design_snapshot"],
+        "defer_when_scope": ("hotfix", "surgical", "debug"),
+    },
+    {
+        "decision_id": "component_foundation",
+        "title": "Component foundation selection",
+        "why_it_matters": (
+            "The UI foundation (library, tokens, primitives) constrains every subsequent "
+            "component decision. Changing foundation mid-build is high-cost."
+        ),
+        "evidence_domain": "design_system",
+        "posture_field": "foundation_posture",
+        "priority": 9,
+        "structural": True,
+        "applies": _applies_foundation,
+        "resolving_capabilities": ["component_search_plan", "component_select"],
+        "defer_when_scope": ("hotfix", "surgical", "debug"),
+    },
+    {
+        "decision_id": "design_system_posture",
+        "title": "Design system posture",
+        "why_it_matters": (
+            "Whether to extend an existing system, introduce tokens, or stay ad-hoc affects "
+            "consistency work and review scope for the whole surface."
+        ),
+        "evidence_domain": "design_system",
+        "posture_field": "system_posture",
+        "priority": 8,
+        "structural": True,
+        "applies": _applies_design_system,
+        "resolving_capabilities": ["design_graph_manage", "design_consistency_assess"],
+        "defer_when_scope": ("hotfix", "surgical", "debug"),
+    },
+    {
+        "decision_id": "ui_baseline",
+        "title": "Live UI baseline",
+        "why_it_matters": (
+            "Without a current UI snapshot, fixes and features risk targeting the wrong DOM "
+            "state or missing regressions."
+        ),
+        "evidence_domain": "ui_runtime",
+        "posture_field": "ui_runtime",
+        "priority": 7,
+        "structural": False,
+        "applies": _applies_ui_baseline,
+        "resolving_capabilities": ["browser_observe"],
+        "defer_when_scope": (),
+    },
+    {
+        "decision_id": "codebase_context",
+        "title": "Codebase routing context",
+        "why_it_matters": (
+            "Route and component resolution reduces guesswork about where to edit and which "
+            "patterns the repo already uses."
+        ),
+        "evidence_domain": "codebase",
+        "posture_field": "codebase",
+        "priority": 6,
+        "structural": False,
+        "applies": _applies_codebase_context,
+        "resolving_capabilities": ["codebase_context"],
+        "defer_when_scope": ("surgical",),
+    },
+    {
+        "decision_id": "seo_baseline",
+        "title": "SEO evidence baseline",
+        "why_it_matters": (
+            "Meta structure, crawlability, and CWV gaps should be measured before optimizing "
+            "copy or layout for search."
+        ),
+        "evidence_domain": "seo",
+        "posture_field": "seo",
+        "priority": 7,
+        "structural": False,
+        "applies": _applies_seo,
+        "resolving_capabilities": ["seo_readiness", "seo_evidence_collect"],
+        "defer_when_scope": ("hotfix", "surgical"),
+    },
+    {
+        "decision_id": "accessibility_baseline",
+        "title": "Accessibility quality baseline",
+        "why_it_matters": (
+            "WCAG gaps and keyboard/screen-reader failures should be measured before "
+            "declaring accessibility work complete."
+        ),
+        "evidence_domain": "quality",
+        "posture_field": "quality",
+        "priority": 7,
+        "structural": False,
+        "applies": _applies_accessibility,
+        "resolving_capabilities": ["quality_audit"],
+        "defer_when_scope": ("hotfix", "surgical"),
+    },
+    {
+        "decision_id": "verification_outcome",
+        "title": "Verification outcome",
+        "why_it_matters": (
+            "Implementation is not complete until deterministic verify passes against the "
+            "intended criteria."
+        ),
+        "evidence_domain": "ui_runtime",
+        "posture_field": "verification_status",
+        "priority": 8,
+        "structural": False,
+        "applies": _applies_verification,
+        "resolving_capabilities": ["browser_verify", "browser_observe"],
+        "defer_when_scope": (),
+    },
+]
+
+
+def _agent_face_for_decisions(psm: ProjectSituationModel, disc: dict[str, str]) -> str:
+	"""Classify face for decision deferral — keep forms off structural foundations."""
+	try:
+		from navigation.coordination_intelligence.planning.coordinator_card import (
+			classify_agent_face,
+		)
+
+		intent = _intent_text(psm)
+		return classify_agent_face(
+			{
+				"task_scope": disc.get("task_scope"),
+				"surface_type": disc.get("surface_type")
+				or getattr(psm.episode, "surface_type", None),
+				"intent": intent,
+				"user_intent": intent,
+			}
+		)
+	except Exception:
+		return ""
+
+
+_FORMS_SKIP_DECISIONS = frozenset(
+	{
+		"component_foundation",
+		"design_reference",
+		"design_system_posture",
+	}
+)
+
+
+def _collect_unresolved(
+    psm: ProjectSituationModel,
+    disc: dict[str, str],
+) -> list[UnresolvedDecision]:
+    scope = disc["task_scope"]
+    face = _agent_face_for_decisions(psm, disc)
+    out: list[UnresolvedDecision] = []
+    for rule in _DECISION_RULES:
+        defer_scopes = rule.get("defer_when_scope") or ()
+        if scope in defer_scopes:
+            continue
+        # Forms face: probe/verify path — do not raise foundation/inspiration gates.
+        if face == "forms" and str(rule.get("decision_id") or "") in _FORMS_SKIP_DECISIONS:
+            continue
+        applies: AppliesFn = rule["applies"]
+        if not applies(disc, psm):
+            continue
+        posture_field = rule.get("posture_field") or rule["evidence_domain"]
+        if posture_field == "design_reference_posture":
+            posture = disc.get("design_reference_posture", "none")
+        elif posture_field == "foundation_posture":
+            posture = disc.get("foundation_posture", "unknown")
+        elif posture_field == "system_posture":
+            posture = disc.get("system_posture", "no_ds")
+        elif posture_field == "verification_status":
+            posture = psm.episode.verification_status
+        else:
+            posture = _domain_posture(psm, posture_field)
+        caps = list(rule.get("resolving_capabilities") or [])
+        if str(rule["decision_id"]) == "design_reference":
+            from navigation.coordination_intelligence.planning.reference_routing import (
+                order_design_reference_capabilities,
+            )
+
+            caps = order_design_reference_capabilities(
+                caps,
+                task_scope=scope,
+                psm=psm,
+            )
+        out.append(
+            UnresolvedDecision(
+                decision_id=str(rule["decision_id"]),
+                title=str(rule["title"]),
+                why_it_matters=str(rule["why_it_matters"]),
+                evidence_domain=str(rule["evidence_domain"]),
+                posture=posture,
+                priority=int(rule["priority"]),
+                resolving_capabilities=caps,
+            )
+        )
+    out.sort(key=lambda d: d.priority, reverse=True)
+    return out
+
+
+def _derive_engineering_phase(disc: dict[str, str], psm: ProjectSituationModel) -> str:
+    scope = disc["task_scope"]
+    band = disc["lifecycle_band"]
+    stage = psm.situation.lifecycle_stage
+
+    if scope in ("hotfix",):
+        return "hotfix_remediation"
+    if scope in ("debug",):
+        return "implementation"
+    if scope == "surgical":
+        return "implementation"
+
+    if psm.episode.verification_status == "passed" and band in ("late", "production"):
+        return "maintenance"
+
+    if stage in ("S01_intent", "S02_discovery", "S03_design") or band == "early":
+        if scope in ("design_driven", "redesign"):
+            return "design_orientation"
+        if scope == "system_setup":
+            return "architecture"
+        if scope in ("S03_design",):
+            return "design_orientation"
+        return "design_orientation" if band == "early" else "implementation"
+
+    if stage in ("S04_architecture",) or scope == "system_setup":
+        return "architecture"
+    if stage in ("S07_verification",) or psm.episode.verification_status == "pending":
+        if posture_meets_min(_domain_posture(psm, "ui_runtime"), "partial"):
+            return "verification"
+    if stage in ("S08_quality", "S09_consistency", "S10_release"):
+        return "quality"
+    if disc.get("polish_saturation") in ("soft", "hard"):
+        return "polish"
+    if band == "production":
+        return "maintenance"
+    return "implementation"
+
+
+def _derive_influence_level(
+    disc: dict[str, str],
+    psm: ProjectSituationModel,
+    unresolved: list[UnresolvedDecision],
+) -> tuple[str, float]:
+    scope = disc["task_scope"]
+    band = disc["lifecycle_band"]
+    structural = [d for d in unresolved if d.priority >= 8]
+
+    if scope in ("hotfix", "surgical", "debug"):
+        return "minimal", 0.15
+    if band == "production":
+        return "maintenance", 0.2
+    if disc.get("polish_saturation") == "hard":
+        return "minimal", 0.25
+    if (
+        psm.episode.verification_status == "passed"
+        and not psm.evidence.blocking
+        and scope in ("feature_incremental",)
+    ):
+        return "balanced", 0.45
+    # Do not collapse design-driven / redesign work to maintenance on first verify —
+    # that erases Ship Council recommendation right when the draft becomes shippable.
+    if (
+        psm.episode.verification_status == "passed"
+        and not psm.evidence.blocking
+        and scope not in ("design_driven", "redesign", "system_setup")
+    ):
+        return "maintenance", 0.3
+
+    if len(structural) >= 2 and band == "early":
+        return "structural", 0.9
+    if scope in ("design_driven", "redesign", "system_setup") and band == "early":
+        if structural:
+            return "structural", 0.85
+    if structural and band == "early":
+        return "structural", 0.75
+
+    if scope in ("design_driven", "redesign") and band in ("early", "mid"):
+        return "balanced", 0.6
+    return "balanced", 0.5
+
+
+def _build_priorities(
+    unresolved: list[UnresolvedDecision],
+    disc: dict[str, str],
+    phase: str,
+) -> list[str]:
+    priorities: list[str] = []
+    for decision in unresolved[:3]:
+        priorities.append(f"Resolve: {decision.title}")
+    if not priorities:
+        if phase == "verification":
+            priorities.append("Confirm criteria and run verify before claiming done")
+        elif phase == "hotfix_remediation":
+            priorities.append("Minimize scope; observe, fix, verify, ship")
+        elif disc["task_scope"] in ("surgical",):
+            priorities.append("Single targeted change; verify immediately")
+        else:
+            priorities.append("Implement with verify loop; avoid speculative design spend")
+    return priorities
+
+
+def _build_risks(
+    unresolved: list[UnresolvedDecision],
+    influence_level: str,
+    disc: dict[str, str],
+) -> list[str]:
+    if influence_level not in ("structural", "balanced"):
+        return []
+    risks: list[str] = []
+    structural = [d for d in unresolved if d.priority >= 8]
+    for decision in structural[:2]:
+        risks.append(
+            f"Proceeding without '{decision.title}' may force rework and inconsistent UI."
+        )
+    if disc["task_scope"] in ("design_driven", "redesign") and influence_level == "structural":
+        risks.append(
+            "Implementing layout/components before hierarchy is settled often wastes a full iteration."
+        )
+    return risks
+
+
+def _build_deferrals(disc: dict[str, str], psm: ProjectSituationModel, phase: str) -> list[str]:
+    defer: list[str] = []
+    scope = disc["task_scope"]
+    if scope in ("hotfix", "surgical", "debug"):
+        defer.extend(
+            [
+                "Design inspiration and consistency audits",
+                "SEO deep audits unless directly related to the fix",
+            ]
+        )
+    if phase in ("design_orientation", "architecture"):
+        defer.append("Production polish and micro-interactions until core structure is verified")
+    if disc.get("polish_saturation") in ("soft", "hard"):
+        defer.append("Further design review loops — diminishing returns reached")
+    if psm.episode.verification_status != "passed" and scope not in ("hotfix",):
+        defer.append("Declaring task complete before perception_verify passes (data.verified=true)")
+    from navigation.coordination_intelligence.planning.section_checklist import (
+        get_section_checklist,
+        section_checklist_complete,
+    )
+
+    checklist = get_section_checklist(psm)
+    if (
+        checklist
+        and checklist.get("required")
+        and not section_checklist_complete(checklist)
+        and scope not in ("hotfix", "surgical", "debug")
+    ):
+        defer.append("Declaring task complete before section checklist is complete")
+    if (
+        psm.artifacts.snapshot_id
+        and psm.episode.verification_status == "passed"
+        and not bool(psm.episode.retry_counters.get("ship_council_clear"))
+        and scope in ("design_driven", "redesign", "system_setup")
+    ):
+        defer.append("Declaring task complete before Ship Council clears")
+    return defer
+
+
+def _build_stop_conditions(
+    psm: ProjectSituationModel,
+    disc: dict[str, str],
+    briefing_stop: str | None,
+    investment: dict[str, Any] | None,
+) -> list[str]:
+    stops: list[str] = []
+    if briefing_stop:
+        stops.append(briefing_stop)
+    if psm.episode.verification_status == "passed" and not psm.evidence.blocking:
+        stops.append("verify_passed_sufficient — stop when criteria met")
+    if investment:
+        remaining = int(investment.get("budget_remaining") or 0)
+        if remaining <= 2:
+            stops.append("intelligence budget nearly exhausted — prefer host reasoning")
+    if disc.get("polish_saturation") == "hard":
+        stops.append("diminishing_returns_hard — suppress design loops")
+    policy_stop = (psm.episode.retry_counters.get("situation_policy_id") or "")
+    if "hotfix" in policy_stop or "surgical" in policy_stop:
+        stops.append("scope-limited task — avoid expanding into design exploration")
+    return list(dict.fromkeys(stops))
+
+
+def _pick_recommended_evidence(
+    psm: ProjectSituationModel,
+    catalog: dict[str, Any],
+    unresolved: list[UnresolvedDecision],
+    *,
+    fallback_capability: str | None,
+    task_scope: str | None = None,
+) -> dict[str, Any] | None:
+    from navigation.coordination_intelligence.planning.reference_routing import (
+        prefer_snapshot_first,
+        snapshot_reference_paid,
+    )
+
+    # Redesign with unpaid snapshot: recommend measured Spec over gallery / other ROI tips.
+    if prefer_snapshot_first(task_scope) and not snapshot_reference_paid(psm):
+        for decision in unresolved:
+            if decision.decision_id != "design_reference":
+                continue
+            if "design_snapshot" not in decision.resolving_capabilities:
+                break
+            return {
+                "for_decision": decision.decision_id,
+                "for_decision_title": decision.title,
+                "capability_id": "design_snapshot",
+                "rationale": (
+                    "Redesign path: bind a measured Design Snapshot before gallery inspiration "
+                    f"(resolves '{decision.title}')."
+                ),
+                "routing_detail": (
+                    f"policy=snapshot_first; scope={task_scope}; "
+                    "unpaid snapshot supersedes inspiration_workflow"
+                ),
+            }
+
+    candidates: list[tuple[float, str, UnresolvedDecision, Any]] = []
+    for decision in unresolved[:4]:
+        for cap_id in decision.resolving_capabilities:
+            decision_eval = evaluate_allocation(psm, catalog, capability_id=cap_id)
+            if decision_eval.recommend:
+                score = decision_eval.roi * decision_eval.eqg
+                candidates.append((score, cap_id, decision, decision_eval))
+
+    if not candidates and fallback_capability:
+        decision_eval = evaluate_allocation(psm, catalog, capability_id=fallback_capability)
+        if decision_eval.recommend:
+            out: dict[str, Any] = {
+                "for_decision": None,
+                "capability_id": fallback_capability,
+                "rationale": decision_eval.benefit_claim,
+                "routing_detail": decision_eval.routing_rationale,
+            }
+            if fallback_capability == "inspiration_workflow":
+                out.update(_inspiration_evidence_hints(psm))
+            return out
+        return None
+
+    if not candidates:
+        return None
+
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    _, cap_id, decision, decision_eval = candidates[0]
+    out = {
+        "for_decision": decision.decision_id,
+        "for_decision_title": decision.title,
+        "capability_id": cap_id,
+        "rationale": (
+            f"Resolves '{decision.title}': {decision_eval.benefit_claim}"
+        ),
+        "routing_detail": decision_eval.routing_rationale,
+    }
+    if cap_id == "inspiration_workflow":
+        out.update(_inspiration_evidence_hints(psm))
+    return out
+
+
+def _inspiration_evidence_hints(psm: ProjectSituationModel) -> dict[str, Any]:
+    """Minimum-evidence inspiration guidance — precise queries, stop early, image-first."""
+    from navigation.inspiration_intelligence.planning.progressive_search import (
+        TARGET_IMAGE_REFS,
+        progressive_queries,
+    )
+
+    seed = "ui design"
+    for frame in reversed(psm.episode.intent_stack):
+        text = (frame.intent or "").strip()
+        if text:
+            seed = text
+            break
+    queries = progressive_queries(seed, max_queries=4)
+    attempts_map = psm.episode.retry_counters.get("capability_attempts") or {}
+    attempts = int(attempts_map.get("inspiration_workflow", 0) or 0)
+    return {
+        "suggested_queries": queries,
+        "target_image_refs": TARGET_IMAGE_REFS,
+        "stop_when": f"{TARGET_IMAGE_REFS} high-quality image refs (prefer CDN/preview blobs)",
+        "mode": "image_first",
+        "browser_fallback": "only if image retrieval fails or interaction/animation inspection is required",
+        "reuse_session_blobs": True,
+        "skip_if_already_attempted": attempts >= 1,
+        "engineering_roi": (
+            "High when design_reference is unresolved and visual hierarchy is undecided; "
+            "low after references are bound or scope is hotfix/surgical."
+        ),
+    }
+
+
+def _effort_guidance(influence_level: str, disc: dict[str, str], investment: dict[str, Any] | None) -> str:
+    ceiling = (investment or {}).get("visual_impact_ceiling", "V3")
+    band = disc.get("lifecycle_band", "mid")
+    if influence_level == "structural":
+        return (
+            f"Invest in structural decisions first (band={band}, ceiling={ceiling}). "
+            "Evidence serves decisions — not the reverse."
+        )
+    if influence_level == "minimal":
+        return "Keep MCP lightweight: observe, fix, verify. Skip design exploration."
+    if influence_level == "maintenance":
+        return "Production posture: verify correctness; defer net-new design investment."
+    return f"Balanced influence (band={band}): gather missing evidence, then implement with verify."
+
+
+def _build_summary(
+    influence_level: str,
+    phase: str,
+    unresolved: list[UnresolvedDecision],
+    disc: dict[str, str],
+) -> str:
+    if not unresolved:
+        if phase == "hotfix_remediation":
+            return "Hotfix mode: minimal frontend influence — observe, patch, verify."
+        if phase == "maintenance" or influence_level == "maintenance":
+            return "Maintenance mode: verify and ship; defer structural design work."
+        return "Core decisions settled — proceed with implementation and verify loop."
+
+    top = unresolved[0]
+    return (
+        f"{top.title} is unresolved ({influence_level} influence, {phase} phase). "
+        f"Scope={disc.get('task_scope')} — address this before broad implementation."
+    )
+
+
+def _evidence_quality_host_notes(psm: ProjectSituationModel) -> list[str]:
+    """Advisory honesty from ledger quality — never a new gate."""
+    notes: list[str] = []
+    snap_q = (psm.evidence.capability_ledger.get("design_snapshot") or {}).get("quality") or {}
+    if isinstance(snap_q, dict) and snap_q.get("thin"):
+        notes.append(
+            "EVIDENCE THIN: last snapshot advanced but quality.thin=true — "
+            "do not treat as a dense measured draft; remeasure a richer surface."
+        )
+    elif isinstance(snap_q, dict) and (
+        int(snap_q.get("degraded_count") or 0) > 0 or list(snap_q.get("degraded") or [])
+    ):
+        notes.append(
+            "EVIDENCE DEGRADED: snapshot advanced with degraded signals — "
+            "read capability_ledger.design_snapshot.quality before locking layout."
+        )
+    review_q = (psm.evidence.capability_ledger.get("design_review") or {}).get("quality") or {}
+    if isinstance(review_q, dict) and review_q.get("thin_clear"):
+        notes.append(
+            "SHIP THIN-CLEAR: council_clear with thin coverage — "
+            "not strong design approval; denser snapshot or accept low-confidence clear."
+        )
+
+    insp_q = (psm.evidence.capability_ledger.get("inspiration_workflow") or {}).get("quality") or {}
+    if isinstance(insp_q, dict):
+        usable = int(insp_q.get("usable_image_refs") or 0)
+        unresolved = int(insp_q.get("seed_unresolved_count") or 0)
+        profiles = int(insp_q.get("profiles_extracted") or 0)
+        minimum = int(insp_q.get("minimum_required") or 3)
+        if usable >= minimum and unresolved > 0:
+            notes.append(
+                f"INSPIRATION NOTE: {usable} refs collected; seed Spec still has "
+                f"{unresolved} open priors (expected until Design Snapshot). "
+                "Collect succeeded — use refs for direction, not as a locked Spec."
+            )
+        elif usable >= minimum and profiles == 0:
+            notes.append(
+                f"INSPIRATION THIN: {usable} blobs meet the count floor but "
+                "profiles_extracted=0 — geometry/mood evidence is still weak."
+            )
+
+    # SpecDiff / revision honesty — prefer review ledger, else snapshot
+    for label, quality in (("design_review", review_q), ("design_snapshot", snap_q)):
+        if not isinstance(quality, dict):
+            continue
+        if quality.get("revision_required"):
+            tops = list(quality.get("delta_top_ids") or [])[:3]
+            tops_s = ", ".join(tops) if tops else "see SpecDiff"
+            notes.append(
+                f"SPECDIFF REVISION: revision_required on {label} — "
+                f"fix drifts before treating draft as aligned ({tops_s})."
+            )
+            break
+        if quality.get("soft_seed_partial"):
+            skipped = int(quality.get("soft_seed_skipped_count") or 0)
+            notes.append(
+                f"SPECDIFF SOFT-SEED: {skipped} major/blocking item(s) skipped "
+                f"(null seed values) on {label} — gate pass is not full SpecDiff coverage."
+            )
+            break
+    return notes
+
+
+def _host_action(
+    influence_level: str,
+    unresolved: list[UnresolvedDecision],
+    recommended: dict[str, Any] | None,
+    stop_conditions: list[str],
+) -> str:
+    if stop_conditions and any("verify_passed" in s for s in stop_conditions):
+        return "Verification satisfied — stop unless user requests more scope."
+    if not unresolved:
+        return "Read blocking issues, implement, and run perception_verify."
+    top = unresolved[0]
+    if influence_level == "structural":
+        action = f"Decide {top.title} before writing substantial UI code."
+    elif influence_level == "minimal":
+        action = f"Keep scope tight; only resolve {top.title} if it blocks the fix."
+    else:
+        action = f"Resolve {top.title}, then implement."
+    if recommended and recommended.get("capability_id"):
+        action += (
+            f" Optional evidence: {recommended['capability_id']} "
+            f"({recommended.get('rationale', '')})."
+        )
+    return action
+
+
+def compile_engineering_strategy(
+    psm: ProjectSituationModel,
+    catalog: dict[str, Any],
+) -> EngineeringStrategy:
+    """Compile decision-centric engineering strategy from live PSM + R12."""
+    disc = derive_discriminators(psm)
+    from navigation.coordination_intelligence.planning.surface_type import apply_surface_type
+
+    apply_surface_type(psm)
+    from navigation.coordination_intelligence.planning.route_surfaces import (
+        active_route_path,
+        promote_mixed_from_routes,
+        routes_summary,
+    )
+
+    promote_mixed_from_routes(psm)
+    disc["surface_type"] = str(getattr(psm.episode, "surface_type", None) or "unknown")
+    policy = match_policy(catalog, disc)
+    policy_id = str(policy.get("policy_id") or "default.fallback")
+
+    allocation = evaluate_allocation(psm, catalog, capability_id=None)
+    if psm.briefing.investment:
+        investment = dict(psm.briefing.investment)
+    else:
+        investment = {
+            "policy_id": allocation.policy_id,
+            "band": allocation.investment_band,
+            "budget_total": allocation.budget_total,
+            "budget_spent": allocation.budget_spent,
+            "budget_remaining": allocation.budget_remaining,
+            "visual_impact_ceiling": allocation.visual_impact_ceiling,
+            "discriminators": allocation.discriminators,
+        }
+
+    unresolved = _collect_unresolved(psm, disc)
+    influence_level, influence_score = _derive_influence_level(psm=psm, disc=disc, unresolved=unresolved)
+    phase = _derive_engineering_phase(disc, psm)
+    priorities = _build_priorities(unresolved, disc, phase)
+    risks = _build_risks(unresolved, influence_level, disc)
+    defer = _build_deferrals(disc, psm, phase)
+    stops = _build_stop_conditions(
+        psm,
+        disc,
+        psm.briefing.stop_reason,
+        investment,
+    )
+    recommended = _pick_recommended_evidence(
+        psm,
+        catalog,
+        unresolved,
+        fallback_capability=psm.briefing.suggested_next_capability,
+        task_scope=disc.get("task_scope"),
+    )
+    from navigation.ux_knowledge.strategy_integration import (
+        augment_recommended_evidence,
+        compile_ux_knowledge_hint,
+    )
+
+    ux_hint = compile_ux_knowledge_hint(
+        psm,
+        disc,
+        influence_level=influence_level,
+        engineering_phase=phase,
+        timing="pre_implementation",
+    )
+    recommended = augment_recommended_evidence(recommended, ux_hint)
+    summary = _build_summary(influence_level, phase, unresolved, disc)
+    host_action = _host_action(influence_level, unresolved, recommended, stops)
+    if ux_hint and phase in ("design_orientation", "architecture", "implementation"):
+        host_action = (
+            f"UX KB: call perception_design_knowledge_query(query_id=ux.retrieve, "
+            f"surface_type={ux_hint['params'].get('surface_type')}) before locking layout. "
+            f"{host_action}"
+        )
+
+    # Prefer bound reference Spec when present — do not blank coverage after observe/verify.
+    # Soft inspiration/figma seeds stay bound for SpecDiff, but must NOT dominate
+    # what_matters / coverage (that caused Test 4: verify pass → 0/30 archetype noise).
+    from navigation.engineering_knowledge import EngineeringKnowledgeCompiler
+    from navigation.engineering_knowledge.reference_binding import (
+        get_measured_spec,
+        get_reference_spec,
+    )
+
+    bound_spec, bound_meta = get_reference_spec(psm=psm)
+    bound_meta = dict(bound_meta or {})
+    measured_spec, measured_meta = get_measured_spec(psm=psm)
+    measured_meta = dict(measured_meta or {})
+    soft_seed = False
+    _MEASURED_KINDS = frozenset({"live_dom", "reference", "design_snapshot"})
+    if bound_spec is not None:
+        sk = str(bound_meta.get("source_kind") or bound_spec.source_kind or "")
+        src = str(bound_meta.get("source") or "")
+        # Live measured Specs stay measured even when coverage is thin (provisional).
+        if sk in _MEASURED_KINDS:
+            soft_seed = False
+        else:
+            soft_seed = (
+                bound_meta.get("quality") == "provisional"
+                or sk in ("inspiration_seed", "figma_seed", "strategy_bootstrap")
+                or "seed" in src.lower()
+                or src == "inspiration"
+            )
+
+    ui_posture = ""
+    try:
+        dom = (psm.situation.domains or {}).get("ui_runtime")
+        ui_posture = str(getattr(dom, "posture", "") or "")
+    except Exception:
+        ui_posture = ""
+    verify_done = ui_posture in ("verified", "known") or str(
+        getattr(psm.episode, "verification_status", "") or ""
+    ) == "passed"
+
+    surface = str(
+        getattr(psm.episode, "surface_type", None)
+        or disc.get("surface_type")
+        or ""
+    ).lower()
+
+    if bound_spec is not None and not soft_seed:
+        eng_spec = bound_spec
+        spec_bound = True
+    elif measured_spec is not None:
+        eng_spec = measured_spec
+        spec_bound = True
+        if not bound_meta:
+            bound_meta = measured_meta
+    else:
+        eng_spec = EngineeringKnowledgeCompiler().empty_spec(
+            source_kind="strategy_bootstrap",
+            provenance={
+                "episode_id": psm.episode_id,
+                "task_scope": disc.get("task_scope"),
+                "soft_seed_bound": soft_seed,
+                "soft_seed_kind": bound_meta.get("source_kind") if soft_seed else None,
+            },
+        )
+        spec_bound = soft_seed  # seed still bound for SpecDiff; catalog is advisory
+        if surface in ("marketing", "unknown", "") or disc.get("task_scope") in (
+            "feature_incremental",
+            "hotfix",
+            "polish",
+        ):
+            eng_spec = _soften_bootstrap_spec_for_surface(eng_spec, surface or "marketing")
+
+    # Prefer Spec impact ordering for what_matters when influence is structural/balanced
+    spec_dict = eng_spec.to_dict()
+    if bound_meta and not spec_dict.get("source_kind"):
+        spec_dict["source_kind"] = bound_meta.get("source_kind") or bound_meta.get("source")
+    # Never let empty bootstrap / soft seeds scream "resolve archetype".
+    # Measured live_dom Specs stay actionable even after verify on incremental work.
+    catalog_actionable = (
+        eng_spec.source_kind
+        not in ("strategy_bootstrap", "inspiration_seed", "figma_seed", "unmeasured")
+        and not soft_seed
+    )
+    if (
+        verify_done
+        and disc.get("task_scope") in ("feature_incremental", "hotfix", "polish")
+        and eng_spec.source_kind
+        in ("strategy_bootstrap", "inspiration_seed", "figma_seed", "unmeasured")
+    ):
+        catalog_actionable = False
+    if not catalog_actionable:
+        # Bootstrap / soft seed is not a measurement board — stop advertising 0/30 as unpaid work.
+        cov = dict(spec_dict.get("coverage") or {})
+        cov["actionable"] = False
+        cov["note"] = (
+            "Catalog not measured yet. Run perception_build_design_snapshot after observe "
+            "to compile live coverage — do not chase bootstrap unresolved_by_impact."
+        )
+        spec_dict["coverage"] = cov
+        spec_dict["unresolved_by_impact"] = []
+        spec_dict["catalog_status"] = "awaiting_design_snapshot"
+    else:
+        cov = dict(spec_dict.get("coverage") or {})
+        cov["actionable"] = True
+        spec_dict["coverage"] = cov
+        spec_dict["catalog_status"] = "measured"
+    if (
+        influence_level in ("structural", "balanced")
+        and catalog_actionable
+        and spec_dict.get("unresolved_by_impact")
+    ):
+        top = spec_dict["unresolved_by_impact"][:3]
+        priorities = [
+            f"Resolve: {d['decision_id']} (impact={d['impact_weight']})"
+            for d in top
+        ] + [p for p in priorities if not p.startswith("Resolve:")]
+    elif verify_done or soft_seed:
+        # Strip catalog-style Resolve:* after verify / soft seed so agents do not
+        # chase bootstrap 0/30. Keep decision Resolve:* when catalog is merely
+        # unmeasured (greenfield still needs unpaid-decision guidance).
+        priorities = [p for p in priorities if not str(p).startswith("Resolve:")]
+        if verify_done and not any("verify" in p.lower() for p in priorities):
+            priorities = [
+                "Verify passed — catalog gaps are advisory until Design Snapshot"
+            ] + priorities
+        elif soft_seed and not any("seed" in p.lower() for p in priorities):
+            priorities = [
+                "Inspiration seed is provisional — do not treat unresolved catalog as blockers"
+            ] + priorities
+    elif not catalog_actionable and not any("snapshot" in p.lower() for p in priorities):
+        # Advisory only — never displace decision Resolve:* at index 0.
+        snap_hint = (
+            "Optional: perception_build_design_snapshot to measure engineering catalog"
+        )
+        if priorities and str(priorities[0]).startswith("Resolve:"):
+            priorities = [priorities[0], snap_hint, *priorities[1:]][:5]
+        else:
+            priorities = [snap_hint, *priorities][:5]
+
+    from navigation.coordination_intelligence.planning.implementation_readiness import (
+        compile_implementation_readiness,
+    )
+
+    unresolved_dicts = [d.to_dict() for d in unresolved]
+    implementation_gate, evidence_plan, recommended_resource = (
+        compile_implementation_readiness(
+            psm,
+            influence_level=influence_level,
+            task_scope=disc.get("task_scope", "feature_incremental"),
+            unresolved_decisions=unresolved_dicts,
+        )
+    )
+    from navigation.coordination_intelligence.planning.right_sizing import (
+        RIGHT_SIZING_RESOURCE,
+        build_right_sizing_card,
+    )
+
+    right_sizing = build_right_sizing_card(
+        psm,
+        {
+            "task_scope": disc.get("task_scope", "feature_incremental"),
+            "influence_level": influence_level,
+        },
+    )
+    # Prefer gate-embedded card (same source of truth).
+    if isinstance(implementation_gate.get("right_sizing"), dict):
+        right_sizing = dict(implementation_gate["right_sizing"])
+
+    if implementation_gate.get("section_checklist_required") or implementation_gate.get(
+        "ship_council_required"
+    ):
+        stops = [s for s in stops if "verify_passed_sufficient" not in s]
+
+    if implementation_gate.get("section_checklist_required"):
+        remaining = ", ".join(implementation_gate.get("incomplete_sections") or []) or "open sections"
+        host_action = (
+            "SECTION CHECKLIST: page verify is not enough. For each layout block: "
+            "observe (look at the screenshot) -> perception_verify with section_id. "
+            f"Remaining: {remaining}. Read {recommended_resource}."
+        )
+    elif implementation_gate["state"] == "blocked":
+        host_action = (
+            f"BLOCKED: read {recommended_resource}, then run "
+            f"{implementation_gate.get('next_required_capability') or 'the required evidence capability'}. "
+            "Do not begin broad visual implementation."
+        )
+    elif implementation_gate.get("residue_scan_required"):
+        host_action = (
+            "RESIDUE SCAN: remeasure once with perception_build_design_snapshot, "
+            "then run Ship Council again. One pass only — do not polish-loop. "
+            f"Read {recommended_resource}."
+        )
+    elif implementation_gate.get("ship_council_required"):
+        host_action = (
+            "SHIP GATE: verify passed but Ship Council has not cleared. "
+            "Run perception_design_review(mode=ship), dispose challenges with engineering rationale, "
+            "then claim-done only when ship_gate.council_clear is true. "
+            f"Read {recommended_resource}."
+        )
+    elif implementation_gate.get("evidence_plan_incomplete"):
+        host_action = (
+            "EVIDENCE PLAN: open items must be completed, skipped with a valid reason, "
+            "or superseded — do not call tools only to satisfy the gate. "
+            f"Next: {implementation_gate.get('next_required_capability')}. "
+            f"Read {recommended_resource}."
+        )
+    elif str(right_sizing.get("tier") or "") in ("touch_up", "polish"):
+        pay = ", ".join(right_sizing.get("pay") or [])
+        host_action = (
+            f"RIGHT-SIZE {str(right_sizing.get('tier')).upper()}: pay {pay}. "
+            "Ship/residue/full-page checklist are advisory — do not run the greenfield ladder "
+            f"unless you upgrade effort_tier. Read {RIGHT_SIZING_RESOURCE}."
+        )
+        recommended_resource = RIGHT_SIZING_RESOURCE
+        if implementation_gate.get("ship_council_advisory"):
+            host_action = (
+                f"{host_action} (Ship challenges remain advisory if you want a second opinion.)"
+            )
+
+    from navigation.coordination_intelligence.planning.ship_council import ship_council_hint
+
+    ship_hint = ship_council_hint(
+        {
+            "influence_level": influence_level,
+            "task_scope": disc.get("task_scope", "feature_incremental"),
+            "implementation_gate": implementation_gate,
+        },
+        psm,
+    )
+    ship_ux_hint = compile_ux_knowledge_hint(
+        psm,
+        disc,
+        influence_level=influence_level,
+        engineering_phase=phase,
+        timing="ship_council",
+    )
+    if ship_hint and ship_ux_hint:
+        ship_hint = dict(ship_hint)
+        ship_hint["ux_knowledge"] = ship_ux_hint
+
+    from navigation.coordination_intelligence.planning.episode_backlog import (
+        compile_episode_backlog,
+    )
+    from navigation.coordination_intelligence.planning.episode_confidence import (
+        compile_episode_confidence,
+    )
+    from navigation.coordination_intelligence.planning.evidence_plan_status import (
+        open_evidence_plan_items,
+    )
+    from navigation.coordination_intelligence.planning.residue_scan import residue_required
+    from navigation.coordination_intelligence.planning.section_checklist import (
+        incomplete_sections,
+    )
+    from navigation.coordination_intelligence.planning.surface_type import design_scope_applies
+
+    surface = disc.get("surface_type") or "unknown"
+    initiative_on = design_scope_applies(
+        psm,
+        {"task_scope": disc.get("task_scope"), "influence_level": influence_level},
+    )
+    open_evidence = open_evidence_plan_items(psm, evidence_plan) if initiative_on else []
+    backlog = compile_episode_backlog(
+        psm=psm,
+        unresolved_decisions=unresolved_dicts,
+        incomplete_sections=(
+            incomplete_sections(psm)
+            if implementation_gate.get("section_checklist_required")
+            else []
+        ),
+        open_ship_signals=[],
+        open_evidence_items=open_evidence if initiative_on else [],
+        residue_required=bool(implementation_gate.get("residue_scan_required")),
+        surface_type=surface,
+        gate_next_capability=str(
+            implementation_gate.get("next_required_capability") or ""
+        )
+        or None,
+    )
+    # Prefer backlog top in what_matters when design-scope — keep Resolve:* first.
+    if initiative_on and backlog.get("top"):
+        top_title = str(backlog["top"].get("title") or "")
+        if top_title:
+            roi_line = f"Next (ROI): {top_title}"
+            filtered = [p for p in priorities if p != roi_line]
+            if filtered and str(filtered[0]).startswith("Resolve:"):
+                priorities = [filtered[0], roi_line, *filtered[1:]][:5]
+            else:
+                priorities = [roi_line, *filtered][:5]
+
+    from navigation.coordination_intelligence.planning.episode_portfolio import (
+        compile_episode_portfolio,
+        initiative_from_portfolio,
+    )
+
+    portfolio = compile_episode_portfolio(
+        psm=psm,
+        unresolved_decisions=unresolved_dicts,
+        implementation_gate=implementation_gate,
+        initiative_on=initiative_on,
+        task_scope=disc.get("task_scope"),
+    )
+    initiative = initiative_from_portfolio(portfolio) if initiative_on else {
+        "unpaid_families": [],
+        "note": "N/A outside design scope",
+    }
+    # Anti-tunnel: when multiple families remain unpaid, surface them on host_action.
+    unpaid_fams = [
+        str(u.get("family"))
+        for u in (portfolio.get("unpaid") or [])
+        if u.get("family")
+    ]
+    if initiative_on and len(unpaid_fams) >= 2 and "Portfolio unpaid:" not in (host_action or ""):
+        host_action = (
+            f"{host_action} Portfolio unpaid: {', '.join(unpaid_fams)} "
+            "(do not tunnel on a single family)."
+        ).strip()
+
+    quality_alerts = _evidence_quality_host_notes(psm)
+    for note in quality_alerts:
+        marker = note.split(":", 1)[0]
+        if marker and marker not in (host_action or ""):
+            host_action = f"{host_action} {note}".strip()
+
+    review_q = (psm.evidence.capability_ledger.get("design_review") or {}).get("quality") or {}
+    if isinstance(review_q, dict) and review_q.get("thin_clear"):
+        if ship_hint is None:
+            ship_hint = {
+                "capability": "design_review",
+                "mode": "ship",
+                "resource": "perception://ship-council",
+            }
+        ship_hint = dict(ship_hint)
+        ship_hint["thin_clear"] = True
+        ship_hint["coverage"] = review_q.get("coverage") or "thin"
+        ship_hint["warning"] = (
+            "council_clear with thin coverage — not strong design approval"
+        )
+
+    confidence = compile_episode_confidence(
+        psm=psm,
+        evidence_plan=evidence_plan,
+        section_complete=not bool(implementation_gate.get("section_checklist_required")),
+        ship_clear=bool(psm.episode.retry_counters.get("ship_council_clear")),
+        residue_required=residue_required(psm),
+        open_backlog_majors=len(backlog.get("items") or []),
+        spec_bound=spec_bound,
+        episode_portfolio=portfolio,
+    )
+
+    return EngineeringStrategy(
+        influence_level=influence_level,
+        influence_score=influence_score,
+        engineering_phase=phase,
+        policy_id=policy_id,
+        task_scope=disc.get("task_scope", "feature_incremental"),
+        lifecycle_stage=psm.situation.lifecycle_stage,
+        lifecycle_band=disc.get("lifecycle_band") or lifecycle_band(psm.situation.lifecycle_stage),
+        summary=summary,
+        host_action=host_action,
+        intent=_intent_text(psm),
+        what_matters_now=priorities,
+        unresolved_decisions=unresolved_dicts,
+        risks_if_proceeding=risks,
+        defer_until_later=defer,
+        effort_guidance=_effort_guidance(influence_level, disc, investment),
+        stop_conditions=stops,
+        investment=investment,
+        recommended_evidence=recommended,
+        playbook_id=psm.episode.active_playbook_id,
+        active_step_id=psm.episode.active_step_id,
+        engineering_spec={
+            "catalog_version": spec_dict.get("catalog_version"),
+            "coverage": spec_dict.get("coverage"),
+            "unresolved_by_impact": spec_dict.get("unresolved_by_impact"),
+            "source_kind": spec_dict.get("source_kind"),
+            "catalog_status": spec_dict.get("catalog_status"),
+        },
+        implementation_gate=implementation_gate,
+        evidence_plan=evidence_plan,
+        recommended_resource=recommended_resource,
+        required_resources=(
+            [recommended_resource]
+            if implementation_gate["state"] in ("blocked", "provisional")
+            or implementation_gate.get("residue_scan_required")
+            or implementation_gate.get("evidence_plan_incomplete")
+            or implementation_gate.get("ship_council_required")
+            else []
+        ),
+        ship_council_hint=ship_hint,
+        surface_type=surface,
+        episode_backlog=backlog,
+        initiative=initiative,
+        episode_confidence=confidence,
+        episode_portfolio=portfolio,
+        evidence_quality_alerts=quality_alerts,
+        active_route=active_route_path(psm),
+        routes=routes_summary(psm),
+        ux_knowledge_hint=ux_hint,
+        right_sizing=right_sizing,
+        verification_status=str(psm.episode.verification_status or ""),
+    )
+
+
+def compile_bootstrap_strategy(
+    catalog: dict[str, Any],
+    *,
+    intent: str | None = None,
+) -> dict[str, Any]:
+    """Strategy stub for health / pre-session — full strategy needs session + intent."""
+    if not intent:
+        return {
+            "influence_level": "unknown",
+            "influence_score": 0.0,
+            "engineering_phase": "unknown",
+            "summary": (
+                "Provide intent on perception_session_start for a full Engineering Strategy."
+            ),
+            "host_action": (
+                "Call perception_session_start({ base_url, intent: '<task description>' }). "
+                "Read agent_summary.engineering_strategy before planning."
+            ),
+            "what_matters_now": [
+                "Bootstrap session with intent describing the engineering task",
+            ],
+            "unresolved_decisions": [],
+            "risks_if_proceeding": [],
+            "defer_until_later": [],
+            "effort_guidance": "Intent unlocks R12 policy matching and influence level.",
+            "stop_conditions": [],
+            "investment": None,
+            "recommended_evidence": None,
+        }
+
+    from navigation.coordination_intelligence.models import IntentFrame, ProjectSituationModel, _utc_now
+    from navigation.coordination_intelligence.planning.situation_policy import intent_suggests_stage
+
+    psm = ProjectSituationModel()
+    psm.episode.intent_stack.append(IntentFrame(intent=intent, pushed_at=_utc_now()))
+    hinted = intent_suggests_stage(intent)
+    if hinted:
+        psm.situation.lifecycle_stage = hinted
+    if any(k in intent.lower() for k in ("hotfix", "production incident")):
+        psm.situation.situation_class = "hotfix"
+    elif any(k in intent.lower() for k in ("bug", "fix responsive", "debug")):
+        psm.situation.situation_class = "functional_bug"
+    elif any(k in intent.lower() for k in ("landing", "dashboard", "redesign", "marketing")):
+        psm.situation.situation_class = "inspiration_needed"
+        if any(k in intent.lower() for k in ("build", "new", "from scratch", "greenfield")):
+            psm.situation.project_maturity = "M1"
+            psm.situation.lifecycle_stage = "S03_design"
+
+    strategy = compile_engineering_strategy(psm, catalog)
+    out = strategy.to_dict()
+    out["bootstrap"] = True
+    out["host_action"] = (
+        f"{out['host_action']} Start session to refresh strategy as evidence accumulates."
+    )
+    return out
+
+
+def surface_engineering_strategy(
+    envelope: dict[str, Any],
+    strategy: dict[str, Any],
+    *,
+    episode_id: str | None = None,
+    suggested_capability: str | None = None,
+    suggested_semantic_action: str | None = None,
+    stop_reason: str | None = None,
+) -> dict[str, Any]:
+    """Promote engineering strategy + slim coordinator card to agent_summary.
+
+    Full strategy lives once under ``data.engineering_strategy``.
+    ``agent_summary`` gets a compact projection (not a second full copy) to
+    cut 3–4x payload duplication that burned Run 3 context budget.
+    """
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        build_coordinator_card,
+    )
+
+    data = envelope.setdefault("data", {})
+    data["engineering_strategy"] = strategy
+    agent_summary = envelope.setdefault("agent_summary", {})
+    # Compact projection — avoid embedding the full strategy twice.
+    agent_summary["engineering_strategy"] = {
+        "summary": strategy.get("summary"),
+        "host_action": strategy.get("host_action"),
+        "influence_level": strategy.get("influence_level"),
+        "policy_id": strategy.get("policy_id"),
+        "task_scope": strategy.get("task_scope"),
+        "surface_type": strategy.get("surface_type"),
+        "what_matters_now": list(strategy.get("what_matters_now") or [])[:4],
+        "recommended_evidence": strategy.get("recommended_evidence"),
+        "recommended_resource": strategy.get("recommended_resource"),
+        "implementation_gate": strategy.get("implementation_gate"),
+        "episode_portfolio": {
+            "paid": list((strategy.get("episode_portfolio") or {}).get("paid") or []),
+            "unpaid": list((strategy.get("episode_portfolio") or {}).get("unpaid") or []),
+        },
+        "ux_knowledge_hint": strategy.get("ux_knowledge_hint"),
+        "right_sizing": strategy.get("right_sizing"),
+        "_full_strategy_path": "data.engineering_strategy",
+    }
+    headline = strategy.get("summary")
+    if headline:
+        agent_summary["coordinator_headline"] = headline
+    alerts = list(strategy.get("evidence_quality_alerts") or [])
+    if alerts:
+        agent_summary["evidence_quality_alerts"] = alerts
+        advisory = agent_summary.setdefault("advisory", [])
+        for note in alerts:
+            if note not in advisory:
+                advisory.append(note)
+    gate = strategy.get("implementation_gate")
+    if gate:
+        agent_summary["implementation_gate"] = gate
+        agent_summary["required_resource"] = gate.get("required_resource")
+        if gate.get("state") == "blocked":
+            blocking = agent_summary.setdefault("blocking", [])
+            directive = (
+                "implementation_blocked: resolve "
+                + ", ".join(gate.get("blocking_decisions") or ["structural decisions"])
+            )
+            if directive not in blocking:
+                blocking.append(directive)
+
+    right_sizing = strategy.get("right_sizing")
+    if isinstance(right_sizing, dict) and right_sizing.get("tier"):
+        agent_summary["right_sizing"] = right_sizing
+        advisory = agent_summary.setdefault("advisory", [])
+        note = (
+            f"right_sizing={right_sizing.get('tier')}: {right_sizing.get('summary')}"
+        )
+        if note not in advisory:
+            advisory.append(note)
+
+    # Host-visible coordinator channel (not buried only under data.coordinator).
+    existing = data.get("coordinator") if isinstance(data.get("coordinator"), dict) else None
+    card = existing or build_coordinator_card(
+        episode_id=str(episode_id or strategy.get("episode_id") or "bootstrap"),
+        strategy=strategy,
+        suggested_capability=suggested_capability,
+        suggested_semantic_action=suggested_semantic_action,
+        stop_reason=stop_reason,
+    )
+    if not existing:
+        data["coordinator"] = card
+    promote_coordinator_visibility(envelope, card)
+    return envelope
+
+
+def promote_coordinator_visibility(
+    envelope: dict[str, Any],
+    card: dict[str, Any],
+) -> dict[str, Any]:
+    """Surface slim coordinator briefing where hosts already look (agent_summary)."""
+    from navigation.coordination_intelligence.planning.coordinator_card import (
+        build_agent_face_card,
+    )
+
+    agent_summary = envelope.setdefault("agent_summary", {})
+    agent_summary["coordinator"] = card
+    host_action = card.get("host_action")
+    next_cap = (card.get("gate") or {}).get("next_required_capability")
+    if host_action:
+        agent_summary["recommended_next"] = host_action
+    elif next_cap:
+        agent_summary["recommended_next"] = f"Gather evidence: {next_cap}"
+
+    # Experimental simple face — primary field agents should read.
+    # Full coordinator / engineering_strategy remain for detail / control A/B.
+    strategy = (envelope.get("data") or {}).get("engineering_strategy") or {}
+    if not isinstance(strategy, dict) or not strategy:
+        # Fall back to compact projection if full strategy not yet attached.
+        compact = agent_summary.get("engineering_strategy")
+        strategy = compact if isinstance(compact, dict) else {}
+    face = build_agent_face_card(
+        episode_id=str(card.get("episode_id") or "unknown"),
+        strategy={
+            **strategy,
+            # NEVER fall back to summary / what_matters_now for classify cues.
+            # Those strings often contain "observe, fix, verify" or "polish" and
+            # poisoned structural episodes into hotfix (Run 6c A/J).
+            "intent": strategy.get("intent")
+            or strategy.get("user_intent")
+            or strategy.get("original_intent")
+            or "",
+            "policy_id": strategy.get("policy_id"),
+            "host_action": strategy.get("host_action") or card.get("host_action"),
+            "implementation_gate": strategy.get("implementation_gate")
+            or card.get("implementation_gate")
+            or card.get("gate"),
+            "episode_portfolio": strategy.get("episode_portfolio")
+            or {
+                "paid": [{"family": f} for f in (card.get("portfolio") or {}).get("paid") or []],
+                "unpaid": [
+                    {"family": f} for f in (card.get("portfolio") or {}).get("unpaid") or []
+                ],
+            },
+            "recommended_resource": strategy.get("recommended_resource")
+            or card.get("recommended_resource"),
+            "task_scope": strategy.get("task_scope"),
+            "surface_type": strategy.get("surface_type") or card.get("surface_type"),
+            "influence_level": strategy.get("influence_level") or card.get("influence_level"),
+        },
+        suggested_capability=card.get("suggested_capability"),
+    )
+    agent_summary["card"] = face
+    # Prefer card.next as recommended_next (empty string = done / claim if claim_ok).
+    agent_summary["recommended_next"] = str(face.get("next") or "")
+    if face.get("next_args"):
+        agent_summary["recommended_next_args"] = face["next_args"]
+    elif "recommended_next_args" in agent_summary:
+        agent_summary.pop("recommended_next_args", None)
+    return envelope

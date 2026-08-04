@@ -7,7 +7,7 @@ from typing import Any
 from navigation.consistency_intelligence.consumers import ConsistencyAuditor, ConsistencyValidator, FixProposer
 from navigation.consistency_intelligence.discovery.merge import MergeStats
 from navigation.consistency_intelligence.graph.model import ProjectDesignGraph
-from navigation.consistency_intelligence.graph.persistence import GraphStore
+from navigation.consistency_intelligence.graph.persistence import GraphStore, get_graph_store
 from navigation.consistency_intelligence.knowledge.api import KnowledgeAPI
 from navigation.consistency_intelligence.knowledge.envelope import KnowledgeResponse
 
@@ -50,8 +50,8 @@ class ConsistencyIntelligenceService:
 	"""Project design knowledge engine — graph + Knowledge API."""
 
 	def __init__(self, *, repo_root: str | Path | None = None) -> None:
-		root = Path(repo_root) if repo_root else None
-		self._store = GraphStore(storage_root=root)
+		root = Path(repo_root).resolve() if repo_root else None
+		self._store = get_graph_store(root)
 		self._api = KnowledgeAPI(self._store)
 
 	@property
@@ -182,7 +182,7 @@ class ConsistencyIntelligenceService:
 		"""Audit snapshot against populated graph (refresh first if needed)."""
 		if snapshot is None:
 			return ConsistencyReport(
-				passed=True,
+				passed=False,
 				summary='No snapshot provided.',
 				degraded=['audit_no_snapshot'],
 			)
@@ -191,7 +191,7 @@ class ConsistencyIntelligenceService:
 		stats = self._store.summary_stats(graph)
 		if stats['standard_count'] == 0 and stats['component_count'] == 0:
 			return ConsistencyReport(
-				passed=True,
+				passed=False,
 				summary='Graph empty — run perception_design_graph_refresh first.',
 				degraded=['graph_empty_run_refresh'],
 			)

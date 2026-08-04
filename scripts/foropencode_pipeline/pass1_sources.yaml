@@ -1,0 +1,29 @@
+# Sealed Pass-1 Priority B sources (no free discovery).
+# Prefer primary URL; fallbacks tried in order if fetch fails or bytes too small.
+
+sources:
+  - source_id: src_steering_law_wikipedia
+    claim_id: UX_HCI_STEER_011
+    title: Steering law (Accot–Zhai)
+    urls:
+      - https://en.wikipedia.org/wiki/Steering_law
+    min_bytes: 2000
+    notes: Prefer Wikipedia for open Accot–Zhai summary if academic PDF blocked
+
+  - source_id: src_gestalt_proximity
+    claim_id: UX_VIS_GEST_006
+    title: Gestalt proximity (NN/g)
+    urls:
+      - https://www.nngroup.com/articles/proximity-principle-visual-perception/
+      - https://www.nngroup.com/articles/gestalt-proximity/
+    min_bytes: 2000
+    notes: NN/g proximity principle; replace paraphrase stubs
+
+  - source_id: src_nasa_tlx
+    claim_id: UX_HFE_TLX_001
+    title: NASA Task Load Index (TLX)
+    urls:
+      - https://www.nasa.gov/human-systems-integration-division/nasa-task-load-index-tlx/
+      - https://humansystems.arc.nasa.gov/groups/tlx/
+    min_bytes: 1500
+    notes: Official NASA-TLX page

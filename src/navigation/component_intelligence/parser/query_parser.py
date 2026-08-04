@@ -165,6 +165,10 @@ def _page_context_from_phrase(phrase: str) -> str:
 		return 'landing page'
 	if 'pricing' in phrase:
 		return 'marketing'
+	if 'about' in phrase:
+		return 'about'
+	if 'portfolio' in phrase:
+		return 'portfolio'
 	return phrase
 
 

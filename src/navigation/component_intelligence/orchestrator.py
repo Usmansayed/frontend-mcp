@@ -57,7 +57,9 @@ class ComponentOrchestrator:
 		selection = None
 
 		if request.candidate_id:
-			candidate = _candidate_stub(request.candidate_id)
+			from .candidate_resolve import resolve_candidate_by_id
+
+			candidate = resolve_candidate_by_id(request.candidate_id)
 			from .integration_models import FoundationSelection
 
 			guidance = CandidateGuidance(
@@ -72,6 +74,7 @@ class ComponentOrchestrator:
 				chosen=candidate,
 				guidance=guidance,
 				rationale='explicit_candidate_id',
+				usable=True,
 			)
 		elif request.query:
 			parsed = parse_query(request.query)
@@ -96,6 +99,15 @@ class ComponentOrchestrator:
 				max_candidates=min(request.max_candidates_for_guidance, 3),
 				contracts=self._contracts,
 			)
+			if not selection.usable or selection.chosen is None:
+				degraded.extend(selection.degraded)
+				return IntegrationResult(
+					status=IntegrationStatus.FAILED,
+					request=request,
+					search=search,
+					selection=selection,
+					degraded=list(dict.fromkeys(degraded + ['foundation_not_usable'])),
+				)
 		else:
 			return IntegrationResult(
 				status=IntegrationStatus.FAILED,
@@ -157,7 +169,9 @@ class ComponentOrchestrator:
 		selection = None
 
 		if request.candidate_id:
-			candidate = _candidate_stub(request.candidate_id)
+			from .candidate_resolve import resolve_candidate_by_id
+
+			candidate = resolve_candidate_by_id(request.candidate_id)
 			from .guidance.collectors import collect_guidance
 			from .integration_models import FoundationSelection
 
@@ -172,6 +186,7 @@ class ComponentOrchestrator:
 				chosen=candidate,
 				guidance=guidance,
 				rationale='explicit_candidate_id',
+				usable=True,
 			)
 		elif request.query:
 			parsed = parse_query(request.query)
@@ -196,6 +211,15 @@ class ComponentOrchestrator:
 				max_candidates=request.max_candidates_for_guidance,
 				contracts=self._contracts,
 			)
+			if not selection.usable or selection.chosen is None:
+				degraded.extend(selection.degraded)
+				return IntegrationResult(
+					status=IntegrationStatus.FAILED,
+					request=request,
+					search=search,
+					selection=selection,
+					degraded=list(dict.fromkeys(degraded + ['foundation_not_usable'])),
+				)
 		else:
 			return IntegrationResult(
 				status=IntegrationStatus.FAILED,
@@ -238,36 +262,36 @@ class ComponentOrchestrator:
 		search_plan: dict[str, Any] | None = None,
 		max_candidates: int = 12,
 	):
+		from .models import ComponentSearchResponse, SearchPlan
+
 		parsed = parse_query(query)
 		plan = build_search_plan(parsed)
 		if search_plan:
-			from .models import SearchPlan
-
 			plan = SearchPlan.from_dict(search_plan, fallback_parsed=parsed)
-		search = await self._search.execute(plan)
-		if not search.candidates:
-			raise ValueError('search_empty')
+		try:
+			search = await self._search.execute(plan)
+		except Exception as exc:
+			# Library lock does not require search success.
+			search = ComponentSearchResponse(
+				query=parsed,
+				candidates=[],
+				search_plan=plan,
+				degraded=[f"search_failed:{exc}"],
+			)
 		selection = await select_foundation(
-			search.candidates,
+			list(search.candidates or []),
 			repo_root=repo_root,
 			parsed_query=parsed,
 			max_candidates=max_candidates,
 			contracts=self._contracts,
 		)
+		# Empty search is OK when library lock succeeded (durable default @shadcn).
+		if not selection.usable and not (search.candidates or []):
+			raise ValueError("search_empty")
 		return selection, search
 
 
 def _candidate_stub(candidate_id: str) -> ComponentCandidate:
-	parts = candidate_id.split(':')
-	name = parts[-1] if parts else candidate_id
-	provider = parts[0] if len(parts) > 1 else 'unknown'
-	return ComponentCandidate(
-		id=candidate_id,
-		provider=provider,
-		provider_group=provider,
-		name=name,
-		title=name,
-		category='component',
-		description='',
-		framework='react',
-	)
+	from .candidate_resolve import resolve_candidate_by_id
+
+	return resolve_candidate_by_id(candidate_id)

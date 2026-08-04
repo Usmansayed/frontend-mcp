@@ -1,0 +1,1016 @@
+{
+  "ok": true,
+  "passed": 42,
+  "total": 42,
+  "rows": [
+    {
+      "id": "fix_vs_feature_stamp",
+      "passed": true,
+      "class": "hotfix",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "standard",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "hotfix"
+    },
+    {
+      "id": "settings_toggle_feature",
+      "passed": true,
+      "class": "feature",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "visual_feedback",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "standard",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "feature"
+    },
+    {
+      "id": "polish_under_design_driven",
+      "passed": true,
+      "class": "hotfix",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "standard",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "hotfix"
+    },
+    {
+      "id": "landing_with_signup_not_forms",
+      "passed": true,
+      "class": "greenfield",
+      "next": "perception_inspiration_collect",
+      "owed": [
+        "inspiration",
+        "visual_feedback",
+        "component"
+      ],
+      "claim_ok": false,
+      "depth": "full",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "greenfield"
+    },
+    {
+      "id": "reference_image_redesign",
+      "passed": true,
+      "class": "redesign",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "snapshot",
+        "visual_feedback"
+      ],
+      "claim_ok": false,
+      "depth": "full",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "redesign"
+    },
+    {
+      "id": "forms_vs_component_gate",
+      "passed": true,
+      "class": "forms",
+      "next": "perception_probe_form",
+      "owed": [
+        "forms",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "light",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "forms"
+    },
+    {
+      "id": "feature_plus_fix_in_sentence",
+      "passed": true,
+      "class": "feature",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "visual_feedback",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "standard",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "feature"
+    },
+    {
+      "id": "add_feature_to_fix_copy",
+      "passed": true,
+      "class": "hotfix",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "light",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "hotfix"
+    },
+    {
+      "id": "forms_done_no_respine",
+      "passed": true,
+      "class": "forms",
+      "next": "",
+      "owed": [],
+      "claim_ok": true,
+      "depth": "light",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "forms"
+    },
+    {
+      "id": "ship_blocks_claim",
+      "passed": true,
+      "class": "greenfield",
+      "next": "perception_design_review",
+      "owed": [],
+      "claim_ok": false,
+      "depth": "full",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "greenfield"
+    },
+    {
+      "id": "section_after_verify",
+      "passed": true,
+      "class": "greenfield",
+      "next": "perception_observe",
+      "owed": [],
+      "claim_ok": false,
+      "depth": "full",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "greenfield"
+    },
+    {
+      "id": "spec_revision_remeasure",
+      "passed": true,
+      "class": "redesign",
+      "next": "perception_build_design_snapshot",
+      "owed": [],
+      "claim_ok": false,
+      "depth": "full",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "redesign"
+    },
+    {
+      "id": "plan_component_remaps",
+      "passed": true,
+      "class": "greenfield",
+      "next": "perception_select_component_foundation",
+      "owed": [
+        "component",
+        "observe",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "full",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "greenfield"
+    },
+    {
+      "id": "greenfield_priority_inspiration_first",
+      "passed": true,
+      "class": "greenfield",
+      "next": "perception_inspiration_collect",
+      "owed": [
+        "inspiration",
+        "visual_feedback",
+        "component"
+      ],
+      "claim_ok": false,
+      "depth": "full",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "greenfield"
+    },
+    {
+      "id": "auth_login_is_forms",
+      "passed": true,
+      "class": "forms",
+      "next": "perception_probe_form",
+      "owed": [
+        "forms",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "light",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "forms"
+    },
+    {
+      "id": "redesign_checkout_stays_redesign",
+      "passed": true,
+      "class": "redesign",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "snapshot",
+        "visual_feedback"
+      ],
+      "claim_ok": false,
+      "depth": "full",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "redesign"
+    },
+    {
+      "id": "mockup_match_not_inspiration",
+      "passed": true,
+      "class": "redesign",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "snapshot",
+        "visual_feedback"
+      ],
+      "claim_ok": false,
+      "depth": "full",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "redesign"
+    },
+    {
+      "id": "claim_extra_blocks_claim",
+      "passed": true,
+      "class": "greenfield",
+      "next": "perception_design_review",
+      "owed": [],
+      "claim_ok": false,
+      "depth": "full",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "greenfield"
+    },
+    {
+      "id": "polish_spacing_not_greenfield",
+      "passed": true,
+      "class": "hotfix",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "standard",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "hotfix"
+    },
+    {
+      "id": "host_polish_advisory_not_feature_steal",
+      "passed": true,
+      "class": "feature",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "visual_feedback",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "standard",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "feature"
+    },
+    {
+      "id": "feature_survives_debug_scope",
+      "passed": true,
+      "class": "feature",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "visual_feedback",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "standard",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "feature"
+    },
+    {
+      "id": "feature_empty_portfolio_observe",
+      "passed": true,
+      "class": "feature",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "visual_feedback",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "standard",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "feature"
+    },
+    {
+      "id": "hotfix_empty_portfolio_observe",
+      "passed": true,
+      "class": "hotfix",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "light",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "hotfix"
+    },
+    {
+      "id": "login_nav_landing_stays_greenfield",
+      "passed": true,
+      "class": "greenfield",
+      "next": "perception_inspiration_collect",
+      "owed": [
+        "inspiration",
+        "visual_feedback",
+        "component"
+      ],
+      "claim_ok": false,
+      "depth": "full",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "greenfield"
+    },
+    {
+      "id": "auth_probe_stays_forms",
+      "passed": true,
+      "class": "forms",
+      "next": "perception_probe_form",
+      "owed": [
+        "forms",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "light",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "forms"
+    },
+    {
+      "id": "claim_ok_after_verify_hotfix",
+      "passed": true,
+      "class": "hotfix",
+      "next": "",
+      "owed": [],
+      "claim_ok": true,
+      "depth": "light",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "hotfix"
+    },
+    {
+      "id": "run6_advisory_fix_prose_greenfield",
+      "passed": true,
+      "class": "greenfield",
+      "next": "perception_inspiration_collect",
+      "owed": [
+        "inspiration",
+        "visual_feedback",
+        "component"
+      ],
+      "claim_ok": false,
+      "depth": "full",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "greenfield"
+    },
+    {
+      "id": "run6_contact_form_validation",
+      "passed": true,
+      "class": "forms",
+      "next": "perception_probe_form",
+      "owed": [
+        "forms",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "standard",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "forms"
+    },
+    {
+      "id": "run6_finish_section_skip_when_not_required",
+      "passed": true,
+      "class": "greenfield",
+      "next": "",
+      "owed": [],
+      "claim_ok": true,
+      "depth": "full",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true,
+        "finish_section_skip": true,
+        "finish_ship_skip": true
+      },
+      "note": null,
+      "classify": "greenfield"
+    },
+    {
+      "id": "run6b_greenfield_policy_not_hotfix",
+      "passed": true,
+      "class": "greenfield",
+      "next": "perception_inspiration_collect",
+      "owed": [
+        "inspiration",
+        "visual_feedback",
+        "component"
+      ],
+      "claim_ok": false,
+      "depth": "full",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "greenfield"
+    },
+    {
+      "id": "pack_greenfield_band_very_heavy_blocks_implement",
+      "passed": true,
+      "class": "greenfield",
+      "next": "perception_inspiration_collect",
+      "owed": [
+        "inspiration",
+        "visual_feedback",
+        "component"
+      ],
+      "claim_ok": false,
+      "depth": "full",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "greenfield"
+    },
+    {
+      "id": "pack_hotfix_band_light_no_inspiration",
+      "passed": true,
+      "class": "hotfix",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "light",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "hotfix"
+    },
+    {
+      "id": "pack_feature_heavy_no_gallery_inspiration",
+      "passed": true,
+      "class": "feature",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "visual_feedback",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "standard",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "feature"
+    },
+    {
+      "id": "run6b_owed_prefers_gate_component",
+      "passed": true,
+      "class": "greenfield",
+      "next": "perception_select_component_foundation",
+      "owed": [
+        "component",
+        "visual_feedback",
+        "observe"
+      ],
+      "claim_ok": false,
+      "depth": "full",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "greenfield"
+    },
+    {
+      "id": "h02_hotfix_scope_on_new_landing",
+      "passed": true,
+      "class": "greenfield",
+      "next": "perception_inspiration_collect",
+      "owed": [
+        "inspiration",
+        "visual_feedback",
+        "component"
+      ],
+      "claim_ok": false,
+      "depth": "full",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "greenfield"
+    },
+    {
+      "id": "h11_inspiration_unpaid_beats_component_gate",
+      "passed": true,
+      "class": "greenfield",
+      "next": "perception_inspiration_collect",
+      "owed": [
+        "inspiration",
+        "visual_feedback",
+        "component"
+      ],
+      "claim_ok": false,
+      "depth": "full",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "greenfield"
+    },
+    {
+      "id": "h18_improve_existing_page_feature",
+      "passed": true,
+      "class": "feature",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "visual_feedback",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "standard",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "feature"
+    },
+    {
+      "id": "h20_restyle_match_brand_redesign",
+      "passed": true,
+      "class": "redesign",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "snapshot",
+        "visual_feedback"
+      ],
+      "claim_ok": false,
+      "depth": "full",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "redesign"
+    },
+    {
+      "id": "h21_forms_done_stale_probe_unpaid",
+      "passed": true,
+      "class": "forms",
+      "next": "",
+      "owed": [],
+      "claim_ok": true,
+      "depth": "light",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "forms"
+    },
+    {
+      "id": "h03_structural_gate_on_css_overlap",
+      "passed": true,
+      "class": "hotfix",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "light",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "hotfix"
+    },
+    {
+      "id": "h16_debug_stamp_additive_heavy",
+      "passed": true,
+      "class": "feature",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "visual_feedback",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "standard",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "feature"
+    },
+    {
+      "id": "h12_feature_gallery_poison_portfolio",
+      "passed": true,
+      "class": "feature",
+      "next": "perception_navigate_and_observe",
+      "owed": [
+        "observe",
+        "visual_feedback",
+        "verify"
+      ],
+      "claim_ok": false,
+      "depth": "standard",
+      "checks": {
+        "class": true,
+        "next": true,
+        "forbid_next": true,
+        "claim_ok": true,
+        "forbid_owed": true,
+        "owed0": true,
+        "band": true,
+        "implement_blocked": true
+      },
+      "note": null,
+      "classify": "feature"
+    }
+  ]
+}

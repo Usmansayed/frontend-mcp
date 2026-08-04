@@ -83,7 +83,11 @@ async def test_execute_compiled_step_sequential(runtime: ExecutionRuntime) -> No
     batch = await execute(step)
     assert len(batch.results) == 2
     assert batch.capability_id == "flow_describe"
-    assert len(runtime.ledger.records()) == 2
+    # Ledger may include retries for safe tools; require both tools appeared.
+    tools = [r.tool for r in runtime.ledger.records()]
+    assert "perception_flow_describe" in tools
+    assert "perception_code_context" in tools
+    assert tools[0] == "perception_flow_describe"
 
 
 @pytest.mark.unit

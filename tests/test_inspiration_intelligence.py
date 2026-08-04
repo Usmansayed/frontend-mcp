@@ -112,9 +112,10 @@ def test_og_enrich_from_detail_html() -> None:
 
 
 def test_provider_priority_order() -> None:
-	assert DEFAULT_PROVIDER_PRIORITY[0] == 'dribbble'
-	assert DEFAULT_PROVIDER_PRIORITY[2] == 'onepagelove'
-	assert DEFAULT_PROVIDER_PRIORITY[-1] == 'land-book'
+	assert DEFAULT_PROVIDER_PRIORITY[0] == 'onepagelove'
+	assert DEFAULT_PROVIDER_PRIORITY[1] == 'lapa'
+	assert 'httpster' in DEFAULT_PROVIDER_PRIORITY
+	assert 'land-book' not in DEFAULT_PROVIDER_PRIORITY
 
 
 def test_onepagelove_parser_filters_nav_links() -> None:
@@ -131,6 +132,15 @@ def test_onepagelove_parser_filters_nav_links() -> None:
 	assert any(h['external_id'] == 'landmark' for h in hits)
 
 
+def test_to_medium_inspiration_url_onepagelove() -> None:
+	from navigation.inspiration_intelligence.tools.media_urls import to_medium_inspiration_url
+
+	url = 'https://assets.onepagelove.com/cdn-cgi/image/width=840,quality=85/file.jpg'
+	out = to_medium_inspiration_url(url, provider_id='onepagelove')
+	assert 'width=640' in out
+	assert 'quality=82' in out
+
+
 def test_normalize_image_url_preserves_cdn_commas() -> None:
 	from navigation.inspiration_intelligence.tools.media_urls import normalize_image_url
 
@@ -138,13 +148,133 @@ def test_normalize_image_url_preserves_cdn_commas() -> None:
 	assert normalize_image_url(url) == url
 
 
-def test_to_medium_inspiration_url_onepagelove() -> None:
+def test_normalize_image_url_picks_largest_srcset() -> None:
+	from navigation.inspiration_intelligence.tools.media_urls import normalize_image_url
+
+	srcset = (
+		'https://a.example/cdn-cgi/image/width=384,height=240/file.jpg 384w, '
+		'https://a.example/cdn-cgi/image/width=960,height=600/file.jpg 960w'
+	)
+	out = normalize_image_url(srcset)
+	assert 'width=960' in out
+	assert out.startswith('https://')
+
+
+def test_to_medium_inspiration_url_behance_avoids_dead_800() -> None:
 	from navigation.inspiration_intelligence.tools.media_urls import to_medium_inspiration_url
 
-	url = 'https://assets.onepagelove.com/cdn-cgi/image/width=840,quality=85/file.jpg'
-	out = to_medium_inspiration_url(url, provider_id='onepagelove')
-	assert 'width=480' in out
-	assert 'quality=75' in out
+	url = 'https://mir-s3-cdn-cf.behance.net/project_modules/1400/abc.png'
+	out = to_medium_inspiration_url(url, provider_id='behance')
+	assert '/800/' not in out
+	assert '/max_1200/' in out
+
+
+def test_to_medium_inspiration_url_siteinspire_forces_jpeg() -> None:
+	from navigation.inspiration_intelligence.tools.media_urls import to_medium_inspiration_url
+
+	url = 'https://r2.siteinspire.com/cdn-cgi/image/width=384,height=240,quality=75,format=auto/x.jpg'
+	out = to_medium_inspiration_url(url, provider_id='siteinspire')
+	assert 'format=jpeg' in out
+	assert 'width=800' in out
+	assert 'quality=78' in out
+
+
+def test_parse_awwwards_relative_sites() -> None:
+	from navigation.inspiration_intelligence.providers.gallery_parse import parse_awwwards_html
+
+	html = '''
+	<a href="/sites/cool-saas">
+	  <img srcset="https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/x.jpg 1x" src="data:image/png;base64,aaa" />
+	</a>
+	'''
+	hits = parse_awwwards_html(html, 'https://www.awwwards.com/websites/')
+	assert len(hits) >= 1
+	assert hits[0]['external_id'] == 'cool-saas'
+	assert hits[0]['url'].startswith('https://www.awwwards.com/sites/')
+	assert 'assets.awwwards.com' in hits[0]['preview_url']
+
+
+def test_parse_godly_recent_design_paths() -> None:
+	from navigation.inspiration_intelligence.providers.gallery_parse import parse_godly_html
+
+	html = '''
+	<a href="/i/12345-saas-landing">
+	  <img src="https://cdn.recent.design/entities/abc.webp" />
+	</a>
+	'''
+	hits = parse_godly_html(html, 'https://recent.design/websites')
+	assert len(hits) >= 1
+	assert hits[0]['external_id'] == '12345-saas-landing'
+	assert 'recent.design/i/' in hits[0]['url']
+	assert 'cdn.recent.design' in hits[0]['preview_url']
+
+
+def test_parse_lapa_post_cards() -> None:
+	from navigation.inspiration_intelligence.providers.gallery_parse import parse_lapa_html
+
+	html = '''
+	<img src="https://cdn.lapa.ninja/assets/images/1x/deadwater-thumb.jpg" />
+	<img src="https://cdn.lapa.ninja/assets/images/2x/deadwater-thumb.jpg" />
+	<a title="Deadwater" href="/post/deadwater/">Deadwater</a>
+	'''
+	hits = parse_lapa_html(html, 'https://www.lapa.ninja/')
+	assert len(hits) == 1
+	assert hits[0]['external_id'] == 'deadwater'
+	assert hits[0]['url'].endswith('/post/deadwater/')
+	assert '/2x/' in hits[0]['preview_url']
+
+
+def test_parse_httpster_preview_articles() -> None:
+	from navigation.inspiration_intelligence.providers.gallery_parse import parse_httpster_html
+
+	html = '''
+	<article class="Preview">
+	  <figure class="Preview__figure">
+	    <img class="Preview__img" src="/assets/media/zd/makingsoftware.com-01-ZdQlpt.webp" />
+	  </figure>
+	  <div class="Preview__meta">
+	    <a class="Preview__title" href="/website/makingsoftware/">Making Software</a>
+	  </div>
+	</article>
+	<article class="Preview">
+	  <figure class="Preview__figure">
+	    <img class="Preview__img" src="/assets/media/z2/footer.design-01-Z2hEelY.webp" />
+	  </figure>
+	  <div class="Preview__meta">
+	    <a class="Preview__title" href="/website/footer-design/">Footer Design</a>
+	  </div>
+	</article>
+	'''
+	hits = parse_httpster_html(html, 'https://httpster.net/')
+	assert len(hits) == 2
+	assert hits[0]['external_id'] == 'makingsoftware'
+	assert 'makingsoftware.com' in hits[0]['preview_url']
+	assert hits[1]['external_id'] == 'footer-design'
+	assert 'footer.design' in hits[1]['preview_url']
+
+
+def test_lapa_and_httpster_search_urls() -> None:
+	from navigation.inspiration_intelligence.providers.gallery_parse import (
+		httpster_search_urls,
+		lapa_search_urls,
+	)
+
+	lapa = lapa_search_urls('saas analytics dashboard')
+	assert any('/category/saas/' in u for u in lapa)
+	assert lapa[-1].endswith('lapa.ninja/')
+
+	httpster = httpster_search_urls('minimal saas app')
+	assert any('application-or-software' in u for u in httpster)
+	assert any('/style/minimal/' in u for u in httpster)
+	assert httpster[-1] == 'https://httpster.net/'
+
+
+def test_to_medium_inspiration_url_lapa_prefers_1x() -> None:
+	from navigation.inspiration_intelligence.tools.media_urls import to_medium_inspiration_url
+
+	url = 'https://cdn.lapa.ninja/assets/images/2x/deadwater-thumb.jpg'
+	out = to_medium_inspiration_url(url, provider_id='lapa')
+	assert '/1x/' in out
 
 
 def test_blob_store_session_lifecycle(tmp_path: Path, monkeypatch) -> None:
@@ -276,7 +406,11 @@ def test_discover_with_mock_dribbble_stops_early() -> None:
 
 	result = asyncio.run(
 		InspirationIntelligenceService(providers=registry).discover(
-			InspirationDiscoveryRequest(query='saas dashboard inspiration', max_candidates=5)
+			InspirationDiscoveryRequest(
+				query='saas dashboard inspiration',
+				max_candidates=5,
+				provider_preference='dribbble',
+			)
 		)
 	)
 	assert result.candidates

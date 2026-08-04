@@ -169,6 +169,7 @@ policies:
     - inspiration_workflow
     - component_select
     - design_review
+    - visual_feedback
     forbid_or_defer:
     - seo_evidence_collect
   eqg_priors:
@@ -178,6 +179,7 @@ policies:
     design_review: 3
     browser_observe: 6
     browser_verify: 7
+    visual_feedback: 8
     seo_evidence_collect: 1
   stop_bias: after_orient_then_implement
 - policy_id: design.greenfield.with_refs.early
@@ -199,6 +201,7 @@ policies:
     - component_select
     - design_review
     - resource_workflow
+    - visual_feedback
     forbid_or_defer:
     - inspiration_workflow
     - seo_evidence_collect
@@ -207,31 +210,22 @@ policies:
     component_select: 8
     resource_workflow: 6
     design_review: 3
+    visual_feedback: 8
     browser_verify: 7
   stop_bias: after_orient_then_implement
 - policy_id: design.figma.early
+  # MVP excluded — Figma Intelligence parked (parked/MVP_EXCLUDE_FIGMA.md).
+  # Empty match so this policy never fires until lift.
+  mvp_excluded: true
   match:
-    task_scope:
-    - design_driven
-    - redesign
-    design_reference_posture:
-    - figma
-  priority: 88
+    task_scope: []
+  priority: 0
   investment:
     B_base: 30
     visual_impact_ceiling: V4
-    allow_heavy:
-    - figma_integration
-    - component_select
-    - design_review
-    forbid_or_defer:
-    - inspiration_workflow
-  eqg_priors:
-    figma_integration: 9
-    inspiration_workflow: 0
-    component_select: 8
-    design_review: 7
-    browser_verify: 7
+    allow_heavy: []
+    forbid_or_defer: []
+  eqg_priors: {}
   stop_bias: after_orient_then_implement
 - policy_id: system_setup.foundations
   match:
@@ -239,11 +233,15 @@ policies:
     - system_setup
   priority: 70
   investment:
-    B_base: 28
+    B_base: 36
     visual_impact_ceiling: V4
     allow_heavy:
     - component_select
     - design_graph_manage
+    - browser_observe
+    - browser_verify
+    - inspiration_workflow
+    - design_snapshot
     forbid_or_defer:
     - seo_evidence_collect
   eqg_priors:
@@ -264,7 +262,6 @@ policies:
     design_reference_posture:
     - inspiration
     - agreed_with_refs
-    - figma
     - prose
   priority: 40
   investment:
@@ -291,7 +288,7 @@ policies:
     - redesign
   priority: 50
   investment:
-    B_base: 14
+    B_base: 36
     visual_impact_ceiling: V2
     allow_heavy:
     - design_consistency_audit
@@ -331,7 +328,7 @@ policies:
   match: {}
   priority: 1
   investment:
-    B_base: 14
+    B_base: 36
     visual_impact_ceiling: V3
     allow_heavy: []
     forbid_or_defer: []

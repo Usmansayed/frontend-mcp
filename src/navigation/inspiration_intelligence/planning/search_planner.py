@@ -8,14 +8,25 @@ from navigation.inspiration_intelligence.models import (
 	InspirationSearchPlan,
 )
 
+# HTTP/CDN-friendly providers first — minimize Chromium for discovery.
+# Fast mode (default) uses only the first two; deep research gets the full list.
+# land-book is registered but omitted from default cascades (unreliable / slow).
 DEFAULT_PROVIDER_PRIORITY: list[str] = [
-	'dribbble',
-	'behance',
 	'onepagelove',
+	'lapa',
+	'behance',
+	'httpster',
+	'dribbble',
 	'awwwards',
 	'siteinspire',
 	'godly',
-	'land-book',
+]
+
+FAST_HTTP_PROVIDER_PRIORITY: list[str] = [
+	'onepagelove',
+	'lapa',
+	'behance',
+	'httpster',
 ]
 
 
@@ -52,8 +63,20 @@ def _build_seed_query(intent: InspirationIntent) -> str:
 
 
 def _resolve_providers(intent: InspirationIntent, preference: str | None) -> list[str]:
+	from navigation.inspiration_intelligence.browser.policy import is_fast_mode
+
+	base = (
+		list(FAST_HTTP_PROVIDER_PRIORITY)
+		if is_fast_mode()
+		else list(DEFAULT_PROVIDER_PRIORITY)
+	)
+	# Explicit preference always leads; browser galleries stay available when asked.
 	if preference:
-		return [preference, *[p for p in DEFAULT_PROVIDER_PRIORITY if p != preference]]
+		if preference not in base:
+			# User asked for a deep gallery — expand beyond fast HTTP set.
+			base = list(DEFAULT_PROVIDER_PRIORITY)
+		return [preference, *[p for p in base if p != preference]]
 	if intent.kind in {InspirationIntentKind.COMPARE, InspirationIntentKind.REUSE_PATTERN}:
+		# Compare / reuse benefits from broader coverage.
 		return list(DEFAULT_PROVIDER_PRIORITY)
-	return list(DEFAULT_PROVIDER_PRIORITY)
+	return base

@@ -42,45 +42,39 @@ Your coding agent (Cursor/Claude/Codex) remains the brain.
 
 ### Install
 
-Both PyPI names install the same MCP server:
+```bash
+pip install frontend-mcp
+```
 
-| Package | Install / upgrade |
-|---------|-------------------|
-| `frontend-perception-engine` | `pip install --upgrade frontend-perception-engine` |
-| `frontend-mcp` (alias) | `pip install --upgrade frontend-mcp` |
+Upgrade:
 
-Use `--upgrade` when a version is already installed — plain `pip install` may leave an older release in place.
+```bash
+pip install -U frontend-mcp
+```
+
+Full setup for **Cursor / Claude Code / Codex / OpenCode** (MCP config + optional rules):  
+→ [`docs/INSTALL.md`](docs/INSTALL.md)
+
+Optional install helper (progress + Chromium):
+
+```bash
+frontend-mcp-install --with-browser
+# or: uvx --from frontend-mcp frontend-mcp-install --with-browser
+```
+
+Legacy name still works (thin reverse alias → same `frontend-mcp`):
+
+```bash
+pip install frontend-perception-engine
+```
 
 **Do not mix** PyPI installs with `pip install -e .` in this repo; editable installs can leave broken metadata that blocks upgrades. Use one or the other.
-
-Recommended (quiet output + next steps):
-
-```bash
-uvx --from frontend-perception-engine frontend-perception-install
-```
-
-Or the shorter alias name:
-
-```bash
-uvx --from frontend-mcp frontend-mcp-install
-```
-
-With Chromium for Browser Use:
-
-```bash
-uvx --from frontend-perception-engine frontend-perception-install --with-browser
-```
 
 Development install from this repo:
 
 ```bash
-python -m navigation.cli.install --editable .
-```
-
-Or classic pip:
-
-```bash
-pip install frontend-perception-engine
+pip install -e .
+# or: python -m navigation.cli.install --editable .
 ```
 
 ### Run MCP server
@@ -100,9 +94,9 @@ frontend-perception-mcp
 Using `uvx` (no local install in current environment):
 
 ```bash
-uvx --from frontend-perception-engine frontend-perception-mcp
-# or
 uvx --from frontend-mcp frontend-mcp
+# or
+uvx --from frontend-mcp frontend-perception-mcp
 ```
 
 ### Cursor MCP config

@@ -30,7 +30,7 @@ AI coding agents are good at generating React, Tailwind, and shadcn code. They a
 - Component libraries scattered across 200+ registries with different naming (`navbar` vs `navigation-menu` vs `app-bar`)
 - Framework docs that are outdated or hallucinated
 
-**Frontend Perception MCP** closes the loop: the agent edits code → the MCP observes the live app → structured facts come back → the agent verifies criteria → only then is the task done.
+**Frontend Perception MCP** closes the loop: the agent edits code → the MCP observes the live app → structured facts come back → the agent verifies criteria → for visual drafts it also clears section checklist + Ship Council → only then is the task done.
 
 ---
 
@@ -55,11 +55,11 @@ Every frontend task follows the same loop. The landing page should show this as 
 OBSERVE   perception_navigate_and_observe / perception_observe
 REASON    agent reads blocking issues, DOM, dev insights; edits repo
 ACT       code changes + optional perception_execute_script
-VERIFY    perception_verify — never skip after UI changes
-STOP      verify passes + blocking empty, or ask human (auth/MFA)
+VERIFY    perception_verify — require data.verified=true (ok alone is not a pass)
+STOP      Done ladder: verified + section checklist (when required) + Ship Council (when required), or ask human (auth/MFA)
 ```
 
-**Hard rule to highlight:** *Never claim UI work is done without `perception_verify`.*
+**Hard rule to highlight:** *Never claim UI work is done on transport `ok` alone — require `data.verified=true`, then finish the Done ladder for visual drafts.*
 
 ---
 
@@ -78,6 +78,8 @@ Unlike BrowserTools and similar stacks: **pip install / uvx only** → MCP → B
 ### Inline screenshots in MCP responses
 
 Observe, verify-fail, and diff return **inline images** the model can actually see — not just file paths. Annotated screenshots, element crops, viewport modes, visual heatmaps.
+
+One common tool — **`perception_visual_feedback`** — runs the LOOK → judge → act loop for any UI work: pass a `purpose` (design / consistency / component / inspiration / hotfix / forms), get the right screenshot pack + a purpose-shaped feedback schema, return your judgment JSON, receive advisory `next_actions`. Design Snapshot, Design Review, and Consistency review/audit alias the same loop with **viewport + full page + section** screenshots by default.
 
 ### Verify is a first-class tool
 
@@ -213,18 +215,18 @@ We say what’s shipped vs planned. Credibility beats hype.
 
 ```bash
 # Recommended
-uvx --from frontend-mcp frontend-mcp-install
+uvx --from frontend-perception-engine frontend-mcp-install
 
 # With Chromium
-uvx --from frontend-mcp frontend-mcp-install --with-browser
+uvx --from frontend-perception-engine frontend-mcp-install --with-browser
 
 # Run server
-uvx --from frontend-mcp frontend-mcp
+uvx --from frontend-perception-engine frontend-mcp
 ```
 
 **Cursor config** — one JSON block, no API keys for core browser tools.
 
-**Packages:** `frontend-perception-engine` and `frontend-mcp` are the same server (alias on PyPI).
+**Package:** install only `frontend-perception-engine` (CLI name remains `frontend-mcp`).
 
 ---
 

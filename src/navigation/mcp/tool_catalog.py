@@ -13,10 +13,8 @@ GROUP_ORDER: dict[str, int] = {
     "Resolver": 40,
     "Component": 50,
     "Design": 60,
-    "SEO": 70,
     "Resources": 80,
     "Inspiration": 85,
-    "Figma": 90,
     "Diagnostics": 100,
     "Coordinator": 110,
 }
@@ -24,6 +22,7 @@ GROUP_ORDER: dict[str, int] = {
 # Explicit overrides (others inferred by rules below)
 _TOOL_GROUP: dict[str, str] = {
     "perception_health": "Session",
+    "perception_step": "Session",
     "perception_session_start": "Session",
     "perception_session_end": "Session",
     "perception_state_save": "Session",
@@ -39,16 +38,22 @@ _TOOL_GROUP: dict[str, str] = {
 # Per-tool workflow lines (what / when / before / next) — concise MCP best practice
 _WORKFLOW: dict[str, dict[str, str]] = {
     "perception_health": {
-        "what": "Ping dev server; confirm MCP envelope.",
+        "what": "Ping app URL; doctor env checks + fix_commands; bootstrap strategy.",
         "when": "First call every task.",
         "before": "—",
-        "next": "perception_session_start",
+        "next": "perception_session_start (or perception_step after session)",
+    },
+    "perception_step": {
+        "what": "Run card.next with card.next_args (Tier-0 spine).",
+        "when": "Every turn after session — prefer over inventing tools.",
+        "before": "perception_session_start",
+        "next": "read card; perception_step again until claim_ok",
     },
     "perception_session_start": {
         "what": "Launch browser session.",
         "when": "After health OK.",
         "before": "perception_health",
-        "next": "perception_navigate_and_observe",
+        "next": "perception_step or perception_navigate_and_observe",
     },
     "perception_session_end": {
         "what": "Close browser; release resources.",
@@ -69,10 +74,10 @@ _WORKFLOW: dict[str, dict[str, str]] = {
         "next": "perception_verify",
     },
     "perception_verify": {
-        "what": "Assert UI criteria (url, text, elements).",
-        "when": "After every code change or browser act.",
+        "what": "Assert UI criteria (url, text, js). Pass = data.verified, not transport ok.",
+        "when": "After every code change or browser act; pass section_id for checklist blocks.",
         "before": "observe or act",
-        "next": "STOP if pass; else diff + fix",
+        "next": "section checklist / Ship Council when required; else STOP if Done ladder clear",
     },
     "perception_diff": {
         "what": "Compare two scan screenshots/DOM.",
@@ -110,18 +115,6 @@ _WORKFLOW: dict[str, dict[str, str]] = {
         "before": "search_components",
         "next": "verify UI",
     },
-    "perception_seo_audit_start": {
-        "what": "Start SEO audit (dev=inline, pro=async).",
-        "when": "After observe; pass scan_id.",
-        "before": "navigate_and_observe",
-        "next": "seo_audit_poll (pro only)",
-    },
-    "perception_seo_audit_poll": {
-        "what": "Poll professional SEO job.",
-        "when": "After seo_audit_start returns job_id.",
-        "before": "seo_audit_start",
-        "next": "seo_verify",
-    },
     "perception_probe_form": {
         "what": "Discover form fields and selectors.",
         "when": "Before filling unknown forms.",
@@ -150,8 +143,8 @@ _COMMON_SCHEMA_EXAMPLES: dict[str, Any] = {
         "description": "Absolute path to app root (package.json). Env: FRONTEND_PERCEPTION_DEFAULT_REPO_ROOT",
         "examples": ["/path/to/my-app"],
     },
-    "url": {"type": "string", "description": "Path or absolute URL", "examples": ["/forms/validation", "http://localhost:5173/"]},
-    "base_url": {"type": "string", "examples": ["http://localhost:5173"]},
+    "url": {"type": "string", "description": "Path or absolute URL", "examples": ["/forms/validation", "http://127.0.0.1:18765/"]},
+    "base_url": {"type": "string", "examples": ["http://127.0.0.1:18765"]},
 }
 
 _DETAIL_ENUM_DOC = (
@@ -190,14 +183,10 @@ def infer_group(name: str) -> str:
         return "Component"
     if name.startswith("perception_design_") or name.startswith("perception_consistency_") or name == "perception_build_design_snapshot":
         return "Design"
-    if name.startswith("perception_seo_"):
-        return "SEO"
-    if name.startswith("perception_resource_"):
+    if name.startswith("perception_resource_") or name == "perception_creative_assets":
         return "Resources"
     if name.startswith("perception_inspiration_"):
         return "Inspiration"
-    if name.startswith("perception_figma_"):
-        return "Figma"
     if any(x in name for x in ("audit_", "diagnosis", "debug_mode", "detect_framework", "framework_docs", "full_diagnosis")):
         return "Diagnostics"
     if name.startswith("perception_coordinator_"):
@@ -216,8 +205,6 @@ def _infer_workflow(name: str) -> dict[str, str]:
             "before": "read perception://resolver-guide",
             "next": "edit + verify",
         }
-    if group == "SEO":
-        return {"what": "SEO intelligence.", "when": "SEO tasks.", "before": "seo_status", "next": "verify or report"}
     if group == "Diagnostics":
         return {"what": "Lighthouse/diagnosis.", "when": "Quality audit.", "before": "loaded page", "next": "review scores"}
     return {"what": "See description.", "when": "As needed.", "before": "AGENT_GUIDE", "next": "verify"}
@@ -226,14 +213,19 @@ def _infer_workflow(name: str) -> dict[str, str]:
 def format_description(name: str, original: str) -> str:
     group = infer_group(name)
     wf = _infer_workflow(name)
-    # Deprecated marker
     dep = " [DEPRECATED]" if name == "perception_code_context" else ""
-    header = f"[{group}]{dep} {wf['what']}"
-    flow = f"When: {wf['when']} | Before: {wf['before']} | Next: {wf['next']}"
     body = original.strip()
-    if len(body) > 200:
-        body = body[:197] + "..."
-    return f"{header} | {flow} | {body}"
+    labels = ("Does:", "Use when:", "Returns:", "Next:")
+    if all(label in body for label in labels):
+        return f"[{group}]{dep} {body}"
+    if len(body) > 180:
+        body = body[:177] + "..."
+    return (
+        f"[{group}]{dep} Does: {wf['what']} "
+        f"Use when: {wf['when']} "
+        "Returns: a structured MCP envelope with evidence quality and artifacts when available. "
+        f"Next: {wf['next']}. Details: {body}"
+    )
 
 
 def _enhance_schema(name: str, schema: dict[str, Any]) -> dict[str, Any]:
@@ -254,9 +246,6 @@ def _enhance_schema(name: str, schema: dict[str, Any]) -> dict[str, Any]:
             "examples",
             [{"route": "/forms/validation", "file": "src/pages/forms/ValidationForm.jsx", "component": {"name": "ValidationForm"}}],
         )
-    if name == "perception_seo_audit_start":
-        props.setdefault("scan_id", _COMMON_SCHEMA_EXAMPLES["scan_id"])
-        out.setdefault("examples", [{"website_url": "http://localhost:5173", "scan_id": "scan_abc", "repo_root": "/path/to/app"}])
     return out
 
 

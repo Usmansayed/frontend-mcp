@@ -28,7 +28,7 @@ https://assets.onepagelove.com/cdn-cgi/image/width=840,quality=85/...
 
 **Critical:** `cdn-cgi/image/` params contain commas — do not split URLs on commas naively.
 
-Medium blob tier: `width=480`, `quality=75`.
+Medium blob tier: `width=640`, `quality=82`.
 
 ## Pagination
 

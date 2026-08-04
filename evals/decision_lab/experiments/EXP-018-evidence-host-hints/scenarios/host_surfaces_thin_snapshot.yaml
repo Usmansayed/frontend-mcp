@@ -1,0 +1,22 @@
+id: exp018_host_surfaces_thin_snapshot
+intent: redesign Meridian analytics dashboard
+lifecycle_stage: S03_design
+project_maturity: M1
+feeds:
+  - tool: perception_build_design_snapshot
+    ok: true
+    data:
+      snapshot_id: snap_thin_018
+    expect:
+      path:capability_ledger.design_snapshot.quality.thin: true
+      host_contains:
+        - "EVIDENCE THIN"
+      evidence_quality_alerts_contains:
+        - "EVIDENCE THIN"
+expect:
+  host_contains:
+    - "EVIDENCE THIN"
+    - "quality.thin=true"
+  evidence_quality_alerts_contains:
+    - "EVIDENCE THIN"
+  path:capability_ledger.design_snapshot.advancement_eligible: true

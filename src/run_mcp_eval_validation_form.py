@@ -35,7 +35,7 @@ def _no_planning_hints(payload: dict) -> bool:
 
 async def main() -> int:
     parser = argparse.ArgumentParser(description="M3 validation-form eval (AGENT_GUIDE §4)")
-    parser.add_argument("--url", default="http://localhost:5173")
+    parser.add_argument("--url", default="http://127.0.0.1:18765")
     parser.add_argument("--headless", action="store_true", help="Accepted for run_all_phases compatibility.")
     args = parser.parse_args()
 

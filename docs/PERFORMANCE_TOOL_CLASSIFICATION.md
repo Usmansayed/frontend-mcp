@@ -41,7 +41,11 @@ Production readiness guide for Frontend Perception MCP tools. **Optimize for eng
 
 All `perception_resolve_*` and `perception_validate_*` tools: **<2s** via sync offload thread pool. Deterministic graph/code reads — do not duplicate in host agent.
 
-## SEO Intelligence
+## SEO Intelligence — MVP EXCLUDED
+
+See parked/MVP_EXCLUDE_SEO.md. Tools below are not shipped in MCP until restored.
+
+## SEO Intelligence (parked reference)
 
 | Tool | Tier | Target |
 |------|------|--------|

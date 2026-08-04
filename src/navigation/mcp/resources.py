@@ -12,6 +12,7 @@ from navigation.core.paths import (
 	validation_form_eval_path,
 )
 from navigation.core.scan_registry import ScanRegistry
+from navigation.mcp.methodology_resources import METHODOLOGY_RESOURCES
 
 _SCAN_ARTIFACTS: dict[str, str] = {
 	'report.json': 'application/json',
@@ -70,15 +71,29 @@ def _scan_artifact_path(rec: object, artifact: str) -> Path | None:
 def list_resources(scans: ScanRegistry | None = None) -> list[dict[str, str]]:
 	resources = [
 		{
+			'uri': uri,
+			'name': name,
+			'description': f'{name} — focused Frontend MCP methodology',
+			'mimeType': 'text/markdown',
+		}
+		for uri, (name, _text) in METHODOLOGY_RESOURCES.items()
+	] + [
+		{
 			'uri': 'perception://agent-guide',
 			'name': 'AGENT_GUIDE',
 			'description': 'Primary behavior contract — playbooks for host agent (read at session start)',
 			'mimeType': 'text/markdown',
 		},
 		{
+			'uri': 'perception://guide/inspiration',
+			'name': 'INSPIRATION_LEVELS',
+			'description': 'Inspiration — pick light|standard|wide|max from task context (agent chooser)',
+			'mimeType': 'text/markdown',
+		},
+		{
 			'uri': 'perception://inspiration-guide',
 			'name': 'INSPIRATION_AGENT_GUIDE',
-			'description': 'Inspiration Intelligence — per-site navigation, preview URLs, anti-bot (read before inspiration tools)',
+			'description': 'Inspiration implementer detail — per-site navigation, preview URLs, anti-bot',
 			'mimeType': 'text/markdown',
 		},
 		{
@@ -93,18 +108,8 @@ def list_resources(scans: ScanRegistry | None = None) -> list[dict[str, str]]:
 			'description': 'Resolver Intelligence — fast route/component/token lookup (read before resolve_* tools)',
 			'mimeType': 'text/markdown',
 		},
-		{
-			'uri': 'perception://seo-guide',
-			'name': 'SEO_AGENT_GUIDE',
-			'description': 'SEO Intelligence — free-first SEO orchestration, providers, verify loop (read before seo tools)',
-			'mimeType': 'text/markdown',
-		},
-		{
-			'uri': 'perception://figma-guide',
-			'name': 'FIGMA_AGENT_GUIDE',
-			'description': 'Figma Intelligence — PAT connect, normalized design context (read before figma tools)',
-			'mimeType': 'text/markdown',
-		},
+		# perception://seo-guide excluded from MVP — see parked/MVP_EXCLUDE_SEO.md
+		# perception://figma-guide excluded from MVP — see parked/MVP_EXCLUDE_FIGMA.md
 		{
 			'uri': 'perception://eval/validation-form',
 			'name': 'Validation Form Eval',
@@ -162,8 +167,18 @@ def _cached_guide(uri: str, path: Path, label: str) -> tuple[str, str, bool]:
 
 def read_resource(uri: str, scans: ScanRegistry | None = None) -> tuple[str, str, bool]:
 	"""Return (mime_type, payload, is_blob). Raises KeyError if unknown."""
+	if uri in METHODOLOGY_RESOURCES:
+		return 'text/markdown', METHODOLOGY_RESOURCES[uri][1], False
+
 	if uri == 'perception://agent-guide':
 		return _cached_guide(uri, agent_guide_path(), 'AGENT_GUIDE.md')
+
+	if uri == 'perception://guide/inspiration':
+		return _cached_guide(
+			uri,
+			module_doc('inspiration_intelligence', 'docs', 'INSPIRATION_LEVELS.md'),
+			'INSPIRATION_LEVELS.md',
+		)
 
 	if uri == 'perception://inspiration-guide':
 		return _cached_guide(
@@ -186,19 +201,8 @@ def read_resource(uri: str, scans: ScanRegistry | None = None) -> tuple[str, str
 			'RESOLVER_AGENT_GUIDE.md',
 		)
 
-	if uri == 'perception://seo-guide':
-		return _cached_guide(
-			uri,
-			module_doc('seo_intelligence', 'docs', 'SEO_AGENT_GUIDE.md'),
-			'SEO_AGENT_GUIDE.md',
-		)
-
-	if uri == 'perception://figma-guide':
-		return _cached_guide(
-			uri,
-			module_doc('figma_intelligence', 'docs', 'FIGMA_AGENT_GUIDE.md'),
-			'FIGMA_AGENT_GUIDE.md',
-		)
+	# perception://seo-guide excluded from MVP — see parked/MVP_EXCLUDE_SEO.md
+	# perception://figma-guide excluded from MVP — see parked/MVP_EXCLUDE_FIGMA.md
 
 	if uri == 'perception://eval/validation-form':
 		return _cached_guide(uri, validation_form_eval_path(), 'VALIDATION_FORM_EVAL.md')

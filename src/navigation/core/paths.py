@@ -6,6 +6,11 @@ from pathlib import Path
 
 from navigation.core.env import find_project_root
 
+# Dev sandbox Vite port — deliberately non-standard so it does not clash with
+# typical local apps on 3000 / 5173 / 8080.
+SANDBOX_DEV_PORT = 18765
+SANDBOX_DEFAULT_BASE_URL = f"http://127.0.0.1:{SANDBOX_DEV_PORT}"
+
 
 def navigation_root() -> Path:
     """Root of the ``navigation`` Python package."""

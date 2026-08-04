@@ -1,0 +1,35 @@
+id: baseline
+name: Decision Lab CI baseline
+description: >
+  Smoke scenarios plus promoted experiment wins (coordination + evidence quality).
+  This is the pack that must stay green while hardening the decision layer.
+scenarios:
+  # Smoke
+  - scenarios/01_structural_dashboard_start.yaml
+  - scenarios/02_settings_surface.yaml
+  - scenarios/03_hotfix_surgical.yaml
+  - scenarios/04_residue_blocks_claim.yaml
+  - scenarios/05_evidence_skip_valid.yaml
+  - scenarios/06_auth_surface.yaml
+  # Promoted coordination locks
+  - experiments/EXP-001-family-visibility/scenarios/ship_host_aligns.yaml
+  - experiments/EXP-002-one-voice/scenarios/one_voice_after_observe.yaml
+  - experiments/EXP-004-snapshot-supersede/scenarios/snapshot_clears_reference.yaml
+  - experiments/EXP-005-meridian-multiroute/scenarios/meridian_multiroute.yaml
+  - experiments/EXP-006-sections-ship-portfolio/scenarios/sections_then_ship.yaml
+  - experiments/EXP-007-confidence-portfolio/scenarios/confidence_after_paid.yaml
+  - experiments/EXP-008-ship-residue-claim/scenarios/ship_residue_claim.yaml
+  - experiments/EXP-009-codebase-claim/scenarios/codebase_does_not_block_claim.yaml
+  - experiments/EXP-010-evidence-status-alias/scenarios/component_status_alias.yaml
+  - experiments/EXP-013-host-portfolio-hint/scenarios/host_lists_unpaid.yaml
+  - experiments/EXP-015-settings-ship-baseline/scenarios/settings_ship_baseline.yaml
+  # Promoted evidence-quality locks (EXP-017–020)
+  - experiments/EXP-017-snapshot-quality/scenarios/snapshot_quality_payload.yaml
+  - experiments/EXP-018-evidence-host-hints/scenarios/host_surfaces_thin_snapshot.yaml
+  - experiments/EXP-018-evidence-host-hints/scenarios/host_surfaces_thin_clear_ship.yaml
+  - experiments/EXP-019-specdiff-honesty/scenarios/specdiff_soft_seed_honesty.yaml
+  - experiments/EXP-020-evidence-baseline/scenarios/inspiration_soft_host.yaml
+  - experiments/EXP-022-perfect-layer-phase-a/scenarios/slim_coordinator_card.yaml
+  - experiments/EXP-023-episode-card/scenarios/episode_card_readout.yaml
+  - experiments/EXP-024-route-aware-meridian/scenarios/meridian_route_aware_ship.yaml
+  - experiments/EXP-027-adoption-evidence-before-impl/scenarios/greenfield_evidence_before_impl.yaml

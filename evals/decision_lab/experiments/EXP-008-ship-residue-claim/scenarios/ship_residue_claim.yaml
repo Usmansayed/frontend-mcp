@@ -1,0 +1,133 @@
+id: exp008_ship_residue_claim
+intent: redesign Meridian analytics dashboard
+lifecycle_stage: S03_design
+project_maturity: M1
+feeds:
+  - tool: perception_navigate_and_observe
+    ok: true
+    data:
+      url: http://localhost:5173/dashboard
+      scan_id: s8
+      agent_summary: {blocking: []}
+  - tool: perception_build_design_snapshot
+    ok: true
+    data:
+      snapshot_id: snap8a
+      layout:
+        viewport: {width: 1280, height: 720}
+        regions:
+          - {role: aside, rect: {w: 200, h: 700}}
+          - {role: main, rect: {w: 1000, h: 700}}
+          - {role: header, rect: {w: 1000, h: 50}}
+  - tool: perception_select_component_foundation
+    ok: true
+    data:
+      selected: {id: shadcn}
+      coordination_evidence: {status: succeeded, advancement_eligible: true}
+  - tool: perception_verify
+    ok: true
+    data: {verified: true, reasons: []}
+  - op: seed_sections
+    regions:
+      - {role: aside, rect: {w: 1, h: 1}}
+      - {role: main, rect: {w: 1, h: 1}}
+      - {role: header, rect: {w: 1, h: 1}}
+  - op: complete_sections
+    expect:
+      ship_council_required: true
+      host_theme: SHIP GATE
+      next_capability: design_review
+  - op: run_ship
+    snapshot:
+      url: http://localhost:5173/dashboard
+      layout:
+        regions: []
+        interactive_boxes:
+          - {x: 0, y: 0, w: 10, h: 10}
+          - {x: 1, y: 0, w: 10, h: 10}
+          - {x: 2, y: 0, w: 10, h: 10}
+          - {x: 3, y: 0, w: 10, h: 10}
+          - {x: 4, y: 0, w: 10, h: 10}
+          - {x: 5, y: 0, w: 10, h: 10}
+          - {x: 6, y: 0, w: 10, h: 10}
+          - {x: 7, y: 0, w: 10, h: 10}
+          - {x: 8, y: 0, w: 10, h: 10}
+          - {x: 9, y: 0, w: 10, h: 10}
+          - {x: 10, y: 0, w: 10, h: 10}
+          - {x: 11, y: 0, w: 10, h: 10}
+          - {x: 12, y: 0, w: 10, h: 10}
+          - {x: 13, y: 0, w: 10, h: 10}
+          - {x: 14, y: 0, w: 10, h: 10}
+          - {x: 15, y: 0, w: 10, h: 10}
+          - {x: 16, y: 0, w: 10, h: 10}
+          - {x: 17, y: 0, w: 10, h: 10}
+          - {x: 18, y: 0, w: 10, h: 10}
+          - {x: 19, y: 0, w: 10, h: 10}
+          - {x: 20, y: 0, w: 10, h: 10}
+          - {x: 21, y: 0, w: 10, h: 10}
+          - {x: 22, y: 0, w: 10, h: 10}
+          - {x: 23, y: 0, w: 10, h: 10}
+          - {x: 24, y: 0, w: 10, h: 10}
+          - {x: 25, y: 0, w: 10, h: 10}
+          - {x: 26, y: 0, w: 10, h: 10}
+          - {x: 27, y: 0, w: 10, h: 10}
+          - {x: 28, y: 0, w: 10, h: 10}
+          - {x: 29, y: 0, w: 10, h: 10}
+          - {x: 30, y: 0, w: 10, h: 10}
+          - {x: 31, y: 0, w: 10, h: 10}
+          - {x: 32, y: 0, w: 10, h: 10}
+          - {x: 33, y: 0, w: 10, h: 10}
+          - {x: 34, y: 0, w: 10, h: 10}
+          - {x: 35, y: 0, w: 10, h: 10}
+          - {x: 36, y: 0, w: 10, h: 10}
+          - {x: 37, y: 0, w: 10, h: 10}
+          - {x: 38, y: 0, w: 10, h: 10}
+          - {x: 39, y: 0, w: 10, h: 10}
+      hierarchy: {prominence_scores: []}
+      colors: {}
+    expect:
+      residue_scan_required: true
+      host_theme: RESIDUE SCAN
+      next_capability: design_snapshot
+      portfolio_unpaid_contains: [residue]
+      prohibited_contains: [claim_complete]
+  - tool: perception_build_design_snapshot
+    ok: true
+    data: &rich_snap
+      snapshot_id: snap8b
+      url: http://localhost:5173/dashboard
+      layout:
+        viewport: {width: 1280, height: 720}
+        regions:
+          - {role: aside, rect: {x: 0, y: 0, w: 200, h: 700}}
+          - {role: main, rect: {x: 200, y: 0, w: 1000, h: 700}}
+          - {role: nav, label: sidebar}
+          - {role: section, rect: {w: 300, h: 100}}
+          - {role: section, rect: {w: 300, h: 100}}
+          - {role: section, rect: {w: 300, h: 100}}
+        interactive_boxes:
+          - {x: 0, y: 100, w: 80, h: 60}
+          - {x: 100, y: 100, w: 80, h: 60}
+          - {x: 200, y: 100, w: 80, h: 60}
+          - {x: 300, y: 100, w: 80, h: 60}
+          - {x: 400, y: 100, w: 80, h: 60}
+      hierarchy:
+        prominence_scores:
+          - {score: 0.9, label: h1}
+          - {score: 0.4}
+          - {score: 0.3}
+          - {score: 0.2}
+      colors: {token_backed_ratio: 0.7}
+  - op: run_ship
+    auto_dispose: revised
+    snapshot: *rich_snap
+    expect:
+      residue_scan_required: false
+      ship_council_clear: true
+      ship_council_required: false
+      prohibited_absent: [claim_complete]
+expect:
+  ship_council_clear: true
+  ship_council_required: false
+  prohibited_absent: [claim_complete]
+  residue_scan_required: false

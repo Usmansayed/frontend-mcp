@@ -18,4 +18,12 @@ __all__ = [
 	'extract_og_image',
 	'http_get',
 	'load_global_policy',
+	'recovery_status',
 ]
+
+def __getattr__(name: str):
+	if name == 'recovery_status':
+		from navigation.inspiration_intelligence.browser.scrapling_route import recovery_status
+
+		return recovery_status
+	raise AttributeError(name)

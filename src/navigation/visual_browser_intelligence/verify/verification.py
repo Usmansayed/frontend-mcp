@@ -5,6 +5,13 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+# Last Runtime.evaluate exception message (cleared on each evaluate_js call).
+_last_js_eval_error: str | None = None
+
+
+def last_js_eval_error() -> str | None:
+    return _last_js_eval_error
+
 
 @dataclass(slots=True)
 class SuccessCriteria:
@@ -54,8 +61,13 @@ async def read_current_url(browser_session: Any) -> str:
 
 
 async def evaluate_js(browser_session: Any, expression: str) -> Any:
+    global _last_js_eval_error
+    _last_js_eval_error = None
     expr = expression.strip()
-    if not expr.startswith("(") and not expr.startswith("function"):
+    # Arrow / function expressions must be invoked — bare `() => ...` is truthy as a function object.
+    if expr.startswith("() =>") or expr.startswith("()=>") or expr.startswith("function"):
+        expr = f"({expr})()"
+    elif not expr.startswith("(") and not expr.startswith("function"):
         expr = f"(() => {{ return ({expr}); }})()"
 
     try:
@@ -64,10 +76,20 @@ async def evaluate_js(browser_session: Any, expression: str) -> Any:
             params={"expression": expr, "returnByValue": True},
             session_id=cdp_session.session_id,
         )
+        if result and result.get("exceptionDetails"):
+            details = result["exceptionDetails"]
+            exc = details.get("exception") if isinstance(details, dict) else None
+            msg = ""
+            if isinstance(exc, dict):
+                msg = str(exc.get("description") or exc.get("value") or "")
+            if not msg and isinstance(details, dict):
+                msg = str(details.get("text") or details.get("description") or "js exception")
+            _last_js_eval_error = (msg or "js exception")[:240]
+            return None
         if result and "result" in result and "value" in result["result"]:
             return result["result"]["value"]
-    except Exception:
-        pass
+    except Exception as exc:
+        _last_js_eval_error = str(exc)[:240]
     return None
 
 
@@ -98,10 +120,40 @@ async def _check_primary(browser_session: Any, criteria: SuccessCriteria, url: s
             reasons.append(f"unexpected text '{needle}' still present")
 
     for js_expr in criteria.js_assertions:
-        if not await evaluate_js(browser_session, js_expr):
-            reasons.append(f"js assertion failed: {js_expr[:60]}")
+        value = await evaluate_js(browser_session, js_expr)
+        err = last_js_eval_error()
+        label = _js_assertion_label(js_expr)
+        if err:
+            reasons.append(f"{label}: js error: {err}" if label else f"js assertion error: {err}")
+        elif not value:
+            if label:
+                reasons.append(f"{label}: failed")
+            else:
+                reasons.append(f"js assertion failed: {js_expr[:60]}")
 
     return reasons
+
+
+def _js_assertion_label(js_expr: str) -> str | None:
+    """Map known convention assertions to stable signal names for hosts."""
+    try:
+        from navigation.coordination_intelligence.planning.chrome_conventions import (
+            CHROME_PERMANENCE_ASSERTION,
+            HORIZONTAL_OVERFLOW_ASSERTION,
+        )
+    except Exception:
+        return None
+    if js_expr == CHROME_PERMANENCE_ASSERTION or (
+        "hasStickyChain" in js_expr and "querySelectorAll" in js_expr and "aside" in js_expr
+    ):
+        return "chrome_permanence_failed"
+    if js_expr == HORIZONTAL_OVERFLOW_ASSERTION or (
+        "scrollWidth" in js_expr and "innerWidth" in js_expr
+    ):
+        return "horizontal_overflow_failed"
+    if "getBoundingClientRect" in js_expr and "section" in js_expr.lower():
+        return "section_presence_failed"
+    return None
 
 
 async def verify(browser_session: Any, criteria: SuccessCriteria) -> VerificationResult:

@@ -40,6 +40,59 @@ async def wait_for_page_ready(
     return False
 
 
+async def wait_for_spa_navigation_settle(
+    session: Any,
+    *,
+    url_before: str,
+    timeout: float = 6.0,
+    poll: float = 0.12,
+    stable_polls: int = 2,
+) -> dict[str, Any]:
+    """Wait for client-side route transitions where readyState stays ``complete``.
+
+    Next.js App Router often updates ``location`` / ``document.title`` after the
+    click while readyState never leaves complete — a plain ready wait races the
+    observe snapshot (title/content mismatch).
+    """
+    deadline = time.monotonic() + timeout
+    before = str(url_before or "").strip()
+    last_url = ""
+    last_title = ""
+    stable = 0
+    changed = False
+    while time.monotonic() < deadline:
+        meta = await evaluate_js(
+            session,
+            "({ url: location.href || '', title: document.title || '', ready: document.readyState || '' })",
+        )
+        if not isinstance(meta, dict):
+            await asyncio.sleep(poll)
+            continue
+        url = str(meta.get("url") or "")
+        title = str(meta.get("title") or "")
+        if before and url and url != before:
+            changed = True
+        if url == last_url and title == last_title and url:
+            stable += 1
+            if changed and stable >= stable_polls:
+                return {"ok": True, "url": url, "title": title, "changed": True}
+            if not before and stable >= stable_polls:
+                return {"ok": True, "url": url, "title": title, "changed": False}
+        else:
+            stable = 0
+            last_url = url
+            last_title = title
+        await asyncio.sleep(poll)
+    # Timed out — return last known meta; caller may still observe.
+    return {
+        "ok": changed and bool(last_url),
+        "url": last_url,
+        "title": last_title,
+        "changed": changed,
+        "timed_out": True,
+    }
+
+
 async def wait_until(
     predicate: Callable[[], bool],
     *,

@@ -1,0 +1,14 @@
+id: exp013_host_lists_unpaid_portfolio
+intent: redesign Meridian analytics dashboard
+lifecycle_stage: S03_design
+project_maturity: M1
+expect_after_start:
+  gate.state: blocked
+  host_contains:
+    - "Portfolio unpaid:"
+    - snapshot
+    - component
+expect:
+  host_contains:
+    - "Portfolio unpaid:"
+    - "do not tunnel"

@@ -1,0 +1,53 @@
+id: exp001_ship_host_aligns_after_verify
+intent: redesign Meridian analytics dashboard
+lifecycle_stage: S03_design
+project_maturity: M1
+feeds:
+  - tool: perception_inspiration_collect
+    ok: true
+    data:
+      inspiration_collection:
+        reference_count: 3
+        refs: [{id: r1}, {id: r2}, {id: r3}]
+      coordination_evidence:
+        outcome: succeeded
+        advancement_eligible: true
+        status: succeeded
+    expect:
+      portfolio_paid_contains: [inspiration]
+  - tool: perception_build_design_snapshot
+    ok: true
+    data:
+      snapshot_id: snap_exp001
+      layout:
+        regions:
+          - {role: main}
+          - {role: aside}
+          - {role: section}
+          - {role: section}
+          - {role: section}
+    expect:
+      portfolio_paid_contains: [inspiration, snapshot]
+  - tool: perception_select_component_foundation
+    ok: true
+    data:
+      selected: {id: shadcn}
+      coordination_evidence:
+        outcome: succeeded
+        advancement_eligible: true
+        status: succeeded
+  - tool: perception_verify
+    ok: true
+    data:
+      verified: true
+      reasons: []
+    expect:
+      ship_council_required: true
+      next_capability: design_review
+      host_theme: SHIP GATE
+      portfolio_unpaid_contains: [design_review]
+expect:
+  ship_council_required: true
+  host_theme: SHIP GATE
+  next_capability: design_review
+  prohibited_contains: [claim_complete]

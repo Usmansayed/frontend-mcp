@@ -1,0 +1,10 @@
+id: smoke
+name: Decision Lab smoke
+description: Original six scenarios only (fast).
+scenarios:
+  - scenarios/01_structural_dashboard_start.yaml
+  - scenarios/02_settings_surface.yaml
+  - scenarios/03_hotfix_surgical.yaml
+  - scenarios/04_residue_blocks_claim.yaml
+  - scenarios/05_evidence_skip_valid.yaml
+  - scenarios/06_auth_surface.yaml

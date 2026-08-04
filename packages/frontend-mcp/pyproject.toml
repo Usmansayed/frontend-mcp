@@ -1,21 +1,11 @@
+# Do not publish — root package is frontend-mcp now.
 [project]
-name = "frontend-mcp"
-version = "1.1.7"
-description = "Frontend Perception MCP — deterministic browser runtime for coding agents (alias package)."
-readme = "README.md"
+name = "frontend-mcp-DO-NOT-PUBLISH-FROM-HERE"
+version = "0.0.0"
+description = "RETIRED folder. Root pyproject.toml is frontend-mcp."
 requires-python = ">=3.10"
-dependencies = [
-  "frontend-perception-engine==1.1.7",
-]
-
-[project.scripts]
-frontend-mcp = "navigation.mcp.server:main"
-frontend-mcp-install = "navigation.cli.install:main"
+dependencies = []
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["frontend_mcp*"]

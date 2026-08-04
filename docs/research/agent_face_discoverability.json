@@ -1,0 +1,364 @@
+{
+  "summary": {
+    "overall_score": 1.0,
+    "passed": 8,
+    "total": 8,
+    "verdict": "EASY_ENOUGH"
+  },
+  "checks": [
+    {
+      "id": "always_on_budget",
+      "ok": true,
+      "score": 1.0,
+      "detail": "instructions=220w rule=326w combined=546w (budget\u2264700)",
+      "evidence": {
+        "instructions_words": 220,
+        "rule_words": 326
+      }
+    },
+    {
+      "id": "always_on_spine_keywords",
+      "ok": true,
+      "score": 1.0,
+      "detail": "missing=none",
+      "evidence": {
+        "missing": []
+      }
+    },
+    {
+      "id": "spines_exist",
+      "ok": true,
+      "score": 1.0,
+      "detail": "spines=5 lengths={'perception://spine/feature': 37, 'perception://spine/forms': 43, 'perception://spine/greenfield': 48, 'perception://spine/hotfix': 33, 'perception://spine/redesign': 52} gs\u2192card=True",
+      "evidence": {
+        "spines": [
+          "perception://spine/greenfield",
+          "perception://spine/redesign",
+          "perception://spine/feature",
+          "perception://spine/hotfix",
+          "perception://spine/forms"
+        ],
+        "lengths": {
+          "perception://spine/feature": 37,
+          "perception://spine/forms": 43,
+          "perception://spine/greenfield": 48,
+          "perception://spine/hotfix": 33,
+          "perception://spine/redesign": 52
+        }
+      }
+    },
+    {
+      "id": "tool_descriptions_core",
+      "ok": true,
+      "score": 1.0,
+      "detail": "tools=73 core_present=True core_when=100% core_how=100% core_len=100%",
+      "evidence": {
+        "tool_count": 73,
+        "core_missing": [],
+        "core_rows": [
+          {
+            "name": "perception_build_design_snapshot",
+            "words": 73,
+            "has_when": true,
+            "has_how": true,
+            "len_ok": true
+          },
+          {
+            "name": "perception_design_review",
+            "words": 75,
+            "has_when": true,
+            "has_how": true,
+            "len_ok": true
+          },
+          {
+            "name": "perception_health",
+            "words": 44,
+            "has_when": true,
+            "has_how": true,
+            "len_ok": true
+          },
+          {
+            "name": "perception_inspiration_collect",
+            "words": 50,
+            "has_when": true,
+            "has_how": true,
+            "len_ok": true
+          },
+          {
+            "name": "perception_navigate_and_observe",
+            "words": 60,
+            "has_when": true,
+            "has_how": true,
+            "len_ok": true
+          },
+          {
+            "name": "perception_probe_form",
+            "words": 48,
+            "has_when": true,
+            "has_how": true,
+            "len_ok": true
+          },
+          {
+            "name": "perception_session_start",
+            "words": 48,
+            "has_when": true,
+            "has_how": true,
+            "len_ok": true
+          },
+          {
+            "name": "perception_verify",
+            "words": 53,
+            "has_when": true,
+            "has_how": true,
+            "len_ok": true
+          },
+          {
+            "name": "perception_visual_feedback",
+            "words": 98,
+            "has_when": true,
+            "has_how": true,
+            "len_ok": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "tool_volume",
+      "ok": true,
+      "score": 1.0,
+      "detail": "73 tools exposed; groups={'Diagnostics': 9, 'Browser': 12, 'Design': 9, 'Resolver': 9, 'Quality': 4, 'Coordinator': 3, 'Session': 7, 'Inspiration': 3, 'Component': 4, 'Resources': 13}; grouped=100% (pass if \u226450 or \u226590% grouped \u2264100)",
+      "evidence": {
+        "tool_count": 73,
+        "groups": {
+          "Diagnostics": 9,
+          "Browser": 12,
+          "Design": 9,
+          "Resolver": 9,
+          "Quality": 4,
+          "Coordinator": 3,
+          "Session": 7,
+          "Inspiration": 3,
+          "Component": 4,
+          "Resources": 13
+        },
+        "group_rate": 1.0
+      }
+    },
+    {
+      "id": "resource_index",
+      "ok": true,
+      "score": 1.0,
+      "detail": "total=30 spines=5 guide_cards=9",
+      "evidence": {
+        "uris": [
+          "perception://getting-started",
+          "perception://spine/greenfield",
+          "perception://spine/redesign",
+          "perception://spine/feature",
+          "perception://spine/hotfix",
+          "perception://spine/forms",
+          "perception://frontend-methodology",
+          "perception://design-workflow",
+          "perception://redesign-workflow",
+          "perception://bugfix-workflow",
+          "perception://engineering-strategy",
+          "perception://agent-coordination",
+          "perception://guide/scoreboard",
+          "perception://guide/greenfield",
+          "perception://guide/redesign",
+          "perception://guide/feature",
+          "perception://guide/hotfix",
+          "perception://guide/forms",
+          "perception://guide/hard-fails",
+          "perception://guide/right-sizing",
+          "perception://decision-ledger",
+          "perception://ship-council",
+          "perception://verification-guide",
+          "perception://browser-lifecycle",
+          "perception://agent-guide",
+          "perception://guide/inspiration",
+          "perception://inspiration-guide",
+          "perception://resource-guide",
+          "perception://resolver-guide",
+          "perception://eval/validation-form"
+        ]
+      }
+    },
+    {
+      "id": "live_card_after_bootstrap",
+      "ok": true,
+      "score": 1.0,
+      "detail": "classes={'greenfield': 'greenfield', 'redesign': 'redesign', 'hotfix': 'hotfix'}",
+      "evidence": {
+        "results": [
+          {
+            "label": "greenfield",
+            "ok": true,
+            "class": "greenfield",
+            "next": "perception_inspiration_collect",
+            "owed": [
+              {
+                "family": "inspiration",
+                "tool": "perception_inspiration_collect",
+                "args": {
+                  "query": "<surface / brand direction from intent>",
+                  "inspiration_level": "light"
+                }
+              },
+              {
+                "family": "visual_feedback",
+                "tool": "perception_visual_feedback",
+                "args": {
+                  "purpose": "design"
+                }
+              },
+              {
+                "family": "snapshot",
+                "tool": "perception_build_design_snapshot",
+                "args": {
+                  "scan_id": "<from observe>"
+                }
+              }
+            ],
+            "gate": "blocked",
+            "claim_ok": false,
+            "resource": "perception://spine/greenfield",
+            "recommended_next": "perception_inspiration_collect"
+          },
+          {
+            "label": "redesign",
+            "ok": true,
+            "class": "redesign",
+            "next": "perception_navigate_and_observe",
+            "owed": [
+              {
+                "family": "snapshot",
+                "tool": "perception_build_design_snapshot",
+                "args": {
+                  "scan_id": "<from observe>"
+                }
+              },
+              {
+                "family": "visual_feedback",
+                "tool": "perception_visual_feedback",
+                "args": {
+                  "purpose": "design"
+                }
+              },
+              {
+                "family": "component",
+                "tool": "perception_select_component_foundation",
+                "args": {
+                  "query": "<component need from intent, e.g. 'primary CTA button'>"
+                }
+              }
+            ],
+            "gate": "blocked",
+            "claim_ok": false,
+            "resource": "perception://spine/redesign",
+            "recommended_next": "perception_navigate_and_observe"
+          },
+          {
+            "label": "hotfix",
+            "ok": true,
+            "class": "hotfix",
+            "next": "perception_navigate_and_observe",
+            "owed": [],
+            "gate": "blocked",
+            "claim_ok": false,
+            "resource": "perception://spine/hotfix",
+            "recommended_next": "perception_navigate_and_observe"
+          }
+        ]
+      }
+    },
+    {
+      "id": "card_alone_sufficient_for_next",
+      "ok": true,
+      "score": 1.0,
+      "detail": "card.next present on all bootstrap cases",
+      "evidence": {
+        "results": [
+          {
+            "label": "greenfield",
+            "ok": true,
+            "class": "greenfield",
+            "next": "perception_inspiration_collect",
+            "owed": [
+              {
+                "family": "inspiration",
+                "tool": "perception_inspiration_collect",
+                "args": {
+                  "query": "<surface / brand direction from intent>",
+                  "inspiration_level": "light"
+                }
+              },
+              {
+                "family": "visual_feedback",
+                "tool": "perception_visual_feedback",
+                "args": {
+                  "purpose": "design"
+                }
+              },
+              {
+                "family": "snapshot",
+                "tool": "perception_build_design_snapshot",
+                "args": {
+                  "scan_id": "<from observe>"
+                }
+              }
+            ],
+            "gate": "blocked",
+            "claim_ok": false,
+            "resource": "perception://spine/greenfield",
+            "recommended_next": "perception_inspiration_collect"
+          },
+          {
+            "label": "redesign",
+            "ok": true,
+            "class": "redesign",
+            "next": "perception_navigate_and_observe",
+            "owed": [
+              {
+                "family": "snapshot",
+                "tool": "perception_build_design_snapshot",
+                "args": {
+                  "scan_id": "<from observe>"
+                }
+              },
+              {
+                "family": "visual_feedback",
+                "tool": "perception_visual_feedback",
+                "args": {
+                  "purpose": "design"
+                }
+              },
+              {
+                "family": "component",
+                "tool": "perception_select_component_foundation",
+                "args": {
+                  "query": "<component need from intent, e.g. 'primary CTA button'>"
+                }
+              }
+            ],
+            "gate": "blocked",
+            "claim_ok": false,
+            "resource": "perception://spine/redesign",
+            "recommended_next": "perception_navigate_and_observe"
+          },
+          {
+            "label": "hotfix",
+            "ok": true,
+            "class": "hotfix",
+            "next": "perception_navigate_and_observe",
+            "owed": [],
+            "gate": "blocked",
+            "claim_ok": false,
+            "resource": "perception://spine/hotfix",
+            "recommended_next": "perception_navigate_and_observe"
+          }
+        ]
+      }
+    }
+  ]
+}

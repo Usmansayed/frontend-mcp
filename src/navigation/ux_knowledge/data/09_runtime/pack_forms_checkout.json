@@ -1,0 +1,121 @@
+{
+  "pack_id": "pack_forms_checkout",
+  "title": "Forms and Checkout",
+  "target_surfaces": [
+    "perception://design-workflow",
+    "feature",
+    "greenfield"
+  ],
+  "claim_stubs": [
+    {
+      "claim_id": "UX_ARC_FORM_010",
+      "name": "Single-Column Form Layout",
+      "engineering_meaning": "Use one vertical stack for fields. Allow narrow exceptions only for tightly coupled micro-fields (e.g., city/state/ZIP).",
+      "how_to_detect_violations": "Layout audit: consecutive unrelated inputs share similar vertical positions outside allowed micro-groups.",
+      "when_to_apply": "Checkout, signup, lead forms, most consumer forms.",
+      "when_not_to_apply": "Expert dense enterprise forms with trained users; tightly coupled date/name parts.",
+      "confidence": 0.95,
+      "source_ids": [
+        "src_baymard_form_design",
+        "src_iso_9241_110"
+      ],
+      "full_card_path": "06_corpus/normalized/UX_ARC_FORM_010.json"
+    },
+    {
+      "claim_id": "UX_PRD_GUEST_001",
+      "name": "Guest Checkout Prominence",
+      "engineering_meaning": "On account gate step, present Guest Checkout as equal/greater visual weight than Sign in / Create account.",
+      "how_to_detect_violations": "Checkout entry audit: guest path missing, below fold, or weaker than login.",
+      "when_to_apply": "Consumer ecommerce checkout entry.",
+      "when_not_to_apply": "B2B portals requiring authenticated purchasing by policy.",
+      "confidence": 0.95,
+      "source_ids": [
+        "src_baymard_checkout",
+        "src_fogg_behaviormodel"
+      ],
+      "full_card_path": "06_corpus/normalized/UX_PRD_GUEST_001.json"
+    },
+    {
+      "claim_id": "UX_INX_ERR_009",
+      "name": "Error Prevention and Fault Tolerance",
+      "engineering_meaning": "Prefer constraints/masks and field-level validation after completion. Never wipe the form on failure. Messages must be specific and programmatically associated.",
+      "how_to_detect_violations": "Submit-only validation with page reload; cleared fields; color-only errors.",
+      "when_to_apply": "Account, checkout, payment, and high-stakes forms.",
+      "when_not_to_apply": "Validate-on-each-keystroke before the user finishes typing.",
+      "confidence": 0.95,
+      "source_ids": [
+        "src_iso_9241_110",
+        "src_baymard_form_design"
+      ],
+      "full_card_path": "06_corpus/normalized/UX_INX_ERR_009.json"
+    },
+    {
+      "claim_id": "UX_INX_SELF_001",
+      "name": "ISO 9241-110 Self-Descriptiveness",
+      "engineering_meaning": "Visible labels, explained states, and actionable errors. Prefer persistent labels over placeholder-only fields; icon-only controls need accessible names.",
+      "how_to_detect_violations": "Audit controls for missing accessible names; placeholder-only fields; opaque errors.",
+      "when_to_apply": "Forms, navigation, status chrome, errors.",
+      "when_not_to_apply": "Universally conventional icons may use short names if the accessibility tree is complete.",
+      "confidence": 0.95,
+      "source_ids": [
+        "src_iso_9241_110"
+      ],
+      "full_card_path": "06_corpus/normalized/UX_INX_SELF_001.json"
+    },
+    {
+      "claim_id": "UX_ARC_ISO_001",
+      "name": "ISO 9241-110 Suitability for the Task",
+      "engineering_meaning": "Show only controls/info needed for the current task; minimize steps for common paths; hide advanced options until needed.",
+      "how_to_detect_violations": "For a screen, mark elements not supporting the primary task; if a large share is irrelevant, fail.",
+      "when_to_apply": "Task-focused flows: forms, checkout, setup wizards.",
+      "when_not_to_apply": "Command centers / multi-goal dashboards where breadth is the task.",
+      "confidence": 0.95,
+      "source_ids": [
+        "src_iso_9241_110",
+        "src_hick_law_pmc"
+      ],
+      "full_card_path": "06_corpus/normalized/UX_ARC_ISO_001.json"
+    },
+    {
+      "claim_id": "UX_COG_FOGG_013",
+      "name": "Fogg Behavior Model (B=MAP)",
+      "engineering_meaning": "Diagnose failed CTAs/onboarding by testing Prompt visibility/timing, Ability (friction), and Motivation (value clarity). Prefer raising Ability before spamming prompts.",
+      "how_to_detect_violations": "High exposure + low conversion: check if prompt is hidden, task is hard, or value is unclear.",
+      "when_to_apply": "Conversion CTAs, onboarding, notifications, habit loops.",
+      "when_not_to_apply": "Passive reading surfaces; automated backend processes; manipulative dark patterns.",
+      "confidence": 0.85,
+      "source_ids": [
+        "src_fogg_behaviormodel",
+        "src_baymard_checkout"
+      ],
+      "full_card_path": "06_corpus/normalized/UX_COG_FOGG_013.json"
+    },
+    {
+      "claim_id": "UX_A11Y_CONT_005",
+      "name": "WCAG Contrast (Minimum)",
+      "engineering_meaning": "Compute relative luminance of foreground/background pairs. Fail if normal text < 4.5:1 or large text (≈18pt+/14pt bold) < 3:1. Prefer semantic tokens that encode compliant pairs.",
+      "how_to_detect_violations": "Automated contrast checkers (axe, WAVE, WebAIM) plus sampling computed styles on text over images/gradients.",
+      "when_to_apply": "All meaningful text and images of text, including form labels and error copy.",
+      "when_not_to_apply": "Decorative text, inactive/disabled components, incidental logotypes as allowed by WCAG.",
+      "confidence": 1.0,
+      "source_ids": [
+        "src_webaim_wcag_checklist",
+        "src_ibm_carbon"
+      ],
+      "full_card_path": "06_corpus/normalized/UX_A11Y_CONT_005.json"
+    }
+  ],
+  "conflict_pairs": [
+    {
+      "a": "UX_COG_HICK_002",
+      "b": "UX_HCI_FITTS_001",
+      "decision_hint": "One large primary CTA; disclose secondary options. Never below WCAG target floor."
+    }
+  ],
+  "budgets": {
+    "max_claim_stubs": 12,
+    "max_rationale_tokens": 1500
+  },
+  "created_at": "2026-07-19",
+  "notes": "Maps to form/checkout playbook guide_form_opt."
+}

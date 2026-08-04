@@ -98,9 +98,6 @@ def main() -> int:
         names = {t["name"] for t in tools_resp["result"]["tools"]}
         for required in (
             "perception_health",
-            "perception_seo_audit_start",
-            "perception_seo_audit_poll",
-            "perception_seo_audit_cancel",
             "perception_code_context",
         ):
             results.append({"check": f"tool_registered:{required}", "ok": required in names})
@@ -117,42 +114,10 @@ def main() -> int:
             "reachable": (env.get("data") or {}).get("reachable"),
         })
 
-        # 2. seo audit start — must return fast with job id
-        ms, env = call(proc, 4, "perception_seo_audit_start", {
-            "website_url": "http://localhost:5173",
-            "mode": "development",
-        })
-        job_id = (env.get("data") or {}).get("audit_job_id")
-        results.append({
-            "tool": "perception_seo_audit_start",
-            "ms": round(ms * 1000),
-            "ok": env.get("ok"),
-            "audit_job_id": job_id,
-            "fast_enqueue": ms < 2.0,
-        })
+        # SEO Intelligence tools are MVP-excluded (parked/MVP_EXCLUDE_SEO.md) — not exercised here.
 
-        # 3. health during background job — must stay fast
-        ms, env = call(proc, 5, "perception_health", {"url": "http://localhost:5173"})
-        results.append({
-            "tool": "perception_health_during_job",
-            "ms": round(ms * 1000),
-            "ok": env.get("ok"),
-            "non_blocking": ms < 5.0,
-        })
-
-        # 4. poll once
-        if job_id:
-            ms, env = call(proc, 6, "perception_seo_audit_poll", {"audit_job_id": job_id})
-            job = (env.get("data") or {}).get("seo_audit_job") or {}
-            results.append({
-                "tool": "perception_seo_audit_poll",
-                "ms": round(ms * 1000),
-                "ok": env.get("ok"),
-                "status": job.get("status"),
-            })
-
-        # 5. code_context offload (sandbox repo)
-        ms, env = call(proc, 7, "perception_code_context", {
+        # 2. code_context offload (sandbox repo)
+        ms, env = call(proc, 4, "perception_code_context", {
             "repo_root": str(SANDBOX),
             "query": "validation form",
             "max_files": 5,
@@ -164,22 +129,11 @@ def main() -> int:
             "has_data": bool(env.get("data")),
         })
 
-        # 6. cancel job
-        if job_id:
-            ms, env = call(proc, 8, "perception_seo_audit_cancel", {"audit_job_id": job_id})
-            results.append({
-                "tool": "perception_seo_audit_cancel",
-                "ms": round(ms * 1000),
-                "ok": env.get("ok"),
-            })
-
         print(json.dumps({"phase1_mcp_smoke": results}, indent=2))
 
         failed = [
             r for r in results
             if r.get("ok") is False
-            or r.get("fast_enqueue") is False
-            or r.get("non_blocking") is False
         ]
         return 1 if failed else 0
     finally:

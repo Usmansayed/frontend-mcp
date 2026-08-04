@@ -18,12 +18,13 @@ src/navigation/
 ├── design_sense_intelligence/         # 9. UX reasoning over DesignSnapshot
 ├── consistency_intelligence/          # 10. Design-system consistency over DesignSnapshot
 ├── inspiration_intelligence/          # 11. Public inspiration (Dribbble, Behance, …)
-├── figma_intelligence/              # 12. User Figma account + design systems (future)
-├── resource_intelligence/             # 13. Creative assets (icons, fonts, photos, …)
-├── seo_intelligence/                  # 14. SEO orchestration (GSC, GA4, LibreCrawl, …)
+├── resource_intelligence/             # 12. Creative assets (icons, fonts, photos, …)
+├── coordination_intelligence/         # 13. Scoreboard / portfolio / gate
 ├── mcp/                               # MCP protocol (tools, handlers, server)
 └── cli/                               # Install wrapper
 ```
+
+Parked modules (not shipped in the live MCP surface) live under `parked/` only.
 
 Legacy import paths (`navigation.perception`, `navigation.console`, `navigation.codeGraph`, etc.) remain as **shims** for backward compatibility.
 
@@ -213,18 +214,28 @@ Validates production readiness and debugging signals.
 
 **Path:** `design_sense_intelligence/`
 
-UI/UX **review and critique orchestration** — reasons over `DesignSnapshot` reports (layout, hierarchy, usability, craft). Does **not** extract DOM/CSS or enforce design-system math (see module 10).
+UI/UX **review and critique orchestration** — reasons over `DesignSnapshot` (layout, hierarchy, usability, craft). Does **not** extract DOM/CSS or enforce design-system math (see module 10).
 
 | Capability | Status |
 |------------|--------|
 | Visual layout heuristics (`visual_insights`) | ✅ |
-| Quality report hints (`quality_hints`) | ✅ |
-| Specialist reviewers + Review Coordinator | 🚧 scaffold |
-| Provider adapters (Open Design, Design Lint, Microsoft, UICrit, Crit/Rams) | 🚧 scaffold |
-| Design Lint rule engine port (DOM/CSS) | 🚧 scaffold |
-| Full design review MCP tool | 📋 planned |
+| Specialist reviewers + Review Coordinator | ✅ |
+| Provider adapters (Open Design, Design Lint, Microsoft, UICrit, Crit/Rams, static `design_knowledge`) | ✅ |
+| **UX Knowledge Brain provider (`ux_knowledge`)** — ForOpenCode playbooks/principles/psychology via deterministic `ux.retrieve` | ✅ |
+| Design Lint rule engine | ✅ |
+| MCP `perception_design_review` | ✅ |
 
-See [features/design_sense_intelligence.md](./features/design_sense_intelligence.md).
+**Knowledge layers (do not collapse):**
+
+| Layer | Source | Role |
+|-------|--------|------|
+| Static Design Sense knowledge | `knowledge/psychology`, principles, patterns | Lightweight hints in review |
+| UX Knowledge Brain | `ForOpenCode/` graph + packs + SQLite | Evidence-backed playbooks (Hick, Fitts, forms, …) |
+| Project Design Graph | Consistency Intelligence | *This project’s* tokens/components only |
+
+**MCP tools:** `perception_design_review` (pass `repo_root` for UX KB corpus), `perception_design_knowledge_query` with `query_id: ux.retrieve`
+
+See [features/design_sense_intelligence.md](./features/design_sense_intelligence.md) and `ForOpenCode/kb/schemas/RETRIEVAL_CONTRACT_v1.md`.
 
 Consumed during observe (`visual_insights`) and diagnosis (`quality_hints`). Component Intelligence consumes `contract.py`.
 
@@ -234,21 +245,21 @@ Consumed during observe (`visual_insights`) and diagnosis (`quality_hints`). Com
 
 **Path:** `consistency_intelligence/`
 
-Ensures the frontend remains **mathematically and visually consistent** with the design system. Detects drift, scores inconsistencies, and (future) suggests or applies fixes. **Not** UX coaching — that is Design Sense Intelligence.
+Ensures the frontend remains **mathematically and visually consistent** with the design system (Project Design Graph). Detects drift, scores inconsistencies, and proposes fixes. **Not** UX coaching — that is Design Sense Intelligence.
 
 | Capability | Status |
 |------------|--------|
-| Module scaffold (`service`, `models`, `rules/`) | ✅ |
-| Design token extraction | 📋 planned |
-| Spacing / typography / color scale validation | 📋 planned |
-| Border radius, shadows, layout grid rules | 📋 planned |
-| Component + interaction-state consistency | 📋 planned |
-| Visual hierarchy + responsive consistency | 📋 planned |
-| Consistency scoring + fix suggestions | 📋 planned |
+| Module + Discovery Pipeline + PDG store | ✅ |
+| MCP review / audit / assess / propose_fix | ✅ |
+| Graph refresh + summary | ✅ |
+| Inline viewport/full/section screenshots on review/audit | ✅ |
+| Agent `visual_feedback` → `next_actions` | ✅ |
+| Consistency scoring polish + more validators | 📋 ongoing |
+| `perception_consistency_diff` / richer token snapshot | 📋 planned |
 
-**MCP tools (planned):** `perception_consistency_audit`, `perception_consistency_diff`, `perception_token_snapshot`
+**MCP tools:** `perception_consistency_review`, `perception_consistency_audit`, `perception_consistency_assess`, `perception_consistency_propose_fix`, `perception_design_graph_refresh`, `perception_design_graph_summary`
 
-See [features/consistency_intelligence.md](./features/consistency_intelligence.md).
+See [features/consistency_intelligence.md](./features/consistency_intelligence.md) and [features/visual.md](./features/visual.md).
 
 ---
 
@@ -277,29 +288,7 @@ See `inspiration_intelligence/docs/ARCHITECTURE.md`, `inspiration_intelligence/d
 
 ---
 
-## 12. Figma Intelligence
-
-**Path:** `figma_intelligence/`
-
-**Connection + coordination layer** for the user's Figma workspace via **southleft/figma-console-mcp**. Returns normalized `FigmaDesignContext` — not design critique or public inspiration.
-
-| Capability | Status |
-|------------|--------|
-| Connection Manager (PAT connect, validate, store) | ✅ |
-| Session Manager (file, page, frame, selection) | ✅ |
-| Figma Console MCP Adapter | ✅ |
-| Context Normalizer + Design Cache + Coordination | ✅ |
-| Health Monitor | ✅ |
-| MCP: `perception_figma_connect`, `_status`, `_context` | ✅ |
-| Legacy community pipeline (discover / extraction) | ✅ retained |
-
-See [features/figma_intelligence.md](./features/figma_intelligence.md) and `perception://figma-guide`.
-
-**Boundary:** Inspiration Intelligence → public galleries. Design Sense → critique. Component Intelligence → components. Figma Intelligence → user's Figma connection + normalized context only.
-
----
-
-## 13. Resource Intelligence
+## 12. Resource Intelligence
 
 **Path:** `resource_intelligence/`
 
@@ -323,27 +312,11 @@ See `resource_intelligence/docs/ARCHITECTURE.md` and [features/resource_intellig
 
 ---
 
-## 14. SEO Intelligence
+## 13. Coordination Intelligence
 
-**Path:** `seo_intelligence/`
+**Path:** `coordination_intelligence/`
 
-Orchestrates **free-first SEO evidence** — Search Console, GA4, LibreCrawl, Lighthouse, Browser Intelligence. Not Ahrefs, Semrush, or an internet-scale crawler.
-
-| Capability | Status |
-|------------|--------|
-| Architecture + provider matrix | ✅ |
-| SEO Knowledge Graph schema | ✅ |
-| Live provider adapters (GSC, GA4, LibreCrawl, Lighthouse, Browser) | ✅ |
-| Cross-analysis + recommendations + verification loop | ✅ |
-| Capability-aware planner + fallbacks | ✅ |
-| AI-native recommendation pipeline + reasoning_context | ✅ |
-| `perception_seo_status` + `perception_seo_audit` + `perception_seo_connect` + `perception_seo_verify` | ✅ |
-
-**Do not build:** keyword databases, backlink crawlers, SERP databases.
-
-See `seo_intelligence/docs/ARCHITECTURE.md` and [features/seo_intelligence.md](./features/seo_intelligence.md).
-
-**Boundary:** SEO Intelligence owns search performance orchestration. Browser Intelligence owns live observation (consumed via adapter). `perception_audit_seo` (Frontend Quality) remains a page-level Lighthouse audit — SEO Intelligence correlates multi-source evidence.
+Episode scoreboard: portfolio unpaid/paid, backlog, implementation gate, Ship Council, residue, surface type. Distilled artifacts live under `coordination_layer/` and are bundled into `artifacts/runtime/`.
 
 ---
 

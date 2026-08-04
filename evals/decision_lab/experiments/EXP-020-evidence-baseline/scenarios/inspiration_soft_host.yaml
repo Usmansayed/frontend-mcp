@@ -1,0 +1,28 @@
+id: exp020_inspiration_soft_host
+intent: redesign Meridian analytics dashboard
+lifecycle_stage: S03_design
+project_maturity: M1
+feeds:
+  - tool: perception_inspiration_collect
+    ok: true
+    data:
+      inspiration_collection:
+        hits:
+          - {inspiration_blob: b1, profile: {mood: calm}}
+          - {inspiration_blob: b2}
+          - {inspiration_blob: b3, extracted_profile: {density: sparse}}
+      engineering_spec:
+        unresolved_by_impact: [hierarchy, spacing, chrome]
+      reference_bind: {implementation_ready: false, quality: seed}
+    expect:
+      path:capability_ledger.inspiration_workflow.quality.usable_image_refs: 3
+      path:capability_ledger.inspiration_workflow.quality.seed_unresolved_count: 3
+      host_contains:
+        - "INSPIRATION NOTE"
+      evidence_quality_alerts_contains:
+        - "INSPIRATION NOTE"
+expect:
+  host_contains:
+    - "INSPIRATION NOTE"
+    - "seed Spec"
+  path:capability_ledger.inspiration_workflow.advancement_eligible: true

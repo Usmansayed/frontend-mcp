@@ -6,6 +6,7 @@ const destinations = [
   { to: '/shop', title: 'Shop', desc: 'Categories → products → detail → cart → checkout wizard.' },
   { to: '/forms', title: 'Forms', desc: 'Simple, validated, and multi-step wizard forms.' },
   { to: '/help/faq', title: 'Help Center', desc: 'Accordion FAQ, contact form, and article tree.' },
+  { to: '/eval/flaws', title: 'Flaw Gallery', desc: 'Hidden-flaw surfaces for coordination / Ship Council eval.' },
 ]
 
 export default function Home() {

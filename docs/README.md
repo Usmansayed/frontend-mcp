@@ -34,9 +34,9 @@ Platform docs for the ultimate frontend MCP for AI coding agents.
 | [features/consistency_intelligence.md](./features/consistency_intelligence.md) | 📋 scaffold |
 | [features/inspiration_intelligence.md](./features/inspiration_intelligence.md) | ✅ public gallery inspiration |
 | [features/resource_intelligence.md](./features/resource_intelligence.md) | 📋 research & architecture |
-| [features/seo_intelligence.md](./features/seo_intelligence.md) | 📋 architecture_v1 |
-| [features/figma_intelligence.md](./features/figma_intelligence.md) | ✅ Figma connection + context layer |
 | [features/comparison_browser_tools.md](./features/comparison_browser_tools.md) | Reference vs us |
+
+Parked (not in the live MCP package): see `parked/` — not agent-facing.
 
 ## Agent playbooks
 
@@ -44,7 +44,6 @@ Platform docs for the ultimate frontend MCP for AI coding agents.
 |----------|-------------|
 | [AGENT_GUIDE.md](../AGENT_GUIDE.md) | Main playbooks — `perception://agent-guide` |
 | [RESOLVER_AGENT_GUIDE.md](../src/navigation/resolver_intelligence/docs/RESOLVER_AGENT_GUIDE.md) | Code ↔ UI resolvers — `perception://resolver-guide` |
-| [SEO_AGENT_GUIDE.md](../src/navigation/seo_intelligence/docs/SEO_AGENT_GUIDE.md) | Async SEO — `perception://seo-guide` |
 
 **Agent loop:** `health` → `session_start` → `observe` → `resolve_*` → edit code → `verify`
 

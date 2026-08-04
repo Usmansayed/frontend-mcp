@@ -1,6 +1,6 @@
 [project]
-name = "frontend-perception-engine"
-version = "1.1.7"
+name = "frontend-mcp"
+version = "1.2.0"
 description = "Frontend Perception MCP — deterministic browser runtime for coding agents."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -14,16 +14,24 @@ dependencies = [
   "google-auth-oauthlib>=1.2.0",
   "httpx>=0.27.0",
   "pyyaml>=6.0.0",
+  "google-genai>=1.0.0",
+  "jsonschema>=4.22.0",
+  "beautifulsoup4>=4.12.0",
+  "html2text>=2024.2.26",
+  "langchain-core>=0.3.0",
 ]
 
 [project.scripts]
-frontend-perception-mcp = "navigation.mcp.server:main"
+frontend-perception-mcp = "navigation.cli.main:main"
 frontend-perception-install = "navigation.cli.install:main"
+frontend-mcp = "navigation.cli.main:main"
+frontend-mcp-install = "navigation.cli.install:main"
 
 [project.optional-dependencies]
-aws = ["boto3>=1.35.0"]
-# Audits use Lighthouse CLI via npx (Node.js 18+). No extra Python packages required.
-audits = []
+# Optional Scrapling recovery for tough WAF galleries (not required to install MCP).
+scrapling = [
+  "scrapling[fetchers]>=0.4.0",
+]
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
@@ -37,6 +45,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 navigation = ["**/*.md", "**/*.yaml", "**/*.json"]
+frontend_mcp = ["py.typed"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"

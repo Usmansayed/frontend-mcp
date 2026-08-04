@@ -1,0 +1,442 @@
+# Guide Lab PRODUCTION-LIKE pack — sticky design, empty unpaid, forms, figma, ladder
+# Isolated offline quizzes for Option C dual guides.
+
+- id: P01
+  class: feature
+  ask: "Add a tooltip on the save button"
+  unpaid: []
+  gate: {state: ready, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    first_family_or: [observe, verify]
+    must_not: [inspiration, seo]
+    require_multi_owed: false
+
+- id: P02
+  class: hotfix
+  ask: "Production: login CTA misaligned"
+  unpaid: []
+  gate: {state: maintenance, next_required_capability: browser_observe}
+  backlog_top: observe
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [inspiration, component, design_review]
+    require_multi_owed: false
+
+- id: P03
+  class: polish
+  ask: "Nudge spacing 4px after redesign draft this episode"
+  sticky_design: true
+  unpaid: [observe, verify, design_review]
+  gate: {state: ready, next_required_capability: design_review}
+  backlog_top: design_review
+  gold:
+    owed: [observe, verify, design_review]
+    owed_mode: covers
+    first_family: observe
+    must_not: [inspiration]
+    require_multi_owed: true
+
+- id: P04
+  class: polish
+  ask: "Nudge spacing 4px — fresh episode, no design draft"
+  sticky_design: false
+  unpaid: [observe, verify, component, inspiration]
+  gate: {state: blocked, next_required_capability: component_select}
+  backlog_top: component
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [component, inspiration]
+    require_multi_owed: false
+
+- id: P05
+  class: greenfield
+  ask: "New landing; Figma connected unpaid"
+  unpaid: [figma, inspiration, component]
+  gate: {state: blocked, next_required_capability: inspiration_workflow}
+  backlog_top: inspiration
+  gold:
+    owed: [figma, component]
+    owed_or: [[figma, component, observe], [inspiration, component]]
+    owed_mode: covers
+    first_family: figma
+    first_family_or: [figma, inspiration]
+    first_mode: reference_family
+    must_not: [seo]
+    require_multi_owed: true
+
+- id: P06
+  class: greenfield
+  ask: "Figma already paid; foundation unpaid"
+  unpaid: [component, observe, verify]
+  gate: {state: provisional, next_required_capability: browser_observe}
+  backlog_top: observe
+  gold:
+    owed: [component, observe]
+    owed_or: [[component, observe, verify]]
+    owed_mode: covers
+    first_family: component
+    must_not: [seo]
+    require_multi_owed: true
+
+- id: P07
+  class: redesign
+  ask: "Sections incomplete; snapshot unpaid"
+  unpaid: [snapshot, sections, verify]
+  gate: {state: provisional, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [snapshot, verify]
+    owed_or: [[snapshot, sections, verify]]
+    owed_mode: covers
+    first_family: snapshot
+    must_not: []
+    require_multi_owed: true
+
+- id: P08
+  class: redesign
+  ask: "Residue remasure required after thin ship"
+  unpaid: [residue, design_review]
+  gate: {state: provisional, next_required_capability: design_snapshot}
+  backlog_top: residue
+  gold:
+    owed: [residue, design_review]
+    owed_or: [[residue], [residue, design_review]]
+    owed_mode: covers
+    first_family: residue
+    first_family_or: [residue, design_review]
+    must_not: [inspiration]
+    require_multi_owed: false
+
+- id: P09
+  class: forms
+  ask: "Fix signup validation messages"
+  unpaid: [observe, forms, verify, inspiration]
+  gate: {state: ready, next_required_capability: inspiration_workflow}
+  backlog_top: inspiration
+  gold:
+    owed: [observe, forms, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [inspiration]
+    require_multi_owed: true
+
+- id: P10
+  class: forms
+  ask: "Auth gate probe on /login"
+  unpaid: [observe, guards, verify]
+  gate: {state: provisional, next_required_capability: browser_observe}
+  backlog_top: observe
+  gold:
+    owed: [observe, guards, verify]
+    owed_or: [[observe, forms, verify], [observe, guards, verify]]
+    owed_mode: covers
+    first_family: observe
+    must_not: [seo]
+    require_multi_owed: true
+
+- id: P11
+  class: mockup
+  ask: "PrimeStay hero match; wrong port 5173 vs 5174"
+  unpaid: [snapshot, observe, verify]
+  gate: {state: provisional, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [snapshot, observe, verify]
+    owed_mode: covers
+    first_family: snapshot
+    must_not: [inspiration]
+    require_multi_owed: true
+
+- id: P12
+  class: polish
+  ask: "Opacity -30% looks unchanged"
+  unpaid: [observe, verify, snapshot]
+  gate: {state: ready, next_required_capability: design_snapshot}
+  backlog_top: snapshot
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [snapshot, inspiration]
+    require_multi_owed: false
+
+- id: P13
+  class: feature
+  ask: "Only seo unpaid on copy tweak"
+  unpaid: [seo]
+  gate: {state: ready, next_required_capability: browser_observe}
+  backlog_top: seo
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [seo]
+    require_multi_owed: false
+
+- id: P14
+  class: redesign
+  ask: "Settings surface redesign — skip equal KPI ship logic"
+  unpaid: [snapshot, observe, verify, design_review]
+  gate: {state: provisional, next_required_capability: design_snapshot}
+  backlog_top: snapshot
+  gold:
+    owed: [snapshot, observe, verify]
+    owed_or: [[snapshot, observe, design_review]]
+    owed_mode: covers
+    first_family: snapshot
+    must_not: []
+    require_multi_owed: true
+
+- id: P15
+  class: hotfix
+  ask: "gate.next=ship but hotfix scope"
+  unpaid: [observe, verify, design_review]
+  gate: {state: ready, next_required_capability: design_review}
+  backlog_top: design_review
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [design_review]
+    require_multi_owed: false
+
+- id: P16
+  class: greenfield
+  ask: "recommended_evidence=verify; reference unpaid"
+  unpaid: [inspiration, component]
+  gate: {state: blocked, next_required_capability: browser_verify}
+  backlog_top: verify
+  recommended_evidence: browser_verify
+  gold:
+    owed: [inspiration, component]
+    owed_mode: covers
+    first_family: inspiration
+    first_mode: reference_family
+    must_not: [seo]
+    require_multi_owed: true
+
+- id: P17
+  class: mockup
+  ask: "Claim done; snapshot+ship unpaid; next=verify"
+  unpaid: [snapshot, design_review]
+  gate: {state: ready, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [snapshot, design_review]
+    owed_mode: covers
+    first_family: snapshot
+    must_not: []
+    require_multi_owed: true
+
+- id: P18
+  class: feature
+  ask: "Resolve billing route owner then verify"
+  unpaid: [resolve, observe, verify]
+  gate: {state: provisional, next_required_capability: component_select}
+  backlog_top: resolve
+  gold:
+    owed: [resolve, observe, verify]
+    owed_mode: covers
+    first_family: resolve
+    must_not: [inspiration]
+    require_multi_owed: true
+
+- id: P19
+  class: redesign
+  ask: "Inspiration timed out; snapshot unpaid"
+  unpaid: [inspiration, snapshot, verify]
+  gate: {state: blocked, next_required_capability: inspiration_workflow}
+  backlog_top: inspiration
+  gold:
+    owed: [snapshot, verify]
+    owed_mode: covers
+    first_family: snapshot
+    must_not: []
+    require_multi_owed: true
+
+- id: P20
+  class: forms
+  ask: "Empty unpaid on form fix"
+  unpaid: []
+  gate: {state: ready, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [observe, forms, verify]
+    owed_mode: covers
+    first_family: observe
+    first_family_or: [observe, forms]
+    must_not: [inspiration, seo]
+    require_multi_owed: true
+
+- id: P21
+  class: greenfield
+  ask: "All deferred+structural; do not call seo"
+  unpaid: [inspiration, snapshot, component, observe, verify, seo, resources]
+  gate: {state: blocked, next_required_capability: inspiration_workflow}
+  backlog_top: inspiration
+  gold:
+    owed: [inspiration, component, observe]
+    owed_or: [[snapshot, component, observe], [inspiration, component, verify]]
+    owed_mode: covers
+    first_family: inspiration
+    first_mode: reference_family
+    must_not: [seo]
+    require_multi_owed: true
+
+- id: P22
+  class: polish
+  sticky_design: true
+  ask: "Micro blur after sticky redesign; sections unpaid"
+  unpaid: [observe, sections, verify]
+  gate: {state: provisional, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [observe, sections, verify]
+    owed_mode: covers
+    first_family: sections
+    first_family_or: [sections, observe]
+    must_not: [inspiration]
+    require_multi_owed: true
+
+- id: P23
+  class: feature
+  ask: "Parallel temptation — still one family next from owed"
+  unpaid: [observe, verify]
+  gate: {state: ready, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [inspiration, seo]
+    require_multi_owed: false
+
+- id: P24
+  class: mockup
+  ask: "Triple conflict next=verify top=inspiration unpaid=snapshot+ship"
+  unpaid: [inspiration, snapshot, design_review]
+  gate: {state: provisional, next_required_capability: browser_verify}
+  backlog_top: inspiration
+  gold:
+    owed: [snapshot, design_review]
+    owed_mode: covers
+    first_family: snapshot
+    must_not: [inspiration]
+    require_multi_owed: true
+
+- id: P25
+  class: hotfix
+  ask: "Diff after fail — observe/verify only"
+  unpaid: [observe, verify, component, inspiration]
+  gate: {state: ready, next_required_capability: component_select}
+  backlog_top: component
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [component, inspiration]
+    require_multi_owed: false
+
+- id: P26
+  class: redesign
+  ask: "Spec bound; only verify+ship unpaid"
+  unpaid: [verify, design_review]
+  gate: {state: ready, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [verify, design_review]
+    owed_mode: covers
+    first_family: verify
+    first_family_or: [verify, design_review]
+    must_not: [inspiration]
+    require_multi_owed: true
+
+- id: P27
+  class: greenfield
+  ask: "Snapshot unpaid only (no inspiration in unpaid)"
+  unpaid: [snapshot, component, observe]
+  gate: {state: blocked, next_required_capability: design_snapshot}
+  backlog_top: snapshot
+  gold:
+    owed: [snapshot, component, observe]
+    owed_mode: covers
+    first_family: snapshot
+    first_mode: reference_family
+    must_not: [seo]
+    require_multi_owed: true
+
+- id: P28
+  class: feature
+  ask: "End-of-task MCP temptation — unpaid observe+verify"
+  unpaid: [observe, verify]
+  gate: {state: ready, next_required_capability: browser_observe}
+  backlog_top: observe
+  gold:
+    owed: [observe, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [seo]
+    require_multi_owed: false
+
+- id: P29
+  class: redesign
+  ask: "host_action SHIP while snapshot unpaid"
+  unpaid: [snapshot, design_review]
+  gate: {state: ready, next_required_capability: design_review}
+  backlog_top: design_review
+  gold:
+    owed: [snapshot, design_review]
+    owed_mode: covers
+    first_family: snapshot
+    must_not: []
+    require_multi_owed: true
+
+- id: P30
+  class: forms
+  ask: "probe_form before unknown signup"
+  unpaid: [forms, observe, verify, seo]
+  gate: {state: provisional, next_required_capability: browser_verify}
+  backlog_top: verify
+  gold:
+    owed: [observe, forms, verify]
+    owed_mode: covers
+    first_family: observe
+    must_not: [seo]
+    require_multi_owed: true
+
+- id: P31
+  class: polish
+  sticky_design: true
+  ask: "Sticky polish; residue unpaid"
+  unpaid: [observe, residue, design_review]
+  gate: {state: provisional, next_required_capability: design_snapshot}
+  backlog_top: residue
+  gold:
+    owed: [observe, residue, design_review]
+    owed_mode: covers
+    first_family: residue
+    first_family_or: [residue, observe]
+    must_not: [inspiration]
+    require_multi_owed: true
+
+- id: P32
+  class: greenfield
+  ask: "Conflicting top=component next=observe unpaid includes inspiration"
+  unpaid: [inspiration, component, observe]
+  gate: {state: blocked, next_required_capability: browser_observe}
+  backlog_top: component
+  gold:
+    owed: [inspiration, component, observe]
+    owed_mode: covers
+    first_family: inspiration
+    first_mode: reference_family
+    must_not: [seo]
+    require_multi_owed: true

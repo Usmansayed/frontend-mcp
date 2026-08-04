@@ -49,7 +49,15 @@ def download_url(
 		if referer:
 			headers['Referer'] = referer
 		req = urllib.request.Request(url, headers=headers)
-		with urllib.request.urlopen(req, timeout=45) as resp:
+		ctx = None
+		try:
+			import ssl
+			import certifi
+
+			ctx = ssl.create_default_context(cafile=certifi.where())
+		except Exception:
+			ctx = None
+		with urllib.request.urlopen(req, timeout=45, context=ctx) as resp:
 			data = resp.read()
 		if not data:
 			return False

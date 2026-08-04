@@ -8,7 +8,9 @@ from navigation.inspiration_intelligence.providers.site_factory import (
 	build_awwwards_provider,
 	build_behance_provider,
 	build_godly_provider,
+	build_httpster_provider,
 	build_landbook_provider,
+	build_lapa_provider,
 	build_onepagelove_provider,
 	build_siteinspire_provider,
 )
@@ -16,8 +18,15 @@ from navigation.inspiration_intelligence.providers.site_factory import (
 HIGH_CONFIDENCE_SCORE = 0.55
 PRODUCTION_MIN_CANDIDATES = 1
 
-# Rescue order when full cascade returns empty — most reliable sources first
-RESCUE_PROVIDER_ORDER: list[str] = ['onepagelove', 'behance', 'dribbble']
+# Rescue order when full cascade returns empty — most reliable HTTP sources first
+# (land-book excluded: slow / browser-heavy; keep for explicit pin only)
+RESCUE_PROVIDER_ORDER: list[str] = [
+	'onepagelove',
+	'lapa',
+	'behance',
+	'httpster',
+	'siteinspire',
+]
 
 
 def min_high_confidence_hits() -> int:
@@ -32,6 +41,8 @@ class InspirationProviderRegistry:
 			'dribbble': DribbbleProvider(),
 			'behance': build_behance_provider(),
 			'onepagelove': build_onepagelove_provider(),
+			'lapa': build_lapa_provider(),
+			'httpster': build_httpster_provider(),
 			'awwwards': build_awwwards_provider(),
 			'siteinspire': build_siteinspire_provider(),
 			'godly': build_godly_provider(),

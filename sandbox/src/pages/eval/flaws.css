@@ -1,0 +1,203 @@
+/* Tricky flaws — look intentional; fail only under strict measurement. */
+
+.flaw-shell {
+  display: flex;
+  min-height: 100vh;
+  background: #0f1220;
+  color: #e6e8f2;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+.flaw-aside {
+  width: 220px;
+  flex-shrink: 0;
+  background: #171b2e;
+  border-right: 1px solid #2a3057;
+  padding: 16px;
+}
+
+.flaw-aside a {
+  display: block;
+  color: #9aa0c0;
+  padding: 8px 10px;
+  text-decoration: none;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+
+.flaw-aside a.active {
+  background: #1f2440;
+  color: #e6e8f2;
+}
+
+.flaw-main {
+  flex: 1;
+  padding: 28px 36px;
+  min-width: 0;
+}
+
+.flaw-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin: 20px 0;
+}
+
+.flaw-kpi {
+  background: #171b2e;
+  border: 1px solid #2a3057;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.flaw-kpi .label {
+  color: #9aa0c0;
+  font-size: 0.85rem;
+}
+
+.flaw-kpi .value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+/*
+ * F1/F6: looks sticky in DevTools (position:sticky) but top:auto never pins.
+ * Document scrolls normally — no overflow shell tricks.
+ */
+.flaw-aside--broken-sticky {
+  position: sticky;
+  top: auto;
+  align-self: flex-start;
+}
+
+/* Working chrome (F2/F3/F4) */
+.flaw-aside--sticky {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  max-height: 100vh;
+  overflow: auto;
+}
+
+/* F5: sticky only on inner list; outer aside is static */
+.flaw-aside--trap {
+  position: static;
+  align-self: flex-start;
+}
+.flaw-aside--trap .flaw-aside-inner {
+  position: sticky;
+  top: 0;
+}
+
+/*
+ * F2: micro overflow in-flow (not ::after) so scrollWidth grows.
+ */
+.flaw-micro-overflow {
+  width: calc(100vw + 10px);
+  max-width: none;
+  height: 8px;
+  margin: 0 0 16px 0;
+  background: linear-gradient(90deg, #1f2440, #2a3057);
+  border-radius: 4px;
+  opacity: 0.35;
+}
+
+/* F4: subtle marketing shell (~58vw) — reads “product” until measured */
+.flaw-main-wrap {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+.flaw-main--narrow {
+  width: min(58vw, 900px);
+  max-width: 900px;
+  flex: 0 0 auto;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* F3: near-equal hierarchy — tiny font deltas, same padding/weight */
+.flaw-kpi--near-a .value { font-size: 1.58rem; }
+.flaw-kpi--near-b .value { font-size: 1.55rem; }
+.flaw-kpi--near-c .value { font-size: 1.52rem; }
+.flaw-kpi--near-d .value { font-size: 1.50rem; }
+
+/* F9/F12: exact-equal hierarchy */
+.flaw-kpi--exact .value { font-size: 1.55rem; }
+
+/* F8: barely over verify tolerance (+2px) */
+.flaw-micro-overflow--tiny {
+  width: calc(100vw + 3px);
+}
+
+/*
+ * F7/F12: transform creates a containing block — sticky+top:0 looks correct
+ * in DevTools but pins to the transformed host, not the viewport.
+ */
+.flaw-transform-host {
+  transform: translateZ(0);
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+/* F10/F12: left-aligned compressed column (not centered marketing) */
+.flaw-main-wrap--left {
+  justify-content: flex-start;
+}
+.flaw-main--left-narrow {
+  width: min(62vw, 960px);
+  max-width: 960px;
+  flex: 0 0 auto;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/*
+ * F11: decoy sticky breadcrumb nav appears first in querySelector order;
+ * real sidebar <aside> is static and scrolls away.
+ */
+.flaw-page-decoy {
+  min-height: 100vh;
+  background: #0f1220;
+}
+.flaw-decoy-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: 36px;
+  line-height: 36px;
+  padding: 0 16px;
+  font-size: 0.8rem;
+  color: #9aa0c0;
+  background: #12162a;
+  border-bottom: 1px solid #2a3057;
+}
+.flaw-shell--decoy {
+  min-height: calc(100vh - 36px);
+}
+
+/* F13/F15: overflow-x:hidden looks harmless; breaks viewport sticky */
+.flaw-shell--ox-hidden {
+  overflow-x: hidden;
+}
+
+/* F14: sticky with negative top — DevTools says sticky; pins off-screen */
+.flaw-aside--sticky-neg {
+  position: sticky;
+  top: -80px;
+  align-self: flex-start;
+  max-height: 100vh;
+  overflow: auto;
+}
+
+.flaw-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: #9aa0c0;
+  border: 1px solid #2a3057;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+}

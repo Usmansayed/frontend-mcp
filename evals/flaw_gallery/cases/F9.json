@@ -1,0 +1,16 @@
+{
+  "id": "F9",
+  "path": "/eval/flaws/F9",
+  "intent": "redesign SaaS analytics dashboard with sidebar KPIs",
+  "soft_text": ["Welcome, ops", "FlawCase F9"],
+  "must_layers": ["ship"],
+  "expect": {
+    "soft_verified": true,
+    "verify_reason_substrings": [],
+    "chrome_permanence_fail": false,
+    "overflow_fail": false,
+    "ship_must_include": ["equal_weight_kpi_cluster"],
+    "ship_must_exclude": ["nav_not_sticky", "responsive_breakage"],
+    "claim_complete_prohibited": true
+  }
+}

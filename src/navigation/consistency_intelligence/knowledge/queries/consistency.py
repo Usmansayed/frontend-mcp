@@ -1,6 +1,8 @@
 """Consistency query handlers — graph-backed assessment (Phase 3)."""
 from __future__ import annotations
 
+import re
+
 from navigation.consistency_intelligence.graph.model import ProjectDesignGraph, StandardNode
 
 from ..envelope import (
@@ -13,6 +15,21 @@ from ..envelope import (
 	stub_response,
 )
 from ._helpers import exceptions_from_graph, group_deviations
+
+# Observation CSS props → foundation contexts learned from snapshots.
+_PROP_TO_FOUNDATION: dict[str, tuple[str, ...]] = {
+	'font-size': ('typography',),
+	'font-family': ('typography',),
+	'font-weight': ('typography',),
+	'line-height': ('typography',),
+	'padding': ('spacing',),
+	'margin': ('spacing',),
+	'gap': ('spacing',),
+	'color': ('color', 'colors', 'palette'),
+	'background-color': ('color', 'colors', 'palette'),
+	'border-radius': ('radius', 'spacing'),
+}
+_SPACING_STANDARD_PROPS = frozenset({'scale', 'base-unit', 'padding', 'gap', 'margin', 'spacing'})
 
 
 def _infer_context(selector: str, params: dict) -> str:
@@ -36,10 +53,25 @@ def _actual_values(params: dict) -> dict[str, str]:
 	return {str(k): str(v) for k, v in raw.items()}
 
 
+def _normalize_css_value(value: str) -> str:
+	text = value.strip().lower().replace(' ', '')
+	m = re.fullmatch(r'(-?\d+(?:\.\d+)?)px', text)
+	if m:
+		num = float(m.group(1))
+		if num.is_integer():
+			return f'{int(num)}px'
+		return f'{num}px'
+	return text
+
+
 def _value_matches(actual: str, expected: list[str]) -> bool:
-	actual_norm = actual.strip().lower()
-	for exp in expected:
-		if actual_norm == exp.strip().lower():
+	actual_norm = _normalize_css_value(actual)
+	expected_norms = {_normalize_css_value(exp) for exp in expected}
+	if actual_norm in expected_norms:
+		return True
+	# Multi-token shorthand (padding/margin): any side in the learned scale.
+	for part in re.findall(r'-?\d+(?:\.\d+)?px', actual.lower()):
+		if _normalize_css_value(part) in expected_norms:
 			return True
 	return False
 
@@ -49,17 +81,61 @@ def _find_matching_exception(graph: ProjectDesignGraph, standard_id: str, select
 		if ex.standard_id != standard_id:
 			continue
 		if ex.element_pattern in selector or selector.endswith(ex.element_pattern):
-			if ex.actual_value == actual:
+			if _normalize_css_value(ex.actual_value) == _normalize_css_value(actual):
 				return ex
 	return None
 
 
-def _standards_to_assess(graph: ProjectDesignGraph, context: str, properties: list[str]) -> list[StandardNode]:
-	standards = graph.standards_for_context(context)
-	if properties:
-		prop_set = set(properties)
-		standards = [s for s in standards if s.property in prop_set]
-	return standards
+def _standards_to_assess(
+	graph: ProjectDesignGraph,
+	context: str,
+	properties: list[str],
+	actual_values: dict[str, str] | None = None,
+) -> list[StandardNode]:
+	"""Match by element context, then broaden via CSS property → foundation context."""
+	seen: set[str] = set()
+	out: list[StandardNode] = []
+
+	def _add(std: StandardNode) -> None:
+		if std.id in seen:
+			return
+		seen.add(std.id)
+		out.append(std)
+
+	for std in graph.standards_for_context(context):
+		_add(std)
+
+	props = list(properties) if properties else list((actual_values or {}).keys())
+	for prop in props:
+		for alias in _PROP_TO_FOUNDATION.get(prop, ()):
+			for std in graph.standards_for_context(alias):
+				_add(std)
+		for std in list(graph.foundations.standards):
+			if std.property == prop:
+				_add(std)
+			elif prop in ('padding', 'gap', 'margin') and std.property in _SPACING_STANDARD_PROPS:
+				_add(std)
+			elif prop in ('font-size', 'font-family') and std.property in (
+				'font-size',
+				'font-family',
+				'scale',
+			):
+				_add(std)
+	return out
+
+
+def _actual_for_standard(std: StandardNode, actual_values: dict[str, str]) -> str | None:
+	if std.property in actual_values:
+		return actual_values[std.property]
+	if std.property in _SPACING_STANDARD_PROPS:
+		for key in ('padding', 'gap', 'margin'):
+			if key in actual_values:
+				return actual_values[key]
+	if std.property in ('font-size', 'scale') and 'font-size' in actual_values:
+		return actual_values['font-size']
+	if std.property == 'font-family' and 'font-family' in actual_values:
+		return actual_values['font-family']
+	return None
 
 
 def _assess_standards(
@@ -74,17 +150,16 @@ def _assess_standards(
 	matched: list[StandardNode] = []
 	evidence: list[EvidenceRef] = []
 
-	for std in _standards_to_assess(graph, context, properties):
-		prop = std.property
-		if prop not in actual_values:
+	for std in _standards_to_assess(graph, context, properties, actual_values):
+		actual = _actual_for_standard(std, actual_values)
+		if actual is None:
 			continue
-		actual = actual_values[prop]
 		matched.append(std)
 		evidence.append(
 			EvidenceRef(
 				kind='observation',
 				selector=selector or None,
-				property_name=prop,
+				property_name=std.property,
 				value=actual,
 			)
 		)
@@ -93,14 +168,14 @@ def _assess_standards(
 		if _find_matching_exception(graph, std.id, selector, actual):
 			continue
 		deviations.append({
-			'property': prop,
+			'property': std.property,
 			'actual': actual,
 			'expected': list(std.expected_values),
 			'standard_id': std.id,
 			'confidence': std.confidence,
 		})
 
-	consistent = len(deviations) == 0 and bool(matched or not actual_values)
+	consistent = len(deviations) == 0 and bool(matched)
 	return consistent, deviations, matched, evidence
 
 
@@ -125,7 +200,34 @@ def handle_consistency_assess(graph: ProjectDesignGraph, query: KnowledgeQuery) 
 		actual_values=actual_values,
 	)
 
+	graph_has_standards = bool(graph.foundations.standards) or any(
+		bool(c.standards) for c in graph.components.values()
+	)
+
 	if not matched and actual_values:
+		# Populated graph but no overlap — skip observation; do NOT emit Phase-1 stub codes.
+		if graph_has_standards:
+			return KnowledgeResponse(
+				query=query,
+				answer={
+					'status': 'ok',
+					'consistent': True,
+					'skipped': True,
+					'context': context,
+					'selector': selector,
+					'deviations': [],
+					'deviation_count': 0,
+					'grouped_deviations': [],
+					'message': (
+						f'No overlapping standards for context `{context}` / '
+						f'props {sorted(actual_values)}; observation skipped.'
+					),
+				},
+				confidence=0.4,
+				degraded=['observation_no_matching_standard'],
+				graph_version=graph.meta.graph_version,
+				meta={'skipped': True, 'graph_populated': True},
+			)
 		return stub_response(
 			graph,
 			query,

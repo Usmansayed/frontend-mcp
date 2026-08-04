@@ -35,34 +35,36 @@ src/navigation/
 ├── design_reference_registry/    # reference snapshots + compare
 ├── codebase_intelligence/        # CRG graph, code context
 ├── frontend_quality_intelligence/# console, network, audits, diagnosis
-├── design_sense_intelligence/    # UX heuristics, design reasoning
+├── design_sense_intelligence/    # UX heuristics, design reasoning + UX KB provider
 ├── consistency_intelligence/     # Project Design Graph + consistency
+├── ux_knowledge/                 # Deterministic ForOpenCode retrieval (ux.retrieve)
 ├── inspiration_intelligence/       # Public gallery inspiration (Dribbble, Behance, …)
-├── figma_intelligence/           # Figma connection + normalized design context
 ├── resource_intelligence/        # Creative assets (icons, fonts, photos, …)
-├── seo_intelligence/             # SEO orchestration (GSC, GA4, LibreCrawl, …)
+├── coordination_intelligence/    # Scoreboard / episode portfolio / gate
 ├── mcp/                          # MCP server (thin handlers)
 └── cli/
 ```
 
 Legacy paths (`perception/`, `console/`, `codeGraph/`, `browser_use/`, etc.) are **import shims** — prefer intelligence module imports for new code.
 
-## Module boundaries: Design Sense vs Consistency
+## Module boundaries: Design Sense vs Consistency vs UX KB
 
 | Concern | Module |
 |---------|--------|
 | "Is this good UX?" / qualitative guidance | **Design Sense Intelligence** |
-| "Does this match the design system?" / token & scale enforcement | **Consistency Intelligence** |
+| Universal playbooks/principles (Hick, Fitts, forms, psychology) | **UX Knowledge Brain** via Design Sense `ux_knowledge` provider + `ux.retrieve` |
+| "Does this match the design system?" / token & scale enforcement | **Consistency Intelligence** (Project Design Graph) |
 
+Do **not** merge ForOpenCode principles into the Project Design Graph — PDG is project-local; UX KB is universal evidence.
 ## Module boundaries: SEO vs Browser vs Frontend Quality
 
-| Concern | Module |
-|---------|--------|
-| Site-wide SEO evidence (GSC, GA4, crawl, CWV correlation) | **SEO Intelligence** |
-| Live page observation, DOM, screenshots | **Browser Intelligence** |
-| Single-page Lighthouse SEO audit (`perception_audit_seo`) | **Frontend Quality** |
+| Concern | Module | MVP |
+|---------|--------|-----|
+| Site-wide SEO evidence (GSC, GA4, crawl, CWV correlation) | **SEO Intelligence** (`parked/`) | **Excluded** — see [parked/MVP_EXCLUDE_SEO.md](../parked/MVP_EXCLUDE_SEO.md) |
+| Live page observation, DOM, screenshots | **Browser Intelligence** | Included |
+| Single-page Lighthouse SEO audit (`perception_audit_seo`) | **Frontend Quality** | Included |
 
-SEO Intelligence **orchestrates** free providers and normalizes into the SEO Knowledge Graph. It does not build keyword databases or internet crawlers.
+SEO Intelligence code is parked outside the MCP tool surface for MVP. Do not call `perception_seo_*` until restored.
 
 ## Core principles
 
@@ -70,7 +72,7 @@ SEO Intelligence **orchestrates** free providers and normalizes into the SEO Kno
 2. **Modular intelligence** — extend one module without touching unrelated code.
 3. **Provider abstraction** — external services (Grounded Docs, Lighthouse, CRG) behind provider interfaces.
 4. **CDP-first** — console, network, screenshots, audits via Chrome DevTools Protocol.
-5. **Verify before done** — `perception_verify` + `perception_diff` are first-class.
+5. **Verify before done** — `data.verified=true` is required; visual drafts also need section checklist + Ship Council when the implementation gate requires them.
 
 ## Session lifecycle
 

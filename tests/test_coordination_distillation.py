@@ -74,7 +74,8 @@ def test_state_lexicon_telemetry_only() -> None:
 def test_capability_graph_is_public_api_shape() -> None:
     graph = _load_yaml("capability_graph.v1.yaml")
     cap_ids = {c["capability_id"] for c in graph["capabilities"]}
-    assert len(cap_ids) == 32
+    assert len(cap_ids) == 33
+    assert "visual_feedback" in cap_ids
     assert graph["design_principles"]
     for cap in graph["capabilities"]:
         assert cap["tier"] == "T1_global"

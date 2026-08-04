@@ -1,0 +1,13 @@
+id: auth_surface
+intent: redesign login and signup auth screens
+lifecycle_stage: S03_design
+project_maturity: M1
+expect_after_start:
+  surface_type: auth
+  influence_level: structural
+  gate.state: blocked
+  prohibited_contains:
+    - claim_complete
+expect:
+  surface_type: auth
+  gate.state: blocked

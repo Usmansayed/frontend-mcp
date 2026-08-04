@@ -1,0 +1,601 @@
+﻿async def handle_seo_status(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.seo_intelligence import SeoIntelligenceService
+
+    service = SeoIntelligenceService()
+    status = service.status()
+    return make_envelope(
+        "perception_seo_status",
+        ok=True,
+        data={
+            "seo_status": status,
+            "ai_visibility": status.get("ai_visibility"),
+            "agent_summary": {
+                "phase": status.get("phase"),
+                "integrations": status.get("integrations"),
+                "advisory": [
+                    "Read perception://seo-guide before SEO audits.",
+                    "Default mode: development â€” instant browser scan + AI visibility from scan_id (no crawl/auth).",
+                    "Professional mode (mode=professional): GSC + GA4 + crawl â€” OAuth when user asks; poll for results.",
+                ],
+            },
+        },
+    )
+
+
+async def handle_seo_query(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.seo_intelligence import SeoIntelligenceService
+
+    query_id = str(arguments.get("query_id") or "").strip()
+    if not query_id:
+        service = SeoIntelligenceService()
+        return make_envelope(
+            "perception_seo_query",
+            ok=True,
+            data={
+                "seo_query": {"queries": service.list_graph_queries()},
+                "agent_summary": {
+                    "advisory": [
+                        "Pass query_id e.g. page.issues, audit.diff, site.traffic_signals, graph.summary.",
+                        "Run perception_seo_audit_start first to populate the graph.",
+                    ],
+                },
+            },
+        )
+
+    params = arguments.get("params") if isinstance(arguments.get("params"), dict) else {}
+    for key in ("page_url", "audit_id"):
+        if arguments.get(key) and key not in params:
+            params[key] = arguments.get(key)
+
+    service = SeoIntelligenceService()
+    outcome = service.graph_query(query_id, params)
+    ok = bool(outcome.get("ok"))
+    return make_envelope(
+        "perception_seo_query",
+        ok=ok,
+        error=str(outcome.get("error") or "") if not ok else None,
+        data={
+            "seo_query": outcome,
+            "agent_summary": {
+                "query_id": query_id,
+                "advisory": [
+                    "Use page.issues before fixing a URL.",
+                    "Use site.traffic_signals after professional audits for drop hypotheses.",
+                ],
+            },
+        },
+    )
+
+
+async def handle_seo_connect(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.seo_intelligence.auth.bing import bing_auth_status
+    from navigation.seo_intelligence.auth.connect import connect_bing, connect_google
+    from navigation.seo_intelligence.auth.google import google_oauth_status
+    from navigation.seo_intelligence.setup.onboarding import SeoOnboardingService
+
+    onboarding = SeoOnboardingService()
+    website_url = str(arguments.get("website_url") or arguments.get("url") or "").strip()
+    code = str(arguments.get("code") or "").strip()
+    api_key = str(arguments.get("api_key") or "").strip()
+    provider = str(arguments.get("provider") or "").strip().lower()
+    action = str(arguments.get("action") or "setup").strip().lower()
+    interactive = bool(arguments.get("interactive", True))
+
+    if action == "status" and not website_url:
+        google_oauth = google_oauth_status()
+        bing_oauth = bing_auth_status()
+        return make_envelope(
+            "perception_seo_connect",
+            ok=True,
+            data={
+                "google_oauth": google_oauth,
+                "bing_oauth": bing_oauth,
+                "onboarding": {
+                    "steps": ["website_url"],
+                    "auth_on_demand": True,
+                    "auth_flow": "local_browser_oauth",
+                },
+                "agent_summary": {
+                    "advisory": [
+                        "Initial setup: perception_seo_connect with website_url only.",
+                        "Google/Bing OAuth only when user requests provider-specific analysis.",
+                    ],
+                },
+            },
+        )
+
+    if not website_url:
+        return make_envelope("perception_seo_connect", ok=False, error="website_url required")
+
+    oauth_actions = {"connect_google", "connect_bing", "connect"}
+    wants_google = action == "connect_google" or (action == "connect" and provider == "google")
+    wants_bing = action == "connect_bing" or (action == "connect" and provider == "bing")
+
+    if wants_bing or (provider == "bing" and action in oauth_actions):
+        if api_key:
+            try:
+                result = await onboarding.complete_bing_api_key(website_url, api_key)
+            except Exception as exc:
+                return make_envelope("perception_seo_connect", ok=False, error=str(exc))
+            profile = result.get("profile") or {}
+            return make_envelope(
+                "perception_seo_connect",
+                ok=True,
+                data={**result, "agent_summary": {"bing_connected": profile.get("bing_connected")}},
+                degraded=list(result.get("discovery_notes") or []),
+            )
+
+        if code:
+            try:
+                result = await onboarding.complete_bing_connect(website_url, code)
+            except Exception as exc:
+                return make_envelope("perception_seo_connect", ok=False, error=str(exc))
+            profile = result.get("profile") or {}
+            return make_envelope(
+                "perception_seo_connect",
+                ok=True,
+                data={**result, "agent_summary": {"bing_connected": profile.get("bing_connected")}},
+                degraded=list(result.get("discovery_notes") or []),
+            )
+
+        if action == "refresh_discovery":
+            try:
+                profile = await onboarding.refresh_discovery(website_url, provider="bing")
+            except Exception as exc:
+                return make_envelope("perception_seo_connect", ok=False, error=str(exc))
+            return make_envelope(
+                "perception_seo_connect",
+                ok=True,
+                data={
+                    "website_url": website_url,
+                    "provider": "bing",
+                    "profile": profile.to_dict(),
+                    "discovery_notes": list(profile.discovery_notes),
+                },
+            )
+
+        if interactive:
+            try:
+                result = await connect_bing(website_url, onboarding=onboarding)
+            except Exception as exc:
+                return make_envelope("perception_seo_connect", ok=False, error=str(exc))
+            profile = result.get("profile") or {}
+            return make_envelope(
+                "perception_seo_connect",
+                ok=True,
+                data={
+                    **result,
+                    "agent_summary": {
+                        "bing_connected": profile.get("bing_connected"),
+                        "auth_flow": "local_browser_oauth",
+                        "prompt": "Bing Webmaster connected.",
+                    },
+                },
+                degraded=list(result.get("discovery_notes") or []),
+            )
+
+        try:
+            auth = await onboarding.start_bing_connect(website_url)
+        except Exception as exc:
+            return make_envelope("perception_seo_connect", ok=False, error=str(exc))
+        return make_envelope("perception_seo_connect", ok=True, data={**auth, "interactive": False})
+
+    if wants_google:
+        if code:
+            try:
+                result = await onboarding.complete_google_connect(website_url, code)
+            except Exception as exc:
+                return make_envelope("perception_seo_connect", ok=False, error=str(exc))
+            profile = result.get("profile") or {}
+            return make_envelope(
+                "perception_seo_connect",
+                ok=True,
+                data={
+                    **result,
+                    "agent_summary": {
+                        "google_connected": profile.get("google_connected"),
+                        "auto_configured": profile.get("auto_configured"),
+                        "prompt": "Google Search Console and Analytics connected.",
+                    },
+                },
+                degraded=list(result.get("discovery_notes") or []),
+            )
+
+        if action == "refresh_discovery":
+            try:
+                profile = await onboarding.refresh_discovery(website_url, provider="google")
+            except Exception as exc:
+                return make_envelope("perception_seo_connect", ok=False, error=str(exc))
+            return make_envelope(
+                "perception_seo_connect",
+                ok=True,
+                data={
+                    "website_url": website_url,
+                    "profile": profile.to_dict(),
+                    "discovery_notes": list(profile.discovery_notes),
+                },
+            )
+
+        if interactive:
+            try:
+                result = await connect_google(website_url, onboarding=onboarding)
+            except Exception as exc:
+                return make_envelope("perception_seo_connect", ok=False, error=str(exc))
+            profile = result.get("profile") or {}
+            return make_envelope(
+                "perception_seo_connect",
+                ok=True,
+                data={
+                    **result,
+                    "agent_summary": {
+                        "google_connected": profile.get("google_connected"),
+                        "auto_configured": profile.get("auto_configured"),
+                        "auth_flow": "local_browser_oauth",
+                        "prompt": "Google Search Console and Analytics connected.",
+                    },
+                },
+                degraded=list(result.get("discovery_notes") or []),
+            )
+
+        try:
+            auth = await onboarding.start_google_connect(website_url)
+        except Exception as exc:
+            return make_envelope("perception_seo_connect", ok=False, error=str(exc))
+        return make_envelope("perception_seo_connect", ok=True, data={**auth, "interactive": False})
+
+    if action == "refresh_discovery":
+        try:
+            profile = await onboarding.refresh_discovery(website_url)
+        except Exception as exc:
+            return make_envelope("perception_seo_connect", ok=False, error=str(exc))
+        return make_envelope(
+            "perception_seo_connect",
+            ok=True,
+            data={
+                "website_url": website_url,
+                "profile": profile.to_dict(),
+                "discovery_notes": list(profile.discovery_notes),
+            },
+        )
+
+    # Default: website-only setup (no OAuth)
+    try:
+        result = await onboarding.register_website(website_url)
+    except Exception as exc:
+        return make_envelope("perception_seo_connect", ok=False, error=str(exc))
+    site = await onboarding.site_status(website_url)
+    return make_envelope(
+        "perception_seo_connect",
+        ok=True,
+        data={
+            **result,
+            **site,
+            "agent_summary": {
+                "ready": True,
+                "advisory": [
+                    "Website registered. SEO Intelligence ready without OAuth.",
+                    "Connect Google only when user requests Search Console or GA4 analysis.",
+                    "Connect Bing only when user requests Bing Webmaster analysis.",
+                ],
+            },
+        },
+    )
+
+
+def _prepare_seo_audit_request(arguments: dict[str, Any]) -> tuple[Any, list[str]]:
+    from navigation.seo_intelligence import SeoAuditRequest
+    from navigation.seo_intelligence.planning.modes import parse_audit_mode
+    from navigation.seo_intelligence.setup.onboarding import SeoOnboardingService
+
+    website_url = str(arguments.get("website_url") or arguments.get("url") or "").strip()
+    mode_raw = arguments.get("mode")
+    mode = parse_audit_mode(str(mode_raw)) if mode_raw else None
+    request = SeoAuditRequest(
+        website_url=website_url,
+        property_url=str(arguments.get("property_url") or ""),
+        repo_root=str(arguments.get("repo_root") or ""),
+        scan_id=str(arguments.get("scan_id") or ""),
+        ga4_property_id=str(arguments.get("ga4_property_id") or ""),
+        bing_site_url=str(arguments.get("bing_site_url") or ""),
+        providers=[str(p) for p in (arguments.get("providers") or []) if p],
+        intents=[str(i) for i in (arguments.get("intents") or []) if i],
+        mode=mode,
+        include_cross_analysis=bool(arguments.get("include_cross_analysis", True)),
+        include_recommendations=bool(arguments.get("include_recommendations", True)),
+        include_ai_visibility=bool(arguments.get("include_ai_visibility", True)),
+        ai_reasoning=arguments.get("ai_reasoning") if "ai_reasoning" in arguments else None,
+    )
+    enriched, _profile, notes = SeoOnboardingService().enrich_audit_request(request)
+    return enriched, notes
+
+
+async def handle_seo_audit(scans: ScanRegistry, arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.seo_intelligence import SeoIntelligenceService
+    from navigation.seo_intelligence.planning.modes import mode_summary, resolve_effective_mode
+    from navigation.seo_intelligence.setup.auth_requirements import auth_prompts_for_request, audit_blocked_by_auth
+
+    website_url = str(arguments.get("website_url") or arguments.get("url") or "").strip()
+    if not website_url:
+        return make_envelope("perception_seo_audit", ok=False, error="website_url required")
+    request, setup_notes = _prepare_seo_audit_request(arguments)
+    effective_mode = resolve_effective_mode(request)
+
+    if audit_blocked_by_auth(request):
+        prompts = auth_prompts_for_request(request)
+        return make_envelope(
+            "perception_seo_audit",
+            ok=False,
+            error="auth_required",
+            data={
+                "auth_required": prompts,
+                "mode": effective_mode.value,
+                "agent_summary": {
+                    "blocking": [p["prompt"] for p in prompts],
+                    "advisory": [
+                        "Professional SEO requires Google OAuth â€” run perception_seo_connect with action=connect_google (interactive opens browser).",
+                        "Then retry perception_seo_audit with mode=professional.",
+                    ],
+                },
+            },
+        )
+
+    service = SeoIntelligenceService(scan_registry=scans)
+    result = await service.audit(request)
+    payload = result.to_dict()
+    advisory = [
+        "Every recommendation must cite evidence_ids â€” run perception_seo_verify after fixes.",
+        "Pass scan_id from perception_observe for Browser Intelligence rendering evidence.",
+    ]
+    if effective_mode.value == "development":
+        advisory.append(
+            "Development SEO mode (default) â€” no auth. Use mode=professional when user asks to optimize with Search Console data."
+        )
+    else:
+        advisory.append("Professional SEO mode â€” live GSC/GA4 evidence included when connected.")
+    if setup_notes:
+        advisory.append(f"onboarding:{','.join(setup_notes[:3])}")
+    if result.degraded:
+        advisory.append(f"degraded:{','.join(result.degraded[:5])}")
+    return make_envelope(
+        "perception_seo_audit",
+        ok=True,
+        data={
+            "seo_audit": payload,
+            "mode": mode_summary(effective_mode),
+            "agent_summary": {
+                "website_url": website_url,
+                "mode": effective_mode.value,
+                "evidence_count": len(result.evidence),
+                "recommendation_count": len(result.recommendations),
+                "capability_routes": [r.to_dict() for r in result.capability_routes],
+                "connections": result.connections,
+                "advisory": advisory + [
+                    "Prefer perception_seo_audit_start + perception_seo_audit_poll for long audits (non-blocking).",
+                ],
+            },
+        },
+        degraded=result.degraded + setup_notes,
+    )
+
+
+async def handle_seo_audit_start(scans: ScanRegistry, arguments: dict[str, Any]) -> dict[str, Any]:
+    import asyncio
+
+    from navigation.seo_intelligence.jobs import SeoAuditJobRunner, get_job_store
+    from navigation.seo_intelligence.models import SeoAuditMode
+    from navigation.seo_intelligence.planning.modes import mode_summary, resolve_effective_mode
+    from navigation.seo_intelligence.planning.orchestrator import SeoAuditOrchestrator
+    from navigation.seo_intelligence.setup.auth_requirements import audit_blocked_by_auth, auth_prompts_for_request
+
+    website_url = str(arguments.get("website_url") or arguments.get("url") or "").strip()
+    if not website_url:
+        return make_envelope("perception_seo_audit_start", ok=False, error="website_url required")
+
+    request, setup_notes = _prepare_seo_audit_request(arguments)
+    effective_mode = resolve_effective_mode(request)
+
+    if audit_blocked_by_auth(request):
+        prompts = auth_prompts_for_request(request)
+        return make_envelope(
+            "perception_seo_audit_start",
+            ok=False,
+            error="auth_required",
+            data={
+                "auth_required": prompts,
+                "mode": effective_mode.value,
+                "agent_summary": {
+                    "blocking": [p["prompt"] for p in prompts],
+                    "advisory": [
+                        "Professional SEO requires Google OAuth â€” run perception_seo_connect first.",
+                    ],
+                },
+            },
+        )
+
+    # Development SEO: synchronous instant audit (2â€“5s usefulness-first budget).
+    if effective_mode == SeoAuditMode.DEVELOPMENT:
+        if not request.scan_id:
+            return make_envelope(
+                "perception_seo_audit_start",
+                ok=False,
+                error="scan_id required for development SEO",
+                data={
+                    "mode": mode_summary(effective_mode),
+                    "agent_summary": {
+                        "blocking": ["Run perception_observe or perception_navigate_and_observe first, then pass scan_id."],
+                    },
+                },
+            )
+        orchestrator = SeoAuditOrchestrator(scan_registry=scans)
+        budget_s = float(arguments.get("budget_s") or 5.0)
+        result, partial = await orchestrator.development_audit_bounded(request, budget_s=budget_s)
+        advisory = [
+            "Development SEO completed inline â€” no polling required.",
+            f"Use perception_seo_query with audit_id={result.audit_id} for graph reads.",
+        ]
+        if partial:
+            advisory.insert(
+                0,
+                f"Partial audit returned within {budget_s}s budget â€” rerun with professional mode for full crawl.",
+            )
+        return make_envelope(
+            "perception_seo_audit_start",
+            ok=True,
+            data={
+                "status": "completed" if not partial else "partial",
+                "instant": True,
+                "terminal": True,
+                "partial": partial,
+                "audit_id": result.audit_id,
+                "seo_audit": result.to_dict(),
+                "mode": mode_summary(effective_mode),
+                "agent_summary": {
+                    "website_url": website_url,
+                    "mode": effective_mode.value,
+                    "recommendation_count": len(result.recommendations),
+                    "evidence_count": len(result.evidence),
+                    "advisory": advisory,
+                },
+            },
+            degraded=sorted(set(setup_notes + list(result.degraded))),
+        )
+
+    # Professional SEO: async background job.
+    runner = SeoAuditJobRunner(scan_registry=scans)
+    audit_job_id = runner.start(request, setup_notes=setup_notes)
+    job = get_job_store().get(audit_job_id)
+
+    return make_envelope(
+        "perception_seo_audit_start",
+        ok=True,
+        data={
+            "audit_job_id": audit_job_id,
+            "status": job.status.value if job else "queued",
+            "instant": False,
+            "poll_interval_ms": 2000,
+            "poll_tool": "perception_seo_audit_poll",
+            "mode": mode_summary(effective_mode),
+            "agent_summary": {
+                "website_url": website_url,
+                "mode": effective_mode.value,
+                "advisory": [
+                    "Poll perception_seo_audit_poll until terminal status.",
+                    "Use perception_seo_query for fast graph reads after evidence arrives.",
+                    "Cancel with perception_seo_audit_cancel if needed.",
+                ],
+            },
+        },
+        degraded=setup_notes,
+    )
+
+
+async def handle_seo_audit_poll(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.seo_intelligence.jobs import get_job_store
+
+    audit_job_id = str(arguments.get("audit_job_id") or "").strip()
+    if not audit_job_id:
+        return make_envelope("perception_seo_audit_poll", ok=False, error="audit_job_id required")
+
+    since_seq = int(arguments.get("since_evidence_seq") or 0)
+    store = get_job_store()
+    job = store.get(audit_job_id)
+    if job is None:
+        return make_envelope("perception_seo_audit_poll", ok=False, error="audit_job_not_found")
+
+    job.poll_seq += 1
+    store.save(job)
+
+    evidence_delta = store.evidence_delta_since(audit_job_id, since_seq)
+    partial_summary: dict[str, Any] = {
+        "evidence_count": len(job.evidence_ids),
+        "recommendation_count": 0,
+    }
+    if job.seo_audit:
+        partial_summary["recommendation_count"] = len((job.seo_audit.get("recommendations") or []))
+
+    data: dict[str, Any] = {
+        **job.to_dict(),
+        "evidence_delta": evidence_delta,
+        "partial_summary": partial_summary,
+    }
+    if job.terminal and job.seo_audit:
+        data["seo_audit"] = job.seo_audit
+
+    advisory = [
+        "Poll until status is completed, failed, or cancelled.",
+        "Pass since_evidence_seq to receive only new evidence deltas.",
+    ]
+    if job.terminal and job.latest_audit_id:
+        advisory.append(f"Use perception_seo_query with audit_id={job.latest_audit_id}.")
+
+    return make_envelope(
+        "perception_seo_audit_poll",
+        ok=True,
+        data={
+            "seo_audit_job": data,
+            "agent_summary": {
+                "audit_job_id": audit_job_id,
+                "status": job.status.value,
+                "terminal": job.terminal,
+                "evidence_count": len(job.evidence_ids),
+                "advisory": advisory,
+            },
+        },
+        degraded=job.degraded,
+        error=job.error if job.status.value == "failed" else None,
+    )
+
+
+async def handle_seo_audit_cancel(arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.seo_intelligence.jobs import get_job_store
+
+    audit_job_id = str(arguments.get("audit_job_id") or "").strip()
+    if not audit_job_id:
+        return make_envelope("perception_seo_audit_cancel", ok=False, error="audit_job_id required")
+
+    job = get_job_store().request_cancel(audit_job_id)
+    if job is None:
+        return make_envelope("perception_seo_audit_cancel", ok=False, error="audit_job_not_found")
+
+    return make_envelope(
+        "perception_seo_audit_cancel",
+        ok=True,
+        data={
+            "audit_job_id": audit_job_id,
+            "status": job.status.value,
+            "agent_summary": {
+                "advisory": ["Job marked cancelled; in-flight provider work may finish briefly."],
+            },
+        },
+    )
+
+
+async def handle_seo_verify(scans: ScanRegistry, arguments: dict[str, Any]) -> dict[str, Any]:
+    from navigation.seo_intelligence import SeoIntelligenceService
+
+    website_url = str(arguments.get("website_url") or arguments.get("url") or "").strip()
+    if not website_url:
+        return make_envelope("perception_seo_verify", ok=False, error="website_url required")
+    request, _setup_notes = _prepare_seo_audit_request(arguments)
+    rec_ids = [str(r) for r in (arguments.get("recommendation_ids") or []) if r]
+    service = SeoIntelligenceService(scan_registry=scans)
+    outcome = await service.verify(request, recommendation_ids=rec_ids)
+    ok = bool(outcome.get("ok"))
+    verification = outcome.get("verification") or {}
+    return make_envelope(
+        "perception_seo_verify",
+        ok=ok,
+        error=str(outcome.get("error") or "") if not ok else None,
+        data={
+            "seo_verify": outcome,
+            "agent_summary": {
+                "passed_count": verification.get("passed_count"),
+                "failed_count": verification.get("failed_count"),
+                "pending_resolved": verification.get("items"),
+                "advisory": [
+                    "Verification compares graph baseline to fresh audit evidence.",
+                    "Also run perception_verify for UI-level confirmation.",
+                ],
+            },
+        },
+    )

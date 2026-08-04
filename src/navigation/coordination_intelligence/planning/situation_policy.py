@@ -61,10 +61,15 @@ def derive_discriminators(psm: ProjectSituationModel) -> dict[str, str]:
     cluster = psm.situation.cluster_id.lower()
 
     task_scope = _derive_task_scope(intent_text, situation, cluster, psm)
+    # Sticky design episode: verify-fail must not erase Done-ladder obligations.
+    if task_scope in ("design_driven", "redesign", "system_setup"):
+        psm.episode.retry_counters["episode_design_scope"] = task_scope
     design_ref = _derive_design_reference_posture(psm, intent_text)
     system = _derive_system_posture(psm)
     foundation = _derive_foundation_posture(psm)
     polish = str(psm.episode.retry_counters.get("polish_saturation") or "none")
+
+    surface = str(getattr(psm.episode, "surface_type", None) or "unknown")
 
     return {
         "task_scope": task_scope,
@@ -74,7 +79,15 @@ def derive_discriminators(psm: ProjectSituationModel) -> dict[str, str]:
         "system_posture": system,
         "foundation_posture": foundation,
         "polish_saturation": polish if polish in ("none", "soft", "hard") else "none",
+        "surface_type": surface,
     }
+
+
+def sticky_design_scope(psm: ProjectSituationModel) -> str | None:
+    raw = psm.episode.retry_counters.get("episode_design_scope")
+    if raw in ("design_driven", "redesign", "system_setup"):
+        return str(raw)
+    return None
 
 
 def _derive_task_scope(
@@ -83,9 +96,66 @@ def _derive_task_scope(
     cluster: str,
     psm: ProjectSituationModel,
 ) -> str:
-    if situation in ("hotfix",) or "hotfix" in intent_text or "incident" in cluster:
+    sticky = sticky_design_scope(psm)
+    explicit_hotfix = (
+        situation in ("hotfix",)
+        or "hotfix" in intent_text
+        or "incident" in cluster
+        or any(k in intent_text for k in ("production incident", "pager", "sev1", "sev2"))
+    )
+    explicit_bug_intent = "bug" in intent_text or situation in ("functional_bug",)
+
+    if explicit_hotfix:
         return "hotfix"
-    if situation in ("functional_bug",) or "debug" in cluster or "bug" in intent_text:
+
+    # Intent / situation design signals beat temporary debug cluster bumps.
+    # Do NOT treat bare "foundation" / "component foundation" as system_setup —
+    # that is mid-suite select language on redesign/portfolio suites (Test 10).
+    if any(
+        k in intent_text
+        for k in (
+            "design system",
+            "token system",
+            "theme setup",
+            "design tokens",
+            "system setup",
+            "foundations setup",
+        )
+    ):
+        return "system_setup"
+    if any(
+        k in intent_text
+        for k in ("redesign", "rebrand", "new landing", "marketing site", "homepage hero")
+    ):
+        return "redesign" if "redesign" in intent_text or "rebrand" in intent_text else "design_driven"
+    if any(k in intent_text for k in ("portfolio", "about page", "landing page", "marketing")):
+        return "design_driven"
+    if ("landing" in intent_text or ("dashboard" in intent_text and "new" in intent_text)):
+        return "design_driven"
+    if situation in ("redesign", "inspiration_needed"):
+        return "design_driven"
+    if "design.reference" in cluster or "design.figma" in cluster:
+        return "design_driven"
+
+    # Sticky design episode survives verify-fail → cluster.debug.* reclassification.
+    if sticky and not explicit_bug_intent:
+        if any(
+            k in intent_text
+            for k in (
+                "padding",
+                "margin",
+                "fix typo",
+                "one button",
+                "single button",
+                "tweak",
+                "color of",
+                "rename",
+            )
+        ):
+            return "surgical"
+        return sticky
+
+    if explicit_bug_intent or ("debug" in cluster and not sticky):
         return "debug"
     if any(
         k in intent_text
@@ -101,30 +171,22 @@ def _derive_task_scope(
         )
     ):
         return "surgical"
-    if any(k in intent_text for k in ("design system", "token", "foundation", "theme setup")):
-        return "system_setup"
-    if any(
-        k in intent_text
-        for k in ("redesign", "rebrand", "new landing", "marketing site", "homepage hero")
-    ):
-        return "redesign" if "redesign" in intent_text or "rebrand" in intent_text else "design_driven"
-    if "landing" in intent_text or "dashboard" in intent_text and "new" in intent_text:
-        return "design_driven"
-    if situation in ("redesign", "inspiration_needed"):
-        return "design_driven"
-    if "design.reference" in cluster or "design.figma" in cluster:
-        return "design_driven"
     return "feature_incremental"
 
 
 def _derive_design_reference_posture(psm: ProjectSituationModel, intent_text: str) -> str:
-    persistent = psm.artifacts.persistent or {}
-    if persistent.get("figma_connected") or "figma" in intent_text:
-        return "figma"
+    """MVP: never return 'figma' — Figma Intelligence is parked (parked/MVP_EXCLUDE_FIGMA.md)."""
+    snapshot = psm.evidence.capability_ledger.get("design_snapshot") or {}
+    if (
+        snapshot.get("status") in ("succeeded", "provisional")
+        or snapshot.get("advancement_eligible") is True
+        or bool(psm.artifacts.snapshot_id)
+    ):
+        return "snapshot"
     design = psm.evidence.domains.get("design_source")
     assets = psm.evidence.domains.get("assets")
-    attempts = psm.episode.retry_counters.get("capability_attempts") or {}
-    if int(attempts.get("inspiration_workflow", 0)) >= 1 or (
+    inspiration = psm.evidence.capability_ledger.get("inspiration_workflow") or {}
+    if inspiration.get("status") in ("succeeded", "provisional") or (
         design and design.posture not in ("unknown",)
     ):
         return "inspiration"
@@ -132,6 +194,11 @@ def _derive_design_reference_posture(psm: ProjectSituationModel, intent_text: st
         return "agreed_with_refs"
     if any(k in intent_text for k in ("no reference", "no inspiration", "from scratch")):
         return "agreed_no_refs"
+    # Legacy figma_connected / "figma" in intent must NOT select design.figma.early.
+    # Prefer snapshot when the host is measuring a live page; otherwise none.
+    persistent = psm.artifacts.persistent or {}
+    if persistent.get("figma_connected") or "figma" in intent_text:
+        return "snapshot" if psm.artifacts.snapshot_id else "none"
     return "none"
 
 
@@ -145,10 +212,11 @@ def _derive_system_posture(psm: ProjectSituationModel) -> str:
 
 
 def _derive_foundation_posture(psm: ProjectSituationModel) -> str:
-    attempts = psm.episode.retry_counters.get("capability_attempts") or {}
-    if int(attempts.get("component_integrate", 0)) >= 1:
+    integrated = psm.evidence.capability_ledger.get("component_integrate") or {}
+    selected = psm.evidence.capability_ledger.get("component_select") or {}
+    if integrated.get("status") == "succeeded":
         return "integrated"
-    if int(attempts.get("component_select", 0)) >= 1:
+    if selected.get("status") == "succeeded":
         return "selected"
     return "unknown"
 

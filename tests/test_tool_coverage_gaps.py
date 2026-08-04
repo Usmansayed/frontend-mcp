@@ -20,7 +20,6 @@ sys.path.insert(0, str(ROOT / "src"))
 from navigation.mcp.handlers import (
     handle_audit_best_practices,
     handle_audit_performance,
-    handle_figma_connect,
     handle_resource_avatar_search,
     handle_resource_font_search,
     handle_resource_illustration_search,
@@ -31,15 +30,6 @@ from navigation.mcp.handlers import (
 
 def _run(coro) -> dict:
     return asyncio.run(coro)
-
-
-@pytest.mark.unit
-def test_perception_figma_connect_envelope() -> None:
-    """perception_figma_connect must return a well-formed envelope even without a PAT."""
-    result = _run(handle_figma_connect({}))
-    assert result["contract_version"] == "1.0"
-    assert result["tool"] == "perception_figma_connect"
-    assert isinstance(result.get("data"), dict)
 
 
 @pytest.mark.unit

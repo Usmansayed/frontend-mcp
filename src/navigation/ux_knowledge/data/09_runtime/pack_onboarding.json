@@ -1,0 +1,224 @@
+{
+  "pack_id": "pack_onboarding",
+  "title": "Onboarding & First-Use Playbook",
+  "target_surfaces": [
+    "perception://guide/greenfield",
+    "greenfield",
+    "feature"
+  ],
+  "retrieval_keys": {
+    "surface_type": [
+      "onboarding",
+      "landing"
+    ],
+    "user_flow": [
+      "onboarding",
+      "signup",
+      "checkout"
+    ]
+  },
+  "playbook_id": "pb_onboarding",
+  "pattern_refs": [
+    "pat_12_step_color_scale",
+    "pat_accessible_color_tokens",
+    "pat_adaptive_faceted_navigation",
+    "pat_advanced_settings_accordion",
+    "pat_ai_legible_context_layer",
+    "pat_ai_legible_design_system_context",
+    "pat_aria_describedby_hints",
+    "pat_aria_describedby_instructions",
+    "pat_aria_live_status_announcer",
+    "pat_auto_save_draft",
+    "pat_bmap_cta_block",
+    "pat_bmap_cta_design"
+  ],
+  "related_principle_ids": [
+    "UX_PRD_PEAKENDRULE_001",
+    "UX_PRD_BMAPDIAGN_001",
+    "UX_PRD_GUEST_001",
+    "UX_PRD_FACETEDNAVIG_001",
+    "UX_PRD_SEARCHDISCOV_001",
+    "UX_PRD_SOCIALPROOFV_001",
+    "UX_COG_FOGG_013"
+  ],
+  "claim_stubs": [
+    {
+      "claim_id": "UX_PRD_BMAPDIAGN_001",
+      "name": "Diagnose Onboarding CTAs using B=MAP",
+      "engineering_meaning": "Ensure every critical onboarding CTA simultaneously provides Motivation, Ability, and a Prompt. If a user fails to act, diagnose the drop-off by identifying which of these three elements is missing.",
+      "how_to_detect_violations": "Audit onboarding drop-off points. Check if the user knows why to act (Motivation), how to act easily (Ability), and is explicitly asked to act now (Prompt).",
+      "when_to_apply": "When designing or optimizing user onboarding flows, permission requests, or core activation events where user action is required.",
+      "when_not_to_apply": "When actions are automated by the system or when dealing with passive informational consumption rather than interactive tasks.",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_pilot_fogg"
+      ],
+      "full_card_path": "kb://cards/UX_PRD_BMAPDIAGN_001"
+    },
+    {
+      "claim_id": "UX_PRD_GUEST_001",
+      "name": "Guest Checkout Prominence",
+      "engineering_meaning": "Guest checkout must be a primary, highly visible path; do not force account creation to purchase.",
+      "how_to_detect_violations": "Checkout entry audit: guest path missing, below fold, or weaker than login.",
+      "when_to_apply": "Consumer ecommerce checkout entry.",
+      "when_not_to_apply": "B2B portals requiring authenticated purchasing by policy.",
+      "confidence": 0.95,
+      "source_ids": [
+        "src_baymard_checkout",
+        "src_fogg_behaviormodel"
+      ],
+      "full_card_path": "kb://cards/UX_PRD_GUEST_001"
+    },
+    {
+      "claim_id": "UX_PRD_PEAKENDRULE_001",
+      "name": "Peak-End Rule for Onboarding Flows",
+      "engineering_meaning": "Optimize the emotional peak and the final step of onboarding flows to be highly positive and rewarding, as users judge the overall experience based on these specific moments rather than the average of all steps.",
+      "how_to_detect_violations": "Review multi-step onboarding flows. Identify the most friction-heavy step (potential negative peak) and the final success state (end). Flag if the final step lacks clear positive reinforcement, celebration, or if stressful steps lack supportive design.",
+      "when_to_apply": "When designing multi-step onboarding sequences, high-stakes user actions (e.g., launching a first campaign), or complex setup flows where user anxiety might be high.",
+      "when_not_to_apply": "During repetitive, high-frequency utility tasks where users prioritize pure speed and efficiency over emotional engagement or 'delight'.",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_agg_lawsofux_peakend"
+      ],
+      "full_card_path": "kb://cards/UX_PRD_PEAKENDRULE_001"
+    },
+    {
+      "claim_id": "UX_PRD_SOCIALPROOFV_001",
+      "name": "Show Number of User Ratings in List Items",
+      "engineering_meaning": "Always display the total number of user ratings alongside the average rating score within product list items.",
+      "how_to_detect_violations": "Identify product list items displaying a rating average (e.g., stars). Verify that the total count of user ratings is explicitly shown next to the average.",
+      "when_to_apply": "Apply to all e-commerce product lists (category pages, search results, recommendations) where user ratings are supported and exist for the product.",
+      "when_not_to_apply": "Do not apply if the site does not feature user reviews, or if the product has no reviews (depending on the design choice to hide empty ratings).",
+      "confidence": 0.95,
+      "source_ids": [
+        "url_chk_baymard_lists"
+      ],
+      "full_card_path": "kb://cards/UX_PRD_SOCIALPROOFV_001"
+    },
+    {
+      "claim_id": "UX_PRD_FACETEDNAVIG_001",
+      "name": "Faceted Navigation vs. Simple Filters",
+      "engineering_meaning": "Use faceted navigation (multiple dimensional filters) for large, complex product catalogs to improve findability, but rely on simple filters for smaller sets to minimize interaction cost.",
+      "how_to_detect_violations": "Evaluate product listing or search results pages: identify if the filtering UI offers multiple distinct dimensions (facets) or just basic, single-dimension filters.",
+      "when_to_apply": "Apply faceted navigation when users need to narrow down extremely large content sets across multiple distinct dimensions (e.g., e-commerce product catalogs with size, color, brand).",
+      "when_not_to_apply": "Do not use faceted navigation if the content set is small or users only need one or two basic criteria, as it adds unnecessary cognitive load and metadata maintenance.",
+      "confidence": 0.9,
+      "source_ids": [
+        "url_nng_filters"
+      ],
+      "full_card_path": "kb://cards/UX_PRD_FACETEDNAVIG_001"
+    },
+    {
+      "claim_id": "UX_PRD_HOMEPAGECATE_001",
+      "name": "Feature at Least 40% of Product Categories on Homepage",
+      "engineering_meaning": "Visually feature a broad range of product types—at least 40% of the site's top-level categories—directly on the homepage using images, thumbnails, or text links.",
+      "how_to_detect_violations": "Calculate the percentage of top-level product categories visually represented on the homepage. Flag if it is below 40%.",
+      "when_to_apply": "When designing the homepage for an e-commerce site with a diverse or multi-category product catalog.",
+      "when_not_to_apply": "When designing for single-product stores or highly specialized brands with a very narrow product range.",
+      "confidence": 0.9,
+      "source_ids": [
+        "url_sit_baymard_homepage_design"
+      ],
+      "full_card_path": "kb://cards/UX_PRD_HOMEPAGECATE_001"
+    },
+    {
+      "claim_id": "UX_COG_FOGG_013",
+      "name": "Fogg Behavior Model (B=MAP)",
+      "engineering_meaning": "A target behavior occurs when Motivation, Ability, and a Prompt converge at the same moment (B=MAP).",
+      "how_to_detect_violations": "High exposure + low conversion: check if prompt is hidden, task is hard, or value is unclear.",
+      "when_to_apply": "Conversion CTAs, onboarding, notifications, habit loops.",
+      "when_not_to_apply": "Passive reading surfaces; automated backend processes; manipulative dark patterns.",
+      "confidence": 0.9,
+      "source_ids": [
+        "src_fogg_behaviormodel",
+        "src_baymard_checkout",
+        "url_onb_fogg_logrocket"
+      ],
+      "full_card_path": "kb://cards/UX_COG_FOGG_013"
+    },
+    {
+      "claim_id": "UX_PRD_SEARCHDISCOV_001",
+      "name": "Make Search Prominently Visible",
+      "engineering_meaning": "Display the search input field as an open, visible text box rather than hiding it behind an icon or menu to maximize discoverability.",
+      "how_to_detect_violations": "Identify the search component in the UI. Verify that the text input field is visible by default without requiring a user interaction (like clicking a magnifying glass icon) to expand or reveal it.",
+      "when_to_apply": "When search is a primary navigation method for users, such as in e-commerce catalogs, large content repositories, or complex applications.",
+      "when_not_to_apply": "During focused conversion flows (like checkout) where global search might distract the user and lead to abandonment, unless the search is specifically scoped to the task (e.g., searching for a store location or applying a promo code).",
+      "confidence": 0.9,
+      "source_ids": [
+        "url_nng_search"
+      ],
+      "full_card_path": "kb://cards/UX_PRD_SEARCHDISCOV_001"
+    },
+    {
+      "claim_id": "UX_PRD_WIZARDPATTER_001",
+      "name": "Use Wizards for Infrequent or Novice Multi-Step Tasks",
+      "engineering_meaning": "Use a wizard pattern to guide users through complex, multi-step tasks if the process is performed infrequently (e.g., onboarding, setup) or by novice users. Avoid wizards for frequent tasks or expert users, as the step-by-step flow increases interaction cost and limits control.",
+      "how_to_detect_violations": "Identify multi-step data entry flows. Check if the task is performed frequently by the same user or requires cross-referencing data across steps. If frequent or requires cross-referencing, a wizard is likely an anti-pattern.",
+      "when_to_apply": "When users are unfamiliar with a domain, lack expertise, or perform a complex process rarely (like initial account setup or onboarding), and need guided, sequential steps with branching logic.",
+      "when_not_to_apply": "When users perform the task repeatedly, need to compare information across steps, require flexible non-linear workflows, or are domain experts who need high control and efficiency.",
+      "confidence": 0.9,
+      "source_ids": [
+        "url_nng_wizard"
+      ],
+      "full_card_path": "kb://cards/UX_PRD_WIZARDPATTER_001"
+    }
+  ],
+  "conflict_pairs": [
+    {
+      "a": "ap_hiding_the_guest_checkou",
+      "b": "UX_PRD_GUEST_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_a_naked_get_started_butt",
+      "b": "UX_PRD_BMAPDIAGN_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_firing_multiple_sequenti",
+      "b": "UX_COG_FOGG_013",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_forcing_users_to_create_",
+      "b": "UX_PRD_GUEST_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_using_generic_labels_lik",
+      "b": "UX_PRD_BMAPDIAGN_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_abruptly_dropping_the_us",
+      "b": "UX_PRD_PEAKENDRULE_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_presenting_a_massive_sin",
+      "b": "UX_PRD_WIZARDPATTER_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_using_a_single_long_drop",
+      "b": "UX_PRD_FACETEDNAVIG_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_a_standalone_next_or_sub",
+      "b": "UX_PRD_BMAPDIAGN_001",
+      "decision_hint": "anti-pattern"
+    },
+    {
+      "a": "ap_displaying_a_massive_mul",
+      "b": "UX_PRD_FACETEDNAVIG_001",
+      "decision_hint": "anti-pattern"
+    }
+  ],
+  "budgets": {
+    "max_claim_stubs": 20,
+    "max_rationale_tokens": 2500
+  },
+  "created_at": "2026-07-21",
+  "notes": "Graph-slice pack — deterministic retrieval, no embeddings."
+}

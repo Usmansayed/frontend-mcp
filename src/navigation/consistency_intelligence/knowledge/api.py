@@ -37,9 +37,12 @@ class KnowledgeAPI:
 		*,
 		repo_root: str | Path | None = None,
 	) -> ProjectDesignGraph:
-		root = Path(repo_root) if repo_root else None
-		if root is not None:
-			self._store = GraphStore(storage_root=root)
+		from navigation.consistency_intelligence.graph.persistence import get_graph_store
+
+		if repo_root is not None and str(repo_root).strip():
+			root = Path(repo_root)
+			# Reuse process-scoped store — never wipe in-memory graph after refresh.
+			self._store = get_graph_store(root)
 		return self._store.load(project_id, repo_root=str(repo_root or ''))
 
 	def save_graph(self, graph: ProjectDesignGraph) -> str | None:

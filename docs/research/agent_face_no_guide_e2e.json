@@ -1,0 +1,721 @@
+{
+  "suite": "agent_face_no_guide_e2e",
+  "url": "http://127.0.0.1:18765",
+  "ok": true,
+  "passed": 9,
+  "total": 9,
+  "cases": [
+    {
+      "id": "forms",
+      "ok": true,
+      "expect_class": "forms",
+      "got_class": "forms",
+      "class_ok": true,
+      "card_present_rate": 1.0,
+      "followed_card_rate": 1.0,
+      "guides_read": 0,
+      "claim_ok_at_end": true,
+      "verified": true,
+      "finish_ok": true,
+      "steps": [
+        {
+          "i": 0,
+          "tool": "perception_health",
+          "ok": true,
+          "latency_ms": 2331,
+          "card_class": "forms",
+          "card_next": "perception_probe_form",
+          "card_gate": "maintenance",
+          "card_claim_ok": false,
+          "owed_families": [
+            "forms"
+          ],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 1,
+          "tool": "perception_session_start",
+          "ok": true,
+          "latency_ms": 4278,
+          "card_class": "forms",
+          "card_next": "perception_probe_form",
+          "card_gate": "blocked",
+          "card_claim_ok": false,
+          "owed_families": [
+            "forms"
+          ],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 2,
+          "tool": "perception_probe_form",
+          "ok": true,
+          "latency_ms": 1534,
+          "card_class": "forms",
+          "card_next": "perception_probe_form",
+          "card_gate": "maintenance",
+          "card_claim_ok": false,
+          "owed_families": [
+            "forms"
+          ],
+          "followed_card": true,
+          "error": null
+        }
+      ],
+      "notes": [
+        "verify_invalid=True",
+        "verify_valid=True"
+      ],
+      "error": null
+    },
+    {
+      "id": "hotfix",
+      "ok": true,
+      "expect_class": "hotfix",
+      "got_class": "hotfix",
+      "class_ok": true,
+      "card_present_rate": 1.0,
+      "followed_card_rate": 1.0,
+      "guides_read": 0,
+      "claim_ok_at_end": true,
+      "verified": true,
+      "finish_ok": true,
+      "steps": [
+        {
+          "i": 0,
+          "tool": "perception_health",
+          "ok": true,
+          "latency_ms": 27,
+          "card_class": "hotfix",
+          "card_next": "perception_navigate_and_observe",
+          "card_gate": "maintenance",
+          "card_claim_ok": false,
+          "owed_families": [],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 1,
+          "tool": "perception_session_start",
+          "ok": true,
+          "latency_ms": 3,
+          "card_class": "hotfix",
+          "card_next": "perception_navigate_and_observe",
+          "card_gate": "maintenance",
+          "card_claim_ok": false,
+          "owed_families": [],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 2,
+          "tool": "perception_navigate_and_observe",
+          "ok": true,
+          "latency_ms": 1075,
+          "card_class": "hotfix",
+          "card_next": "perception_navigate_and_observe",
+          "card_gate": "maintenance",
+          "card_claim_ok": false,
+          "owed_families": [],
+          "followed_card": true,
+          "error": null
+        }
+      ],
+      "notes": [
+        "verify_text(Home)=True"
+      ],
+      "error": null
+    },
+    {
+      "id": "greenfield",
+      "ok": true,
+      "expect_class": "greenfield",
+      "got_class": "greenfield",
+      "class_ok": true,
+      "card_present_rate": 1.0,
+      "followed_card_rate": 1.0,
+      "guides_read": 0,
+      "claim_ok_at_end": false,
+      "verified": true,
+      "finish_ok": true,
+      "steps": [
+        {
+          "i": 0,
+          "tool": "perception_health",
+          "ok": true,
+          "latency_ms": 35,
+          "card_class": "greenfield",
+          "card_next": "perception_inspiration_collect",
+          "card_gate": "blocked",
+          "card_claim_ok": false,
+          "owed_families": [
+            "inspiration",
+            "visual_feedback",
+            "snapshot"
+          ],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 1,
+          "tool": "perception_session_start",
+          "ok": true,
+          "latency_ms": 8,
+          "card_class": "greenfield",
+          "card_next": "perception_inspiration_collect",
+          "card_gate": "blocked",
+          "card_claim_ok": false,
+          "owed_families": [
+            "inspiration",
+            "visual_feedback",
+            "snapshot"
+          ],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 2,
+          "tool": "perception_inspiration_collect",
+          "ok": true,
+          "latency_ms": 1525,
+          "card_class": "greenfield",
+          "card_next": "perception_visual_feedback",
+          "card_gate": "blocked",
+          "card_claim_ok": false,
+          "owed_families": [
+            "visual_feedback",
+            "observe",
+            "component"
+          ],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 3,
+          "tool": "perception_visual_feedback",
+          "ok": true,
+          "latency_ms": 294,
+          "card_class": "greenfield",
+          "card_next": "perception_navigate_and_observe",
+          "card_gate": "blocked",
+          "card_claim_ok": false,
+          "owed_families": [
+            "observe",
+            "component"
+          ],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 4,
+          "tool": "perception_navigate_and_observe",
+          "ok": true,
+          "latency_ms": 1324,
+          "card_class": "greenfield",
+          "card_next": "perception_select_component_foundation",
+          "card_gate": "blocked",
+          "card_claim_ok": false,
+          "owed_families": [
+            "component"
+          ],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 5,
+          "tool": "perception_select_component_foundation",
+          "ok": true,
+          "latency_ms": 1548,
+          "card_class": "greenfield",
+          "card_next": "perception_verify",
+          "card_gate": "ready",
+          "card_claim_ok": false,
+          "owed_families": [],
+          "followed_card": true,
+          "error": null
+        }
+      ],
+      "notes": [
+        "vf_ok=True",
+        "verify=True",
+        "claim_ok=False"
+      ],
+      "error": null
+    },
+    {
+      "id": "redesign",
+      "ok": true,
+      "expect_class": "redesign",
+      "got_class": "redesign",
+      "class_ok": true,
+      "card_present_rate": 1.0,
+      "followed_card_rate": 1.0,
+      "guides_read": 0,
+      "claim_ok_at_end": false,
+      "verified": true,
+      "finish_ok": true,
+      "steps": [
+        {
+          "i": 0,
+          "tool": "perception_health",
+          "ok": true,
+          "latency_ms": 29,
+          "card_class": "redesign",
+          "card_next": "perception_navigate_and_observe",
+          "card_gate": "provisional",
+          "card_claim_ok": false,
+          "owed_families": [
+            "snapshot",
+            "visual_feedback",
+            "component"
+          ],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 1,
+          "tool": "perception_session_start",
+          "ok": true,
+          "latency_ms": 4,
+          "card_class": "redesign",
+          "card_next": "perception_navigate_and_observe",
+          "card_gate": "blocked",
+          "card_claim_ok": false,
+          "owed_families": [
+            "snapshot",
+            "visual_feedback",
+            "component"
+          ],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 2,
+          "tool": "perception_navigate_and_observe",
+          "ok": true,
+          "latency_ms": 1377,
+          "card_class": "redesign",
+          "card_next": "perception_build_design_snapshot",
+          "card_gate": "provisional",
+          "card_claim_ok": false,
+          "owed_families": [
+            "snapshot",
+            "visual_feedback",
+            "component"
+          ],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 3,
+          "tool": "perception_build_design_snapshot",
+          "ok": true,
+          "latency_ms": 366,
+          "card_class": "redesign",
+          "card_next": "perception_select_component_foundation",
+          "card_gate": "provisional",
+          "card_claim_ok": false,
+          "owed_families": [
+            "component",
+            "verify",
+            "sections"
+          ],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 4,
+          "tool": "perception_select_component_foundation",
+          "ok": true,
+          "latency_ms": 618,
+          "card_class": "redesign",
+          "card_next": "perception_verify",
+          "card_gate": "provisional",
+          "card_claim_ok": false,
+          "owed_families": [
+            "verify",
+            "sections"
+          ],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 5,
+          "tool": "perception_verify",
+          "ok": true,
+          "latency_ms": 601,
+          "card_class": "redesign",
+          "card_next": "perception_verify",
+          "card_gate": "provisional",
+          "card_claim_ok": false,
+          "owed_families": [
+            "verify",
+            "sections"
+          ],
+          "followed_card": true,
+          "error": null
+        }
+      ],
+      "notes": [
+        "vf_ok=True",
+        "verify=True",
+        "claim_ok=False"
+      ],
+      "error": null
+    },
+    {
+      "id": "feature",
+      "ok": true,
+      "expect_class": "feature",
+      "got_class": "feature",
+      "class_ok": true,
+      "card_present_rate": 1.0,
+      "followed_card_rate": 1.0,
+      "guides_read": 0,
+      "claim_ok_at_end": true,
+      "verified": true,
+      "finish_ok": true,
+      "steps": [
+        {
+          "i": 0,
+          "tool": "perception_health",
+          "ok": true,
+          "latency_ms": 28,
+          "card_class": "feature",
+          "card_next": "perception_navigate_and_observe",
+          "card_gate": "maintenance",
+          "card_claim_ok": false,
+          "owed_families": [],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 1,
+          "tool": "perception_session_start",
+          "ok": true,
+          "latency_ms": 5,
+          "card_class": "feature",
+          "card_next": "perception_navigate_and_observe",
+          "card_gate": "blocked",
+          "card_claim_ok": false,
+          "owed_families": [],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 2,
+          "tool": "perception_navigate_and_observe",
+          "ok": true,
+          "latency_ms": 923,
+          "card_class": "feature",
+          "card_next": "perception_navigate_and_observe",
+          "card_gate": "maintenance",
+          "card_claim_ok": false,
+          "owed_families": [],
+          "followed_card": true,
+          "error": null
+        }
+      ],
+      "notes": [
+        "verify_text(Home)=True"
+      ],
+      "error": null
+    },
+    {
+      "id": "polish",
+      "ok": true,
+      "expect_class": "hotfix",
+      "got_class": "hotfix",
+      "class_ok": true,
+      "card_present_rate": 1.0,
+      "followed_card_rate": 1.0,
+      "guides_read": 0,
+      "claim_ok_at_end": true,
+      "verified": true,
+      "finish_ok": true,
+      "steps": [
+        {
+          "i": 0,
+          "tool": "perception_health",
+          "ok": true,
+          "latency_ms": 8,
+          "card_class": "hotfix",
+          "card_next": "perception_navigate_and_observe",
+          "card_gate": "maintenance",
+          "card_claim_ok": false,
+          "owed_families": [],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 1,
+          "tool": "perception_session_start",
+          "ok": true,
+          "latency_ms": 5,
+          "card_class": "hotfix",
+          "card_next": "perception_navigate_and_observe",
+          "card_gate": "blocked",
+          "card_claim_ok": false,
+          "owed_families": [],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 2,
+          "tool": "perception_navigate_and_observe",
+          "ok": true,
+          "latency_ms": 1071,
+          "card_class": "hotfix",
+          "card_next": "perception_navigate_and_observe",
+          "card_gate": "maintenance",
+          "card_claim_ok": false,
+          "owed_families": [],
+          "followed_card": true,
+          "error": null
+        }
+      ],
+      "notes": [
+        "verify_text(Home)=True"
+      ],
+      "error": null
+    },
+    {
+      "id": "hotfix_stamped_feature",
+      "ok": true,
+      "expect_class": "hotfix",
+      "got_class": "hotfix",
+      "class_ok": true,
+      "card_present_rate": 1.0,
+      "followed_card_rate": 1.0,
+      "guides_read": 0,
+      "claim_ok_at_end": true,
+      "verified": true,
+      "finish_ok": true,
+      "steps": [
+        {
+          "i": 0,
+          "tool": "perception_health",
+          "ok": true,
+          "latency_ms": 21,
+          "card_class": "hotfix",
+          "card_next": "perception_navigate_and_observe",
+          "card_gate": "maintenance",
+          "card_claim_ok": false,
+          "owed_families": [],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 1,
+          "tool": "perception_session_start",
+          "ok": true,
+          "latency_ms": 3,
+          "card_class": "hotfix",
+          "card_next": "perception_navigate_and_observe",
+          "card_gate": "maintenance",
+          "card_claim_ok": false,
+          "owed_families": [],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 2,
+          "tool": "perception_navigate_and_observe",
+          "ok": true,
+          "latency_ms": 948,
+          "card_class": "hotfix",
+          "card_next": "perception_navigate_and_observe",
+          "card_gate": "maintenance",
+          "card_claim_ok": false,
+          "owed_families": [],
+          "followed_card": true,
+          "error": null
+        }
+      ],
+      "notes": [
+        "verify_text(Home)=True"
+      ],
+      "error": null
+    },
+    {
+      "id": "landing_signup_not_forms",
+      "ok": true,
+      "expect_class": "greenfield",
+      "got_class": "greenfield",
+      "class_ok": true,
+      "card_present_rate": 1.0,
+      "followed_card_rate": 1.0,
+      "guides_read": 0,
+      "claim_ok_at_end": false,
+      "verified": true,
+      "finish_ok": true,
+      "steps": [
+        {
+          "i": 0,
+          "tool": "perception_health",
+          "ok": true,
+          "latency_ms": 25,
+          "card_class": "greenfield",
+          "card_next": "perception_inspiration_collect",
+          "card_gate": "blocked",
+          "card_claim_ok": false,
+          "owed_families": [
+            "inspiration",
+            "visual_feedback",
+            "snapshot"
+          ],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 1,
+          "tool": "perception_session_start",
+          "ok": true,
+          "latency_ms": 4,
+          "card_class": "greenfield",
+          "card_next": "perception_inspiration_collect",
+          "card_gate": "blocked",
+          "card_claim_ok": false,
+          "owed_families": [
+            "inspiration",
+            "visual_feedback",
+            "snapshot"
+          ],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 2,
+          "tool": "perception_inspiration_collect",
+          "ok": true,
+          "latency_ms": 1741,
+          "card_class": "greenfield",
+          "card_next": "perception_visual_feedback",
+          "card_gate": "blocked",
+          "card_claim_ok": false,
+          "owed_families": [
+            "visual_feedback",
+            "observe",
+            "component"
+          ],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 3,
+          "tool": "perception_visual_feedback",
+          "ok": true,
+          "latency_ms": 290,
+          "card_class": "greenfield",
+          "card_next": "perception_navigate_and_observe",
+          "card_gate": "provisional",
+          "card_claim_ok": false,
+          "owed_families": [
+            "observe",
+            "component",
+            "verify"
+          ],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 4,
+          "tool": "perception_navigate_and_observe",
+          "ok": true,
+          "latency_ms": 1006,
+          "card_class": "greenfield",
+          "card_next": "perception_select_component_foundation",
+          "card_gate": "provisional",
+          "card_claim_ok": false,
+          "owed_families": [
+            "component",
+            "verify"
+          ],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 5,
+          "tool": "perception_select_component_foundation",
+          "ok": true,
+          "latency_ms": 296,
+          "card_class": "greenfield",
+          "card_next": "perception_verify",
+          "card_gate": "provisional",
+          "card_claim_ok": false,
+          "owed_families": [
+            "verify"
+          ],
+          "followed_card": true,
+          "error": null
+        }
+      ],
+      "notes": [
+        "vf_ok=True",
+        "verify=True",
+        "claim_ok=False"
+      ],
+      "error": null
+    },
+    {
+      "id": "checkout_feature_not_forms",
+      "ok": true,
+      "expect_class": "feature",
+      "got_class": "feature",
+      "class_ok": true,
+      "card_present_rate": 1.0,
+      "followed_card_rate": 1.0,
+      "guides_read": 0,
+      "claim_ok_at_end": true,
+      "verified": true,
+      "finish_ok": true,
+      "steps": [
+        {
+          "i": 0,
+          "tool": "perception_health",
+          "ok": true,
+          "latency_ms": 30,
+          "card_class": "feature",
+          "card_next": "perception_navigate_and_observe",
+          "card_gate": "maintenance",
+          "card_claim_ok": false,
+          "owed_families": [],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 1,
+          "tool": "perception_session_start",
+          "ok": true,
+          "latency_ms": 3,
+          "card_class": "feature",
+          "card_next": "perception_navigate_and_observe",
+          "card_gate": "blocked",
+          "card_claim_ok": false,
+          "owed_families": [],
+          "followed_card": true,
+          "error": null
+        },
+        {
+          "i": 2,
+          "tool": "perception_navigate_and_observe",
+          "ok": true,
+          "latency_ms": 1172,
+          "card_class": "feature",
+          "card_next": "perception_navigate_and_observe",
+          "card_gate": "maintenance",
+          "card_claim_ok": false,
+          "owed_families": [],
+          "followed_card": true,
+          "error": null
+        }
+      ],
+      "notes": [
+        "verify_text(Home)=True"
+      ],
+      "error": null
+    }
+  ]
+}

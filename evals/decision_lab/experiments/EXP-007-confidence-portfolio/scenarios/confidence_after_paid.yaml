@@ -1,0 +1,27 @@
+id: exp007_confidence_after_paid_families
+intent: redesign Meridian analytics dashboard
+lifecycle_stage: S03_design
+project_maturity: M1
+feeds:
+  - tool: perception_navigate_and_observe
+    ok: true
+    data:
+      url: http://localhost:5173/dashboard
+      scan_id: s7
+      agent_summary: {blocking: []}
+  - tool: perception_build_design_snapshot
+    ok: true
+    data:
+      snapshot_id: snap7
+      layout: {regions: [{role: main}, {role: section}]}
+  - tool: perception_select_component_foundation
+    ok: true
+    data:
+      selected: {id: shadcn}
+      coordination_evidence: {status: succeeded, advancement_eligible: true}
+  - tool: perception_verify
+    ok: true
+    data: {verified: true, reasons: []}
+expect:
+  portfolio_paid_contains: [observe, snapshot, component, verify]
+  episode_confidence.score_min: 0.55

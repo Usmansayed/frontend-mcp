@@ -66,9 +66,14 @@ Actions: `click_button`, `click_link`, `set_input` (with `text` / `label` / `val
 
 ### `perception_verify`
 
-Criteria: `url_contains`, `text_contains`, `js_assertions`, etc.
+Criteria: `url_contains`, `text_contains`, `js_assertions`, optional `section_id`.
 
-On failure: `failure_scan_id`, inline annotated screenshot.
+Pass condition: **`data.verified=true`** (top-level `ok` is transport only).
+
+On failure: `failure_scan_id`, inline annotated screenshot, `verified=false`.
+
+For visual drafts, claim-done also requires section checklist + Ship Council when
+`implementation_gate` sets those flags — see AGENT_GUIDE §19.
 
 ### `perception_diff`
 
@@ -381,133 +386,48 @@ Full pipeline: search or `candidate_id` → select → integrate → validate �
 
 **Returns:** `data.integration_result` (`status`, `selection`, `integration`, `validation`, `repair_attempts`).
 
-## Figma Intelligence
+## Design Snapshot / Design Sense / Consistency
 
-Read `perception://figma-guide` before calling. Connection + coordination over southleft/figma-console-mcp — not design critique.
+| Tool | Role |
+|------|------|
+| `perception_build_design_snapshot` | Measure Design Snapshot + Engineering Spec; bind reference when needed |
+| `perception_design_review` | Design review or Ship Council (`mode=ship`) |
+| `perception_consistency_review` | Refresh PDG from snapshot + batch audit |
+| `perception_consistency_audit` | Batch audit vs populated graph |
+| `perception_consistency_assess` | Single selector + actual styles |
+| `perception_consistency_propose_fix` | Fix recommendation for `standard_id` |
+| `perception_design_graph_refresh` / `_summary` | Project Design Graph I/O |
+| `perception_design_knowledge_query` | PDG queries or `ux.retrieve` |
 
-### `perception_figma_status`
+## Common Visual Feedback — `perception_visual_feedback`
 
-Module phase, connection state, session, console health.
+ONE tool for the LOOK → judge → act loop for **any** UI work. `purpose`
+(`design | consistency | component | inspiration | hotfix | forms | general`) picks the
+screenshot pack default, the `recommended_resource` guide, the purpose-shaped
+`feedback_schema` the agent fills, and the advisory `next_actions` routing.
 
-**Returns:** `data.figma_status`, `data.health`.
+| Arg | Notes |
+|-----|-------|
+| `session_id` | live capture (preferred) |
+| `scan_id` | offline reuse of stored screenshot |
+| `purpose` | why you are looking — shapes pack, guide, schema, actions |
+| `include_screenshots` | default `true`; `false` = process feedback only |
+| `screenshot_pack` | `auto` → purpose default; also `design` \| `viewport` \| `full` \| `section` \| `element` \| `none` |
+| `screenshot_selector` | element crop (forces `element`) |
+| `max_sections` / `focus_sections` | section-crop control |
+| `visual_feedback` | agent judgment after looking → drives `next_actions` (purpose extras: `borrow`/`ignore`, `standard_hints`, `field_issues`, `slot_notes`, `regression_watch`, `hierarchy_issues`) |
+| `visual_notes` / `visual_judgment` | flat aliases |
 
-### `perception_figma_connect`
+**LOOK phase (no judgment yet):** inline MCP images + `data.visual_evidence` + `data.feedback_schema` + `data.feedback_prompt` + `data.recommended_resource`.
+**Judgment phase:** normalized `data.visual_feedback` + advisory `data.next_actions` (`verify_section`, `propose_consistency_fix`, `edit_then_remeasure`, `collect_inspiration`, `probe_form`, `diff_after_fix`, …). Hints only — the agent decides.
 
-Connect user's Figma account with Personal Access Token (stored locally).
+### Shared visual args (snapshot / design_review / consistency_review / consistency_audit)
 
-| Param | Type | Default |
-|-------|------|---------|
-| `pat` | string | required for connect |
-| `action` | `connect` \| `status` \| `disconnect` | `connect` |
-| `account_hint` | string | optional label |
+The four design/consistency tools accept the same visual args as **thin aliases** over the
+common runner (`purpose=design|consistency` implied) — one capture/feedback code path.
 
-**Flow:** User provides PAT once → validate → store → never ask again unless invalid.
-
-### `perception_figma_context`
-
-Normalized design context for active session.
-
-| Param | Type | Default |
-|-------|------|---------|
-| `file_url` | string | Figma file/design URL |
-| `file_key` | string | file key |
-| `page_id` | string | active page |
-| `frame_id` | string | active frame |
-| `selection_node_ids` | string[] | selection override |
-| `refresh` | boolean | `false` — bypass cache |
-
-**Returns:** `data.figma_context` (`file`, `pages`, `components`, `variables`, `styles`, `tokens`, `selection`).
-
-## SEO Intelligence
-
-Read `perception://seo-guide` before calling. Orchestration layer — not Ahrefs/Semrush.
-
-### `perception_seo_status`
-
-Module phase, provider catalog, integration health, knowledge graph summary.
-
-**Returns:** `data.seo_status` (`phase`, `providers_live`, `integrations`, `graph`, `do_not_build`).
-
-### `perception_seo_connect`
-
-Register a website (default) or run on-demand OAuth when provider data is needed.
-
-| Param | Type | Default |
-|-------|------|---------|
-| `website_url` | string | required |
-| `provider` | `google` \| `bing` | — (required for `connect_bing`) |
-| `action` | `setup` \| `connect_google` \| `connect_bing` \| `connect` \| `status` \| `refresh_discovery` | `setup` |
-| `interactive` | boolean | `true` (browser flow) |
-| `code` | string | automation override only |
-| `api_key` | string | Bing fallback when OAuth client not configured |
-
-**Setup:** `website_url` only — no OAuth.
-
-**On-demand OAuth:** `action=connect_google` or `connect_bing` → browser opens → sign-in → localhost callback on port 8787 → tokens stored.
-
-### `perception_seo_audit_start`
-
-Start SEO audit. **Preferred for agents.**
-
-| Param | Type | Default |
-|-------|------|---------|
-| `website_url` | string | required |
-| `mode` | string | `development` |
-| `scan_id` | string | required for development |
-| `repo_root` | string | optional |
-| `budget_s` | number | `5.0` (development only) |
-
-**Development (default):** synchronous inline result — `data.status: "completed"`, `data.instant: true`, `data.seo_audit` payload. No polling. Browser + AI Visibility only (requires `scan_id`).
-
-**Professional:** returns `data.audit_job_id`, `data.poll_tool`, `data.poll_interval_ms` — poll with `perception_seo_audit_poll`.
-
-### `perception_seo_audit_poll`
-
-Poll background audit job.
-
-| Param | Required |
-|-------|----------|
-| `audit_job_id` | yes |
-
-**Returns:** `data.seo_audit_job` (status, progress, partial evidence).
-
-### `perception_seo_audit_cancel`
-
-| Param | Required |
-|-------|----------|
-| `audit_job_id` | yes |
-
-### `perception_seo_audit`
-
-**Legacy — blocks MCP server.** Use `perception_seo_audit_start` + `perception_seo_audit_poll` instead.
-
-| Param | Type | Default |
-|-------|------|---------|
-| `website_url` | string | required |
-| `mode` | string | auto — `development` or `professional` |
-| `property_url` | string | advanced GSC override |
-| `ga4_property_id` | string | advanced GA4 override |
-| `bing_site_url` | string | advanced Bing override |
-| `scan_id` | string | Browser Intelligence scan |
-| `repo_root` | string | |
-| `providers` | string[] | subset of provider ids |
-| `intents` | string[] | capability ids |
-| `include_cross_analysis` | boolean | true |
-| `include_recommendations` | boolean | true |
-
-**Returns:** `data.seo_audit` (`evidence`, `recommendations`, `reasoning_context`, `connections`, `degraded`, `graph_summary`, `verification`).
-
-### `perception_seo_verify`
-
-Re-audit and compare against graph baseline to close recommendation verification items.
-
-| Param | Type | Default |
-|-------|------|---------|
-| `website_url` | string | required |
-| `recommendation_ids` | string[] | all from graph if omitted |
-| `scan_id` | string | Browser scan for rendering re-check |
-
-**Returns:** `data.seo_verify` (`verification` with `passed_count`, `failed_count`, `items`).
+Loop: LOOK → fill `visual_feedback` per `feedback_schema` → act on `next_actions` → re-LOOK.
+Details: [features/visual.md](./features/visual.md).
 
 ## Resources
 
@@ -515,10 +435,8 @@ Re-audit and compare against graph baseline to close recommendation verification
 |-----|---------|
 | `perception://agent-guide` | AGENT_GUIDE.md — main playbooks |
 | `perception://resolver-guide` | Resolver Intelligence — resolve_* tools |
-| `perception://seo-guide` | SEO_AGENT_GUIDE.md — Development inline vs Professional poll |
 | `perception://inspiration-guide` | Inspiration Intelligence |
 | `perception://resource-guide` | Resource Intelligence |
-| `perception://figma-guide` | Figma Intelligence |
 | `perception://eval/validation-form` | Eval scenario |
 | `perception://scan/{id}/report.json` | Full observation (+ embedded `perception_report` when present) |
 | `perception://scan/{id}/diagnosis.json` | Structured `PerceptionReport` |
@@ -531,8 +449,8 @@ Re-audit and compare against graph baseline to close recommendation verification
 ## Install & run
 
 ```bash
-pip install frontend-perception-engine   # or frontend-mcp
-uvx --from frontend-mcp frontend-mcp
+pip install --upgrade frontend-perception-engine
+uvx --from frontend-perception-engine frontend-mcp
 ```
 
 Cursor MCP:
@@ -542,7 +460,7 @@ Cursor MCP:
   "mcpServers": {
     "frontend-perception": {
       "command": "uvx",
-      "args": ["--from", "frontend-mcp", "frontend-mcp"]
+      "args": ["--from", "frontend-perception-engine", "frontend-mcp"]
     }
   }
 }

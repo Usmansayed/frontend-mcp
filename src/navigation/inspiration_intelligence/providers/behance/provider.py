@@ -46,15 +46,34 @@ class BehanceProvider:
 		if not query:
 			return [], ['behance_empty_query']
 
-		self._tracker.wait_if_needed(self.provider_id, self._policy)
+		await self._tracker.await_if_needed(self.provider_id, self._policy)
 		encoded = urllib.parse.quote(query)
 		url = BEHANCE_NAVIGATION.search_url_pattern.format(query_slug=encoded)
-		html, status, err = await asyncio.to_thread(http_get, url)
+		html, status, err = await asyncio.to_thread(http_get, url, timeout=8.0)
+		fetch_tier = 'http'
 		if err:
-			return [], [f'behance_fetch_failed:{err}']
-		block = detect_block_signal(html, status_code=status)
-		if block:
-			return [], [f'behance_block:{block}']
+			degraded.append(f'behance_fetch_failed:{err}')
+			html = ''
+
+		from navigation.inspiration_intelligence.browser.scrapling_route import (
+			fetch_html_important_recovery,
+			http_looks_blocked,
+		)
+
+		if http_looks_blocked(status, html or '', err) or not html:
+			h2, st2, e2, notes, tier = await fetch_html_important_recovery(
+				url, already_blocked=True
+			)
+			degraded.extend(notes)
+			if tier == 'scrapling_stealthy' and h2 and not e2:
+				html, status, err = h2, st2, None
+				fetch_tier = 'scrapling_stealthy'
+			elif not html:
+				return [], degraded + ([f'behance_block:{detect_block_signal("", status_code=status) or "empty"}'])
+
+		block = detect_block_signal(html or '', status_code=status)
+		if block or not html:
+			return [], degraded + [f'behance_block:{block or "empty"}']
 
 		candidates: list[InspirationCandidate] = []
 		seen: set[str] = set()
@@ -76,7 +95,7 @@ class BehanceProvider:
 					provider_id=self.provider_id,
 					external_id=gallery_id,
 					url=gallery_url.split('"')[0],
-					metadata={'search_query': query, 'fetch_tier': 'http'},
+					metadata={'search_query': query, 'fetch_tier': fetch_tier},
 					discovery_score=0.7,
 				)
 			)
@@ -107,4 +126,11 @@ class BehanceProvider:
 		)
 
 	async def health(self) -> dict[str, Any]:
-		return {'provider_id': self.provider_id, 'status': 'ok', 'fetch_tiers': ['http']}
+		from navigation.inspiration_intelligence.browser.scrapling_route import recovery_status
+
+		return {
+			'provider_id': self.provider_id,
+			'status': 'ok',
+			'fetch_tiers': ['http', 'scrapling_stealthy'],
+			'scrapling_recovery': recovery_status(),
+		}

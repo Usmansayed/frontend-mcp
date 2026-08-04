@@ -330,9 +330,19 @@ SEED_PROVIDERS: dict[str, ResourceProviderMeta] = {
 		provider_id='hero-patterns',
 		display_name='Hero Patterns',
 		categories=[ResourceCategory.PATTERN],
-		priority_tier=1,
+		priority_tier=0,
 		self_hostable=True,
-		license=_lic(spdx_id='MIT', commercial_use=True, mcp_download_allowed=True, source_url='https://github.com/zcreativelab/react-hero-patterns'),
+		api_available=True,
+		license=_lic(
+			spdx_id='MIT',
+			commercial_use=True,
+			mcp_download_allowed=True,
+			attribution_required=True,
+			notes=[
+				'npm hero-patterns wrapper is MIT; pattern artwork by Steve Schoger is CC-BY-4.0 — attribute when shipping.',
+			],
+			source_url='https://heropatterns.com/',
+		),
 	),
 	# --- 3D ---
 	'3dicons': ResourceProviderMeta(

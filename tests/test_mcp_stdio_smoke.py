@@ -118,7 +118,9 @@ def test_mcp_stdio_smoke() -> None:
         assert len(tools) >= 66, f"expected >=66 tools, got {len(tools)}"
         tool_names = {t.get("name") for t in tools}
         assert "perception_health" in tool_names
-        assert "perception_seo_status" in tool_names
+        assert "perception_seo_status" not in tool_names, "SEO Intelligence parked for MVP"
+        assert "perception_figma_status" not in tool_names, "Figma Intelligence parked for MVP"
+        assert "perception_audit_seo" in tool_names, "Lighthouse SEO category must remain"
         assert "perception_resource_pattern_search" in tool_names, (
             "orphan handler must be registered as a tool"
         )
@@ -137,20 +139,7 @@ def test_mcp_stdio_smoke() -> None:
         assert "ok" in health_env
         assert "data" in health_env
 
-        _send(proc, {
-            "jsonrpc": "2.0",
-            "id": 4,
-            "method": "tools/call",
-            "params": {"name": "perception_seo_status", "arguments": {}},
-        })
-        seo_resp = _read_response(proc, timeout_s=20.0)
-        seo_env = _envelope_from_call_tool_result(seo_resp)
-        assert seo_env.get("contract_version") == "1.0"
-        assert seo_env.get("ok") is True
-        seo_data = seo_env.get("data") or {}
-        assert "ai_visibility" in seo_data, "seo status must expose ai_visibility block"
-
-        blob = json.dumps(seo_env).lower()
+        blob = json.dumps(health_env).lower()
         for token in PLANNING_HINT_TOKENS:
             assert token not in blob, f"planning hint token {token!r} leaked into envelope"
 
@@ -165,6 +154,8 @@ def test_mcp_stdio_smoke() -> None:
         assert len(resources) >= 7, f"expected >=7 resources, got {len(resources)}"
         uris = {r.get("uri") for r in resources}
         assert "perception://agent-guide" in uris
+        assert "perception://seo-guide" not in uris
+        assert "perception://figma-guide" not in uris
 
         _send(proc, {
             "jsonrpc": "2.0",

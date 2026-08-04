@@ -100,6 +100,14 @@ async def test_idempotency_dedupes_safe_tool(runtime: ExecutionRuntime) -> None:
 
 
 @pytest.mark.unit
+def test_observe_not_auto_deduped() -> None:
+    registry = SafeToolRegistry()
+    assert registry.is_safe("perception_observe")
+    assert not registry.allows_auto_dedupe("perception_observe")
+    assert registry.allows_auto_dedupe("perception_flow_describe")
+
+
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_mutating_tool_not_deduped(runtime: ExecutionRuntime) -> None:
     args = {"session_id": "idem-test"}

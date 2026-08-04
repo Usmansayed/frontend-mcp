@@ -2,9 +2,9 @@ name: Test
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, coordination-sandbox, "exp/**"]
   pull_request:
-    branches: [main, master]
+    branches: [main, master, coordination-sandbox]
   schedule:
     # Nightly at 03:15 UTC — runs full T3 phase integration.
     - cron: "15 3 * * *"
@@ -51,7 +51,14 @@ jobs:
         run: |
           pytest -m "unit or golden" -v --timeout=60
 
-  # T2 contract + T4 validation-form eval — needs sandbox on :5173.
+      - name: Agent face cutover contracts
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          pytest tests/test_coordinator_card.py tests/test_mcp_bootstrap_contract.py -v --timeout=60
+
+  # T2 contract + T4 validation-form eval — needs sandbox on :18765.
   contract-and-eval:
     name: T2 contract + T4 eval (sandbox)
     runs-on: ubuntu-latest
@@ -89,13 +96,13 @@ jobs:
       - name: Start sandbox dev server
         working-directory: sandbox
         run: |
-          nohup npm run dev -- --host 127.0.0.1 --port 5173 > sandbox.log 2>&1 &
+          nohup npm run dev -- --host 127.0.0.1 --port 18765 > sandbox.log 2>&1 &
           echo "sandbox_pid=$!" >> $GITHUB_ENV
 
       - name: Wait for sandbox
         run: |
           for i in $(seq 1 60); do
-            if curl -sSf http://127.0.0.1:5173/ > /dev/null; then
+            if curl -sSf http://127.0.0.1:18765/ > /dev/null; then
               echo "sandbox ready"
               exit 0
             fi
@@ -117,7 +124,7 @@ jobs:
           PYTHONUTF8: "1"
           PYTHONIOENCODING: "utf-8"
           SEO_SKIP_COMPANION_BOOTSTRAP: "1"
-        run: python src/run_mcp_contract_tests.py --url http://127.0.0.1:5173 --headless
+        run: python src/run_mcp_contract_tests.py --url http://127.0.0.1:18765 --headless
 
       - name: T4 validation-form eval
         env:
@@ -125,7 +132,15 @@ jobs:
           PYTHONIOENCODING: "utf-8"
           SEO_SKIP_COMPANION_BOOTSTRAP: "1"
         continue-on-error: true
-        run: python src/run_mcp_eval_validation_form.py --url http://127.0.0.1:5173 --headless
+        run: python src/run_mcp_eval_validation_form.py --url http://127.0.0.1:18765 --headless
+
+      - name: Agent-face no-guide forms smoke
+        env:
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+          SEO_SKIP_COMPANION_BOOTSTRAP: "1"
+        continue-on-error: true
+        run: python -u scripts/eval_agent_face_no_guide_e2e.py --cases forms --url http://127.0.0.1:18765
 
       - name: Upload contract artifacts
         if: always()
@@ -175,12 +190,12 @@ jobs:
       - name: Start sandbox
         working-directory: sandbox
         run: |
-          nohup npm run dev -- --host 127.0.0.1 --port 5173 > sandbox.log 2>&1 &
+          nohup npm run dev -- --host 127.0.0.1 --port 18765 > sandbox.log 2>&1 &
 
       - name: Wait for sandbox
         run: |
           for i in $(seq 1 60); do
-            if curl -sSf http://127.0.0.1:5173/ > /dev/null; then exit 0; fi
+            if curl -sSf http://127.0.0.1:18765/ > /dev/null; then exit 0; fi
             sleep 1
           done
           exit 1
@@ -190,7 +205,7 @@ jobs:
           PYTHONUTF8: "1"
           PYTHONIOENCODING: "utf-8"
           SEO_SKIP_COMPANION_BOOTSTRAP: "1"
-        run: python src/run_all_phases.py --url http://127.0.0.1:5173 --headless
+        run: python src/run_all_phases.py --url http://127.0.0.1:18765 --headless
         continue-on-error: true
 
       - name: Upload phase artifacts

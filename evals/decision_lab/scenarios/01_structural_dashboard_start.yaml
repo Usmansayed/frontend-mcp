@@ -1,0 +1,28 @@
+id: structural_dashboard_start
+intent: build a new SaaS analytics dashboard
+lifecycle_stage: S03_design
+project_maturity: M1
+expect_after_start:
+  surface_type: dashboard
+  task_scope: design_driven
+  influence_level: structural
+  gate.state: blocked
+  next_capability: inspiration_workflow
+  prohibited_contains:
+    - claim_complete
+    - broad_visual_implementation
+  backlog.top.kind: structural_decision
+feeds:
+  - tool: perception_inspiration_collect
+    ok: false
+    error: image blobs could not be materialized
+    expect:
+      gate.state: blocked
+      next_capability: browser_observe
+      prohibited_contains:
+        - claim_complete
+expect:
+  gate.state: blocked
+  surface_type: dashboard
+  prohibited_contains:
+    - claim_complete

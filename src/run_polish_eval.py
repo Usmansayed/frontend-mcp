@@ -18,7 +18,6 @@ from navigation.mcp.handlers import (
     handle_observe,
     handle_probe_guards,
     handle_search_components,
-    handle_seo_audit_start,
     handle_session_end,
     handle_session_start,
 )
@@ -56,7 +55,6 @@ async def main() -> int:
     static_uris = [
         "perception://agent-guide",
         "perception://resolver-guide",
-        "perception://seo-guide",
     ]
     resource_results = {}
     for uri in static_uris:
@@ -207,51 +205,6 @@ async def main() -> int:
             "url_after": hygiene.get("url_after"),
             "degraded": guards.get("degraded") or [],
         }
-
-        if scan_id:
-            seo_dev, ms_seo = await _timed(
-                handle_seo_audit_start(
-                    scans,
-                    {
-                        "website_url": args.url,
-                        "scan_id": scan_id,
-                        "repo_root": str(SANDBOX_ROOT),
-                    },
-                )
-            )
-            report["timings_ms"]["seo_audit_start_development"] = round(ms_seo, 1)
-            data = seo_dev.get("data") or {}
-            report["tests"]["seo_development_instant"] = {
-                "ok": seo_dev.get("ok") is True,
-                "status": data.get("status"),
-                "instant": data.get("instant"),
-                "terminal": data.get("terminal"),
-                "audit_id": data.get("audit_id"),
-                "latency_ms": round(ms_seo, 1),
-                "target_met": seo_dev.get("ok") is True and ms_seo <= 5000 and data.get("status") in {"completed", "partial"},
-            }
-            report["payload_bytes"]["seo_audit_start_development"] = _payload_bytes(seo_dev)
-
-            seo_pro, ms_pro = await _timed(
-                handle_seo_audit_start(
-                    scans,
-                    {
-                        "website_url": args.url,
-                        "mode": "professional",
-                        "scan_id": scan_id,
-                        "repo_root": str(SANDBOX_ROOT),
-                    },
-                )
-            )
-            report["timings_ms"]["seo_audit_start_professional_enqueue"] = round(ms_pro, 1)
-            pdata = seo_pro.get("data") or {}
-            report["tests"]["seo_professional_async"] = {
-                "ok": seo_pro.get("ok") is True or seo_pro.get("error") == "auth_required",
-                "error": seo_pro.get("error"),
-                "audit_job_id": pdata.get("audit_job_id"),
-                "instant": pdata.get("instant"),
-                "auth_blocked": seo_pro.get("error") == "auth_required",
-            }
     finally:
         await handle_session_end(store, {"session_id": sid})
         await store.end_all()

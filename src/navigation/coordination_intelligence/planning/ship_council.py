@@ -1,0 +1,1187 @@
+"""Ship Council — post-draft, ROI-ranked ship challenges via design_review ship mode."""
+from __future__ import annotations
+
+from typing import Any
+
+from navigation.coordination_intelligence.models import ProjectSituationModel
+from navigation.coordination_intelligence.planning.decision_ledger import (
+    apply_dispositions,
+    is_signal_suppressed,
+    load_ledger,
+    save_ledger,
+    upsert_challenge_entry,
+    validate_accept_reason,
+)
+
+MAX_CHALLENGES = 5
+PREFER_CHALLENGES = 4
+ROI_HIGH_CUT = 0.45
+
+SEVERITY_WEIGHT = {
+    "blocking": 1.0,
+    "major": 0.85,
+    "minor": 0.4,
+    "advisory": 0.15,
+}
+
+INFLUENCE_WEIGHT = {
+    "structural": 1.0,
+    "balanced": 0.9,
+    "minimal": 0.35,
+    "maintenance": 0.25,
+}
+
+SIGNAL_TEMPLATES: dict[str, dict[str, Any]] = {
+    # Legacy ledger keys — sticky/overflow are Verify chrome_conventions now.
+    "nav_not_sticky": {
+        "decision": "Navigation",
+        "question": "Sidebar scrolls with content. Is this intentional for a productivity dashboard?",
+        "why_it_matters": "Persistent navigation reduces context switching on data-heavy surfaces.",
+        "owner": "agent",
+        "default_action": "revise",
+        "base_severity": "major",
+        "visual_improvement": 0.88,
+    },
+    "narrow_centered_main": {
+        "decision": "Layout",
+        "question": "Main content uses a centered marketing-width layout. Should this be a full product settings or dashboard shell?",
+        "why_it_matters": "Product settings and dashboards usually use full-width shells for density and scan efficiency.",
+        "owner": "agent",
+        "default_action": "revise",
+        "base_severity": "major",
+        "visual_improvement": 0.9,
+    },
+    "equal_weight_kpi_cluster": {
+        "decision": "Information Hierarchy",
+        "question": (
+            "Multiple KPI or card regions share equal visual weight. "
+            "Should one metric become the dominant focal point?"
+        ),
+        "why_it_matters": "Equal weight flattens scanning; users miss the primary business signal.",
+        "owner": "agent",
+        "default_action": "revise",
+        "base_severity": "major",
+        "visual_improvement": 0.92,
+        "revise_guidance": (
+            "Differentiate the primary KPI with type size, weight, or color "
+            "inside equal-width columns (same grid track / flex basis). "
+            "Do NOT break an equal KPI row with col-span, flex-grow, or width hacks "
+            "that make one card ~35%+ wide and truncate sibling titles."
+        ),
+        "anti_patterns": [
+            "xl:col-span-2/3 on one KPI in a 4-up row",
+            "flex-grow only on the first metric card",
+            "uneven grid tracks that clip 'New Customers' / 'Active Accounts' labels",
+        ],
+    },
+    "uneven_kpi_columns": {
+        "decision": "Metric Row Layout",
+        "question": (
+            "KPI/metric cards in one row have uneven widths (one dominates). "
+            "Should the row return to equal column share?"
+        ),
+        "why_it_matters": (
+            "Uneven metric columns look broken, truncate labels, and usually come from "
+            "a bad hierarchy 'fix' (col-span) rather than real product layout."
+        ),
+        "owner": "agent",
+        "default_action": "revise",
+        "base_severity": "major",
+        "visual_improvement": 0.9,
+        "revise_guidance": (
+            "Restore equal columns (grid-cols-4 / equal flex basis). "
+            "Express hierarchy with typography inside cards, not uneven widths."
+        ),
+        "anti_patterns": [
+            "leaving one card much wider after a hierarchy revise",
+        ],
+    },
+    "settings_form_measure": {
+        "decision": "Settings Content Measure",
+        "question": (
+            "Settings content spans nearly the full shell width. "
+            "Should preference groups use a tighter centered measure (~70–85%)?"
+        ),
+        "why_it_matters": (
+            "Full-bleed settings rows create long label-to-control gaps and feel unfinished "
+            "even when matching dashboard shell consistency."
+        ),
+        "owner": "agent",
+        "default_action": "revise",
+        "base_severity": "major",
+        "visual_improvement": 0.8,
+        "revise_guidance": (
+            "Constrain settings/main form column to ~70–85% width (or max-w-3xl/4xl) and center. "
+            "Accept only with design-system rationale that settings must share dashboard measure."
+        ),
+    },
+    "settings_footer_collision": {
+        "decision": "Settings Footer Rhythm",
+        "question": (
+            "Save/Reset actions sit too close to the last settings section. "
+            "Should footer breathing room increase?"
+        ),
+        "why_it_matters": "Tight footer collision reads as unfinished even under compact density.",
+        "owner": "agent",
+        "default_action": "revise",
+        "base_severity": "minor",
+        "visual_improvement": 0.55,
+        "revise_guidance": "Add clear margin/padding between last section and action row (typically ≥24–40px).",
+    },
+    "theme_not_coupled": {
+        "decision": "Theme Coupling",
+        "question": "Hard-coded colors dominate over theme tokens. Should palette follow light/dark theme variables?",
+        "why_it_matters": "Uncoupled colors break theme switching and erode design-system consistency.",
+        "owner": "agent",
+        "default_action": "revise",
+        "base_severity": "major",
+        "visual_improvement": 0.86,
+    },
+    "responsive_breakage": {
+        "decision": "Responsive Structure",
+        "question": "Layout overflow or horizontal scroll detected. Should primary chrome collapse cleanly on smaller viewports?",
+        "why_it_matters": "Broken responsive structure hides navigation and KPIs on laptops and tablets.",
+        "owner": "agent",
+        "default_action": "revise",
+        "base_severity": "blocking",
+        "visual_improvement": 0.84,
+    },
+    "dashboard_composition": {
+        "decision": "Dashboard Composition",
+        "question": "Dashboard sections compete for attention without a clear primary job. Should composition be simplified?",
+        "why_it_matters": "Unclear section jobs increase cognitive load and slow task completion.",
+        "owner": "agent",
+        "default_action": "revise",
+        "base_severity": "major",
+        "visual_improvement": 0.87,
+    },
+    "spec_drift_major": {
+        "decision": "Reference Conformance",
+        "question": "Live UI materially diverges from the bound reference Spec. Should this drift be revised before ship?",
+        "why_it_matters": "Unreviewed Spec drift often reintroduces hierarchy and spacing regressions.",
+        "owner": "agent",
+        "default_action": "revise",
+        "base_severity": "major",
+        "visual_improvement": 0.8,
+    },
+    "hierarchy_dense_ui": {
+        "decision": "Composition",
+        "question": "Interactive density is high with competing focal points. Should secondary actions be de-emphasized?",
+        "why_it_matters": "Too many equal-weight controls slow decision-making on dashboard surfaces.",
+        "owner": "agent",
+        "default_action": "revise",
+        "base_severity": "minor",
+        "visual_improvement": 0.55,
+    },
+    "brand_direction": {
+        "decision": "Visual Identity",
+        "question": "Color and typography choices may reflect brand positioning. Should this direction be confirmed?",
+        "why_it_matters": "Brand and visual identity tradeoffs require product or stakeholder alignment.",
+        "owner": "user",
+        "default_action": "ask_user",
+        "base_severity": "major",
+        "visual_improvement": 0.7,
+    },
+}
+
+FRAMING = (
+    "You're about to ship this frontend. "
+    "Here are the highest-ROI decisions we'd challenge before approving release."
+)
+
+
+def should_skip_ship_council(
+    *,
+    influence_level: str,
+    task_scope: str,
+    polish_saturation: str = "none",
+) -> bool:
+    # Hotfix / surgical always skip — verify is enough.
+    if task_scope in ("hotfix", "surgical", "debug"):
+        return True
+    if influence_level == "minimal" and task_scope not in ("design_driven", "redesign", "system_setup"):
+        return True
+    # Maintenance alone must NOT skip design-driven / redesign drafts — that was how
+    # agents claimed done after Spec+verify while leftover UI issues stayed unchallenged.
+    if influence_level == "maintenance" and task_scope not in ("design_driven", "redesign", "system_setup"):
+        return True
+    if polish_saturation == "hard":
+        return False
+    return False
+
+
+def episode_needs_ship_council(psm: ProjectSituationModel, strategy: dict[str, Any]) -> bool:
+    """True when claim-done must wait for Ship Council clear on this episode."""
+    from navigation.coordination_intelligence.planning.right_sizing import (
+        effort_requires_ship,
+        resolve_effort_tier,
+    )
+    from navigation.coordination_intelligence.planning.situation_policy import sticky_design_scope
+
+    resolved = resolve_effort_tier(psm, strategy)
+    if not effort_requires_ship(str(resolved.get("tier"))):
+        return False
+    scope = str(strategy.get("task_scope") or sticky_design_scope(psm) or "")
+    influence = str(strategy.get("influence_level") or "")
+    sticky = sticky_design_scope(psm)
+    if sticky in ("design_driven", "redesign", "system_setup"):
+        scope = sticky
+    elif scope in ("hotfix", "surgical", "debug"):
+        return False
+    if influence == "minimal" and scope not in ("design_driven", "redesign", "system_setup"):
+        return False
+    if not psm.artifacts.snapshot_id:
+        return False
+    if psm.episode.verification_status != "passed":
+        return False
+    if bool(psm.episode.retry_counters.get("ship_council_clear")):
+        return False
+    if scope in ("design_driven", "redesign", "system_setup"):
+        return True
+    return influence in ("structural", "balanced")
+
+
+def should_recommend_ship_mode(psm: ProjectSituationModel, strategy: dict[str, Any]) -> bool:
+    return episode_needs_ship_council(psm, strategy)
+
+
+def _roi_band(score: float) -> str:
+    if score >= 0.75:
+        return "high"
+    if score >= ROI_HIGH_CUT:
+        return "medium"
+    return "low"
+
+
+def _lifecycle_weight(psm: ProjectSituationModel) -> float:
+    weight = 0.65
+    if psm.episode.verification_status == "passed":
+        weight = 1.0
+    # Ship mode often runs with a fresh/ephemeral PSM; do not collapse ROI so far
+    # that majors evaporate before ranking.
+    elif psm.artifacts.snapshot_id:
+        weight = 0.85
+    saturation = str(psm.episode.retry_counters.get("polish_saturation") or "none")
+    if saturation == "hard":
+        weight *= 0.55
+    elif saturation == "soft":
+        weight *= 0.8
+    return weight
+
+
+def _strategy_weight(signal: str, strategy: dict[str, Any]) -> float:
+    influence = str(strategy.get("influence_level") or "balanced")
+    base = INFLUENCE_WEIGHT.get(influence, 0.7)
+    unresolved = {
+        str(d.get("decision_id") or ""): float(d.get("impact_weight") or 0.5)
+        for d in (strategy.get("unresolved_decisions") or [])
+    }
+    for decision_id, impact in unresolved.items():
+        if decision_id and decision_id in signal:
+            return min(1.0, base + impact * 0.25)
+    return base
+
+
+def compute_roi_score(
+    *,
+    severity: str,
+    strategy: dict[str, Any],
+    psm: ProjectSituationModel,
+    specdiff_magnitude: float,
+    visual_improvement: float,
+    signal: str,
+) -> float:
+    raw = (
+        SEVERITY_WEIGHT.get(severity, 0.5)
+        * _strategy_weight(signal, strategy)
+        * _lifecycle_weight(psm)
+        * max(min(specdiff_magnitude, 1.0), 0.1)
+        * max(min(visual_improvement, 1.0), 0.1)
+    )
+    return round(min(1.0, raw), 4)
+
+
+def _snapshot_dict(snapshot: Any) -> dict[str, Any]:
+    if hasattr(snapshot, "to_dict"):
+        return snapshot.to_dict()
+    return dict(snapshot or {})
+
+
+def _viewport_width(layout: dict[str, Any]) -> float:
+    vp = layout.get("viewport") or {}
+    return float(vp.get("width") or 0)
+
+
+def _rect_width_ratio(region: dict[str, Any], viewport_w: float) -> float | None:
+    if region.get("width_ratio") is not None:
+        try:
+            return float(region["width_ratio"])
+        except (TypeError, ValueError):
+            pass
+    if region.get("width_pct") is not None:
+        try:
+            return float(region["width_pct"])
+        except (TypeError, ValueError):
+            pass
+    rect = region.get("rect") if isinstance(region.get("rect"), dict) else {}
+    if not rect or viewport_w <= 0:
+        return None
+    w = float(rect.get("w") or rect.get("width") or 0)
+    if w <= 0:
+        return None
+    return min(1.0, w / viewport_w)
+
+
+def _region_is_centered(region: dict[str, Any], viewport_w: float) -> bool:
+    if bool(region.get("centered")):
+        return True
+    if str(region.get("layout_pattern") or "") == "marketing_centered":
+        return True
+    rect = region.get("rect") if isinstance(region.get("rect"), dict) else {}
+    if not rect or viewport_w <= 0:
+        return False
+    x = float(rect.get("x") or rect.get("left") or 0)
+    w = float(rect.get("w") or rect.get("width") or 0)
+    if w <= 0 or w / viewport_w > 0.88:
+        return False
+    left_margin = x
+    right_margin = viewport_w - (x + w)
+    return abs(left_margin - right_margin) <= max(48.0, viewport_w * 0.08)
+
+
+def _region_position(region: dict[str, Any]) -> str:
+    pos = str(region.get("position") or "").lower()
+    if pos:
+        return pos
+    style = region.get("style") if isinstance(region.get("style"), dict) else {}
+    return str(style.get("position") or "").lower()
+
+
+def _normalize_prominence_values(prominence: list[Any]) -> list[float]:
+    values: list[float] = []
+    for p in prominence:
+        if isinstance(p, (int, float)):
+            values.append(float(p))
+            continue
+        if not isinstance(p, dict):
+            continue
+        if p.get("normalized") is not None:
+            values.append(float(p["normalized"]))
+            continue
+        if p.get("prominence") is not None:
+            values.append(float(p["prominence"]))
+            continue
+        values.append(float(p.get("score") or 0))
+    if not values:
+        return []
+    # Live hierarchy uses font-size scores (often >> 1). Normalize to 0-1.
+    if max(values) > 1.5:
+        peak = max(values) or 1.0
+        return [v / peak for v in values]
+    return values
+
+
+def _equal_weight_from_same_level_prominence(prominence: list[Any]) -> bool:
+    """Equal-weight KPI headings share a level; sidebar chrome must not poison the band."""
+    by_level: dict[Any, list[float]] = {}
+    raw_scores: list[float] = []
+    for item in prominence:
+        if isinstance(item, dict):
+            try:
+                score = float(item.get("score") or 0)
+            except (TypeError, ValueError):
+                continue
+            level = item.get("level")
+            if level is None:
+                raw_scores.append(score)
+                continue
+            by_level.setdefault(level, []).append(score)
+        else:
+            try:
+                raw_scores.append(float(item))
+            except (TypeError, ValueError):
+                continue
+    for scores in by_level.values():
+        if len(scores) < 3:
+            continue
+        norms = _normalize_prominence_values(scores)
+        if norms and (max(norms) - min(norms)) < 0.12:
+            return True
+    # Legacy: flat numeric list with no level metadata
+    if not by_level and len(raw_scores) >= 3:
+        norms = _normalize_prominence_values(raw_scores)
+        return bool(norms and (max(norms) - min(norms)) < 0.12)
+    return False
+
+
+def _equal_weight_from_boxes(boxes: list[dict[str, Any]]) -> bool:
+    """Detect equal-weight KPI/card rows from geometry when hierarchy is sparse."""
+    usable: list[tuple[float, float, float, float]] = []
+    for box in boxes:
+        if not isinstance(box, dict):
+            continue
+        x = float(box.get("x") or 0)
+        y = float(box.get("y") or 0)
+        w = float(box.get("w") or box.get("width") or 0)
+        h = float(box.get("h") or box.get("height") or 0)
+        if w < 80 or h < 40:
+            continue
+        usable.append((x, y, w, h))
+    if len(usable) < 3:
+        return False
+    # Group by approximate row (y band).
+    usable.sort(key=lambda b: b[1])
+    rows: list[list[tuple[float, float, float, float]]] = []
+    for box in usable:
+        placed = False
+        for row in rows:
+            if abs(row[0][1] - box[1]) <= 40:
+                row.append(box)
+                placed = True
+                break
+        if not placed:
+            rows.append([box])
+    for row in rows:
+        if len(row) < 3:
+            continue
+        widths = [b[2] for b in row]
+        heights = [b[3] for b in row]
+        avg_w = sum(widths) / len(widths)
+        avg_h = sum(heights) / len(heights)
+        if avg_w <= 0 or avg_h <= 0:
+            continue
+        width_span = (max(widths) - min(widths)) / avg_w
+        height_span = (max(heights) - min(heights)) / avg_h
+        if width_span <= 0.18 and height_span <= 0.25:
+            return True
+    return False
+
+
+def _uneven_kpi_columns_from_boxes(boxes: list[dict[str, Any]]) -> bool:
+    """Detect a metric row where one card dominates width (broken equal grid)."""
+    usable: list[tuple[float, float, float, float]] = []
+    for box in boxes:
+        if not isinstance(box, dict):
+            continue
+        x = float(box.get("x") or 0)
+        y = float(box.get("y") or 0)
+        w = float(box.get("w") or box.get("width") or 0)
+        h = float(box.get("h") or box.get("height") or 0)
+        if w < 80 or h < 40:
+            continue
+        usable.append((x, y, w, h))
+    if len(usable) < 3:
+        return False
+    usable.sort(key=lambda b: b[1])
+    rows: list[list[tuple[float, float, float, float]]] = []
+    for box in usable:
+        placed = False
+        for row in rows:
+            if abs(row[0][1] - box[1]) <= 40:
+                row.append(box)
+                placed = True
+                break
+        if not placed:
+            rows.append([box])
+    for row in rows:
+        if len(row) < 3:
+            continue
+        widths = [b[2] for b in row]
+        min_w = min(widths)
+        max_w = max(widths)
+        if min_w <= 0:
+            continue
+        # One card clearly dominates (e.g. ~35%+ vs clipped siblings).
+        if max_w / min_w >= 1.45:
+            return True
+    return False
+
+
+def assess_snapshot_coverage(snapshot: Any) -> dict[str, Any]:
+    """How much of the ship detector surface can actually run on this snapshot."""
+    snap = _snapshot_dict(snapshot)
+    layout = snap.get("layout") or {}
+    hierarchy = snap.get("hierarchy") or {}
+    colors = snap.get("colors") or {}
+    regions = list(layout.get("regions") or [])
+    prominence = list(hierarchy.get("prominence_scores") or [])
+    boxes = list(layout.get("interactive_boxes") or [])
+    visual = layout.get("visual_insights") or {}
+    if not boxes:
+        boxes = list(visual.get("element_boxes") or [])
+    checks = {
+        "regions": len(regions) >= 1,
+        "nav_geometry": any(
+            str(r.get("role") or r.get("label") or "").lower()
+            in {"nav", "sidebar", "aside", "navigation"}
+            or "sidebar" in " ".join(r.get("classes") or []).lower()
+            for r in regions
+        ),
+        "main_geometry": any(
+            str(r.get("role") or "").lower() in {"main", "content", "settings"}
+            and (_rect_width_ratio(r, _viewport_width(layout)) is not None or r.get("rect"))
+            for r in regions
+        ),
+        "prominence": len(prominence) >= 2,
+        "boxes": len(boxes) >= 2,
+        "token_ratio": colors.get("token_backed_ratio") is not None
+        or (snap.get("design_tokens") or {}).get("token_backed_ratio") is not None,
+    }
+    score = sum(1 for ok in checks.values() if ok)
+    if score >= 5:
+        band = "full"
+    elif score >= 3:
+        band = "partial"
+    else:
+        band = "thin"
+    return {"coverage": band, "checks": checks, "score": score}
+
+
+def _collect_snapshot_signals(
+    snapshot: Any,
+    *,
+    surface_type: str = "unknown",
+) -> list[dict[str, Any]]:
+    snap = _snapshot_dict(snapshot)
+    layout = snap.get("layout") or {}
+    hierarchy = snap.get("hierarchy") or {}
+    colors = snap.get("colors") or {}
+    tokens = snap.get("design_tokens") or {}
+    signals: list[dict[str, Any]] = []
+    viewport_w = _viewport_width(layout)
+    surface = (surface_type or "unknown").lower()
+
+    # Overflow + sticky chrome are Verify conventions (chrome_conventions), not Ship Council.
+
+    token_ratio = colors.get("token_backed_ratio")
+    if token_ratio is None:
+        token_ratio = tokens.get("token_backed_ratio")
+    if token_ratio is not None and float(token_ratio) < 0.45:
+        signals.append({
+            "signal": "theme_not_coupled",
+            "severity": "major",
+            "specdiff_magnitude": max(0.5, 1.0 - float(token_ratio)),
+            "evidence_refs": ["snapshot:colors.token_backed_ratio"],
+        })
+
+    prominence = list(hierarchy.get("prominence_scores") or [])
+    # KPI / dense-dashboard challenges only on dashboard-like surfaces.
+    # Marketing / about / auth / settings false-fire on equal section cards.
+    allow_kpi = surface in ("dashboard", "mixed", "data_table")
+    if allow_kpi and _equal_weight_from_same_level_prominence(prominence):
+        signals.append({
+            "signal": "equal_weight_kpi_cluster",
+            "severity": "major",
+            "specdiff_magnitude": 0.75,
+            "evidence_refs": ["snapshot:hierarchy.prominence_scores"],
+        })
+
+    boxes = list(layout.get("interactive_boxes") or [])
+    visual = layout.get("visual_insights") or {}
+    if not boxes:
+        boxes = list(visual.get("element_boxes") or [])
+    # Prefer card-like static boxes when interactive list is nav-only.
+    card_boxes = [
+        b for b in list(visual.get("element_boxes") or [])
+        if isinstance(b, dict) and (
+            "card" in str(b.get("classes") or b.get("class") or "").lower()
+            or str(b.get("role") or "").lower() in ("article", "group")
+        )
+    ]
+    if len(card_boxes) >= 3:
+        boxes = list(boxes) + card_boxes
+    if allow_kpi and "equal_weight_kpi_cluster" not in {s["signal"] for s in signals} and _equal_weight_from_boxes(boxes):
+        signals.append({
+            "signal": "equal_weight_kpi_cluster",
+            "severity": "major",
+            "specdiff_magnitude": 0.78,
+            "evidence_refs": ["snapshot:layout.interactive_boxes"],
+        })
+
+    if allow_kpi and _uneven_kpi_columns_from_boxes(boxes):
+        signals.append({
+            "signal": "uneven_kpi_columns",
+            "severity": "major",
+            "specdiff_magnitude": 0.84,
+            "evidence_refs": ["snapshot:layout.interactive_boxes"],
+        })
+
+    regions = list(layout.get("regions") or [])
+    # Equal-weight KPI/card rows from section regions when hierarchy/boxes are thin.
+    section_regions = [
+        r for r in regions
+        if str(r.get("role") or "").lower() == "section"
+    ]
+    if allow_kpi and "equal_weight_kpi_cluster" not in {s["signal"] for s in signals} and len(section_regions) >= 3:
+        widths = []
+        for r in section_regions:
+            rect = r.get("rect") if isinstance(r.get("rect"), dict) else {}
+            w = float(rect.get("w") or rect.get("width") or 0)
+            if w >= 80:
+                widths.append(w)
+        if len(widths) >= 3:
+            mean = sum(widths) / len(widths)
+            if mean > 0 and all(abs(w - mean) / mean <= 0.12 for w in widths):
+                signals.append({
+                    "signal": "equal_weight_kpi_cluster",
+                    "severity": "major",
+                    "specdiff_magnitude": 0.76,
+                    "evidence_refs": ["snapshot:layout.regions.section"],
+                })
+
+    for region in regions:
+        role = str(region.get("role") or region.get("label") or "").lower()
+        if role not in {"main", "content", "settings"}:
+            continue
+        width = _rect_width_ratio(region, viewport_w)
+        if width is None:
+            rect = region.get("rect") if isinstance(region.get("rect"), dict) else {}
+            rw = float(rect.get("w") or rect.get("width") or 0)
+            if viewport_w > 0 and rw > 0:
+                width = rw / float(viewport_w)
+        if width is None and region.get("width_ratio") is not None:
+            try:
+                width = float(region.get("width_ratio") or 0)
+            except (TypeError, ValueError):
+                width = None
+        centered = _region_is_centered(region, viewport_w)
+        if region.get("centered") is True:
+            centered = True
+        if region.get("layout_pattern") == "marketing_centered":
+            centered = True
+
+        if surface == "settings_form":
+            # Full-bleed settings content — prefer tighter form measure.
+            if width is not None and width >= 0.90:
+                signals.append({
+                    "signal": "settings_form_measure",
+                    "severity": "major",
+                    "specdiff_magnitude": 0.8,
+                    "evidence_refs": ["snapshot:layout.regions"],
+                })
+            # Skip marketing-narrow challenge on settings.
+            continue
+
+        # Marketing-width main beside a sidebar often fails viewport-centering
+        # (aside offsets margins) — still a high-ROI layout challenge.
+        # Left-aligned compressed columns (~62vw) are the same failure mode.
+        narrow = width is not None and width <= 0.72
+        clearly_narrow = width is not None and width <= 0.65
+        if surface != "dashboard" and ((centered and narrow) or clearly_narrow):
+            signals.append({
+                "signal": "narrow_centered_main",
+                "severity": "major",
+                "specdiff_magnitude": 0.82,
+                "evidence_refs": ["snapshot:layout.regions"],
+            })
+            break
+        if surface == "dashboard" and clearly_narrow and centered:
+            signals.append({
+                "signal": "narrow_centered_main",
+                "severity": "major",
+                "specdiff_magnitude": 0.82,
+                "evidence_refs": ["snapshot:layout.regions"],
+            })
+            break
+
+    if surface == "settings_form":
+        # Footer collision heuristic: action-sized boxes near bottom of viewport.
+        vh = float((layout.get("viewport") or {}).get("height") or 0)
+        if vh > 0 and boxes:
+            near_bottom = [
+                b for b in boxes
+                if isinstance(b, dict)
+                and float(b.get("y") or 0) + float(b.get("h") or b.get("height") or 0) >= vh - 56
+                and float(b.get("h") or b.get("height") or 0) <= 64
+            ]
+            if near_bottom:
+                signals.append({
+                    "signal": "settings_footer_collision",
+                    "severity": "minor",
+                    "specdiff_magnitude": 0.55,
+                    "evidence_refs": ["snapshot:layout.interactive_boxes"],
+                })
+
+    if allow_kpi and len(regions) >= 6:
+        signals.append({
+            "signal": "dashboard_composition",
+            "severity": "major",
+            "specdiff_magnitude": min(1.0, len(regions) / 10.0),
+            "evidence_refs": ["snapshot:layout.regions"],
+        })
+    elif allow_kpi and len(boxes) >= 30:
+        signals.append({
+            "signal": "hierarchy_dense_ui",
+            "severity": "minor",
+            "specdiff_magnitude": 0.55,
+            "evidence_refs": ["snapshot:layout.interactive_boxes"],
+        })
+
+    return signals
+
+
+def _collect_specdiff_signals(engineering_delta: dict[str, Any] | None) -> list[dict[str, Any]]:
+    if not engineering_delta:
+        return []
+    signals: list[dict[str, Any]] = []
+    for item in (engineering_delta.get("top_by_impact") or [])[:12]:
+        if not isinstance(item, dict):
+            continue
+        severity = str(item.get("severity") or "major")
+        if severity not in ("blocking", "major", "minor"):
+            continue
+        magnitude = float(item.get("impact_weight") or 0.5)
+        kind = str(item.get("kind") or item.get("decision_id") or "").lower()
+        detail = str(item.get("detail") or "")
+        signal = "spec_drift_major"
+        if "hierarchy" in kind or "kpi" in detail.lower():
+            signal = "equal_weight_kpi_cluster"
+        elif "layout" in kind or "width" in detail.lower() or "center" in detail.lower():
+            signal = "narrow_centered_main"
+        elif "nav" in kind or "sidebar" in detail.lower():
+            # Sticky chrome is verify's job — SpecDiff nav/sidebar maps to layout shell.
+            signal = "narrow_centered_main"
+        elif "color" in kind or "theme" in kind or "token" in detail.lower():
+            signal = "theme_not_coupled"
+        signals.append({
+            "signal": signal,
+            "severity": severity,
+            "specdiff_magnitude": magnitude,
+            "evidence_refs": [f"specdiff:{item.get('decision_id') or kind}"],
+        })
+    return signals
+
+
+def _collect_finding_signals(findings: list[Any]) -> list[dict[str, Any]]:
+    signals: list[dict[str, Any]] = []
+    for finding in findings:
+        if hasattr(finding, "to_dict"):
+            f = finding.to_dict()
+        elif isinstance(finding, dict):
+            f = finding
+        else:
+            continue
+        severity = str(f.get("severity") or "minor")
+        if severity not in ("blocking", "major", "minor"):
+            continue
+        category = str(f.get("category") or "").lower()
+        fid = str(f.get("id") or "")
+        # Skip overflow / sticky — those are Verify conventions.
+        if category == "layout" or "overflow" in fid:
+            continue
+        if category == "navigation":
+            continue
+        signal = "dashboard_composition"
+        if category == "hierarchy" or "hierarchy" in fid:
+            signal = "equal_weight_kpi_cluster" if "dense" not in fid else "hierarchy_dense_ui"
+        elif category == "color":
+            signal = "theme_not_coupled"
+        elif category == "typography" and severity == "major":
+            signal = "brand_direction"
+        signals.append({
+            "signal": signal,
+            "severity": severity,
+            "specdiff_magnitude": 0.65 if severity == "major" else 0.45,
+            "evidence_refs": [f"design_review:{fid or category}"],
+        })
+    return signals
+
+
+def _collect_revision_gate_signals(revision_gate: dict[str, Any] | None) -> list[dict[str, Any]]:
+    if not revision_gate or not revision_gate.get("revision_required"):
+        return []
+    drifts = list(revision_gate.get("blocking_drifts") or revision_gate.get("drifts") or [])
+    if not drifts:
+        return [{
+            "signal": "spec_drift_major",
+            "severity": "major",
+            "specdiff_magnitude": 0.85,
+            "evidence_refs": ["spec_revision_gate:revision_required"],
+        }]
+    return []
+
+
+_DASHBOARD_ONLY_SIGNALS = frozenset({
+    "equal_weight_kpi_cluster",
+    "uneven_kpi_columns",
+    "dashboard_composition",
+    "hierarchy_dense_ui",
+})
+
+
+def _filter_signals_for_surface(
+    candidates: list[dict[str, Any]],
+    surface_type: str,
+) -> list[dict[str, Any]]:
+    """Drop dashboard/KPI challenges on marketing/about/settings/auth surfaces.
+
+    Findings/SpecDiff paths defaulted many majors to dashboard_composition and
+    bypassed snapshot allow_kpi — Test 8 still saw dashboard_composition on marketing.
+    """
+    surface = (surface_type or "unknown").lower()
+    if surface in ("dashboard", "mixed", "data_table"):
+        return candidates
+    return [
+        c for c in candidates
+        if str(c.get("signal") or "") not in _DASHBOARD_ONLY_SIGNALS
+    ]
+
+
+def _merge_signal_candidates(candidates: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    merged: dict[str, dict[str, Any]] = {}
+    for cand in candidates:
+        signal = str(cand.get("signal") or "")
+        if not signal:
+            continue
+        existing = merged.get(signal)
+        if not existing:
+            merged[signal] = dict(cand)
+            continue
+        existing["specdiff_magnitude"] = max(
+            float(existing.get("specdiff_magnitude") or 0),
+            float(cand.get("specdiff_magnitude") or 0),
+        )
+        sev_rank = {"blocking": 3, "major": 2, "minor": 1, "advisory": 0}
+        if sev_rank.get(str(cand.get("severity")), 0) > sev_rank.get(str(existing.get("severity")), 0):
+            existing["severity"] = cand.get("severity")
+        refs = list(existing.get("evidence_refs") or [])
+        for ref in cand.get("evidence_refs") or []:
+            if ref not in refs:
+                refs.append(ref)
+        existing["evidence_refs"] = refs
+    return list(merged.values())
+
+
+def _materialize_challenge(
+    cand: dict[str, Any],
+    *,
+    strategy: dict[str, Any],
+    psm: ProjectSituationModel,
+) -> dict[str, Any] | None:
+    signal = str(cand.get("signal") or "")
+    template = SIGNAL_TEMPLATES.get(signal)
+    if not template:
+        return None
+    severity = str(cand.get("severity") or template.get("base_severity") or "major")
+    roi_score = compute_roi_score(
+        severity=severity,
+        strategy=strategy,
+        psm=psm,
+        specdiff_magnitude=float(cand.get("specdiff_magnitude") or 0.5),
+        visual_improvement=float(template.get("visual_improvement") or 0.5),
+        signal=signal,
+    )
+    out = {
+        "decision_id": signal,
+        "signal": signal,
+        "decision": template["decision"],
+        "question": template["question"],
+        "why_it_matters": template["why_it_matters"],
+        "severity": severity,
+        "expected_roi": _roi_band(roi_score),
+        "roi_score": roi_score,
+        "default_action": template["default_action"],
+        "owner": template["owner"],
+        "evidence_refs": list(cand.get("evidence_refs") or []),
+        "phase": "challenge",
+        "disposition": None,
+    }
+    if template.get("revise_guidance"):
+        out["revise_guidance"] = template["revise_guidance"]
+    if template.get("anti_patterns"):
+        out["anti_patterns"] = list(template["anti_patterns"])
+    return out
+
+
+def build_ship_council(
+    *,
+    psm: ProjectSituationModel,
+    strategy: dict[str, Any],
+    snapshot: Any,
+    engineering_delta: dict[str, Any] | None,
+    revision_gate: dict[str, Any] | None,
+    findings: list[Any],
+    dispositions: list[dict[str, Any]] | None = None,
+    force: bool = False,
+) -> dict[str, Any]:
+    influence = str(strategy.get("influence_level") or "balanced")
+    task_scope = str(strategy.get("task_scope") or "")
+    polish_saturation = str(psm.episode.retry_counters.get("polish_saturation") or "none")
+
+    # Keep lifecycle ROI grounded when handler PSM has snapshot but unset artifact id.
+    if not psm.artifacts.snapshot_id:
+        snap = _snapshot_dict(snapshot)
+        sid = str(snap.get("snapshot_id") or "")
+        if sid:
+            psm.artifacts.snapshot_id = sid
+        elif snap:
+            psm.artifacts.snapshot_id = "snap_ephemeral"
+
+    ledger = load_ledger(psm)
+    rejected_dispositions: list[dict[str, Any]] = []
+    if dispositions:
+        _, rejected_dispositions = apply_dispositions(ledger, dispositions)
+
+    if not force and should_skip_ship_council(
+        influence_level=influence,
+        task_scope=task_scope,
+        polish_saturation=polish_saturation,
+    ):
+        save_ledger(psm, ledger)
+        return {
+            "mode": "ship",
+            "framing": FRAMING,
+            "challenges": [],
+            "ranked_roi": [],
+            "ship_gate": {
+                "state": "skipped",
+                "open_high_roi": 0,
+                "council_clear": True,
+                "coverage": "skipped",
+            },
+            "ship_summary": _build_ship_summary(
+                ledger,
+                challenges_raised=0,
+                open_high_roi=0,
+                coverage="skipped",
+            ),
+            "decision_ledger": ledger,
+            "rejected_dispositions": rejected_dispositions,
+            "skipped_reason": f"influence={influence}, task_scope={task_scope}",
+        }
+
+    from navigation.coordination_intelligence.planning.residue_scan import (
+        get_residue_state,
+        mark_residue_completed,
+        maybe_require_residue_for_ship,
+        residue_required,
+    )
+    from navigation.coordination_intelligence.planning.surface_type import (
+        apply_surface_type,
+        design_scope_applies,
+    )
+
+    surface = str(
+        strategy.get("surface_type")
+        or getattr(psm.episode, "surface_type", None)
+        or "unknown"
+    )
+    apply_surface_type(psm, snapshot=_snapshot_dict(snapshot) or None)
+    surface = str(getattr(psm.episode, "surface_type", None) or surface or "unknown")
+
+    from navigation.coordination_intelligence.planning.route_surfaces import (
+        active_route_path,
+        active_route_surface,
+        upsert_route_surface,
+    )
+
+    # Prefer live active-route surface for detectors on mixed episodes (Meridian).
+    # Never let a historical snapshot URL clobber active_route (dashboard snap on settings).
+    snap = _snapshot_dict(snapshot)
+    existing_active = getattr(psm.episode, "active_route_path", None) or active_route_path(psm)
+    snap_url = snap.get("url")
+    if snap_url:
+        upsert_route_surface(
+            psm,
+            str(snap_url),
+            snapshot=snap or None,
+            family="snapshot",
+            snapshot_id=str(snap.get("snapshot_id") or "") or None,
+            set_active=not bool(existing_active),
+        )
+    elif not existing_active:
+        # No snap URL and no active route — nothing to resolve.
+        pass
+    route_surface = active_route_surface(psm)
+    effective_surface = str(route_surface or surface or "unknown")
+    if str(getattr(psm.episode, "surface_type", None) or "") == "mixed" and route_surface:
+        effective_surface = str(route_surface)
+
+    candidates = _merge_signal_candidates(
+        _collect_snapshot_signals(snapshot, surface_type=effective_surface)
+        + _collect_specdiff_signals(engineering_delta)
+        + _collect_finding_signals(findings)
+        + _collect_revision_gate_signals(revision_gate)
+    )
+    candidates = _filter_signals_for_surface(candidates, effective_surface)
+
+    coverage_info = assess_snapshot_coverage(snapshot)
+    coverage = str(coverage_info.get("coverage") or "thin")
+
+    challenges: list[dict[str, Any]] = []
+    for cand in candidates:
+        signal = str(cand.get("signal") or "")
+        if is_signal_suppressed(ledger, signal):
+            continue
+        challenge = _materialize_challenge(cand, strategy=strategy, psm=psm)
+        if not challenge:
+            continue
+        # Majors/blocking always surface; ROI cut only trims low-value minor/advisory noise.
+        severity = str(challenge.get("severity") or "")
+        if severity not in ("blocking", "major") and challenge["roi_score"] < ROI_HIGH_CUT:
+            continue
+        challenges.append(challenge)
+
+    challenges.sort(key=lambda c: (-float(c["roi_score"]), c["signal"]))
+    max_count = 2 if polish_saturation == "hard" else MAX_CHALLENGES
+    if len(challenges) > max_count:
+        challenges = challenges[:max_count]
+    elif len(challenges) > PREFER_CHALLENGES and polish_saturation == "soft":
+        challenges = challenges[:PREFER_CHALLENGES]
+
+    ranked_roi = [
+        {"decision": c["decision"], "roi_score": c["roi_score"]}
+        for c in challenges
+    ]
+
+    open_challenges = [
+        c for c in challenges
+        if (ledger.get("entries") or {}).get(c["signal"], {}).get("phase") != "closed"
+    ]
+    awaiting_user = any(
+        (ledger.get("entries") or {}).get(c["signal"], {}).get("disposition") == "ask_user"
+        for c in challenges
+    )
+
+    for challenge in challenges:
+        upsert_challenge_entry(ledger, challenge)
+
+    design_scope = design_scope_applies(psm, strategy)
+    prior_residue = get_residue_state(psm)
+    residue_already_pending = bool(prior_residue.get("required")) and not bool(
+        prior_residue.get("completed")
+    )
+    snap = _snapshot_dict(snapshot)
+    layout = snap.get("layout") or {}
+    dense_ui = (
+        len(list(layout.get("regions") or [])) >= 6
+        or len(list(layout.get("interactive_boxes") or [])) >= 30
+        or len(list((layout.get("visual_insights") or {}).get("boxes") or [])) >= 30
+    )
+    # Remeasure + ship again after residue was required → close the one-pass scan.
+    if design_scope and residue_already_pending:
+        mark_residue_completed(psm)
+        residue_pending = False
+    else:
+        residue_pending = maybe_require_residue_for_ship(
+            psm,
+            coverage=coverage,
+            challenge_count=len(challenges),
+            dense_ui=dense_ui,
+            design_scope=design_scope,
+        )
+
+    if not challenges:
+        gate_state = "clear"
+        council_clear = True
+    elif awaiting_user:
+        gate_state = "awaiting_user"
+        council_clear = False
+    elif open_challenges:
+        gate_state = "challenge"
+        council_clear = False
+    else:
+        gate_state = "clear"
+        council_clear = True
+
+    # Newly required residue blocks ship clear even when detectors found nothing.
+    if residue_pending or residue_required(psm):
+        council_clear = False
+        if gate_state == "clear":
+            gate_state = "residue"
+
+    open_high = [
+        c for c in open_challenges
+        if c.get("expected_roi") == "high"
+    ]
+
+    # Persist ship gate on the episode so later maintenance polish cannot claim-done
+    # without a council clear from this (or a later) ship pass.
+    psm.episode.retry_counters["ship_council_run"] = True
+    psm.episode.retry_counters["ship_council_clear"] = bool(council_clear)
+
+    ship_summary = None
+    if council_clear or polish_saturation == "hard":
+        ship_summary = _build_ship_summary(
+            ledger,
+            challenges_raised=len(challenges),
+            open_high_roi=len(open_high),
+            coverage=coverage,
+        )
+
+    save_ledger(psm, ledger)
+
+    return {
+        "mode": "ship",
+        "framing": FRAMING,
+        "challenges": challenges,
+        "ranked_roi": ranked_roi,
+        "ship_gate": {
+            "state": gate_state,
+            "open_high_roi": len(open_high),
+            "council_clear": council_clear,
+            "coverage": coverage,
+            "coverage_checks": coverage_info.get("checks"),
+            "residue_scan_required": residue_required(psm),
+            "surface_type": effective_surface,
+            "episode_surface_type": surface,
+            "active_route": active_route_path(psm),
+        },
+        "ship_summary": ship_summary,
+        "decision_ledger": ledger,
+        "rejected_dispositions": rejected_dispositions,
+    }
+
+
+def _build_ship_summary(
+    ledger: dict[str, Any],
+    *,
+    challenges_raised: int,
+    open_high_roi: int,
+    coverage: str = "partial",
+) -> dict[str, Any]:
+    stats = ledger.get("session_stats") or {}
+    revised = int(stats.get("revised") or 0)
+    accepted = int(stats.get("accepted") or 0)
+    asked_user = int(stats.get("asked_user") or 0)
+    total = max(challenges_raised, revised + accepted + asked_user)
+
+    if open_high_roi == 0 and total > 0:
+        improvement = "high" if revised >= accepted else "medium"
+        confidence = round(min(0.98, 0.72 + (revised * 0.06) + (accepted * 0.04)), 2)
+    elif total == 0:
+        improvement = "low"
+        # Empty clear is not high certainty — especially on thin detector coverage.
+        if coverage == "thin":
+            confidence = 0.48
+        elif coverage == "partial":
+            confidence = 0.58
+        else:
+            confidence = 0.62
+    else:
+        improvement = "medium"
+        confidence = round(max(0.35, 0.75 - open_high_roi * 0.08), 2)
+
+    return {
+        "challenges_raised": total,
+        "revised": revised,
+        "accepted": accepted,
+        "asked_user": asked_user,
+        "estimated_ui_improvement": improvement,
+        "ship_confidence": confidence,
+        "coverage": coverage,
+    }
+
+
+def ship_council_hint(strategy: dict[str, Any], psm: ProjectSituationModel) -> dict[str, Any] | None:
+    if not should_recommend_ship_mode(psm, strategy):
+        return None
+    return {
+        "capability": "design_review",
+        "mode": "ship",
+        "resource": "perception://ship-council",
+        "reason": (
+            "Post-verify draft exists; run Ship Council before claiming done. "
+            "Spec/token alignment and verify pass are not enough — dispose ship challenges first."
+        ),
+    }

@@ -12,7 +12,7 @@ Build → test on sandbox → move to next phase. Do not start phase N+1 until p
 | Human-auth gate (no loop on login/MFA) | `auth_gate.py` | `/login` → `requires_human` |
 
 ```bash
-cd sandbox && npm run dev   # :5173
+cd sandbox && npm run dev   # :18765 (non-standard; avoids clash with :3000/:5173)
 python src/run_phase1.py --headless
 ```
 

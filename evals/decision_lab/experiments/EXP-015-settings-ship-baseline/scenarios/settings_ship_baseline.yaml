@@ -1,0 +1,33 @@
+id: exp015_settings_ship_baseline
+intent: redesign workspace settings preferences page
+lifecycle_stage: S03_design
+project_maturity: M1
+expect_after_start:
+  surface_type: settings_form
+feeds:
+  - op: run_ship
+    force: true
+    snapshot:
+      url: http://localhost:5173/settings
+      layout:
+        viewport: {width: 1280, height: 720}
+        regions:
+          - {role: sidebar, width_ratio: 0.18}
+          - {role: main, label: settings, width_ratio: 0.95, rect: {x: 220, y: 0, w: 1060, h: 720}}
+        interactive_boxes:
+          - {x: 400, y: 680, w: 80, h: 32}
+          - {x: 500, y: 680, w: 80, h: 32}
+      hierarchy:
+        prominence_scores:
+          - {score: 0.5, label: a}
+          - {score: 0.5, label: b}
+          - {score: 0.5, label: c}
+      colors: {token_backed_ratio: 0.8}
+    expect:
+      surface_type: settings_form
+      ship_signals_contains: [settings_form_measure]
+      ship_signals_absent: [equal_weight_kpi_cluster]
+expect:
+  surface_type: settings_form
+  ship_signals_contains: [settings_form_measure]
+  ship_signals_absent: [equal_weight_kpi_cluster]

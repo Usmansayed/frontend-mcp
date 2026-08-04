@@ -1,0 +1,693 @@
+{
+  "board_pass": true,
+  "subset_pass": true,
+  "full_board_pass": true,
+  "phases_run": [
+    "d",
+    "e"
+  ],
+  "targets": {
+    "cold_p50_s": 3.0,
+    "warm_p50_s": 1.5,
+    "parallel_wall_s": 5.0,
+    "sequential_pack_s": 12.0,
+    "min_hits": 3,
+    "cache_warm_budget_s": 0.4,
+    "cache_speedup_min": 3.0,
+    "phase_c_budgets": {
+      "forms/login": 8.0,
+      "forms/checkout": 8.0,
+      "chrome/text_input": 6.0,
+      "section/hero": 8.0,
+      "section/footer": 5.0,
+      "chrome/button": 6.0
+    }
+  },
+  "phase_a": {
+    "cold_ok": 5,
+    "cold_total": 5,
+    "cold_p50_s": 0.002,
+    "cold_max_s": 1.151,
+    "cold_budget_s": 3.0,
+    "cold_budget_pass": true,
+    "warm_ok": 3,
+    "warm_total": 3,
+    "warm_p50_s": 0.342,
+    "warm_max_s": 0.851,
+    "warm_budget_s": 1.5,
+    "warm_budget_pass": true,
+    "all_quality_pass": true
+  },
+  "phase_b": {
+    "parallel_ok": 3,
+    "parallel_total": 3,
+    "parallel_wall_s": 0.814,
+    "parallel_budget_s": 5.0,
+    "parallel_budget_pass": true,
+    "sequential_ok": 5,
+    "sequential_total": 5,
+    "sequential_wall_s": 1.0,
+    "sequential_budget_s": 12.0,
+    "sequential_budget_pass": true
+  },
+  "phase_c": {
+    "ok": 6,
+    "total": 6,
+    "all_pass": true,
+    "failed": [],
+    "p50_s": 1.223,
+    "max_s": 2.941
+  },
+  "phase_d": {
+    "seed_ok": true,
+    "seed_wall_s": 0.997,
+    "warm_cache_p50_s": 0.002,
+    "warm_cache_budget_s": 0.4,
+    "warm_cache_pass": true,
+    "cache_hits_ok": true,
+    "speedup_vs_seed": 498.5,
+    "pool_ok": true,
+    "pool_p50_s": 0.757,
+    "pool_max_s": 0.857,
+    "all_pass": true
+  },
+  "phase_e": {
+    "policy_ok": true,
+    "live_friendly_ok": true,
+    "stealthy_budget_before": 2,
+    "stealthy_budget_after": 2,
+    "stealthy_budget_untouched": true,
+    "live_wall_s": 0.332,
+    "live_hits": 4,
+    "all_pass": true,
+    "notes": []
+  },
+  "rows": [
+    {
+      "phase": "A_cold",
+      "case_id": "landing",
+      "query": "modern saas landing page",
+      "ok": true,
+      "wall_s": 1.151,
+      "hits": 4,
+      "providers": [
+        "saasframe"
+      ],
+      "stop": "enough_relevant_refs_pattern",
+      "error": "",
+      "cached": false
+    },
+    {
+      "phase": "A_cold",
+      "case_id": "pricing",
+      "query": "pricing section cards",
+      "ok": true,
+      "wall_s": 0.502,
+      "hits": 4,
+      "providers": [
+        "daisyui",
+        "saasframe"
+      ],
+      "stop": "enough_relevant_refs_pattern",
+      "error": "",
+      "cached": false
+    },
+    {
+      "phase": "A_cold",
+      "case_id": "navbar",
+      "query": "navbar with mega menu",
+      "ok": true,
+      "wall_s": 0.002,
+      "hits": 4,
+      "providers": [
+        "daisyui"
+      ],
+      "stop": "enough_relevant_refs_pattern",
+      "error": "",
+      "cached": false
+    },
+    {
+      "phase": "A_cold",
+      "case_id": "login",
+      "query": "login form saas",
+      "ok": true,
+      "wall_s": 0.002,
+      "hits": 4,
+      "providers": [
+        "daisyui"
+      ],
+      "stop": "enough_relevant_refs_pattern",
+      "error": "",
+      "cached": false
+    },
+    {
+      "phase": "A_cold",
+      "case_id": "button",
+      "query": "primary button ui",
+      "ok": true,
+      "wall_s": 0.002,
+      "hits": 4,
+      "providers": [
+        "daisyui"
+      ],
+      "stop": "enough_relevant_refs_pattern",
+      "error": "",
+      "cached": false
+    },
+    {
+      "phase": "A_warm",
+      "case_id": "landing",
+      "query": "modern saas landing page",
+      "ok": true,
+      "wall_s": 0.342,
+      "hits": 4,
+      "providers": [
+        "saasframe"
+      ],
+      "stop": "result_cache",
+      "error": "",
+      "cached": true
+    },
+    {
+      "phase": "A_warm",
+      "case_id": "pricing",
+      "query": "pricing section cards",
+      "ok": true,
+      "wall_s": 0.851,
+      "hits": 4,
+      "providers": [
+        "daisyui",
+        "saasframe"
+      ],
+      "stop": "result_cache",
+      "error": "",
+      "cached": true
+    },
+    {
+      "phase": "A_warm",
+      "case_id": "navbar",
+      "query": "navbar with mega menu",
+      "ok": true,
+      "wall_s": 0.002,
+      "hits": 4,
+      "providers": [
+        "daisyui"
+      ],
+      "stop": "result_cache",
+      "error": "",
+      "cached": true
+    },
+    {
+      "phase": "B_parallel",
+      "case_id": "modern",
+      "query": "modern saas landing page",
+      "ok": true,
+      "wall_s": 0.328,
+      "hits": 4,
+      "providers": [
+        "saasframe"
+      ],
+      "stop": "enough_relevant_refs_pattern",
+      "error": "",
+      "cached": false
+    },
+    {
+      "phase": "B_parallel",
+      "case_id": "pricing",
+      "query": "pricing section cards",
+      "ok": true,
+      "wall_s": 0.814,
+      "hits": 4,
+      "providers": [
+        "daisyui",
+        "saasframe"
+      ],
+      "stop": "enough_relevant_refs_pattern",
+      "error": "",
+      "cached": false
+    },
+    {
+      "phase": "B_parallel",
+      "case_id": "login",
+      "query": "login form saas",
+      "ok": true,
+      "wall_s": 0.002,
+      "hits": 4,
+      "providers": [
+        "daisyui"
+      ],
+      "stop": "enough_relevant_refs_pattern",
+      "error": "",
+      "cached": false
+    },
+    {
+      "phase": "B_sequential",
+      "case_id": "modern",
+      "query": "modern saas landing page",
+      "ok": true,
+      "wall_s": 0.334,
+      "hits": 4,
+      "providers": [
+        "saasframe"
+      ],
+      "stop": "result_cache",
+      "error": "",
+      "cached": true
+    },
+    {
+      "phase": "B_sequential",
+      "case_id": "pricing",
+      "query": "pricing section cards",
+      "ok": true,
+      "wall_s": 0.66,
+      "hits": 4,
+      "providers": [
+        "daisyui",
+        "saasframe"
+      ],
+      "stop": "result_cache",
+      "error": "",
+      "cached": true
+    },
+    {
+      "phase": "B_sequential",
+      "case_id": "navbar",
+      "query": "navbar with mega menu",
+      "ok": true,
+      "wall_s": 0.002,
+      "hits": 4,
+      "providers": [
+        "daisyui"
+      ],
+      "stop": "result_cache",
+      "error": "",
+      "cached": true
+    },
+    {
+      "phase": "B_sequential",
+      "case_id": "login",
+      "query": "login form saas",
+      "ok": true,
+      "wall_s": 0.002,
+      "hits": 4,
+      "providers": [
+        "daisyui"
+      ],
+      "stop": "result_cache",
+      "error": "",
+      "cached": true
+    },
+    {
+      "phase": "B_sequential",
+      "case_id": "primary",
+      "query": "primary button ui",
+      "ok": true,
+      "wall_s": 0.002,
+      "hits": 4,
+      "providers": [
+        "daisyui"
+      ],
+      "stop": "result_cache",
+      "error": "",
+      "cached": true
+    },
+    {
+      "phase": "C_quality",
+      "case_id": "forms/login",
+      "query": "login signup form with email password",
+      "ok": true,
+      "wall_s": 2.941,
+      "hits": 8,
+      "providers": [
+        "daisyui",
+        "saasframe_login"
+      ],
+      "stop": "enough_relevant_refs_pattern",
+      "error": "",
+      "cached": false,
+      "budget_s": 8.0,
+      "budget_ok": true,
+      "notes": []
+    },
+    {
+      "phase": "C_quality",
+      "case_id": "forms/checkout",
+      "query": "checkout payment form multi step",
+      "ok": true,
+      "wall_s": 0.085,
+      "hits": 8,
+      "providers": [
+        "daisyui",
+        "saasframe_checkout"
+      ],
+      "stop": "enough_relevant_refs_pattern",
+      "error": "",
+      "cached": false,
+      "budget_s": 8.0,
+      "budget_ok": true,
+      "notes": []
+    },
+    {
+      "phase": "C_quality",
+      "case_id": "chrome/text_input",
+      "query": "text input with label and placeholder",
+      "ok": true,
+      "wall_s": 1.954,
+      "hits": 8,
+      "providers": [
+        "daisyui",
+        "saasframe_login"
+      ],
+      "stop": "enough_relevant_refs_pattern",
+      "error": "",
+      "cached": false,
+      "budget_s": 6.0,
+      "budget_ok": true,
+      "notes": []
+    },
+    {
+      "phase": "C_quality",
+      "case_id": "section/hero",
+      "query": "hero section above the fold",
+      "ok": true,
+      "wall_s": 0.956,
+      "hits": 6,
+      "providers": [
+        "daisyui",
+        "hero_gallery"
+      ],
+      "stop": "enough_relevant_refs_pattern",
+      "error": "",
+      "cached": false,
+      "budget_s": 8.0,
+      "budget_ok": true,
+      "notes": []
+    },
+    {
+      "phase": "C_quality",
+      "case_id": "section/footer",
+      "query": "site footer links",
+      "ok": true,
+      "wall_s": 0.14,
+      "hits": 4,
+      "providers": [
+        "daisyui",
+        "footer_design"
+      ],
+      "stop": "enough_relevant_refs_pattern",
+      "error": "",
+      "cached": false,
+      "budget_s": 5.0,
+      "budget_ok": true,
+      "notes": []
+    },
+    {
+      "phase": "C_quality",
+      "case_id": "chrome/button",
+      "query": "primary button hover states",
+      "ok": true,
+      "wall_s": 1.489,
+      "hits": 8,
+      "providers": [
+        "aceternity_buttons",
+        "daisyui",
+        "ibelick_buttons"
+      ],
+      "stop": "enough_relevant_refs_pattern",
+      "error": "",
+      "cached": false,
+      "budget_s": 6.0,
+      "budget_ok": true,
+      "notes": []
+    },
+    {
+      "phase": "D_cache_on",
+      "case_id": "cache_on_1",
+      "query": "pricing section cards",
+      "ok": true,
+      "wall_s": 0.997,
+      "hits": 4,
+      "providers": [
+        "daisyui",
+        "saasframe"
+      ],
+      "stop": "enough_relevant_refs_pattern",
+      "error": "",
+      "cached": true,
+      "budget_s": null,
+      "budget_ok": null,
+      "notes": [
+        "seed"
+      ],
+      "cache_hit": false,
+      "stealthy_used": false
+    },
+    {
+      "phase": "D_cache_on",
+      "case_id": "cache_on_2",
+      "query": "pricing section cards",
+      "ok": true,
+      "wall_s": 0.002,
+      "hits": 4,
+      "providers": [
+        "daisyui",
+        "saasframe"
+      ],
+      "stop": "result_cache",
+      "error": "",
+      "cached": true,
+      "budget_s": 0.4,
+      "budget_ok": true,
+      "notes": [
+        "warm_cache"
+      ],
+      "cache_hit": true,
+      "stealthy_used": false
+    },
+    {
+      "phase": "D_cache_on",
+      "case_id": "cache_on_3",
+      "query": "pricing section cards",
+      "ok": true,
+      "wall_s": 0.001,
+      "hits": 4,
+      "providers": [
+        "daisyui",
+        "saasframe"
+      ],
+      "stop": "result_cache",
+      "error": "",
+      "cached": true,
+      "budget_s": 0.4,
+      "budget_ok": true,
+      "notes": [
+        "warm_cache"
+      ],
+      "cache_hit": true,
+      "stealthy_used": false
+    },
+    {
+      "phase": "D_cache_off",
+      "case_id": "cache_off_1",
+      "query": "pricing section cards",
+      "ok": true,
+      "wall_s": 0.857,
+      "hits": 4,
+      "providers": [
+        "daisyui",
+        "saasframe"
+      ],
+      "stop": "enough_relevant_refs_pattern",
+      "error": "",
+      "cached": false,
+      "budget_s": null,
+      "budget_ok": null,
+      "notes": [
+        "pool_warm"
+      ],
+      "cache_hit": false,
+      "stealthy_used": false
+    },
+    {
+      "phase": "D_cache_off",
+      "case_id": "cache_off_2",
+      "query": "pricing section cards",
+      "ok": true,
+      "wall_s": 0.65,
+      "hits": 4,
+      "providers": [
+        "daisyui",
+        "saasframe"
+      ],
+      "stop": "enough_relevant_refs_pattern",
+      "error": "",
+      "cached": false,
+      "budget_s": null,
+      "budget_ok": null,
+      "notes": [
+        "pool_warm"
+      ],
+      "cache_hit": false,
+      "stealthy_used": false
+    },
+    {
+      "phase": "D_cache_off",
+      "case_id": "cache_off_3",
+      "query": "pricing section cards",
+      "ok": true,
+      "wall_s": 0.757,
+      "hits": 4,
+      "providers": [
+        "daisyui",
+        "saasframe"
+      ],
+      "stop": "enough_relevant_refs_pattern",
+      "error": "",
+      "cached": false,
+      "budget_s": null,
+      "budget_ok": null,
+      "notes": [
+        "pool_warm"
+      ],
+      "cache_hit": false,
+      "stealthy_used": false
+    },
+    {
+      "phase": "E_policy",
+      "case_id": "friendly_deny",
+      "query": "https://www.saasframe.io/categories/login",
+      "ok": true,
+      "wall_s": 0.0,
+      "hits": 0,
+      "providers": [],
+      "stop": "",
+      "error": "",
+      "cached": false,
+      "budget_s": null,
+      "budget_ok": null,
+      "notes": [
+        "should_try_stealthy=False"
+      ],
+      "cache_hit": false,
+      "stealthy_used": false
+    },
+    {
+      "phase": "E_policy",
+      "case_id": "friendly_deny",
+      "query": "https://img.daisyui.com/images/components/input.webp",
+      "ok": true,
+      "wall_s": 0.0,
+      "hits": 0,
+      "providers": [],
+      "stop": "",
+      "error": "",
+      "cached": false,
+      "budget_s": null,
+      "budget_ok": null,
+      "notes": [
+        "should_try_stealthy=False"
+      ],
+      "cache_hit": false,
+      "stealthy_used": false
+    },
+    {
+      "phase": "E_policy",
+      "case_id": "friendly_deny",
+      "query": "https://hero.gallery/",
+      "ok": true,
+      "wall_s": 0.0,
+      "hits": 0,
+      "providers": [],
+      "stop": "",
+      "error": "",
+      "cached": false,
+      "budget_s": null,
+      "budget_ok": null,
+      "notes": [
+        "should_try_stealthy=False"
+      ],
+      "cache_hit": false,
+      "stealthy_used": false
+    },
+    {
+      "phase": "E_policy",
+      "case_id": "friendly_deny",
+      "query": "https://www.footer.design/",
+      "ok": true,
+      "wall_s": 0.0,
+      "hits": 0,
+      "providers": [],
+      "stop": "",
+      "error": "",
+      "cached": false,
+      "budget_s": null,
+      "budget_ok": null,
+      "notes": [
+        "should_try_stealthy=False"
+      ],
+      "cache_hit": false,
+      "stealthy_used": false
+    },
+    {
+      "phase": "E_policy",
+      "case_id": "waf_eligible",
+      "query": "https://dribbble.com/search/login",
+      "ok": true,
+      "wall_s": 0.0,
+      "hits": 0,
+      "providers": [],
+      "stop": "",
+      "error": "",
+      "cached": false,
+      "budget_s": null,
+      "budget_ok": null,
+      "notes": [
+        "should_try_stealthy=True (policy only, not invoked)"
+      ],
+      "cache_hit": false,
+      "stealthy_used": false
+    },
+    {
+      "phase": "E_live",
+      "case_id": "friendly_collect",
+      "query": "modern saas landing page",
+      "ok": true,
+      "wall_s": 0.332,
+      "hits": 4,
+      "providers": [
+        "saasframe"
+      ],
+      "stop": "enough_relevant_refs_pattern",
+      "error": "",
+      "cached": false,
+      "budget_s": null,
+      "budget_ok": null,
+      "notes": [
+        "budget_untouched",
+        "no_stealthy_signals"
+      ],
+      "cache_hit": false,
+      "stealthy_used": false
+    },
+    {
+      "phase": "E_waf_optional",
+      "case_id": "waf_policy_only",
+      "query": "https://dribbble.com/search/login",
+      "ok": true,
+      "wall_s": 0.0,
+      "hits": 0,
+      "providers": [],
+      "stop": "",
+      "error": "",
+      "cached": false,
+      "budget_s": null,
+      "budget_ok": null,
+      "notes": [
+        "slow_path_excluded_from_p50",
+        "stealthy_not_invoked"
+      ],
+      "cache_hit": false,
+      "stealthy_used": false
+    }
+  ]
+}

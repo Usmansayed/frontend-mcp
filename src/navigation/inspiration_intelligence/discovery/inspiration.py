@@ -1,8 +1,9 @@
-"""Inspiration discovery — priority provider search with production guarantees."""
+"""Inspiration discovery — concurrent HTTP wave + exclusive browser queue."""
 from __future__ import annotations
 
 from navigation.inspiration_intelligence.browser.policy import RateLimitTracker
 from navigation.inspiration_intelligence.candidate_intelligence.normalizer import normalize_candidates
+from navigation.inspiration_intelligence.discovery.concurrent_wave import discover_providers_concurrent
 from navigation.inspiration_intelligence.models import (
 	CommunitySearchPlan,
 	InspirationCandidate,
@@ -86,8 +87,9 @@ async def discover_inspiration(
 	max_results: int,
 	providers: InspirationProviderRegistry | None = None,
 	skip_usage_gate: bool = False,
+	http_concurrency: int = 5,
 ) -> tuple[list[InspirationCandidate], list[str]]:
-	"""Query inspiration providers in priority order; guarantee results when possible."""
+	"""Query inspiration providers concurrently (HTTP) then serial browser."""
 	from navigation.inspiration_intelligence.browser.usage_gate import InspirationUsageGate
 
 	degraded: list[str] = []
@@ -106,37 +108,60 @@ async def discover_inspiration(
 	providers_searched: list[str] = []
 	rate_tracker = RateLimitTracker()
 
+	# Filter rate-budgeted providers before the wave.
+	eligible: list[str] = []
 	for provider_id in search_plan.provider_ids:
-		provider = registry.get(provider_id)
-		if provider is None:
+		if registry.get(provider_id) is None:
 			degraded.append(f'discovery_missing_provider:{provider_id}')
 			continue
-
 		policy = rate_tracker.policy_for(provider_id)
 		if rate_tracker.over_budget(provider_id, policy):
 			degraded.append(f'discovery_rate_budget:{provider_id}')
 			continue
+		eligible.append(provider_id)
 
-		remaining = max_results - len(candidates)
-		if remaining <= 0 and len(candidates) >= PRODUCTION_MIN_CANDIDATES:
-			break
+	def _should_stop(wave_results: dict) -> bool:
+		approx: list[InspirationCandidate] = list(candidates)
+		seen_local = set(seen)
+		for _pid, (batch, _deg) in wave_results.items():
+			for candidate in batch:
+				key = candidate.candidate_id or f'{candidate.provider_id}:{candidate.external_id}'
+				if key in seen_local:
+					continue
+				seen_local.add(key)
+				approx.append(candidate)
+		approx = normalize_candidates(approx)
+		return has_enough_high_confidence(approx, max_results=max_results)
 
-		batch, batch_degraded = await provider.discover_candidates(
-			search_plan,
-			community_plan=community_plan,
-			intent=intent,
-			max_results=remaining if remaining > 0 else max_results,
-		)
-		providers_searched.append(provider_id)
+	wave_results, traces, searched = await discover_providers_concurrent(
+		registry,
+		eligible,
+		search_plan=search_plan,
+		community_plan=community_plan,
+		intent=intent,
+		max_results=max_results,
+		http_concurrency=http_concurrency,
+		should_stop=_should_stop,
+	)
+	providers_searched.extend(searched)
+	for tr in traces:
+		if tr.get('stopped_early'):
+			degraded.append('discovery_http_early_cancel')
+		if tr.get('error'):
+			degraded.append(f"discovery_error:{tr.get('provider_id')}:{tr.get('error')}")
+
+	# Merge in priority order
+	for provider_id in eligible:
+		if provider_id not in wave_results:
+			continue
+		batch, batch_degraded = wave_results[provider_id]
 		degraded.extend(batch_degraded)
-
 		for candidate in batch:
 			key = candidate.candidate_id or f'{candidate.provider_id}:{candidate.external_id}'
 			if key in seen:
 				continue
 			seen.add(key)
 			candidates.append(candidate)
-
 		candidates = normalize_candidates(candidates)
 		if has_enough_high_confidence(candidates, max_results=max_results):
 			degraded.append(f'discovery_early_stop:{provider_id}')
@@ -144,6 +169,7 @@ async def discover_inspiration(
 
 	if providers_searched:
 		degraded.append(f'discovery_providers_searched:{",".join(providers_searched)}')
+	degraded.append('discovery_concurrent_http:1')
 
 	if not candidates:
 		rescue, rescue_deg = await _rescue_discovery(

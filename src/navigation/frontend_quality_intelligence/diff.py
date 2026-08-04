@@ -57,12 +57,21 @@ def diff_observations(
 	after_shot = after.get('annotated_screenshot_path') or after.get('screenshot_path')
 	if artifacts_dir and before_shot and after_shot:
 		prefix = f'{scan_id_before}_vs_{scan_id_after}'.replace('/', '_')[:80]
-		vd: VisualDiffResult = diff_screenshot_files(
-			before_shot,
-			after_shot,
-			artifacts_dir / 'diffs',
-			prefix=prefix,
-		)
-		result['visual_diff'] = vd.to_dict()
+		try:
+			same_file = Path(before_shot).resolve() == Path(after_shot).resolve()
+		except OSError:
+			same_file = before_shot == after_shot
+		if same_file:
+			result['visual_diff'] = VisualDiffResult(
+				degraded=['before_and_after_screenshot_same_file'],
+			).to_dict()
+		else:
+			vd: VisualDiffResult = diff_screenshot_files(
+				before_shot,
+				after_shot,
+				artifacts_dir / 'diffs',
+				prefix=prefix,
+			)
+			result['visual_diff'] = vd.to_dict()
 
 	return result

@@ -100,26 +100,38 @@ class InspirationBlobStore:
 			normalize_image_url(preview_url),
 			provider_id=provider_id,
 		)
-		source = medium_url or normalize_image_url(preview_url) or screenshot_path
-		if not source:
+		original = normalize_image_url(preview_url)
+		candidates: list[str] = []
+		for u in (medium_url, original, screenshot_path):
+			u = (u or '').strip()
+			if u and u not in candidates:
+				candidates.append(u)
+		if not candidates:
 			return None
-		if provider_id == 'land-book' and 'og-image' in source:
+		if provider_id == 'land-book' and all('og-image' in c for c in candidates if is_http_url(c)):
 			return None
 
 		stem = _slugify(f'{provider_id}-{candidate_id or title}')
 		dest = session_dir / f'{stem}.jpg'
 
 		raw: bytes | None = None
-		if is_local_image_ref(source):
-			path = Path(source)
-			if source.startswith('file://'):
-				from urllib.parse import unquote, urlparse
+		source = ''
+		for candidate in candidates:
+			if provider_id == 'land-book' and 'og-image' in candidate:
+				continue
+			source = candidate
+			if is_local_image_ref(source):
+				path = Path(source)
+				if source.startswith('file://'):
+					from urllib.parse import unquote, urlparse
 
-				path = Path(unquote(urlparse(source).path))
-			if path.is_file():
-				raw = path.read_bytes()
-		elif is_http_url(source):
-			raw = self._fetch_bytes(source, referer=page_url)
+					path = Path(unquote(urlparse(source).path))
+				if path.is_file():
+					raw = path.read_bytes()
+			elif is_http_url(source):
+				raw = self._fetch_bytes(source, referer=page_url)
+			if raw:
+				break
 
 		if not raw:
 			return None
@@ -166,6 +178,48 @@ class InspirationBlobStore:
 				failed += 1
 		return {'materialized': materialized, 'failed': failed, 'session_id': session_id}
 
+	async def materialize_hits_async(
+		self,
+		session_id: str,
+		hits: list[dict[str, Any]],
+		*,
+		concurrency: int = 4,
+	) -> dict[str, Any]:
+		"""Parallel JPEG materialize (thread pool) after URL wins."""
+		import asyncio
+
+		sem = asyncio.Semaphore(max(1, concurrency))
+
+		async def _one(hit: dict[str, Any]) -> bool:
+			async with sem:
+				blob = await asyncio.to_thread(
+					self.materialize,
+					session_id,
+					preview_url=str(hit.get('preview_url') or ''),
+					page_url=str(hit.get('url') or ''),
+					provider_id=str(hit.get('provider_id') or ''),
+					candidate_id=str(hit.get('candidate_id') or ''),
+					title=str(hit.get('title') or ''),
+					screenshot_path=str(hit.get('screenshot_path') or ''),
+				)
+				if blob:
+					hit['inspiration_blob'] = blob
+					hit['blob_session_id'] = session_id
+					state = self._load_sessions()
+					exp = state.get(session_id, {}).get('expires_at', time.time() + self._ttl_s)
+					hit['blob_expires_at'] = datetime.fromtimestamp(exp, tz=timezone.utc).isoformat()
+					return True
+				return False
+
+		results = await asyncio.gather(*[_one(h) for h in hits])
+		materialized = sum(1 for ok in results if ok)
+		return {
+			'materialized': materialized,
+			'failed': len(hits) - materialized,
+			'session_id': session_id,
+			'blob_concurrency': concurrency,
+		}
+
 	def materialize_manifest(self, session_id: str, manifest_path: Path) -> dict[str, Any]:
 		data = json.loads(manifest_path.read_text(encoding='utf-8'))
 		hits: list[dict[str, Any]] = list(data.get('hits') or [])
@@ -176,6 +230,44 @@ class InspirationBlobStore:
 		data['blob_summary'] = summary
 		manifest_path.write_text(json.dumps(data, indent=2), encoding='utf-8')
 		return summary
+
+	async def materialize_manifest_async(
+		self,
+		session_id: str,
+		manifest_path: Path,
+		*,
+		concurrency: int = 4,
+	) -> dict[str, Any]:
+		data = json.loads(manifest_path.read_text(encoding='utf-8'))
+		hits: list[dict[str, Any]] = list(data.get('hits') or [])
+		summary = await self.materialize_hits_async(session_id, hits, concurrency=concurrency)
+		data['hits'] = hits
+		data['blob_session_id'] = session_id
+		data['mode'] = 'urls_and_ephemeral_blobs'
+		data['blob_summary'] = summary
+		manifest_path.write_text(json.dumps(data, indent=2), encoding='utf-8')
+		return summary
+
+	def list_blob_paths(
+		self,
+		session_id: str,
+		*,
+		limit: int = 8,
+	) -> list[tuple[str, str]]:
+		"""Return (label, absolute_path) for session blobs that still exist on disk."""
+		self.cleanup_expired()
+		state = self._load_sessions()
+		meta = state.get(session_id) or {}
+		out: list[tuple[str, str]] = []
+		for row in list(meta.get('blobs') or [])[: max(1, int(limit))]:
+			if not isinstance(row, dict):
+				continue
+			path = str(row.get('blob_path') or '').strip()
+			if not path or not Path(path).is_file():
+				continue
+			cid = str(row.get('candidate_id') or 'ref').strip() or 'ref'
+			out.append((f'inspiration:{cid[:48]}', path))
+		return out
 
 	def end_session(self, session_id: str) -> int:
 		"""Delete all blobs for a session (call when agent work is done)."""
@@ -219,12 +311,32 @@ class InspirationBlobStore:
 
 	def _fetch_bytes(self, url: str, *, referer: str) -> bytes | None:
 		try:
-			headers = {'User-Agent': 'Mozilla/5.0'}
+			headers = {
+				'User-Agent': (
+					'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+					'(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+				),
+				'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+				'Accept-Language': 'en-US,en;q=0.9',
+			}
 			if referer:
 				headers['Referer'] = referer
 			req = urllib.request.Request(url, headers=headers)
-			with urllib.request.urlopen(req, timeout=45) as resp:
-				return resp.read()
+			ctx = None
+			try:
+				import ssl
+				import certifi
+
+				ctx = ssl.create_default_context(cafile=certifi.where())
+			except Exception:
+				ctx = None
+			with urllib.request.urlopen(req, timeout=10, context=ctx) as resp:
+				data = resp.read()
+				ctype = (resp.headers.get('Content-Type') or '').lower()
+				# Reject HTML error pages returned as 200
+				if 'text/html' in ctype and len(data) < 50_000:
+					return None
+				return data
 		except Exception:
 			return None
 
@@ -233,7 +345,10 @@ class InspirationBlobStore:
 			from PIL import Image
 
 			img = Image.open(BytesIO(raw))
+			# AVIF / RGBA / palette → RGB for JPEG
 			if img.mode not in ('RGB', 'L'):
+				img = img.convert('RGB')
+			elif img.mode == 'L':
 				img = img.convert('RGB')
 			w, h = img.size
 			if w > MEDIUM_MAX_WIDTH:

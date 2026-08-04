@@ -1,0 +1,21 @@
+id: exp010_component_status_alias
+intent: redesign Meridian analytics dashboard
+lifecycle_stage: S03_design
+project_maturity: M1
+feeds:
+  - tool: perception_build_design_snapshot
+    ok: true
+    data: {snapshot_id: s10, layout: {regions: [{role: main}]}}
+  - tool: perception_select_component_foundation
+    ok: true
+    data:
+      selected: {id: shadcn}
+      coordination_evidence:
+        status: succeeded
+        advancement_eligible: true
+    expect:
+      backlog_top_decision_not: component_foundation
+      portfolio_paid_contains: [component]
+expect:
+  backlog_top_decision_not: component_foundation
+  portfolio_paid_contains: [snapshot, component]

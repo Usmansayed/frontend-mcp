@@ -1,0 +1,121 @@
+{
+  "pack_id": "pack_greenfield_structure",
+  "title": "Greenfield Structural Decisions",
+  "target_surfaces": [
+    "perception://design-workflow",
+    "perception://engineering-strategy",
+    "greenfield",
+    "redesign"
+  ],
+  "claim_stubs": [
+    {
+      "claim_id": "UX_ARC_ISO_001",
+      "name": "ISO 9241-110 Suitability for the Task",
+      "engineering_meaning": "Show only controls/info needed for the current task; minimize steps for common paths; hide advanced options until needed.",
+      "how_to_detect_violations": "For a screen, mark elements not supporting the primary task; if a large share is irrelevant, fail.",
+      "when_to_apply": "Task-focused flows: forms, checkout, setup wizards.",
+      "when_not_to_apply": "Command centers / multi-goal dashboards where breadth is the task.",
+      "confidence": 0.95,
+      "source_ids": [
+        "src_iso_9241_110",
+        "src_hick_law_pmc"
+      ],
+      "full_card_path": "06_corpus/normalized/UX_ARC_ISO_001.json"
+    },
+    {
+      "claim_id": "UX_COG_HICK_002",
+      "name": "Hick-Hyman Law",
+      "engineering_meaning": "Reduce simultaneous actionable choices; chunk into hierarchies/search; highlight a primary action so effective n is small for novices.",
+      "how_to_detect_violations": "Count peer primary actions in a decision region; many equally weighted CTAs/menu items without grouping (often ≫7 visible peers) → overload risk.",
+      "when_to_apply": "Nav menus, pricing tiers, settings panels, checkout decisions, onboarding choices.",
+      "when_not_to_apply": "Expert analytic dashboards needing simultaneous density; highly learned expert UIs.",
+      "confidence": 0.95,
+      "source_ids": [
+        "src_hick_law_pmc",
+        "src_iso_9241_110"
+      ],
+      "full_card_path": "06_corpus/normalized/UX_COG_HICK_002.json"
+    },
+    {
+      "claim_id": "UX_HCI_FITTS_001",
+      "name": "Fitts's Law (Shannon Formulation)",
+      "engineering_meaning": "Reduce pointing latency by increasing effective target width and decreasing travel distance for frequent actions. Treat screen edges as larger effective targets.",
+      "how_to_detect_violations": "Estimate A from resting cursor/thumb zones and W of primary CTAs; flag frequent actions with high ID or targets below WCAG floor.",
+      "when_to_apply": "CTA placement, toolbars, menus, drag targets on pointer UIs.",
+      "when_not_to_apply": "Pure keyboard flows; voice; intentionally high-friction destructive controls.",
+      "confidence": 0.95,
+      "source_ids": [
+        "src_fitts_law_yorku",
+        "src_w3c_wcag22_target_size"
+      ],
+      "full_card_path": "06_corpus/normalized/UX_HCI_FITTS_001.json"
+    },
+    {
+      "claim_id": "UX_A11Y_TARG_004",
+      "name": "WCAG 2.2 Target Size (Minimum)",
+      "engineering_meaning": "Interactive hit areas must meet ≥24×24 CSS px, or ensure undersized targets have enough clearance that 24px-diameter circles centered on their boxes do not intersect other targets.",
+      "how_to_detect_violations": "Measure CSS bounding boxes. If width or height < 24px, test whether a 24px-diameter circle centered on the box intersects any other target.",
+      "when_to_apply": "All pointer-activated controls (mouse, touch, pen), including icon-only buttons.",
+      "when_not_to_apply": "Inline text links constrained by line-height; unmodified user-agent controls; equivalent larger control available; essential/legal presentation exceptions per WCAG.",
+      "confidence": 1.0,
+      "source_ids": [
+        "src_w3c_wcag22_target_size"
+      ],
+      "full_card_path": "06_corpus/normalized/UX_A11Y_TARG_004.json"
+    },
+    {
+      "claim_id": "UX_A11Y_CONT_005",
+      "name": "WCAG Contrast (Minimum)",
+      "engineering_meaning": "Compute relative luminance of foreground/background pairs. Fail if normal text < 4.5:1 or large text (≈18pt+/14pt bold) < 3:1. Prefer semantic tokens that encode compliant pairs.",
+      "how_to_detect_violations": "Automated contrast checkers (axe, WAVE, WebAIM) plus sampling computed styles on text over images/gradients.",
+      "when_to_apply": "All meaningful text and images of text, including form labels and error copy.",
+      "when_not_to_apply": "Decorative text, inactive/disabled components, incidental logotypes as allowed by WCAG.",
+      "confidence": 1.0,
+      "source_ids": [
+        "src_webaim_wcag_checklist",
+        "src_ibm_carbon"
+      ],
+      "full_card_path": "06_corpus/normalized/UX_A11Y_CONT_005.json"
+    },
+    {
+      "claim_id": "UX_COG_FOGG_013",
+      "name": "Fogg Behavior Model (B=MAP)",
+      "engineering_meaning": "Diagnose failed CTAs/onboarding by testing Prompt visibility/timing, Ability (friction), and Motivation (value clarity). Prefer raising Ability before spamming prompts.",
+      "how_to_detect_violations": "High exposure + low conversion: check if prompt is hidden, task is hard, or value is unclear.",
+      "when_to_apply": "Conversion CTAs, onboarding, notifications, habit loops.",
+      "when_not_to_apply": "Passive reading surfaces; automated backend processes; manipulative dark patterns.",
+      "confidence": 0.85,
+      "source_ids": [
+        "src_fogg_behaviormodel",
+        "src_baymard_checkout"
+      ],
+      "full_card_path": "06_corpus/normalized/UX_COG_FOGG_013.json"
+    },
+    {
+      "claim_id": "UX_A11Y_FOCUS_011",
+      "name": "Focus Not Obscured (Minimum)",
+      "engineering_meaning": "Sticky headers/footers, cookie bars, and overlays must not fully cover the focused control. Use scroll-margin / focus management so focused nodes stay at least partially visible.",
+      "how_to_detect_violations": "Tab through the page with sticky chrome present; fail if focused element is completely covered.",
+      "when_to_apply": "All interactive components, especially with sticky UI chrome.",
+      "when_not_to_apply": "User-opened content (e.g., modal) dismissible without advancing focus, per WCAG nuance.",
+      "confidence": 1.0,
+      "source_ids": [
+        "src_w3c_wcag22_overview"
+      ],
+      "full_card_path": "06_corpus/normalized/UX_A11Y_FOCUS_011.json"
+    }
+  ],
+  "conflict_pairs": [
+    {
+      "a": "UX_COG_HICK_002",
+      "b": "UX_HCI_FITTS_001",
+      "decision_hint": "Prioritize WCAG mins, one primary CTA, then chunk choices."
+    }
+  ],
+  "budgets": {
+    "max_claim_stubs": 12,
+    "max_rationale_tokens": 1500
+  },
+  "created_at": "2026-07-19",
+  "notes": "Structural influence pack for engineering_strategy unresolved decisions."
+}

@@ -53,5 +53,12 @@ class IdempotencyStore:
     def put(self, key: str, entry: IdempotencyEntry) -> None:
         self._entries[key] = entry
 
+    def invalidate_tool(self, tool: str) -> int:
+        """Drop cached entries for a tool (e.g. after SPA-mutating actions)."""
+        dead = [k for k, e in self._entries.items() if e.tool == tool]
+        for k in dead:
+            del self._entries[k]
+        return len(dead)
+
     def clear(self) -> None:
         self._entries.clear()

@@ -7,6 +7,28 @@ from navigation.consistency_intelligence.knowledge.api import KnowledgeAPI
 from navigation.consistency_intelligence.knowledge.envelope import KnowledgeResponse
 from navigation.consistency_intelligence.models import ConsistencyFinding, ConsistencyReport
 
+_STUB_DEGRADED = frozenset(
+	{
+		'knowledge_query_stub_phase1',
+		'discovery_pipeline_phase2',
+	}
+)
+
+
+def _assess_usable(assess: KnowledgeResponse) -> bool:
+	"""Fail closed: stubs / zero-confidence / stub tags are not a pass."""
+	if (assess.answer or {}).get('skipped'):
+		return False
+	if 'observation_no_matching_standard' in (assess.degraded or []):
+		return False
+	if assess.answer.get('status') == 'stub':
+		return False
+	if float(assess.confidence or 0.0) <= 0.0:
+		return False
+	if any(d in _STUB_DEGRADED for d in (assess.degraded or [])):
+		return False
+	return True
+
 
 class ConsistencyValidator:
 	"""Phase 3 consumer — never learns or stores design knowledge."""
@@ -63,7 +85,10 @@ class ConsistencyValidator:
 			properties=properties,
 			project_id=project_id,
 		)
-		if assess.answer.get('consistent', True):
+		if not _assess_usable(assess):
+			return assess, None
+		# Missing `consistent` must fail closed (not default True).
+		if assess.answer.get('consistent', False):
 			return assess, None
 		explain = self.explain(
 			selector=selector,
@@ -80,7 +105,20 @@ class ConsistencyValidator:
 		explain: KnowledgeResponse | None = None,
 	) -> ConsistencyReport:
 		"""Map KnowledgeResponse → legacy ConsistencyReport for MCP adapters."""
-		consistent = bool(assess.answer.get('consistent', True))
+		usable = _assess_usable(assess)
+		if not usable:
+			consistent = False
+			summary = (
+				assess.answer.get('message')
+				or 'Consistency assess stub / no usable standards — run Discovery and re-assess with exact context keys.'
+			)
+		else:
+			consistent = bool(assess.answer.get('consistent', False))
+			summary = (
+				f'Consistent with project standards ({assess.confidence:.0%} confidence).'
+				if consistent
+				else None
+			)
 		findings: list[ConsistencyFinding] = []
 		source = explain or assess
 		for dev in source.answer.get('deviations') or []:
@@ -100,10 +138,7 @@ class ConsistencyValidator:
 					metadata=dict(dev),
 				)
 			)
-		summary = (
-			f'Consistent with project standards ({assess.confidence:.0%} confidence).'
-			if consistent
-			else f'{len(findings)} deviation(s) from project standards.'
-		)
+		if summary is None:
+			summary = f'{len(findings)} deviation(s) from project standards.'
 		degraded = list(dict.fromkeys([*assess.degraded, *(explain.degraded if explain else [])]))
 		return ConsistencyReport(passed=consistent, summary=summary, findings=findings, degraded=degraded)

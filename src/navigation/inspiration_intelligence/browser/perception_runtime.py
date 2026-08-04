@@ -39,9 +39,11 @@ class PerceptionBrowserRuntime:
 		manager: BrowserSessionManager | None = None,
 	) -> None:
 		root = artifacts_root or Path.cwd() / 'artifacts' / 'inspiration_browser'
-		self._store = SessionStore(artifacts_root=root, manager=manager or BrowserSessionManager.get())
+		self._manager = manager or BrowserSessionManager.get()
+		self._store = SessionStore(artifacts_root=root, manager=self._manager)
 		self._session_id: str | None = None
 		self._rec: Any = None
+		self._parked = False
 
 	@property
 	def session_id(self) -> str | None:
@@ -52,20 +54,50 @@ class PerceptionBrowserRuntime:
 		return self._rec.browser if self._rec else None
 
 	async def start(self, *, base_url: str, headless: bool = False) -> str:
+		# Park the app URL before guest navigation so we never leave Chromium on galleries.
+		await self._manager.park_current_url()
+		self._parked = True
+		# Match MCP default viewport so we reuse the primary browser (no second window).
 		self._rec = await self._store.start(
 			base_url=base_url,
 			headless=headless,
-			viewport_width=1440,
-			viewport_height=900,
+			viewport_width=1920,
+			viewport_height=1080,
 		)
 		self._session_id = self._rec.session_id
 		return self._session_id
 
 	async def close(self) -> None:
+		# Restore app page BEFORE releasing the lease — session metadata must match live URL.
+		if self._parked:
+			restore = await self._manager.restore_parked_url()
+			if not restore.get('restored') and restore.get('attempted'):
+				# Best-effort: still clear guest site if park target failed
+				pass
+			self._parked = False
 		if self._session_id:
 			await self._store.end(self._session_id)
 		self._session_id = None
 		self._rec = None
+
+	async def force_kill(self) -> None:
+		"""Hard reset shared Chromium — use on capture timeout/cancel to avoid leaks.
+
+		Restores parked app URL first when possible so host Perception sessions
+		are less likely to resume on a guest inspiration origin.
+		"""
+		if self._parked:
+			try:
+				await self._manager.restore_parked_url()
+			except Exception:
+				pass
+			self._parked = False
+		self._session_id = None
+		self._rec = None
+		try:
+			await self._store.reset_browser()
+		except Exception:
+			pass
 
 	async def navigate_and_observe(
 		self,
@@ -75,6 +107,11 @@ class PerceptionBrowserRuntime:
 		screenshot: bool = True,
 		ready_timeout: float = 15.0,
 	) -> PerceptionBrowseResult:
+		if self._session_id:
+			try:
+				self._rec = await self._store.ensure(self._session_id)
+			except KeyError:
+				return PerceptionBrowseResult(ok=False, url=url, error='perception_session_not_started')
 		if self._rec is None:
 			return PerceptionBrowseResult(ok=False, url=url, error='perception_session_not_started')
 
@@ -107,6 +144,8 @@ class PerceptionBrowserRuntime:
 		)
 
 	async def execute_script(self, script: str) -> Any:
+		if self._session_id:
+			self._rec = await self._store.ensure(self._session_id)
 		if self._rec is None:
 			raise RuntimeError('perception_session_not_started')
 		return await evaluate_js(self._rec.browser, script)
@@ -136,7 +175,12 @@ class PerceptionBrowserRuntime:
 		except Exception:
 			pass
 
-	async def _capture_screenshot(self, *, name: str) -> str | None:
+	async def _capture_screenshot(
+		self,
+		*,
+		name: str,
+		clip: dict[str, float] | None = None,
+	) -> str | None:
 		if self._rec is None:
 			return None
 		images_dir = self._rec.artifacts_dir / 'images'
@@ -144,8 +188,17 @@ class PerceptionBrowserRuntime:
 		path = images_dir / f'{name}.png'
 		try:
 			cdp = await self._rec.browser.get_or_create_cdp_session(target_id=None, focus=True)
+			params: dict[str, object] = {'format': 'png', 'fromSurface': True}
+			if clip and clip.get('width') and clip.get('height'):
+				params['clip'] = {
+					'x': float(clip['x']),
+					'y': float(clip['y']),
+					'width': float(clip['width']),
+					'height': float(clip['height']),
+					'scale': float(clip.get('scale') or 1),
+				}
 			result = await cdp.cdp_client.send.Page.captureScreenshot(
-				params={'format': 'png', 'fromSurface': True},
+				params=params,
 				session_id=cdp.session_id,
 			)
 			data = result.get('data', '') if isinstance(result, dict) else ''
@@ -156,4 +209,10 @@ class PerceptionBrowserRuntime:
 			path.write_bytes(base64.b64decode(data))
 			return str(path)
 		except Exception:
+			# Clip unsupported / CDP flake — retry full viewport once
+			if clip is not None:
+				try:
+					return await self._capture_screenshot(name=name, clip=None)
+				except Exception:
+					return None
 			return None

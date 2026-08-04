@@ -1,0 +1,30 @@
+id: hotfix_surgical_path
+intent: hotfix production button padding
+lifecycle_stage: S07_verification
+project_maturity: M4
+situation_class: hotfix
+expect_after_start:
+  task_scope: hotfix
+  influence_level: minimal
+  gate.state: maintenance
+  residue_scan_required: false
+  evidence_plan_incomplete: false
+  ship_council_required: false
+  # Face contract: claim_complete stays prohibited until data.verified=true
+  # (prevents false-green claim_ok before hard verify).
+  prohibited_contains:
+    - claim_complete
+feeds:
+  - tool: perception_verify
+    ok: true
+    data: {verified: true, reasons: []}
+    expect:
+      gate.state: maintenance
+      residue_scan_required: false
+      prohibited_absent:
+        - claim_complete
+expect:
+  gate.state: maintenance
+  residue_scan_required: false
+  prohibited_absent:
+    - claim_complete

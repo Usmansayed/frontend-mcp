@@ -33,6 +33,11 @@ os.environ.setdefault("BROWSER_USE_SETUP_LOGGING", "false")
 logger = logging.getLogger(__name__)
 
 
+def _package_version() -> str:
+    from navigation.core.package_meta import installed_version
+
+    return installed_version(default="unknown")
+
 
 try:
 
@@ -189,7 +194,7 @@ class PerceptionMCPServer:
 
                     server_name="frontend-perception",
 
-                    server_version="1.1.7",
+                    server_version=_package_version(),
 
                     capabilities=self._server.get_capabilities(
 
@@ -232,12 +237,7 @@ async def async_main() -> None:
     finally:
 
         await server._store.end_all()
-
-        from navigation.seo_intelligence.setup.companion_processes import shutdown_companions
-
-
-
-        shutdown_companions()
+        # SEO companion shutdown removed — SEO Intelligence parked (parked/MVP_EXCLUDE_SEO.md)
 
 
 

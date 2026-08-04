@@ -141,6 +141,22 @@ _DEFAULT_POLICIES: dict[str, ProviderFetchPolicy] = {
 		headless_default=False,
 		max_requests_per_run=4,
 	),
+	'lapa': ProviderFetchPolicy(
+		provider_id='lapa',
+		min_delay_s=0.4,
+		max_delay_s=1.2,
+		hydration_wait_s=3.0,
+		headless_default=True,
+		max_requests_per_run=4,
+	),
+	'httpster': ProviderFetchPolicy(
+		provider_id='httpster',
+		min_delay_s=0.3,
+		max_delay_s=1.0,
+		hydration_wait_s=2.0,
+		headless_default=True,
+		max_requests_per_run=4,
+	),
 }
 
 
@@ -171,18 +187,40 @@ class RateLimitTracker:
 	_request_counts: dict[str, int] = field(default_factory=dict)
 
 	def wait_if_needed(self, provider_id: str, policy: ProviderFetchPolicy) -> float:
+		"""Sync cooldown — prefer await_if_needed from async callers."""
+		delay = self._compute_delay(provider_id, policy)
+		if delay > 0:
+			time.sleep(delay)
+		self._mark(provider_id)
+		return delay
+
+	async def await_if_needed(self, provider_id: str, policy: ProviderFetchPolicy) -> float:
+		"""Non-blocking cooldown for concurrent MCP waves."""
+		import asyncio
+
+		delay = self._compute_delay(provider_id, policy)
+		if delay > 0:
+			await asyncio.sleep(delay)
+		self._mark(provider_id)
+		return delay
+
+	def _compute_delay(self, provider_id: str, policy: ProviderFetchPolicy) -> float:
 		if os.environ.get('INSPIRATION_FORCE', '').strip().lower() in {'1', 'true', 'yes'}:
-			self._request_counts[provider_id] = self._request_counts.get(provider_id, 0) + 1
+			return 0.0
+		# Fast MCP path: skip jitter so concurrent providers don't serialize on sleep.
+		if is_fast_mode():
 			return 0.0
 		now = time.monotonic()
 		last = self._last_request.get(provider_id, 0.0)
 		elapsed = now - last
 		delay = policy.jitter_delay_s
 		if elapsed < delay:
-			time.sleep(delay - elapsed)
+			return delay - elapsed
+		return 0.0
+
+	def _mark(self, provider_id: str) -> None:
 		self._last_request[provider_id] = time.monotonic()
 		self._request_counts[provider_id] = self._request_counts.get(provider_id, 0) + 1
-		return delay
 
 	def over_budget(self, provider_id: str, policy: ProviderFetchPolicy) -> bool:
 		return self._request_counts.get(provider_id, 0) >= policy.max_requests_per_run

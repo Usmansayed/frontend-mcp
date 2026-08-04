@@ -39,9 +39,12 @@ import SimpleForm from './pages/forms/SimpleForm.jsx'
 import ValidationForm from './pages/forms/ValidationForm.jsx'
 import WizardForm from './pages/forms/WizardForm.jsx'
 import EdgeLab from './pages/edge/EdgeLab.jsx'
+import FlawCase, { FlawGalleryIndex } from './pages/eval/FlawGallery.jsx'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
+  { path: '/eval/flaws', element: <FlawGalleryIndex /> },
+  { path: '/eval/flaws/:caseId', element: <FlawCase /> },
   {
     path: '/',
     element: <Layout />,

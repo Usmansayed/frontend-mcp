@@ -4,6 +4,16 @@ ADR-style log. New entries at top.
 
 ---
 
+## ADR-028 — Park SEO Intelligence outside MVP MCP (2026-07-23)
+
+**Context:** SEO Intelligence is large (OAuth companions, LibreCrawl, async jobs, AI readiness) and distracts agents on localhost engineering tasks during MVP.
+
+**Decision:** Move `seo_intelligence` to `parked/`, unregister all `perception_seo_*` tools and `perception://seo-guide`, keep `perception_audit_seo` (Lighthouse category). Document restore in `parked/MVP_EXCLUDE_SEO.md`.
+
+**Consequences:** Agents must not recommend or block on SEO Intelligence. Historical ADRs 023/027 remain valid for when the module is restored.
+
+---
+
 ## ADR-027 — Evidence-First SEO Intelligence (2026-07-12)
 
 **Context:** SEO Intelligence had production-shaped plumbing but untrustworthy verification (unstable evidence IDs), shallow type-level correlations, and an underused knowledge graph. Product direction: evolve from a collection of integrations into an **evidence platform** that AI and deterministic logic can build on for years.
@@ -266,6 +276,8 @@ ADR-style log. New entries at top.
 
 **Context:** Name confusion `frontend-perception-engine` vs `frontend-mcp`.
 
-**Decision:** Primary library + thin alias package with same entry points.
+**Decision (superseded 2026-07-23):** Primary library + thin alias package with same entry points.
+
+**Update:** The separate `frontend-mcp` PyPI alias caused `package_version` / `frontend_mcp_version` skew in real agent runs. **Single package only:** `frontend-perception-engine` (CLI entry points remain `frontend-mcp` / `frontend-perception-mcp`).
 
 **Consequences:** Two publishes per release; README documents both.

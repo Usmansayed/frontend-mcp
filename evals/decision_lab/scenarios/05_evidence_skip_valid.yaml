@@ -1,0 +1,19 @@
+id: evidence_skip_valid_reason
+intent: build a new SaaS analytics dashboard
+lifecycle_stage: S03_design
+project_maturity: M1
+feeds:
+  - op: set_retry
+    key: evidence_plan_status
+    value:
+      design_reference:
+        state: skipped
+        reason: out_of_scope_for_surface
+        via_capability: null
+        at: lab
+expect:
+  surface_type: dashboard
+  gate.state: blocked
+  # Skip is recorded; process confidence notes valid_skips (not a ritual tool call)
+  prohibited_contains:
+    - claim_complete
