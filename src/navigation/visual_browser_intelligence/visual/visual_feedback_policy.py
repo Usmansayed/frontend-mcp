@@ -116,18 +116,21 @@ PURPOSES: dict[str, dict[str, Any]] = {
 		'pack': PACK_FULL,
 		'recommended_resource': 'perception://guide/inspiration',
 		'focus': (
-			'Digest MANY attached inspiration blobs (not 1–2). For each liked region '
-			'(sidebar, header, composer, message row, empty state): name the ref_id and '
-			'what to COPY with tweaks. Soft mood words alone are invalid. '
+			'LEARN the chrome, then COPY ~80–90% of it. Digest MANY attached inspiration '
+			'blobs (not 1–2). For each liked region (nav/aside/main/composer, message row, '
+			'empty state): name the ref_id and the concrete layout to REPLICATE (density, '
+			'hierarchy, type, chrome). Soft mood / “a little inspiration” is INVALID. '
 			'Fill primary_ref_ids (≥3, ≥5 on very_heavy) + borrow[{ref_id, section, idea}]. '
-			'Never invent chrome from memory while blobs sit unread.'
+			'Never invent chrome from memory while blobs sit unread. After implement, '
+			'reconcile copied chrome to THIS product via consistency (tokens/spacing).'
 		),
 		'extra_keys': ('borrow', 'ignore', 'look_lock', 'primary_ref_ids', 'looked_ref_ids'),
 		'extra_schema': {
 			'borrow': (
 				"[{ref_id, section, idea}] e.g. "
-				"{ref_id:'web_og:maze.co:0', section:'sidebar', idea:'compact history + strong New chat'} "
-				"— concrete section copies with tweaks; mood-only strings rejected"
+				"{ref_id:'web_og:maze.co:0', section:'aside', "
+				"idea:'copy compact history rail + New chat CTA; keep project tokens'} "
+				"— section-level COPY specs (80–90%); mood-only strings rejected"
 			),
 			'ignore': "['their pricing table', 'food photography'] — explicitly not transferable",
 			'look_lock': (
@@ -311,14 +314,22 @@ def build_purpose_next_actions(
 				{
 					'action': 'implement_from_borrow',
 					'why': (
-						'Look locked (borrow/look_lock) — implement from those ideas; '
-						'do not invent a third aesthetic or re-collect by default.'
+						'Look locked — COPY ~80–90% of locked chrome (nav/aside/main/composer) '
+						'from primary_ref_ids + borrow; only small taste tweaks. Then reconcile '
+						'to THIS product via components/resources + consistency_audit. '
+						'Do not invent a third aesthetic or re-collect by default.'
 					),
 					'tool': None,
 					'args_hint': {
 						'borrow': borrow[:5],
 						'look_lock': look_lock,
 						'primary_ref_ids': list(feedback.get('primary_ref_ids') or [])[:6],
+						'copy_target': '80-90%',
+						'then': [
+							'perception_select_component_foundation',
+							'perception_creative_assets',
+							'perception_consistency_audit',
+						],
 					},
 				}
 			)
@@ -390,8 +401,9 @@ def build_purpose_next_actions(
 					'action': 'revise_vs_inspiration',
 					'why': (
 						'Design draft has a look_lock / primary_ref_ids — revise toward those '
-						'borrowed refs at ~80–90% visual copy; fill vs_inspiration + chrome_fidelity; '
-						'do not invent a third look.'
+						'refs at ~80–90% visual COPY (not a light vibe borrow); fill '
+						'vs_inspiration + chrome_fidelity; then consistency-reconcile to project '
+						'tokens. Do not invent a third look.'
 					),
 					'tool': None,
 					'args_hint': {

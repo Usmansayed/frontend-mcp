@@ -176,8 +176,10 @@ def evaluate_inspiration_look_lock(
 		"reasons": reasons,
 		"hint": (
 			"LOOK attached inspiration blobs → fill primary_ref_ids (≥ floor) + "
-			"borrow[{ref_id, section?, idea}] for each liked section to copy with tweaks."
+			"borrow[{ref_id, section, idea}] as COPY specs for chrome (target ~80–90% "
+			"visual match per section, then reconcile to project UI/tokens)."
 			if not look_locked
-			else "direction locked from multi-ref LOOK"
+			else "direction locked — implement ~80–90% chrome copy from primary_ref_ids, then consistency"
 		),
+		"copy_target": "80-90%",
 	}

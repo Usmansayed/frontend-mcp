@@ -1,11 +1,15 @@
-# frontend-mcp (retired PyPI alias)
+# `frontend-mcp` (PyPI)
 
-**Do not install this package.**
-
-Install the single package instead:
+Thin **install alias** for the real package [`frontend-perception-engine`](https://pypi.org/project/frontend-perception-engine/).
 
 ```bash
-pip install --upgrade frontend-perception-engine
+pip install --upgrade --pre frontend-mcp
 ```
 
-That provides the `frontend-mcp` CLI. See [DEPRECATED.md](DEPRECATED.md).
+That installs `frontend-perception-engine` at the **same version** (locked pin — no version skew) and gives you the `frontend-mcp` / `frontend-mcp-install` CLIs.
+
+```bash
+frontend-mcp-install
+# or
+uvx --from frontend-mcp frontend-mcp-install
+```

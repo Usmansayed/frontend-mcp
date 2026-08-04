@@ -67,7 +67,7 @@ INSPIRATION_HEADLESS=false
 | HTTP | **Works** |
 | Preview CDN | `assets.onepagelove.com/cdn-cgi/image/width=...,quality=...` |
 
-**Critical:** CDN URLs contain commas inside `cdn-cgi/image/` params — never split srcset on commas blindly. Medium blob tier uses `width=480`, `quality=75`.
+**Critical:** CDN URLs contain commas inside `cdn-cgi/image/` params — never split srcset on commas blindly. Medium blob tier uses `width=640`, `quality=82` (JPEG materialize defaults ~1120px / q82).
 
 **Filter:** Require screenshot asset near card; skip nav links (`/about`, etc.).
 

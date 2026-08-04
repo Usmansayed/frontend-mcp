@@ -581,7 +581,7 @@ Guideline:
 | Field | Use |
 |-------|-----|
 | `preview_url` / `agent_view_url` | Prefer CDN/og:image for host vision |
-| `inspiration_blob` | Ephemeral medium JPEG (~512–1024px, ~24h TTL) |
+| `inspiration_blob` | Ephemeral medium JPEG (~1120px, q≈82, ~24h TTL) |
 | `blob_session_id` | Reuse within session; pass to session_end when finished |
 | `engineering_spec` | Seed Spec (soft priors) — bind as reference; harden via Snapshot |
 | `spec_revision_gate` | Post-draft SpecDiff vs bound reference |

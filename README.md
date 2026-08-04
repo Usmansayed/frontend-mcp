@@ -42,18 +42,18 @@ Your coding agent (Cursor/Claude/Codex) remains the brain.
 
 ### Install
 
-One PyPI package only:
+One command (pulls the engine at the same version — no skew):
 
 ```bash
-pip install --upgrade frontend-perception-engine
+pip install --upgrade --pre frontend-mcp
 ```
 
-That provides the `frontend-mcp` / `frontend-perception-mcp` CLI.  
-Do **not** install the old separate `frontend-mcp` alias package (it caused version skew). If you have it:
+`--pre` is required while the line is `1.2.0.dev*`. That installs `frontend-perception-engine` pinned to the same version and provides the `frontend-mcp` / `frontend-mcp-install` CLIs.
+
+Equivalent (engine name directly):
 
 ```bash
-pip uninstall frontend-mcp
-pip install --upgrade frontend-perception-engine
+pip install --upgrade --pre frontend-perception-engine
 ```
 
 Use `--upgrade` when a version is already installed — plain `pip install` may leave an older release in place.
@@ -63,14 +63,14 @@ Use `--upgrade` when a version is already installed — plain `pip install` may 
 Recommended (quiet output + next steps):
 
 ```bash
-uvx --from frontend-perception-engine frontend-perception-install
-# or: uvx --from frontend-perception-engine frontend-mcp-install
+uvx --from frontend-mcp frontend-mcp-install
+# or: uvx --from frontend-perception-engine frontend-perception-install
 ```
 
 With Chromium for Browser Use:
 
 ```bash
-uvx --from frontend-perception-engine frontend-perception-install --with-browser
+uvx --from frontend-mcp frontend-mcp-install --with-browser
 ```
 
 Development install from this repo:
@@ -79,10 +79,10 @@ Development install from this repo:
 python -m navigation.cli.install --editable .
 ```
 
-Or classic pip:
+Or classic pip from this repo:
 
 ```bash
-pip install frontend-perception-engine
+pip install -e .
 ```
 
 ### Run MCP server

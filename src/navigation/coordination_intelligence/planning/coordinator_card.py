@@ -1114,6 +1114,45 @@ def _build_finish_checklist(
 	return finish
 
 
+def _build_orders(
+	*,
+	face_class: str,
+	owed: list[dict[str, Any]],
+	implement_blocked: bool,
+) -> list[str]:
+	"""Short imperatives on the face — motivate when hosts ignore soft prose."""
+	if face_class not in {"greenfield", "redesign", "mockup"}:
+		return []
+	owed_fams = {
+		str(o.get("family") or "").strip()
+		for o in owed
+		if isinstance(o, dict)
+	}
+	orders: list[str] = []
+	if "inspiration" in owed_fams or "inspiration_extract" in owed_fams:
+		orders.append(
+			"LOOK many inspiration blobs → LEARN chrome → COPY ~80–90% "
+			"(nav/aside/main/composer); soft vibe-borrow is invalid"
+		)
+	if "component" in owed_fams:
+		orders.append("USE component foundation (select → integrate); do not invent chrome alone")
+	if "resources" in owed_fams:
+		orders.append("APPLY creative_assets (fonts/patterns/motion) into the UI — search≠apply")
+	if "consistency" in owed_fams:
+		orders.append(
+			"After copy: reconcile to THIS product via design_graph + consistency_audit"
+		)
+	if "fidelity" in owed_fams:
+		orders.append(
+			"Attest chrome_fidelity zones mean≥80 / each≥75 vs primary_ref_ids before claim"
+		)
+	if implement_blocked and not orders:
+		orders.append("Pay owed evidence before implement — MCP refuses mutation tools while blocked")
+	elif implement_blocked:
+		orders.insert(0, "implement_blocked: gather evidence only until owed critical is paid")
+	return orders[:6]
+
+
 def _reconcile_face_class(face_class: str, strategy: dict[str, Any]) -> str:
 	"""Last-line correction: policy/unpaid design ladder beats a misclassified hotfix face.
 
@@ -1462,6 +1501,13 @@ def build_agent_face_card(
 		card["phase_hint"] = phase_info.get("hint")
 	except Exception:
 		pass
+	orders = _build_orders(
+		face_class=face_class,
+		owed=owed,
+		implement_blocked=implement_blocked,
+	)
+	if orders:
+		card["orders"] = orders
 	return card
 
 

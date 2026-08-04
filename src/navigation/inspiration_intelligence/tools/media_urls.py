@@ -5,8 +5,9 @@ import re
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
-MEDIUM_MAX_WIDTH = int(__import__('os').environ.get('INSPIRATION_BLOB_MAX_WIDTH', '960'))
-MEDIUM_JPEG_QUALITY = int(__import__('os').environ.get('INSPIRATION_BLOB_JPEG_QUALITY', '76'))
+# Slightly above "thumb" so agents can LEARN chrome (still CDN-cheap, not full-res).
+MEDIUM_MAX_WIDTH = int(__import__('os').environ.get('INSPIRATION_BLOB_MAX_WIDTH', '1120'))
+MEDIUM_JPEG_QUALITY = int(__import__('os').environ.get('INSPIRATION_BLOB_JPEG_QUALITY', '82'))
 
 
 def normalize_image_url(url: str) -> str:
@@ -52,12 +53,14 @@ def to_medium_inspiration_url(url: str, *, provider_id: str = '') -> str:
 	pid = provider_id.lower()
 
 	if 'onepagelove.com' in url:
-		return re.sub(r'width=\d+', 'width=480', url).replace('quality=85', 'quality=75')
+		out = re.sub(r'width=\d+', 'width=640', url)
+		out = re.sub(r'quality=\d+', 'quality=82', out)
+		return out
 
 	if 'siteinspire.com' in url:
 		# Cloudflare Images: force JPEG so Pillow can open without AVIF support.
-		out = re.sub(r'width=\d+', 'width=640', url)
-		out = re.sub(r'quality=\d+', 'quality=70', out)
+		out = re.sub(r'width=\d+', 'width=800', url)
+		out = re.sub(r'quality=\d+', 'quality=78', out)
 		if 'format=' in out:
 			out = re.sub(r'format=[a-z0-9]+', 'format=jpeg', out, flags=re.I)
 		else:
@@ -76,9 +79,9 @@ def to_medium_inspiration_url(url: str, *, provider_id: str = '') -> str:
 	if 'cdn.lapa.ninja' in url and '/2x/' in url:
 		return url.replace('/2x/', '/1x/')
 
-	# Dribbble template placeholders → concrete mid size
+	# Dribbble template placeholders → concrete mid size (learnable chrome, not tiny thumbs)
 	if 'cdn.dribbble.com' in url and '{width}' in url:
-		return url.replace('{width}', '800').replace('{height}', '600')
+		return url.replace('{width}', '1000').replace('{height}', '750')
 
 	if pid == 'land-book' and 'og-image' in url:
 		return ''

@@ -137,8 +137,8 @@ def test_to_medium_inspiration_url_onepagelove() -> None:
 
 	url = 'https://assets.onepagelove.com/cdn-cgi/image/width=840,quality=85/file.jpg'
 	out = to_medium_inspiration_url(url, provider_id='onepagelove')
-	assert 'width=480' in out
-	assert 'quality=75' in out
+	assert 'width=640' in out
+	assert 'quality=82' in out
 
 
 def test_normalize_image_url_preserves_cdn_commas() -> None:
@@ -175,7 +175,8 @@ def test_to_medium_inspiration_url_siteinspire_forces_jpeg() -> None:
 	url = 'https://r2.siteinspire.com/cdn-cgi/image/width=384,height=240,quality=75,format=auto/x.jpg'
 	out = to_medium_inspiration_url(url, provider_id='siteinspire')
 	assert 'format=jpeg' in out
-	assert 'width=640' in out
+	assert 'width=800' in out
+	assert 'quality=78' in out
 
 
 def test_parse_awwwards_relative_sites() -> None:

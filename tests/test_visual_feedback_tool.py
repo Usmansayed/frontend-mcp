@@ -149,6 +149,10 @@ def test_purpose_next_actions_routing() -> None:
 		feedback={**base_fb, 'borrow': ['split hero']},
 	)
 	assert any(a['action'] == 'implement_from_borrow' for a in acts), acts
+	borrow_act = next(a for a in acts if a['action'] == 'implement_from_borrow')
+	assert '80–90%' in borrow_act['why'] or '80-90%' in borrow_act['why']
+	assert borrow_act.get('args_hint', {}).get('copy_target') == '80-90%'
+	assert 'perception_consistency_audit' in (borrow_act.get('args_hint', {}).get('then') or [])
 
 	acts = build_purpose_next_actions(
 		purpose='inspiration', tool='perception_visual_feedback', envelope=_env(),

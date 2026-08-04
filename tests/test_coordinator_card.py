@@ -54,6 +54,10 @@ def test_build_agent_face_card_simple_spine():
     assert "ship_council" in face["claim_extra"]
     assert face["resource"] == "perception://spine/greenfield"
     assert isinstance(face.get("next_args"), dict)
+    orders = face.get("orders") or []
+    assert orders, face
+    assert any("80–90%" in o or "80-90%" in o for o in orders)
+    assert any("implement_blocked" in o for o in orders)
     assert "query" in face["next_args"]
 
 

@@ -1,12 +1,24 @@
-# This alias package is retired. See DEPRECATED.md.
-# Publishing is disabled — use the root frontend-perception-engine package only.
+# frontend-mcp — thin install alias (same version as the engine).
+#
+# Why this exists:
+#   Users type:  pip install --upgrade --pre frontend-mcp
+# That pulls frontend-perception-engine==THIS_VERSION (locked; no skew).
+#
+# Do not put runtime code here. All code lives in the engine package.
+
 [project]
-name = "frontend-mcp-DEPRECATED-DO-NOT-PUBLISH"
-version = "0.0.0"
-description = "RETIRED. Install frontend-perception-engine instead."
+name = "frontend-mcp"
+version = "1.2.0.dev68"
+description = "Install alias for Frontend Perception MCP (pulls frontend-perception-engine)."
+readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+  "frontend-perception-engine==1.2.0.dev68",
+]
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = []

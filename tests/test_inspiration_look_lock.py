@@ -50,6 +50,8 @@ def test_structured_multi_ref_look_locks():
 	)
 	assert out["look_locked"] is True
 	assert out["primary_ref_count"] == 5
+	assert out["copy_target"] == "80-90%"
+	assert "80–90%" in out["hint"] or "80-90%" in out["hint"]
 
 
 @pytest.mark.unit
