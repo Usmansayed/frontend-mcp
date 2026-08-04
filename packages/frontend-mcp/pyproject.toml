@@ -1,24 +1,11 @@
-# frontend-mcp — thin install alias (same version as the engine).
-#
-# Why this exists:
-#   Users type:  pip install --upgrade --pre frontend-mcp
-# That pulls frontend-perception-engine==THIS_VERSION (locked; no skew).
-#
-# Do not put runtime code here. All code lives in the engine package.
-
+# Do not publish — root package is frontend-mcp now.
 [project]
-name = "frontend-mcp"
-version = "1.2.0.dev68"
-description = "Install alias for Frontend Perception MCP (pulls frontend-perception-engine)."
-readme = "README.md"
+name = "frontend-mcp-DO-NOT-PUBLISH-FROM-HERE"
+version = "0.0.0"
+description = "RETIRED folder. Root pyproject.toml is frontend-mcp."
 requires-python = ">=3.10"
-dependencies = [
-  "frontend-perception-engine==1.2.0.dev68",
-]
+dependencies = []
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
-
-[tool.setuptools]
-packages = []

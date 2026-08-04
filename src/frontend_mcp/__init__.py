@@ -1,18 +1,15 @@
-"""Compatibility module — same package as frontend-perception-engine.
+"""Compatibility module for ``import frontend_mcp``.
 
-Historically ``frontend-mcp`` was a separate PyPI alias that caused version skew.
-Version always comes from the single installed engine package.
+Version always mirrors the installed ``frontend-mcp`` distribution
+(legacy ``frontend-perception-engine`` name still accepted).
 """
 from __future__ import annotations
 
 try:
-	from importlib.metadata import PackageNotFoundError, version
-except ImportError:  # pragma: no cover
-	from importlib_metadata import PackageNotFoundError, version  # type: ignore
+	from navigation.core.package_meta import installed_version
 
-try:
-	__version__ = version('frontend-perception-engine')
-except PackageNotFoundError:  # pragma: no cover
-	__version__ = '0.0.0'
+	__version__ = installed_version(default="0.0.0")
+except Exception:  # pragma: no cover
+	__version__ = "0.0.0"
 
-__all__ = ['__version__']
+__all__ = ["__version__"]

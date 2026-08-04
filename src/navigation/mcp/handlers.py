@@ -441,14 +441,14 @@ async def handle_health(arguments: dict[str, Any]) -> dict[str, Any]:
     except Exception as exc:
         error = str(exc)
 
-    engine_ver = None
-    try:
-        engine_ver = version("frontend-perception-engine")
-    except PackageNotFoundError:
-        pass
-    # Single package only — do not read a separate frontend-mcp dist (historical skew).
-    # frontend_mcp is a module inside this package; version fields always match.
+    from navigation.core.package_meta import installed_dist_name, installed_version
+
+    engine_ver = installed_version(default="") or None
+    if engine_ver == "0.0.0":
+        engine_ver = None
+    # Single primary package (frontend-mcp). Legacy engine name is a thin alias only.
     package_ver = engine_ver
+    package_name = installed_dist_name() or "frontend-mcp"
 
     browser_available = True
     try:
@@ -492,7 +492,7 @@ async def handle_health(arguments: dict[str, Any]) -> dict[str, Any]:
             "reachable": reachable,
             "status": status,
             "server_version": package_ver or "unknown",
-            "package_name": "frontend-perception-engine",
+            "package_name": package_name,
             "package_version": package_ver,
             # Same value as package_version (compat for agents that still read this key).
             "frontend_mcp_version": package_ver,

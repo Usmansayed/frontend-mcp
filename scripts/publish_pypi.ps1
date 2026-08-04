@@ -1,4 +1,4 @@
-# Publish engine + synced frontend-mcp install alias (same VERSION — no skew).
+# Publish frontend-mcp (primary) + synced legacy engine alias (same VERSION — no skew).
 # Loads TWINE_* from ../.env (pipy_username / pipy_password).
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
@@ -17,16 +17,16 @@ if (-not $env:TWINE_USERNAME -or -not $env:TWINE_PASSWORD) {
 
 Set-Location $Root
 $Version = (Get-Content (Join-Path $Root "VERSION") -Raw).Trim()
-Write-Host "Publishing version $Version"
+Write-Host "Publishing version $Version (primary: frontend-mcp)"
 
-# Keep alias pin in lockstep with VERSION / root pyproject.
-$AliasPy = Join-Path $Root "packages\frontend-mcp\pyproject.toml"
+# Keep legacy alias pin in lockstep with VERSION.
+$AliasPy = Join-Path $Root "packages\frontend-perception-engine\pyproject.toml"
 $AliasText = Get-Content $AliasPy -Raw
 $AliasText = [regex]::Replace($AliasText, '(?m)^version = ".*"$', "version = `"$Version`"")
 $AliasText = [regex]::Replace(
     $AliasText,
-    '(?m)^(dependencies = \[\r?\n\s*")frontend-perception-engine==[^"\s]+(")',
-    "`${1}frontend-perception-engine==$Version`${2}"
+    '(?m)^(dependencies = \[\r?\n\s*")frontend-mcp==[^"\s]+(")',
+    "`${1}frontend-mcp==$Version`${2}"
 )
 Set-Content -Path $AliasPy -Value $AliasText -NoNewline
 
@@ -46,9 +46,10 @@ function Build-And-Upload([string]$ProjectDir, [string]$Label) {
     }
 }
 
-Build-And-Upload $Root "frontend-perception-engine"
-Build-And-Upload (Join-Path $Root "packages\frontend-mcp") "frontend-mcp"
+# Primary first (full code), then legacy alias.
+Build-And-Upload $Root "frontend-mcp"
+Build-And-Upload (Join-Path $Root "packages\frontend-perception-engine") "frontend-perception-engine"
 
 Write-Host "`nDone. Install with:"
 Write-Host "  pip install --upgrade --pre frontend-mcp"
-Write-Host "  # pins frontend-perception-engine==$Version"
+Write-Host "  # legacy also works: pip install --upgrade --pre frontend-perception-engine"

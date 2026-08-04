@@ -42,15 +42,15 @@ Your coding agent (Cursor/Claude/Codex) remains the brain.
 
 ### Install
 
-One command (pulls the engine at the same version — no skew):
+One package — all code lives under **`frontend-mcp`**:
 
 ```bash
 pip install --upgrade --pre frontend-mcp
 ```
 
-`--pre` is required while the line is `1.2.0.dev*`. That installs `frontend-perception-engine` pinned to the same version and provides the `frontend-mcp` / `frontend-mcp-install` CLIs.
+`--pre` is required while the line is `1.2.0.dev*`. That provides the `frontend-mcp` / `frontend-mcp-install` CLIs.
 
-Equivalent (engine name directly):
+Legacy name still works (thin reverse alias → same version of `frontend-mcp`):
 
 ```bash
 pip install --upgrade --pre frontend-perception-engine
@@ -64,7 +64,6 @@ Recommended (quiet output + next steps):
 
 ```bash
 uvx --from frontend-mcp frontend-mcp-install
-# or: uvx --from frontend-perception-engine frontend-perception-install
 ```
 
 With Chromium for Browser Use:
@@ -102,9 +101,9 @@ frontend-perception-mcp
 Using `uvx` (no local install in current environment):
 
 ```bash
-uvx --from frontend-perception-engine frontend-mcp
+uvx --from frontend-mcp frontend-mcp
 # or
-uvx --from frontend-perception-engine frontend-perception-mcp
+uvx --from frontend-mcp frontend-perception-mcp
 ```
 
 ### Cursor MCP config

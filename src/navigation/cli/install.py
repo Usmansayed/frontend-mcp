@@ -13,7 +13,7 @@ import time
 from collections.abc import Sequence
 from pathlib import Path
 
-DEFAULT_PACKAGE_NAME = 'frontend-perception-engine'
+DEFAULT_PACKAGE_NAME = 'frontend-mcp'
 _SPINNER_FRAMES = '|/-\\'
 
 
@@ -84,6 +84,9 @@ def _build_install_command(
 			cmd.append('--force-reinstall')
 		elif upgrade:
 			cmd.append('--upgrade')
+		# Dev line is 1.2.0.dev* — without --pre pip stays on last stable (1.1.7).
+		if editable is None:
+			cmd.append('--pre')
 		cmd.extend(target)
 		return cmd
 
@@ -94,12 +97,14 @@ def _build_install_command(
 			cmd.append('--reinstall')
 		elif upgrade:
 			cmd.append('--upgrade')
+		if editable is None:
+			cmd.append('--pre')
 		cmd.extend(target)
 		return cmd
 
 	raise SystemExit(
 		'No installer available. Install pip or uv, or use:\n'
-		'  uvx --from frontend-perception-engine frontend-mcp\n',
+		'  uvx --from frontend-mcp frontend-mcp\n',
 	)
 
 
@@ -137,7 +142,7 @@ def _print_success(*, package: str, with_browser: bool) -> None:
 	sys.stdout.write('    frontend-mcp\n')
 	sys.stdout.write('    # or: frontend-perception-mcp\n\n')
 	sys.stdout.write('  Or with uvx (always latest from PyPI):\n')
-	sys.stdout.write('    uvx --from frontend-perception-engine frontend-mcp\n\n')
+	sys.stdout.write('    uvx --from frontend-mcp frontend-mcp\n\n')
 	sys.stdout.write('  Install agent rules (in your app folder):\n')
 	sys.stdout.write('    frontend-mcp setup\n')
 	sys.stdout.write('    frontend-mcp install rules\n\n')
@@ -147,7 +152,7 @@ def _print_success(*, package: str, with_browser: bool) -> None:
 	sys.stdout.write('        "frontend-perception": {\n')
 	sys.stdout.write('          "command": "uvx",\n')
 	sys.stdout.write(
-		'          "args": ["--from", "frontend-perception-engine", "frontend-mcp"]\n'
+		'          "args": ["--from", "frontend-mcp", "frontend-mcp"]\n'
 	)
 	sys.stdout.write('        }\n')
 	sys.stdout.write('      }\n')

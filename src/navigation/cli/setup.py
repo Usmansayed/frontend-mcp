@@ -73,19 +73,23 @@ Do not treat this file as a tool catalog — see `perception://getting-started`.
 
 
 def print_setup_report(*, install_skill: bool, print_rule: bool, print_agents: bool) -> int:
-    engine = _pkg_version("frontend-perception-engine")
+    from navigation.core.package_meta import installed_version
+
+    engine = installed_version(default="") or None
+    if engine in {"", "0.0.0"}:
+        engine = _pkg_version("frontend-mcp") or _pkg_version("frontend-perception-engine")
     exe = _which_frontend_mcp()
 
     sys.stdout.write("Frontend MCP — setup\n")
     sys.stdout.write("====================\n\n")
-    sys.stdout.write(f"  frontend-perception-engine: {engine or 'NOT INSTALLED'}\n")
+    sys.stdout.write(f"  frontend-mcp: {engine or 'NOT INSTALLED'}\n")
     sys.stdout.write(f"  frontend-mcp on PATH:       {exe or 'NOT FOUND'}\n\n")
 
     if not engine:
         sys.stdout.write(
             "Install first:\n"
-            "  pip install --upgrade frontend-perception-engine\n"
-            "  # or: uvx --from frontend-perception-engine frontend-mcp-install\n\n"
+            "  pip install --upgrade --pre frontend-mcp\n"
+            "  # or: uvx --from frontend-mcp frontend-mcp-install\n\n"
         )
         return 1
 

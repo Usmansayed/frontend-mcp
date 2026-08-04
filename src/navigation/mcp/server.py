@@ -34,17 +34,9 @@ logger = logging.getLogger(__name__)
 
 
 def _package_version() -> str:
-    try:
-        from importlib.metadata import version
+    from navigation.core.package_meta import installed_version
 
-        return version("frontend-perception-engine")
-    except Exception:
-        try:
-            from importlib.metadata import version
-
-            return version("frontend-mcp")
-        except Exception:
-            return "unknown"
+    return installed_version(default="unknown")
 
 
 try:

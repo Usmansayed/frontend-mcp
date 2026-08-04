@@ -39,9 +39,11 @@ def _package_mtime() -> float | None:
     except Exception:
         pass
     try:
-        from importlib.metadata import distribution
+        from navigation.core.package_meta import distribution_for_mtime
 
-        dist = distribution("frontend-perception-engine")
+        dist = distribution_for_mtime()
+        if dist is None:
+            raise LookupError("no frontend-mcp distribution")
         # Prefer RECORD / METADATA under dist-info
         for name in ("METADATA", "RECORD", "WHEEL"):
             try:
