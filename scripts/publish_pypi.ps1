@@ -25,8 +25,8 @@ $AliasText = Get-Content $AliasPy -Raw
 $AliasText = [regex]::Replace($AliasText, '(?m)^version = ".*"$', "version = `"$Version`"")
 $AliasText = [regex]::Replace(
     $AliasText,
-    'frontend-perception-engine==[^"\s]+',
-    "frontend-perception-engine==$Version"
+    '(?m)^(dependencies = \[\r?\n\s*")frontend-perception-engine==[^"\s]+(")',
+    "`${1}frontend-perception-engine==$Version`${2}"
 )
 Set-Content -Path $AliasPy -Value $AliasText -NoNewline
 
