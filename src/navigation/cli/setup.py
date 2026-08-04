@@ -88,7 +88,7 @@ def print_setup_report(*, install_skill: bool, print_rule: bool, print_agents: b
     if not engine:
         sys.stdout.write(
             "Install first:\n"
-            "  pip install --upgrade --pre frontend-mcp\n"
+            "  pip install frontend-mcp\n"
             "  # or: uvx --from frontend-mcp frontend-mcp-install\n\n"
         )
         return 1

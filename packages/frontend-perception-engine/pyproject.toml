@@ -1,16 +1,16 @@
 # frontend-perception-engine — legacy install name (thin reverse alias).
 #
-# Prefer:  pip install --upgrade --pre frontend-mcp
+# Prefer:  pip install frontend-mcp
 # This package only depends on frontend-mcp==THIS_VERSION so old docs/commands keep working.
 
 [project]
 name = "frontend-perception-engine"
-version = "1.2.0.dev69"
+version = "1.2.0"
 description = "Legacy alias for frontend-mcp (same version pin — no skew)."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-  "frontend-mcp==1.2.0.dev69",
+  "frontend-mcp==1.2.0",
 ]
 
 [build-system]

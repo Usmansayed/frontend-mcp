@@ -50,6 +50,17 @@ def _resolve_install_package() -> str:
 	return DEFAULT_PACKAGE_NAME
 
 
+def _version_needs_pre() -> bool:
+	"""True when local VERSION is a PEP 440 pre-release (dev/a/b/rc)."""
+	import re
+
+	try:
+		ver = (Path(__file__).resolve().parents[3] / 'VERSION').read_text(encoding='utf-8').strip().lower()
+	except OSError:
+		return False
+	return bool(re.search(r'(?:\.dev|a|b|rc)\d+', ver) or '.dev' in ver)
+
+
 def _pip_available() -> bool:
 	result = subprocess.run(
 		[sys.executable, '-m', 'pip', '--version'],
@@ -84,8 +95,8 @@ def _build_install_command(
 			cmd.append('--force-reinstall')
 		elif upgrade:
 			cmd.append('--upgrade')
-		# Dev line is 1.2.0.dev* — without --pre pip stays on last stable (1.1.7).
-		if editable is None:
+		# Developmental releases need --pre; stable (e.g. 1.2.0) must not.
+		if editable is None and _version_needs_pre():
 			cmd.append('--pre')
 		cmd.extend(target)
 		return cmd
@@ -97,7 +108,7 @@ def _build_install_command(
 			cmd.append('--reinstall')
 		elif upgrade:
 			cmd.append('--upgrade')
-		if editable is None:
+		if editable is None and _version_needs_pre():
 			cmd.append('--pre')
 		cmd.extend(target)
 		return cmd
